@@ -60,7 +60,10 @@ class RegisterController extends Controller
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
-        return view('auth.register', compact('religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste'));
+        $googleOAuth = Session::get('google_oauth');
+        return view('auth.register', compact(
+            'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'googleOAuth'
+        ));
     }
 
     /**
@@ -85,8 +88,7 @@ class RegisterController extends Controller
      */
 
     protected function create(array $data) {
-        //dd($data);
-        return User::create([
+        $payload = [
             'dataid' => strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, 9)),
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
@@ -107,7 +109,22 @@ class RegisterController extends Controller
             'education' => $data['education'],
             'profession' => $data['profession'],
             'password' => Hash::make($data['password']),
-        ]);
+        ];
+
+        $google = Session::get('google_oauth');
+        if (!empty($google['id']) && !empty($google['email']) && strcasecmp($google['email'], $data['email']) === 0) {
+            $payload['google_id'] = $google['id'];
+        }
+
+        $user = User::create($payload);
+
+        if (!empty($payload['google_id'])) {
+            $user->email_verified_at = now();
+            $user->save();
+            Session::forget('google_oauth');
+        }
+
+        return $user;
     }
 
     public function Register(Request $request) {
@@ -128,7 +145,12 @@ class RegisterController extends Controller
             $data['mobile'] = $normalizedInput;
 
             event(new Registered($user = $this->create($data)));
-            Session::flash('message','success|A verification email has been sent to the email address. Please verify email for account activation. Check spam/junk folder if not found.');
+
+            if (!empty($user->google_id) && $user->hasVerifiedEmail()) {
+                Session::flash('message', 'success|Registration complete. Your Google email is verified.');
+            } else {
+                Session::flash('message','success|A verification email has been sent to the email address. Please verify email for account activation. Check spam/junk folder if not found.');
+            }
             Log::info("New user registered (Name: " . $user->first_name . " " . $user->last_name . ", Email: " . $user->email . ")");
 
             if ($response = $this->registered($request, $user)) {

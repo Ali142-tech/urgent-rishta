@@ -17,6 +17,14 @@ use Illuminate\Support\Facades\Artisan;
 */
 Auth::routes(['verify' => true]);
 
+// Shaadi-style login extras (OTP via email for now; SMS later)
+Route::post('login/otp/send', [App\Http\Controllers\Auth\LoginController::class, 'sendOtp'])->name('login.otp.send');
+Route::post('login/otp/verify', [App\Http\Controllers\Auth\LoginController::class, 'verifyOtp'])->name('login.otp.verify');
+Route::post('login/password', [App\Http\Controllers\Auth\LoginController::class, 'loginWithPassword'])->name('login.password');
+Route::post('login/email', [App\Http\Controllers\Auth\LoginController::class, 'loginWithEmail'])->name('login.email');
+Route::get('login/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('login.google');
+Route::get('login/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('login.google.callback');
+
 Route::get('/info', function () {
     phpinfo();
 });

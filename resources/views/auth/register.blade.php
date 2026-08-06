@@ -19,6 +19,9 @@
                     <div class="form-body">
                         <div class="text-center px-2">
                             <h4 class="heading heading-4 strong-400 mb-4 font_light">Create Your Account</h4>
+                            @if(!empty($googleOAuth))
+                                <p class="font_light" style="color:#E91E63;font-size:13px;">Signed in with Google — complete your profile below.</p>
+                            @endif
                         </div>
                         <form class="form-default mt-4" id="register_form" action="{{route('register')}}" method="post" autocomplete="off" enctype="multipart/form-data">
                             @csrf
@@ -26,13 +29,13 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="control-label font_light">First Name</label><br />
-                                        <input type="text" class="form-control form-control-sm" name="first_name" required="required" autofocus value="{{ old('first_name') }}" />
+                                        <input type="text" class="form-control form-control-sm" name="first_name" required="required" autofocus value="{{ old('first_name', $googleOAuth['first_name'] ?? '') }}" />
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="control-label font_light">Last Name</label><br />
-                                        <input type="text" class="form-control form-control-sm" name="last_name" required="required" value="{{ old('last_name') }}" />
+                                        <input type="text" class="form-control form-control-sm" name="last_name" required="required" value="{{ old('last_name', $googleOAuth['last_name'] ?? '') }}" />
                                     </div>
                                 </div>
                             </div>
@@ -50,8 +53,11 @@
                                 <div class="col-md-6">
                                     <div class="form-group">
                                         <label class="control-label font_light">Email</label><br />
-                                        <input type="email" class="form-control form-control-sm" name="email" id="email" required="required" value="{{ old('email') }}" />
+                                        <input type="email" class="form-control form-control-sm" name="email" id="email" required="required" value="{{ old('email', $googleOAuth['email'] ?? '') }}" @if(!empty($googleOAuth['email'])) readonly @endif />
                                         <small id="email_alert" class="lv-alert"></small>
+                                        @if(!empty($googleOAuth['email']))
+                                            <small class="form-text font_light">Email from Google (locked).</small>
+                                        @endif
                                     </div>
                                 </div>
                             </div>

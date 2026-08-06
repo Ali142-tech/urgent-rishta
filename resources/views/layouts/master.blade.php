@@ -1097,11 +1097,11 @@ a.appointment-btn::before{
 
         $(document).ready(function() {
 
-            @if($errors->any())
+            @if($errors->any() && !(request()->is('login') || request()->is('login/*')))
             showAlert("error", "{!! implode('', $errors->all('<div>:message</div>')) !!}")
             @endif
 
-            @if(session('message'))
+            @if(session('message') && !(request()->is('login') || request()->is('login/*')))
             var message = "{!! session('message') !!}".split("|");
             showAlert(message[0], message[1], message[2]);
             @endif
@@ -1109,7 +1109,7 @@ a.appointment-btn::before{
             $(".selectpicker").select2();
         });
         
-        if (window.location.pathname === "/" || window.location.pathname === "/home" || window.location.pathname === "/packages" || window.location.pathname === "/package-details" || window.location.pathname === "/login") {
+        if (window.location.pathname === "/" || window.location.pathname === "/home" || window.location.pathname === "/packages" || window.location.pathname.indexOf("/package-details") === 0) {
             document.body.classList.add("homepage");
         }else{
             document.body.classList.add("normalpage");
