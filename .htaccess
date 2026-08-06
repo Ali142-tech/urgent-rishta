@@ -1,0 +1,9 @@
+// Source - https://stackoverflow.com/a
+// Posted by Alexey, modified by community. See post 'Timeline' for change history
+// Retrieved 2026-01-14, License - CC BY-SA 4.0
+
+<IfModule mod_rewrite.c>
+    RewriteEngine on
+    RewriteCond %{REQUEST_URI} !^public
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
