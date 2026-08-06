@@ -54,6 +54,8 @@ class LoginController extends Controller
      */
     public function sendOtp(Request $request)
     {
+
+    
         $request->validate([
             'country_code' => 'required|string|max:5',
             'mobile' => 'required|string|max:20',
@@ -70,7 +72,9 @@ class LoginController extends Controller
             return redirect()->route('login')->withInput();
         }
 
+    
         $user = $this->findUserByMobile($full);
+    
         if (!$user) {
             Session::flash('message', 'danger|No account found with this mobile number. Please register first.');
             return redirect()->route('login')->withInput();
@@ -124,6 +128,7 @@ class LoginController extends Controller
 
             return redirect()->route('login', ['mode' => 'otp']);
         } catch (\Exception $e) {
+            dd($e->getMessage());
             Log::error('Login OTP send failed: ' . $e->getMessage());
             Session::flash('message', 'danger|Could not send OTP right now. Please try again or login with password.');
             return redirect()->route('login')->withInput();

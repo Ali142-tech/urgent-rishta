@@ -252,7 +252,7 @@
 <section class="shaadi-login-page">
 <div class="shaadi-login-wrap">
     <div class="shaadi-login-card">
-        <div class="brand-mark">U</div>
+        {{-- <div class="brand-mark">U</div> --}}
 
         @php
             $flashType = null;

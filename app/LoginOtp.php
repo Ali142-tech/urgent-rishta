@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 
 class LoginOtp extends Model
@@ -19,9 +20,10 @@ class LoginOtp extends Model
         'consumed_at',
     ];
 
-    protected $dates = [
-        'expires_at',
-        'consumed_at',
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'consumed_at' => 'datetime',
+        'attempts' => 'integer',
     ];
 
     public static function issue(string $identifier, string $plainCode, string $channel, ?string $deliveryTarget): self
@@ -37,16 +39,26 @@ class LoginOtp extends Model
             'code_hash' => Hash::make($plainCode),
             'delivery_target' => $deliveryTarget,
             'attempts' => 0,
-            'expires_at' => now()->addMinutes(10),
+            'expires_at' => now()->addMinutes((int) config('otp.expires_minutes', 10)),
         ]);
     }
 
     public function isValid(): bool
     {
-        return $this->consumed_at === null
-            && $this->expires_at !== null
-            && $this->expires_at->isFuture()
-            && $this->attempts < 5;
+        if ($this->consumed_at !== null) {
+            return false;
+        }
+
+        if ($this->expires_at === null) {
+            return false;
+        }
+
+        $expiresAt = $this->expires_at instanceof Carbon
+            ? $this->expires_at
+            : Carbon::parse($this->expires_at);
+
+        return $expiresAt->isFuture()
+            && (int) $this->attempts < (int) config('otp.max_attempts', 5);
     }
 
     public function matches(string $plainCode): bool
