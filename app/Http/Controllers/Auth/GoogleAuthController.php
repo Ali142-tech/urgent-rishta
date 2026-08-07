@@ -86,12 +86,16 @@ class GoogleAuthController extends Controller
             'last_name' => $last,
             'avatar' => $googleUser->getAvatar(),
         ]);
+        Session::put('register_email', $email);
+        Session::put('register_first_name', $first);
+        Session::put('register_last_name', $last);
+        Session::forget('register_verified');
 
         Session::flash(
             'message',
-            'success|Google connected. Please complete your profile to finish registration.'
+            'success|Google connected. Confirm your name, date of birth, then add your mobile.'
         );
 
-        return redirect()->route('register');
+        return redirect()->route('register', ['mode' => 'start']);
     }
 }

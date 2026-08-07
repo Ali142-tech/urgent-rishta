@@ -1097,11 +1097,11 @@ a.appointment-btn::before{
 
         $(document).ready(function() {
 
-            @if($errors->any() && !(request()->is('login') || request()->is('login/*')))
+            @if($errors->any() && !(request()->is('login') || request()->is('login/*') || request()->is('register') || request()->is('register/*')))
             showAlert("error", "{!! implode('', $errors->all('<div>:message</div>')) !!}")
             @endif
 
-            @if(session('message') && !(request()->is('login') || request()->is('login/*')))
+            @if(session('message') && !(request()->is('login') || request()->is('login/*') || request()->is('register') || request()->is('register/*')))
             var message = "{!! session('message') !!}".split("|");
             showAlert(message[0], message[1], message[2]);
             @endif

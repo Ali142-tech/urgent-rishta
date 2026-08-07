@@ -25,6 +25,19 @@ Route::post('login/email', [App\Http\Controllers\Auth\LoginController::class, 'l
 Route::get('login/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('login.google');
 Route::get('login/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('login.google.callback');
 
+// Multi-step register (name+DOB → mobile/email OTP → profile)
+Route::post('register/basics', [App\Http\Controllers\Auth\RegisterController::class, 'saveBasics'])->name('register.basics');
+Route::post('register/community', [App\Http\Controllers\Auth\RegisterController::class, 'saveCommunity'])->name('register.community');
+Route::post('register/contact', [App\Http\Controllers\Auth\RegisterController::class, 'saveContact'])->name('register.contact');
+Route::post('register/build', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild'])->name('register.build');
+Route::post('register/build2', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild2'])->name('register.build2');
+Route::post('register/build3', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild3'])->name('register.build3');
+Route::post('register/build4', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild4'])->name('register.build4');
+Route::post('register/mobile/otp', [App\Http\Controllers\Auth\RegisterController::class, 'sendMobileOtp'])->name('register.mobile.otp');
+Route::post('register/mobile/verify', [App\Http\Controllers\Auth\RegisterController::class, 'verifyMobile'])->name('register.mobile.verify');
+Route::post('register/otp/send', [App\Http\Controllers\Auth\RegisterController::class, 'sendOtp'])->name('register.otp.send');
+Route::post('register/otp/verify', [App\Http\Controllers\Auth\RegisterController::class, 'verifyOtp'])->name('register.otp.verify');
+
 Route::get('/info', function () {
     phpinfo();
 });

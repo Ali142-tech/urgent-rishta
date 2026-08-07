@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail {
         'birthday',
         'mobile_country',
         'con_of_residence',
+        'state',
         'city',
         'religion',
         'caste',
