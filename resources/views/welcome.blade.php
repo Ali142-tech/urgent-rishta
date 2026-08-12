@@ -1,6 +1,6 @@
 @extends('layouts.master')
 @section('main-content')
-<link rel="stylesheet" href="/css/ur-hero.css?19">
+<link rel="stylesheet" href="/css/ur-hero.css?27">
 {{-- Option A (1a) full homepage — pink theme --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -946,29 +946,7 @@
                 <div class="ur-hero-a__photo-wrap">
                     <img class="ur-hero-a__photo" src="/images/slider_images/slider_image_1.png" alt="Happy couple" loading="eager">
                 </div>
-                <aside class="ur-hero-a__stats" aria-label="Key stats">
-                    <div class="ur-hero-a__stats-item">
-                        <span class="ur-hero-a__stats-icon"><i class="fa fa-heart" aria-hidden="true"></i></span>
-                        <div class="ur-hero-a__stats-text">
-                            <strong>5,000+</strong>
-                            <span>Successful Marriages</span>
-                        </div>
-                    </div>
-                    <div class="ur-hero-a__stats-item">
-                        <span class="ur-hero-a__stats-icon"><i class="fa fa-users" aria-hidden="true"></i></span>
-                        <div class="ur-hero-a__stats-text">
-                            <strong>150K+</strong>
-                            <span>Happy Members</span>
-                        </div>
-                    </div>
-                    <div class="ur-hero-a__stats-item">
-                        <span class="ur-hero-a__stats-icon"><i class="fa fa-shield" aria-hidden="true"></i></span>
-                        <div class="ur-hero-a__stats-text">
-                            <strong>10+</strong>
-                            <span>Years of Trust</span>
-                        </div>
-                    </div>
-                </aside>
+               
             </div>
         </div>
 

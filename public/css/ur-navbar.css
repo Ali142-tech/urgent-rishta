@@ -59,6 +59,7 @@
 #myHeader .ur-header-actions .top_bar_right {
     display: flex;
     align-items: center;
+    flex-wrap: nowrap;
     gap: 10px;
     margin: 0;
     padding: 0;
@@ -70,6 +71,10 @@
     float: none !important;
     margin: 0;
     padding: 0;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
 }
 
 /* ---------- Desktop ---------- */
@@ -266,6 +271,7 @@
     #myHeader .ur-header-actions {
         justify-self: end;
         gap: 10px;
+        flex-wrap: nowrap;
     }
 
     /* Log In + Register — white outline pills */
@@ -286,6 +292,9 @@
         display: inline-flex !important;
         align-items: center;
         gap: 8px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        width: auto !important;
         transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
     }
 
@@ -363,6 +372,7 @@
         #myHeader .navbar-container {
             padding: 14px 20px !important;
             gap: 14px;
+            grid-template-columns: 120px 1fr auto;
         }
         #myHeader .navbar-brand {
             width: 120px;
@@ -379,9 +389,18 @@
         #myHeader .navbar-nav {
             gap: 4px 16px;
         }
-        #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 {
+        #myHeader .ur-header-actions {
+            gap: 8px;
+        }
+        #myHeader .ur-header-actions li {
+            gap: 8px;
+        }
+        #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1,
+        #myHeader .ur-header-actions a[href*="login"].btn.btn-styled,
+        #myHeader .ur-header-actions a[href*="register"].btn.btn-styled {
             padding: 8px 12px !important;
             font-size: 11px !important;
+            gap: 6px;
         }
         #myHeader .appointment-btn {
             padding: 9px 14px !important;
@@ -416,10 +435,11 @@
     #myHeader .navbar.bg-default {
         background: transparent !important;
         border: none !important;
-        padding: 4px 0 10px !important;
+        padding: 0 !important;
         min-height: auto !important;
     }
 
+    /* Single row: logo | Log In Register | menu — collapse wraps below */
     #myHeader .navbar-container,
     .container .navbar-container {
         background: transparent !important;
@@ -427,22 +447,44 @@
         width: 100%;
         display: flex !important;
         align-items: center;
-        justify-content: space-between;
-        padding: 0 12px !important;
+        justify-content: flex-start;
+        padding: 10px 16px !important;
         flex-wrap: wrap;
         border-radius: 0 !important;
         box-shadow: none !important;
         border: none !important;
-        gap: 8px;
+        gap: 8px 10px;
+    }
+
+    #myHeader .navbar-brand {
+        order: 1;
+        width: 132px !important;
+        min-height: 48px !important;
+        height: auto !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    #myHeader .navbar-brand img {
+        width: 100% !important;
+        max-height: 48px !important;
+        object-fit: contain;
+        filter: brightness(0) invert(1) !important;
+        animation: none !important;
+        display: block !important;
     }
 
     #myHeader .ur-header-actions {
-        order: 0;
-        width: 100%;
+        order: 2;
+        width: auto;
+        margin-left: auto;
         justify-content: flex-end;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 8px;
-        padding: 8px 0 4px;
+        padding: 0;
+        flex-shrink: 0;
     }
 
     #myHeader .ur-appt-in-actions {
@@ -455,44 +497,26 @@
         border: 1.5px solid #fff !important;
         color: #fff !important;
         border-radius: 999px !important;
-        padding: 7px 14px !important;
-        font-size: 12px !important;
+        padding: 7px 12px !important;
+        font-size: 11px !important;
         font-weight: 600 !important;
         line-height: 1.2 !important;
         box-shadow: none !important;
         display: inline-flex !important;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
         white-space: nowrap;
     }
 
     #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
         color: #fff !important;
-        font-size: 14px !important;
-    }
-
-    #myHeader .navbar-brand {
-        order: 1;
-        width: 140px !important;
-        min-height: 56px !important;
-        height: auto !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center;
-    }
-
-    #myHeader .navbar-brand img {
-        width: 100% !important;
-        max-height: 58px !important;
-        object-fit: contain;
-        filter: brightness(0) invert(1) !important;
-        animation: none !important;
-        display: block !important;
+        font-size: 12px !important;
     }
 
     #myHeader .ur-nav-toggler-wrap {
-        order: 2;
-        margin-left: auto;
+        order: 3;
+        margin-left: 0;
+        flex-shrink: 0;
     }
 
     #myHeader .navbar-toggler,
@@ -515,11 +539,12 @@
     }
 
     #myHeader .navbar-collapse {
-        order: 3;
+        order: 4;
+        flex: 1 0 100%;
         width: 100%;
         background: #6E0832;
         border-radius: 12px;
-        margin-top: 8px;
+        margin-top: 4px;
         padding: 8px 0;
     }
 
@@ -601,16 +626,27 @@
 
 @media (max-width: 767px) {
     #myHeader .navbar-brand {
-        width: 118px !important;
-        min-height: 48px !important;
+        width: 110px !important;
+        min-height: 42px !important;
     }
 
     #myHeader .navbar-brand img {
-        max-height: 48px !important;
+        max-height: 42px !important;
+    }
+
+    #myHeader .navbar-container,
+    .container .navbar-container {
+        padding: 8px 12px !important;
+        gap: 6px 8px;
     }
 
     #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 {
-        padding: 7px 11px !important;
+        padding: 6px 10px !important;
+        font-size: 10.5px !important;
+        gap: 4px;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
         font-size: 11px !important;
     }
 

@@ -28,7 +28,7 @@
     <link type="text/css" href="/css/custom-style.css?1" rel="stylesheet" />
     <link type="text/css" href="/css/new-theme.css?1" rel="stylesheet" />
     <link type="text/css" href="/css/new-animate.min.css?1" rel="stylesheet" />
-    <link type="text/css" href="/css/ur-navbar.css?8" rel="stylesheet" />
+    <link type="text/css" href="/css/ur-navbar.css?10" rel="stylesheet" />
     <!-- SCRIPTS -->
     <!-- Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
@@ -404,14 +404,18 @@ a.appointment-btn::before{
                                                 </a>
                                             </li>
                                             @endauth
+                                            @guest
                                             <li>
-                                                @guest
                                                 <a href="{{ route('login') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-power-off"></i> Log In</a>
-                                                @if (Route::has('register'))
+                                            </li>
+                                            @if (Route::has('register'))
+                                            <li>
                                                 <a href="{{ route('register') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-user"></i> Register</a>
-                                                @endif
-                                                @endguest
-                                                @auth
+                                            </li>
+                                            @endif
+                                            @endguest
+                                            @auth
+                                            <li>
                                                 @if(User::retrieveUserObject()->admin==1)
                                                 <a href="{{url('admin/profiles')}}" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-cogs"></i> Dashboard</a>
                                                 @endif
@@ -421,7 +425,8 @@ a.appointment-btn::before{
                                                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                                     @csrf
                                                 </form>
-                                                @endauth
+                                            </li>
+                                            @endauth
                                             </li>
                                         </ul>
                                         <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="{{ url('appointments') }}" aria-haspopup="true" aria-expanded="false">
