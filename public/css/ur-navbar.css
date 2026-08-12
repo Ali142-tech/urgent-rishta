@@ -1,0 +1,635 @@
+/**
+ * Urgent Rishta — site navbar (Editorial Luxe mock)
+ * Deep berry bar · uppercase links · outline auth · cream appointment
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
+
+#myHeader {
+    --ur-nav-bg: #8B0A3D;
+    --ur-nav-bg-2: #A0124A;
+    --ur-nav-bg-3: #C2185B;
+    --ur-nav-cream: #E8D5B5;
+    --ur-nav-cream-text: #5C1435;
+    font-family: 'Montserrat', 'DM Sans', system-ui, sans-serif;
+}
+
+#myHeader .custom-nav > a:before {
+    display: none !important;
+}
+
+#myHeader .appointment-btn {
+    align-items: center;
+    text-decoration: none !important;
+}
+
+#myHeader .ur-appt-in-nav .appointment-btn,
+#myHeader .ur-appt-in-actions {
+    display: inline-flex !important;
+}
+
+#myHeader .ur-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+
+#myHeader .ur-header-actions .top_nav_img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+
+#myHeader .ur-header-actions .dropdown-toggle {
+    color: #fff !important;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+#myHeader .ur-header-actions ul,
+#myHeader .ur-header-actions .top_bar_right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    float: none !important;
+}
+
+#myHeader .ur-header-actions li {
+    float: none !important;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---------- Desktop ---------- */
+@media (min-width: 1000px) {
+    #myHeader {
+        position: sticky;
+        top: 0;
+        left: 0;
+        width: 100%;
+        z-index: 1040;
+        padding: 0;
+        /* Deep berry + fine vertical stripe texture (matches mock) */
+        background-color: #8B0A3D !important;
+        background-image:
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.035) 0px,
+                rgba(255, 255, 255, 0.035) 1px,
+                transparent 1px,
+                transparent 5px
+            ),
+            linear-gradient(90deg, #7A0835 0%, #8B0A3D 28%, #A0124A 62%, #8B0A3D 100%) !important;
+        box-shadow: 0 8px 28px rgba(90, 8, 40, 0.35);
+        border-bottom: none !important;
+        pointer-events: none;
+    }
+
+    #myHeader .top-navbar,
+    #myHeader .navbar {
+        pointer-events: auto;
+    }
+
+    #myHeader .top-navbar {
+        display: none !important;
+    }
+
+    #myHeader .navbar.bg-default {
+        padding: 0;
+        width: 100%;
+        min-height: 0;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    #myHeader .navbar > .container.navbar-container,
+    #myHeader .navbar-container,
+    .container .navbar-container {
+        position: relative;
+        max-width: 1280px !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+        display: grid !important;
+        grid-template-columns: 160px 1fr auto;
+        align-items: center;
+        gap: 24px;
+        padding: 16px 36px !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    #myHeader .navbar-container::before,
+    #myHeader .navbar-container::after {
+        display: none !important;
+    }
+
+    #myHeader .ur-appt-in-nav {
+        display: none !important;
+    }
+
+    #myHeader .ur-nav-toggler-wrap {
+        display: none !important;
+    }
+
+    #myHeader .navbar-brand {
+        width: 148px;
+        height: auto;
+        min-height: 52px;
+        display: flex;
+        align-items: center;
+        margin: 0;
+        flex-shrink: 0;
+        padding: 0;
+        justify-self: start;
+    }
+
+    #myHeader .navbar-brand img {
+        width: 100%;
+        max-height: 54px;
+        object-fit: contain;
+        filter: brightness(0) invert(1);
+        animation: none !important;
+        transition: opacity 0.2s ease;
+    }
+
+    #myHeader .navbar-brand:hover img {
+        opacity: 0.9;
+        transform: none;
+    }
+
+    #myHeader .navbar-collapse {
+        display: flex !important;
+        flex: none !important;
+        width: auto !important;
+        align-items: center;
+        justify-content: center !important;
+        justify-self: center;
+        margin: 0 !important;
+        gap: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Flat link row — no glass pill (matches mock) */
+    #myHeader .navbar-nav {
+        align-items: center;
+        gap: 6px 28px;
+        margin: 0 !important;
+        flex-wrap: nowrap;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link {
+        color: #fff !important;
+        font-family: 'Montserrat', system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        padding: 8px 2px 12px !important;
+        border-radius: 0 !important;
+        position: relative;
+        background: transparent !important;
+        white-space: nowrap;
+        box-shadow: none !important;
+        transition: opacity 0.2s ease;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link:hover {
+        color: #fff !important;
+        background: transparent !important;
+        opacity: 0.85;
+        box-shadow: none !important;
+    }
+
+    /* Active: thin white line + center dot (exact mock indicator) */
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active,
+    #myHeader .navbar-light .navbar-nav .nav-link:hover {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active {
+        color: #fff !important;
+        opacity: 1;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        width: 42px;
+        height: 1.5px;
+        background: #fff;
+        transform: translateX(-50%);
+        display: block !important;
+        border-radius: 0;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: -2.5px;
+        width: 6px;
+        height: 6px;
+        background: #fff;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        display: block !important;
+        z-index: 1;
+    }
+
+    #myHeader .navbar-toggler {
+        display: none !important;
+    }
+
+    #myHeader .ur-header-actions {
+        justify-self: end;
+        gap: 10px;
+    }
+
+    /* Log In + Register — white outline pills */
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1,
+    #myHeader .ur-header-actions a[href*="login"].btn.btn-styled,
+    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled {
+        border-radius: 999px !important;
+        padding: 10px 18px !important;
+        font-family: 'Montserrat', system-ui, sans-serif;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.02em;
+        background: transparent !important;
+        border: 1.5px solid rgba(255, 255, 255, 0.85) !important;
+        color: #fff !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i,
+    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled i {
+        color: #fff !important;
+        font-size: 13px !important;
+        animation: none !important;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1:hover,
+    #myHeader .ur-header-actions a[href*="login"].btn.btn-styled:hover,
+    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: #fff !important;
+        color: #fff !important;
+        transform: translateY(-1px);
+        filter: none;
+    }
+
+    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled:hover i {
+        color: #fff !important;
+    }
+
+    /* Book An Appointment — cream / pale gold */
+    #myHeader .appointment-btn {
+        margin: 0 !important;
+        padding: 11px 20px !important;
+        font-family: 'Montserrat', system-ui, sans-serif;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        border-radius: 999px !important;
+        white-space: nowrap;
+        letter-spacing: 0.02em;
+        background: #E8D5B5 !important;
+        color: #5C1435 !important;
+        box-shadow: none !important;
+        transform: none !important;
+        border: none !important;
+        transition: background 0.2s ease, transform 0.2s ease;
+        position: relative;
+        overflow: visible;
+    }
+
+    #myHeader .appointment-btn::after {
+        display: none !important;
+    }
+
+    #myHeader .appointment-btn:hover {
+        background: #F2E4C8 !important;
+        color: #4A102A !important;
+        filter: none;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+    }
+
+    #myHeader .appointment-btn svg {
+        width: 15px;
+        height: 15px;
+        margin-right: 8px;
+        fill: #5C1435 !important;
+        display: inline-block;
+        vertical-align: -2px;
+        animation: none !important;
+        position: relative;
+        z-index: 1;
+    }
+
+    #myHeader .appointment-btn:hover svg {
+        fill: #4A102A !important;
+        transform: none;
+    }
+
+    @media (max-width: 1199px) {
+        #myHeader .navbar-container {
+            padding: 14px 20px !important;
+            gap: 14px;
+        }
+        #myHeader .navbar-brand {
+            width: 120px;
+            min-height: 46px;
+        }
+        #myHeader .navbar-brand img {
+            max-height: 46px;
+        }
+        #myHeader .navbar-light .navbar-nav .nav-link {
+            font-size: 10.5px;
+            letter-spacing: 0.1em;
+            padding: 8px 2px 12px !important;
+        }
+        #myHeader .navbar-nav {
+            gap: 4px 16px;
+        }
+        #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 {
+            padding: 8px 12px !important;
+            font-size: 11px !important;
+        }
+        #myHeader .appointment-btn {
+            padding: 9px 14px !important;
+            font-size: 11px !important;
+        }
+    }
+}
+
+/* ---------- Mobile / tablet ---------- */
+@media (max-width: 999.98px) {
+    #myHeader {
+        position: sticky;
+        top: 0;
+        z-index: 1040;
+        background-color: #8B0A3D !important;
+        background-image:
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.035) 0px,
+                rgba(255, 255, 255, 0.035) 1px,
+                transparent 1px,
+                transparent 5px
+            ),
+            linear-gradient(90deg, #7A0835 0%, #8B0A3D 50%, #A0124A 100%) !important;
+        box-shadow: 0 8px 24px rgba(90, 8, 40, 0.3);
+    }
+
+    #myHeader .top-navbar {
+        display: none !important;
+    }
+
+    #myHeader .navbar.bg-default {
+        background: transparent !important;
+        border: none !important;
+        padding: 4px 0 10px !important;
+        min-height: auto !important;
+    }
+
+    #myHeader .navbar-container,
+    .container .navbar-container {
+        background: transparent !important;
+        max-width: 100%;
+        width: 100%;
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px !important;
+        flex-wrap: wrap;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
+        gap: 8px;
+    }
+
+    #myHeader .ur-header-actions {
+        order: 0;
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 8px 0 4px;
+    }
+
+    #myHeader .ur-appt-in-actions {
+        display: none !important;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1,
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1.btn-shadow {
+        background: transparent !important;
+        border: 1.5px solid #fff !important;
+        color: #fff !important;
+        border-radius: 999px !important;
+        padding: 7px 14px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        line-height: 1.2 !important;
+        box-shadow: none !important;
+        display: inline-flex !important;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
+        color: #fff !important;
+        font-size: 14px !important;
+    }
+
+    #myHeader .navbar-brand {
+        order: 1;
+        width: 140px !important;
+        min-height: 56px !important;
+        height: auto !important;
+        margin: 0 !important;
+        display: flex !important;
+        align-items: center;
+    }
+
+    #myHeader .navbar-brand img {
+        width: 100% !important;
+        max-height: 58px !important;
+        object-fit: contain;
+        filter: brightness(0) invert(1) !important;
+        animation: none !important;
+        display: block !important;
+    }
+
+    #myHeader .ur-nav-toggler-wrap {
+        order: 2;
+        margin-left: auto;
+    }
+
+    #myHeader .navbar-toggler,
+    #myHeader .hamburger {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        border: none !important;
+        padding: 8px !important;
+        margin-left: 0;
+    }
+
+    #myHeader .hamburger-inner,
+    #myHeader .hamburger-inner:before,
+    #myHeader .hamburger-inner:after,
+    #myHeader .hamburger:hover:not(.is-active) .hamburger-inner,
+    #myHeader .hamburger:hover:not(.is-active) .hamburger-inner:before,
+    #myHeader .hamburger:hover:not(.is-active) .hamburger-inner:after {
+        background-color: #fff !important;
+    }
+
+    #myHeader .navbar-collapse {
+        order: 3;
+        width: 100%;
+        background: #6E0832;
+        border-radius: 12px;
+        margin-top: 8px;
+        padding: 8px 0;
+    }
+
+    #myHeader .navbar-collapse.show,
+    #myHeader .navbar-collapse.collapsing {
+        display: block !important;
+    }
+
+    #myHeader .navbar-nav {
+        width: 100%;
+        padding: 4px 8px 10px;
+        background: transparent !important;
+        border: none !important;
+        gap: 0;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link {
+        color: #fff !important;
+        font-family: 'Montserrat', system-ui, sans-serif;
+        font-size: 13px !important;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 12px 14px !important;
+        border-radius: 8px;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link:hover,
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #fff !important;
+        box-shadow: none !important;
+    }
+
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active::before,
+    #myHeader .navbar-light .navbar-nav .nav-link.is-active::after {
+        display: none !important;
+    }
+
+    #myHeader .appointment-btn {
+        margin: 8px 14px 4px !important;
+        width: calc(100% - 28px);
+        justify-content: center;
+        display: inline-flex !important;
+        border-radius: 999px !important;
+        padding: 12px 16px !important;
+        font-size: 13px !important;
+        font-weight: 700;
+        background: #E8D5B5 !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #5C1435 !important;
+    }
+
+    /* Hide top header appointment — only keep the one inside the hamburger menu */
+    #myHeader .ur-header-actions .ur-appt-in-actions,
+    #myHeader .ur-header-actions > a.appointment-btn,
+    #myHeader a.appointment-btn.ur-appt-in-actions {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: 0 !important;
+    }
+
+    #myHeader .appointment-btn svg {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+        fill: #5C1435 !important;
+    }
+}
+
+@media (max-width: 767px) {
+    #myHeader .navbar-brand {
+        width: 118px !important;
+        min-height: 48px !important;
+    }
+
+    #myHeader .navbar-brand img {
+        max-height: 48px !important;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 {
+        padding: 7px 11px !important;
+        font-size: 11px !important;
+    }
+
+    #myHeader .ur-appt-in-nav .appointment-btn {
+        margin: 8px 10px 6px !important;
+        width: calc(100% - 20px);
+    }
+
+    #myHeader .ur-header-actions .ur-appt-in-actions,
+    #myHeader .ur-header-actions > a.appointment-btn,
+    #myHeader a.appointment-btn.ur-appt-in-actions {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        border: 0 !important;
+    }
+}
