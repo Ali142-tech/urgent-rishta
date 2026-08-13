@@ -1,6 +1,6 @@
 @extends('layouts.master')
 @section('main-content')
-<link rel="stylesheet" href="/css/ur-hero.css?27">
+<link rel="stylesheet" href="/css/ur-hero.css?29">
 {{-- Option A (1a) full homepage — pink theme --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -589,9 +589,43 @@
     }
     .ur-photo-gallery .gal-im {
         margin-bottom: 12px;
+        border-radius: 14px;
+        overflow: hidden;
+        opacity: 0;
+        box-shadow: 0 8px 24px rgba(26, 6, 16, 0.08);
+    }
+    .ur-photo-gallery .gal-im.anistart {
+        opacity: 1;
     }
     .ur-photo-gallery .gal-im:before {
-        background: linear-gradient(45deg, rgba(233,30,99,0.72), transparent);
+        background: linear-gradient(180deg, transparent 20%, rgba(26, 6, 16, 0.78) 100%);
+        opacity: 0.35;
+        transition: opacity .45s ease;
+    }
+    .ur-photo-gallery .gal-im:hover:before {
+        opacity: 1;
+    }
+    .ur-photo-gallery .gal-im::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.32) 48%, transparent 66%);
+        transform: translateX(-130%);
+        transition: transform .75s ease;
+    }
+    .ur-photo-gallery .gal-im:hover::after {
+        transform: translateX(130%);
+    }
+    .ur-photo-gallery .gal-im img {
+        transform: scale(1.04);
+        transition: transform 1.15s cubic-bezier(.22,1,.36,1), filter .45s ease;
+        will-change: transform;
+    }
+    .ur-photo-gallery .gal-im:hover img {
+        transform: scale(1.16);
+        filter: saturate(1.1) brightness(1.04);
     }
     .ur-photo-gallery .gal-im img.gal-siz-1 {
         height: 280px;
@@ -599,6 +633,59 @@
     .ur-photo-gallery .gal-im img.gal-siz-2 {
         height: 42vh;
         min-height: 280px;
+    }
+    .ur-photo-gallery .gal-im .txt span,
+    .ur-photo-gallery .gal-im .txt h4 {
+        color: #fff;
+    }
+    .ur-photo-gallery .gal-im .txt h4 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 600;
+    }
+
+    @keyframes urGalReveal {
+        from {
+            opacity: 0;
+            transform: translateY(36px) scale(.94);
+            filter: blur(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            filter: blur(0);
+        }
+    }
+    .urGalReveal {
+        animation-name: urGalReveal;
+        animation-duration: .85s;
+        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
+        animation-fill-mode: both;
+    }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(1) .gal-im:nth-child(1) { animation-delay: .04s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(1) .gal-im:nth-child(2) { animation-delay: .16s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(2) .gal-im:nth-child(1) { animation-delay: .10s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(2) .gal-im:nth-child(2) { animation-delay: .22s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(3) .gal-im:nth-child(1) { animation-delay: .16s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(3) .gal-im:nth-child(2) { animation-delay: .28s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(4) .gal-im:nth-child(1) { animation-delay: .22s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(4) .gal-im:nth-child(2) { animation-delay: .34s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(5) .gal-im:nth-child(1) { animation-delay: .28s; }
+    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(5) .gal-im:nth-child(2) { animation-delay: .40s; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .ur-photo-gallery .gal-im.animate,
+        .ur-photo-gallery .gal-im.anistart {
+            opacity: 1;
+            animation: none !important;
+            transform: none;
+            filter: none;
+        }
+        .ur-photo-gallery .gal-im img,
+        .ur-photo-gallery .gal-im:hover img,
+        .ur-photo-gallery .gal-im::after {
+            transform: none !important;
+            transition: none !important;
+        }
     }
     @media (max-width: 767px) {
         .ur-photo-gallery .gal-im img.gal-siz-1,
@@ -775,12 +862,176 @@
     .ur-gallery img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
     .ur-gallery img.span2 { grid-row: span 2; }
 
-    .ur-cta { position: relative; min-height: 300px; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
-    .ur-cta__bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-    .ur-cta__overlay { position: absolute; inset: 0; background: rgba(142,14,62,.85); }
-    .ur-cta__inner { position: relative; z-index: 2; padding: 48px 24px; max-width: 640px; }
-    .ur-cta__inner h2 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(28px, 4vw, 38px); font-weight: 600; color: #fff; margin: 0 0 12px; }
-    .ur-cta__inner p { font-size: 15px; color: #FFE0EC; margin: 0 0 26px; }
+    .ur-cta {
+        position: relative;
+        min-height: 420px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        overflow: hidden;
+        isolation: isolate;
+        background-color: #1a0610;
+        background-image: url(/images/couples/10.jpg);
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+    .ur-cta__overlay {
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(ellipse 70% 80% at 50% 45%, rgba(90, 8, 40, 0.28) 0%, rgba(26, 4, 16, 0.72) 100%),
+            linear-gradient(180deg, rgba(18, 4, 12, 0.55) 0%, rgba(142, 14, 62, 0.42) 42%, rgba(18, 4, 12, 0.82) 100%);
+    }
+    .ur-cta__glow {
+        position: absolute;
+        width: 520px;
+        height: 220px;
+        left: 50%;
+        top: 42%;
+        transform: translate(-50%, -50%);
+        background: radial-gradient(ellipse at center, rgba(233, 30, 99, 0.28), transparent 68%);
+        filter: blur(28px);
+        pointer-events: none;
+        z-index: 1;
+    }
+    .ur-cta::before,
+    .ur-cta::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(280px, 46%);
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #D4AF6A, transparent);
+        z-index: 3;
+        pointer-events: none;
+        opacity: .7;
+    }
+    .ur-cta::before { top: 22px; }
+    .ur-cta::after { bottom: 22px; }
+    .ur-cta__inner {
+        position: relative;
+        z-index: 2;
+        padding: 72px 24px 68px;
+        max-width: 720px;
+    }
+    .ur-cta__eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        color: #E8C48A;
+        margin-bottom: 18px;
+    }
+    .ur-cta__eyebrow::before,
+    .ur-cta__eyebrow::after {
+        content: '';
+        width: 28px;
+        height: 1px;
+        background: #E8C48A;
+        opacity: .7;
+    }
+    .ur-cta__inner h2 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: clamp(30px, 4.4vw, 46px);
+        font-weight: 600;
+        color: #fff;
+        margin: 0 0 16px;
+        line-height: 1.18;
+        text-shadow: 0 8px 28px rgba(0,0,0,.35);
+    }
+    .ur-cta__inner h2 em {
+        font-style: italic;
+        font-weight: 700;
+        color: #E8C48A;
+        -webkit-text-fill-color: #E8C48A;
+    }
+    .ur-cta__inner p {
+        font-size: 16px;
+        line-height: 1.7;
+        color: rgba(255, 232, 240, 0.92);
+        margin: 0 auto 28px;
+        max-width: 34em;
+    }
+    .ur-cta__actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 14px;
+        margin-bottom: 28px;
+    }
+    .ur-cta__btn {
+        min-width: 200px;
+        padding: 15px 30px;
+        border-radius: 999px;
+        font-size: 14.5px;
+        letter-spacing: .02em;
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease, border-color .18s ease;
+    }
+    .ur-cta__btn--primary {
+        background: linear-gradient(135deg, #FF6B9D 0%, #E91E63 48%, #C2185B 100%) !important;
+        color: #fff !important;
+        border: none;
+        box-shadow:
+            0 12px 28px rgba(233, 30, 99, 0.45),
+            0 0 0 4px rgba(233, 30, 99, 0.12);
+    }
+    .ur-cta__btn--primary:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.04);
+        box-shadow:
+            0 16px 32px rgba(233, 30, 99, 0.52),
+            0 0 0 5px rgba(233, 30, 99, 0.16);
+        color: #fff !important;
+    }
+    .ur-cta__btn--ghost {
+        background: rgba(255,255,255,0.08) !important;
+        border: 1.5px solid rgba(255,255,255,0.72) !important;
+        color: #fff !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+    .ur-cta__btn--ghost:hover {
+        background: #fff !important;
+        color: #C2185B !important;
+        border-color: #fff !important;
+        transform: translateY(-2px);
+    }
+    .ur-cta__trust {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px 22px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        color: rgba(255, 232, 240, 0.88);
+        font-size: 12.5px;
+        font-weight: 600;
+        letter-spacing: .04em;
+    }
+    .ur-cta__trust li {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .ur-cta__trust li::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #E8C48A;
+        box-shadow: 0 0 8px rgba(232, 196, 138, 0.7);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .ur-cta { background-attachment: scroll; }
+    }
 
     .ur-center { text-align: center; max-width: 560px; margin: 0 auto 44px; }
     .ur-sec--deep .ur-eyebrow { color: #FFB6CE; }
@@ -888,11 +1139,37 @@
             width: 100%;
             justify-content: center;
         }
-        .ur-cta__inner {
-            padding: 36px 16px;
+        .ur-cta {
+            min-height: 0;
+            background-attachment: scroll;
         }
-        .ur-cta__inner .ur-actions .ur-btn {
+        .ur-cta::before,
+        .ur-cta::after {
+            width: min(160px, 40%);
+        }
+        .ur-cta__inner {
+            padding: 56px 20px 52px;
+        }
+        .ur-cta__inner h2 {
+            font-size: clamp(26px, 8vw, 34px);
+        }
+        .ur-cta__inner p {
+            font-size: 14.5px;
+            margin-bottom: 22px;
+        }
+        .ur-cta__actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+        .ur-cta__btn {
             width: 100%;
+            min-width: 0;
+        }
+        .ur-cta__trust {
+            gap: 8px 14px;
+            font-size: 11.5px;
         }
         .ur-team__card img {
             height: 260px;
@@ -955,16 +1232,18 @@
                 <form name="search_form" id="search_form" data-toggle="validator" role="form" action="{{route('searchresults')}}" method="POST">
                     @csrf
                     <div class="ur-hero-a__search-grid">
-                        <div class="form-group has-feedback">
+                        <div class="form-group has-feedback" data-field="gender">
                             <label for="gender">Looking for</label>
+                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-user"></i></span>
                             <select name="gender" id="gender" class="form-control form-control-sm selectpicker" required="required">
                                 <option value="">Select one...</option>
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
+                                <option value="female">Bride</option>
+                                <option value="male">Groom</option>
                             </select>
                         </div>
-                        <div class="form-group has-feedback">
+                        <div class="form-group has-feedback" data-field="aged_from">
                             <label for="aged_from">Age From</label>
+                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-calendar"></i></span>
                             <select name="aged_from" id="aged_from" class="form-control form-control-sm selectpicker">
                                 <option value="">From</option>
                                 @for ($i=18; $i<=75; $i++)
@@ -972,8 +1251,9 @@
                                 @endfor
                             </select>
                         </div>
-                        <div class="form-group has-feedback">
-                            <label for="aged_to">To</label>
+                        <div class="form-group has-feedback" data-field="aged_to">
+                            <label for="aged_to">Age To</label>
+                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-calendar"></i></span>
                             <select name="aged_to" id="aged_to" class="form-control form-control-sm selectpicker">
                                 <option value="">To</option>
                                 @for ($i=18; $i<=75; $i++)
@@ -981,8 +1261,9 @@
                                 @endfor
                             </select>
                         </div>
-                        <div class="form-group has-feedback">
+                        <div class="form-group has-feedback" data-field="marital_status">
                             <label for="marital_status">Marital Status</label>
+                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-heart"></i></span>
                             <select name="marital_status" id="marital_status" class="form-control form-control-sm selectpicker">
                                 <option value="">Select one...</option>
                                 @foreach($maritalstatuses as $maritalstatus)
@@ -990,8 +1271,9 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-group has-feedback">
+                        <div class="form-group has-feedback" data-field="country">
                             <label for="country">Country</label>
+                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-globe"></i></span>
                             <select name="country" id="country" class="form-control form-control-sm selectpicker">
                                 <option value="">Select one...</option>
                                 @foreach($countries as $country)
@@ -999,8 +1281,9 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="form-group has-feedback">
+                        <div class="form-group has-feedback" data-field="language">
                             <label for="mother_tongue">Language</label>
+                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-comments"></i></span>
                             <select name="mother_tongue" id="mother_tongue" class="form-control form-control-sm selectpicker">
                                 <option value="">Select one...</option>
                                 @foreach($mothertongues as $mothertongue)
@@ -1378,14 +1661,14 @@
             </div>
             <div class="row no-gutters gall-inn">
                 <div class="col-6 col-md-2">
-                    <div class="gal-im animate animate__animated animate__slow" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/1.jpg" class="gal-siz-1" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
                             <h4>Urgent Rishta</h4>
                         </div>
                     </div>
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/2.jpg" class="gal-siz-2" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
@@ -1394,14 +1677,14 @@
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/3.jpg" class="gal-siz-2" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
                             <h4>Urgent Rishta</h4>
                         </div>
                     </div>
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/4.jpg" class="gal-siz-1" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
@@ -1410,14 +1693,14 @@
                     </div>
                 </div>
                 <div class="col-6 col-md-2">
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/5.jpg" class="gal-siz-1" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
                             <h4>Urgent Rishta</h4>
                         </div>
                     </div>
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/6.jpg" class="gal-siz-2" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
@@ -1426,14 +1709,14 @@
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/7.jpg" class="gal-siz-2" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
                             <h4>Urgent Rishta</h4>
                         </div>
                     </div>
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/8.jpg" class="gal-siz-1" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
@@ -1442,14 +1725,14 @@
                     </div>
                 </div>
                 <div class="col-12 col-md-2">
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/9.jpg" class="gal-siz-2" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
                             <h4>Urgent Rishta</h4>
                         </div>
                     </div>
-                    <div class="gal-im animate animate__animated animate__slower" data-ani="animate__flipInX">
+                    <div class="gal-im animate" data-ani="urGalReveal">
                         <img src="images/gallery/10.jpg" class="gal-siz-1" alt="" loading="lazy">
                         <div class="txt">
                             <span>Find your match with us</span>
@@ -1463,15 +1746,21 @@
 
     <!-- CTA -->
     <section class="ur-cta">
-        <img class="ur-cta__bg" src="images/gallery/4.jpg" alt="" loading="lazy">
         <div class="ur-cta__overlay"></div>
+        <div class="ur-cta__glow" aria-hidden="true"></div>
         <div class="ur-cta__inner">
-            <h2>Find your perfect match, today</h2>
+            <span class="ur-cta__eyebrow">Start your journey</span>
+            <h2>Find your perfect match, <em>today</em></h2>
             <p>Join 15,000+ members who trust Urgent Rishta for a respectful, halal path to marriage.</p>
-            <div class="ur-actions" style="justify-content:center;">
-                <a href="/register" class="ur-btn ur-btn--solid">Register Now</a>
-                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--light">Book a Consultation</a>
+            <div class="ur-cta__actions">
+                <a href="/register" class="ur-btn ur-cta__btn ur-cta__btn--primary">Register Now</a>
+                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-cta__btn ur-cta__btn--ghost">Book a Consultation</a>
             </div>
+            <ul class="ur-cta__trust">
+                <li>15,000+ members</li>
+                <li>5,000+ marriages</li>
+                <li>Halal &amp; respectful</li>
+            </ul>
         </div>
     </section>
 
@@ -1546,8 +1835,66 @@
         // Re-init AFTER master.blade's $(".selectpicker").select2() so age lists stay styled/capped
         function initHeroSearchSelects() {
             if (typeof $.fn.select2 !== 'function') return;
+
+            var countryFlags = {
+                pakistan: '🇵🇰', uae: '🇦🇪', 'united arab emirates': '🇦🇪',
+                uk: '🇬🇧', 'united kingdom': '🇬🇧', england: '🇬🇧',
+                usa: '🇺🇸', 'united states': '🇺🇸', 'united states of america': '🇺🇸',
+                canada: '🇨🇦', 'saudi arabia': '🇸🇦', qatar: '🇶🇦',
+                oman: '🇴🇲', kuwait: '🇰🇼', bahrain: '🇧🇭',
+                australia: '🇦🇺', germany: '🇩🇪', france: '🇫🇷',
+                india: '🇮🇳', bangladesh: '🇧🇩', turkey: '🇹🇷',
+                malaysia: '🇲🇾', italy: '🇮🇹', spain: '🇪🇸'
+            };
+
+            function optionIcon(field, text) {
+                var t = (text || '').toLowerCase();
+                var $ico = $('<span class="ur-opt__ico"></span>');
+                if (field === 'gender') {
+                    if (t.indexOf('bride') !== -1 || t === 'female') {
+                        $ico.addClass('ur-opt__ico--pink').html('<i class="fa fa-female"></i>');
+                    } else {
+                        $ico.addClass('ur-opt__ico--teal').html('<i class="fa fa-male"></i>');
+                    }
+                    return $ico;
+                }
+                if (field === 'aged_from' || field === 'aged_to') {
+                    return $ico.html('<i class="fa fa-calendar"></i>');
+                }
+                if (field === 'marital_status') {
+                    if (t.indexOf('never') !== -1) $ico.html('<i class="fa fa-circle-o"></i>');
+                    else if (t.indexOf('divorced') !== -1) $ico.addClass('ur-opt__ico--gold').html('<i class="fa fa-heartbeat"></i>');
+                    else if (t.indexOf('widow') !== -1) $ico.addClass('ur-opt__ico--gold').html('<i class="fa fa-star-o"></i>');
+                    else if (t.indexOf('separat') !== -1) $ico.addClass('ur-opt__ico--blue').html('<i class="fa fa-pause"></i>');
+                    else if (t.indexOf('await') !== -1) $ico.addClass('ur-opt__ico--gold').html('<i class="fa fa-hourglass-half"></i>');
+                    else $ico.html('<i class="fa fa-heart"></i>');
+                    return $ico;
+                }
+                if (field === 'country') {
+                    var flag = countryFlags[t];
+                    if (flag) return $('<span class="ur-opt__ico ur-opt__ico--flag"></span>').text(flag);
+                    return $ico.html('<i class="fa fa-globe"></i>');
+                }
+                if (field === 'language') {
+                    return $ico.addClass('ur-opt__ico--blue').html('<i class="fa fa-comment"></i>');
+                }
+                return $ico.html('<i class="fa fa-circle"></i>');
+            }
+
+            function optionRow(data) {
+                if (data.id === '' || data.id == null) return null;
+                var $opt = $(data.element);
+                var field = $opt.closest('select').attr('id') || '';
+                var $row = $('<span class="ur-opt"></span>');
+                $row.append(optionIcon(field, data.text));
+                $row.append($('<span class="ur-opt__txt"></span>').text(data.text));
+                return $row;
+            }
+
             $('.ur-hero-a__search-card select.selectpicker').each(function() {
                 var $el = $(this);
+                var placeholder = $el.find('option[value=""]').text() || 'Select one...';
+                var $icon = $el.closest('.form-group').find('.ur-field-ico').html() || '<i class="fa fa-chevron-down"></i>';
                 if ($el.hasClass('select2-hidden-accessible')) {
                     $el.select2('destroy');
                 }
@@ -1555,7 +1902,23 @@
                     width: '100%',
                     minimumResultsForSearch: 12,
                     dropdownCssClass: 'ur-hero-select-drop',
-                    dropdownParent: $('.ur-hero-a__search-card')
+                    dropdownParent: $('.ur-hero-a__search-card'),
+                    placeholder: placeholder,
+                    templateResult: optionRow,
+                    templateSelection: function(data) {
+                        return data.text || placeholder;
+                    }
+                });
+                $el.off('select2:open.urHero').on('select2:open.urHero', function() {
+                    setTimeout(function() {
+                        var $drop = $('.select2-container--open .select2-dropdown');
+                        $drop.addClass('ur-hero-select-drop');
+                        $drop.find('.ur-select-head').remove();
+                        var $head = $('<div class="ur-select-head"></div>');
+                        $head.append($icon);
+                        $head.append($('<span></span>').text(placeholder));
+                        $drop.prepend($head);
+                    }, 0);
                 });
             });
         }

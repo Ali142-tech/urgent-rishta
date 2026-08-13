@@ -23,12 +23,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" type="text/css" />
     <!-- Global style (main) -->
-    <link id="stylesheet" type="text/css" href="/css/global-style-pink.css?1" rel="stylesheet" media="screen" />
+    <link id="stylesheet" type="text/css" href="/css/global-style-pink.css?2" rel="stylesheet" media="screen" />
     <!-- Custom style - Remove if not necessary -->
     <link type="text/css" href="/css/custom-style.css?1" rel="stylesheet" />
     <link type="text/css" href="/css/new-theme.css?1" rel="stylesheet" />
     <link type="text/css" href="/css/new-animate.min.css?1" rel="stylesheet" />
-    <link type="text/css" href="/css/ur-navbar.css?10" rel="stylesheet" />
+    <link type="text/css" href="/css/ur-navbar.css?12" rel="stylesheet" />
     <!-- SCRIPTS -->
     <!-- Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
@@ -406,11 +406,11 @@ a.appointment-btn::before{
                                             @endauth
                                             @guest
                                             <li>
-                                                <a href="{{ route('login') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-power-off"></i> Log In</a>
+                                                <a href="{{ route('login') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow" aria-label="Log In"><i class="fa fa-power-off"></i> Log In</a>
                                             </li>
                                             @if (Route::has('register'))
                                             <li>
-                                                <a href="{{ route('register') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-user"></i> Register</a>
+                                                <a href="{{ route('register') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow" aria-label="Register"><i class="fa fa-user"></i> Register</a>
                                             </li>
                                             @endif
                                             @endguest

@@ -439,37 +439,40 @@
         min-height: auto !important;
     }
 
-    /* Single row: logo | Log In Register | menu — collapse wraps below */
+    /* Single row: logo | Log In Register | menu — menu never drops alone */
     #myHeader .navbar-container,
     .container .navbar-container {
         background: transparent !important;
         max-width: 100%;
         width: 100%;
-        display: flex !important;
+        display: grid !important;
+        grid-template-columns: auto minmax(0, 1fr) auto auto;
+        grid-template-areas: "brand spacer actions toggler";
         align-items: center;
-        justify-content: flex-start;
-        padding: 10px 16px !important;
-        flex-wrap: wrap;
+        padding: 8px 12px !important;
         border-radius: 0 !important;
         box-shadow: none !important;
         border: none !important;
-        gap: 8px 10px;
+        gap: 6px 8px;
+        box-sizing: border-box;
     }
 
     #myHeader .navbar-brand {
-        order: 1;
-        width: 132px !important;
-        min-height: 48px !important;
+        grid-area: brand;
+        order: unset;
+        width: 140px !important;
+        min-height: 50px !important;
         height: auto !important;
         margin: 0 !important;
         display: flex !important;
         align-items: center;
-        flex-shrink: 0;
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     #myHeader .navbar-brand img {
         width: 100% !important;
-        max-height: 48px !important;
+        max-height: 50px !important;
         object-fit: contain;
         filter: brightness(0) invert(1) !important;
         animation: none !important;
@@ -477,12 +480,13 @@
     }
 
     #myHeader .ur-header-actions {
-        order: 2;
+        grid-area: actions;
+        order: unset;
         width: auto;
-        margin-left: auto;
+        margin-left: 0;
         justify-content: flex-end;
         flex-wrap: nowrap;
-        gap: 8px;
+        gap: 6px;
         padding: 0;
         flex-shrink: 0;
     }
@@ -497,14 +501,14 @@
         border: 1.5px solid #fff !important;
         color: #fff !important;
         border-radius: 999px !important;
-        padding: 7px 12px !important;
+        padding: 6px 10px !important;
         font-size: 11px !important;
         font-weight: 600 !important;
         line-height: 1.2 !important;
         box-shadow: none !important;
         display: inline-flex !important;
         align-items: center;
-        gap: 5px;
+        gap: 4px;
         white-space: nowrap;
     }
 
@@ -514,9 +518,12 @@
     }
 
     #myHeader .ur-nav-toggler-wrap {
-        order: 3;
+        grid-area: toggler;
+        order: unset;
         margin-left: 0;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
     }
 
     #myHeader .navbar-toggler,
@@ -525,7 +532,7 @@
         visibility: visible !important;
         opacity: 1 !important;
         border: none !important;
-        padding: 8px !important;
+        padding: 6px !important;
         margin-left: 0;
     }
 
@@ -539,13 +546,28 @@
     }
 
     #myHeader .navbar-collapse {
-        order: 4;
-        flex: 1 0 100%;
+        grid-column: 1 / -1;
+        grid-area: unset;
+        order: unset;
         width: 100%;
         background: #6E0832;
         border-radius: 12px;
         margin-top: 4px;
         padding: 8px 0;
+    }
+
+    /* When menu is open, add a second grid row for it */
+    #myHeader .navbar-container:has(.navbar-collapse.show),
+    #myHeader .navbar-container:has(.navbar-collapse.collapsing) {
+        grid-template-areas:
+            "brand spacer actions toggler"
+            "collapse collapse collapse collapse";
+        grid-template-rows: auto auto;
+    }
+
+    #myHeader .navbar-container:has(.navbar-collapse.show) .navbar-collapse,
+    #myHeader .navbar-container:has(.navbar-collapse.collapsing) .navbar-collapse {
+        grid-area: collapse;
     }
 
     #myHeader .navbar-collapse.show,
@@ -626,24 +648,28 @@
 
 @media (max-width: 767px) {
     #myHeader .navbar-brand {
-        width: 110px !important;
-        min-height: 42px !important;
+        width: 128px !important;
+        min-height: 48px !important;
     }
 
     #myHeader .navbar-brand img {
-        max-height: 42px !important;
+        max-height: 48px !important;
     }
 
     #myHeader .navbar-container,
     .container .navbar-container {
-        padding: 8px 12px !important;
-        gap: 6px 8px;
+        padding: 8px 10px !important;
+        gap: 4px 6px;
+    }
+
+    #myHeader .ur-header-actions {
+        gap: 5px;
     }
 
     #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 {
-        padding: 6px 10px !important;
-        font-size: 10.5px !important;
-        gap: 4px;
+        padding: 6px 8px !important;
+        font-size: 10px !important;
+        gap: 3px;
     }
 
     #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
@@ -667,5 +693,33 @@
         padding: 0 !important;
         overflow: hidden !important;
         border: 0 !important;
+    }
+}
+
+/* Very narrow phones — icon-only auth so hamburger stays on the same row */
+@media (max-width: 380px) {
+    #myHeader .navbar-brand {
+        width: 118px !important;
+        min-height: 46px !important;
+    }
+
+    #myHeader .navbar-brand img {
+        max-height: 46px !important;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1,
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1.btn-shadow {
+        font-size: 0 !important;
+        gap: 0 !important;
+        padding: 0 !important;
+        width: 32px !important;
+        height: 32px !important;
+        justify-content: center;
+        min-width: 32px;
+    }
+
+    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
+        font-size: 13px !important;
+        margin: 0 !important;
     }
 }
