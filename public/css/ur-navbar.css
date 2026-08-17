@@ -480,15 +480,7 @@
     }
 
     #myHeader .ur-header-actions {
-        grid-area: actions;
-        order: unset;
-        width: auto;
-        margin-left: 0;
-        justify-content: flex-end;
-        flex-wrap: nowrap;
-        gap: 6px;
-        padding: 0;
-        flex-shrink: 0;
+        display: none !important;
     }
 
     #myHeader .ur-appt-in-actions {
@@ -536,6 +528,39 @@
         margin-left: 0;
     }
 
+    #myHeader .ur-mobile-actions {
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        margin-left: auto;
+        flex-shrink: 0;
+        grid-area: actions;
+    }
+
+    #myHeader .ur-mobile-profile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        margin-left: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.85);
+        border-radius: 50%;
+        color: #fff !important;
+        text-decoration: none !important;
+        flex-shrink: 0;
+    }
+
+    #myHeader .ur-mobile-profile i {
+        font-size: 14px;
+        line-height: 1;
+    }
+
+    #myHeader .ur-mobile-actions .hamburger {
+        padding: 6px !important;
+    }
+
     #myHeader .hamburger-inner,
     #myHeader .hamburger-inner:before,
     #myHeader .hamburger-inner:after,
@@ -550,17 +575,18 @@
         grid-area: unset;
         order: unset;
         width: 100%;
-        background: #6E0832;
+        background: #0F2E24;
         border-radius: 12px;
         margin-top: 4px;
         padding: 8px 0;
+        box-shadow: inset 0 1px 0 rgba(201, 151, 77, 0.18), inset 0 -1px 0 rgba(201, 151, 77, 0.18);
     }
 
     /* When menu is open, add a second grid row for it */
     #myHeader .navbar-container:has(.navbar-collapse.show),
     #myHeader .navbar-container:has(.navbar-collapse.collapsing) {
         grid-template-areas:
-            "brand spacer actions toggler"
+            "brand spacer actions actions"
             "collapse collapse collapse collapse";
         grid-template-rows: auto auto;
     }
@@ -598,7 +624,7 @@
 
     #myHeader .navbar-light .navbar-nav .nav-link:hover,
     #myHeader .navbar-light .navbar-nav .nav-link.is-active {
-        background: rgba(255, 255, 255, 0.1) !important;
+        background: rgba(201, 151, 77, 0.14) !important;
         color: #fff !important;
         box-shadow: none !important;
     }
@@ -644,36 +670,35 @@
         margin-right: 8px;
         fill: #5C1435 !important;
     }
+
+    #myHeader .navbar-collapse::before,
+    #myHeader .navbar-collapse::after {
+        display: none !important;
+    }
 }
 
 @media (max-width: 767px) {
     #myHeader .navbar-brand {
-        width: 128px !important;
+        width: 108px !important;
         min-height: 48px !important;
     }
 
     #myHeader .navbar-brand img {
-        max-height: 48px !important;
+        max-height: 42px !important;
     }
 
     #myHeader .navbar-container,
     .container .navbar-container {
-        padding: 8px 10px !important;
-        gap: 4px 6px;
+        padding: 8px 8px !important;
+        gap: 4px 4px;
     }
 
     #myHeader .ur-header-actions {
-        gap: 5px;
+        display: none !important;
     }
 
-    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 {
-        padding: 6px 8px !important;
-        font-size: 10px !important;
-        gap: 3px;
-    }
-
-    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
-        font-size: 11px !important;
+    #myHeader .ur-mobile-profile {
+        display: inline-flex !important;
     }
 
     #myHeader .ur-appt-in-nav .appointment-btn {
@@ -694,12 +719,13 @@
         overflow: hidden !important;
         border: 0 !important;
     }
+
+    #myHeader .ur-header-actions .dropdown-menu { left: auto !important; right: 0 !important; }
 }
 
-/* Very narrow phones — icon-only auth so hamburger stays on the same row */
-@media (max-width: 380px) {
+@media (min-width: 768px) and (max-width: 999.98px) {
     #myHeader .navbar-brand {
-        width: 118px !important;
+        width: 120px !important;
         min-height: 46px !important;
     }
 
@@ -707,19 +733,47 @@
         max-height: 46px !important;
     }
 
-    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1,
-    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1.btn-shadow {
-        font-size: 0 !important;
-        gap: 0 !important;
-        padding: 0 !important;
-        width: 32px !important;
-        height: 32px !important;
-        justify-content: center;
-        min-width: 32px;
+    #myHeader .navbar-container,
+    .container .navbar-container {
+        padding: 10px 12px !important;
+        gap: 6px 8px;
+        grid-template-columns: auto 1fr auto auto;
     }
 
-    #myHeader .ur-header-actions .btn.btn-styled.btn-xs.btn-base-1 i {
-        font-size: 13px !important;
-        margin: 0 !important;
+    #myHeader .ur-mobile-actions {
+        gap: 8px;
+    }
+
+    #myHeader .ur-mobile-profile {
+        width: 34px;
+        height: 34px;
+        margin-left: 0;
+    }
+
+    #myHeader .navbar-toggler,
+    #myHeader .hamburger {
+        padding: 6px !important;
+    }
+}
+
+/* Very narrow phones — icon-only auth so hamburger stays on the same row */
+@media (max-width: 380px) {
+    #myHeader .navbar-brand {
+        width: 92px !important;
+        min-height: 42px !important;
+    }
+
+    #myHeader .navbar-brand img {
+        max-height: 38px !important;
+    }
+
+    #myHeader .ur-mobile-profile {
+        width: 30px;
+        height: 30px;
+        margin-left: 4px;
+    }
+
+    #myHeader .ur-header-actions {
+        display: none !important;
     }
 }

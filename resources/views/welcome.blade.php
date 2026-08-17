@@ -1,7 +1,7 @@
 @extends('layouts.master')
 @section('main-content')
 <link rel="stylesheet" href="/css/ur-hero.css?29">
-{{-- Option A (1a) full homepage — pink theme --}}
+{{-- Variation 1a — Editorial Luxe (emerald + gold). ur-1a.css is loaded after the page styles. --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700&display=swap');
 
@@ -557,8 +557,8 @@
     .ur-photo-gallery {
         width: 100%;
         max-width: none;
-        background: #fff;
-        padding: 60px 0 24px;
+        background: #FBF7EF;
+        padding: 24px 0 40px;
         overflow: hidden;
         clear: both;
     }
@@ -1181,6 +1181,7 @@
 
 
 </style>
+<link rel="stylesheet" href="/css/ur-1a.css?13">
 
 <section class="ur-hero-a" aria-label="Home hero">
     <div class="ur-hero-a__overlay"></div>
@@ -1188,42 +1189,16 @@
     <div class="ur-hero-a__inner">
         <div class="ur-hero-a__main">
             <div class="ur-hero-a__content">
-                <div class="ur-hero-a__badge">Est. 2018 • 5,000+ Marriages</div>
+                <div class="ur-hero-a__badge">EST. 2018 · 5,000+ MARRIAGES</div>
                 <h1 class="ur-hero-a__title">
                     A Respectful Path to
                     <span class="ur-hero-line2">
-                        <em>Your Rishta</em><span class="ur-hero-heart" aria-hidden="true"><i class="fa fa-heart-o"></i><span class="ur-hero-spark">✦</span></span>
+                        <em>Your Rishta</em>
                     </span>
                 </h1>
                 <p class="ur-hero-a__subtitle">
                     Verified profiles and dedicated matchmakers serving Pakistani &amp; Muslim families in Pakistan, the UK, USA, Canada and the Gulf.
                 </p>
-
-                <ul class="ur-hero-a__features">
-                    <li>
-                        <i class="fa fa-shield" aria-hidden="true"></i>
-                        <span><b>100% Verified</b><em>Profiles</em></span>
-                    </li>
-                    <li>
-                        <i class="fa fa-user" aria-hidden="true"></i>
-                        <span><b>Dedicated</b><em>Matchmakers</em></span>
-                    </li>
-                    <li>
-                        <i class="fa fa-lock" aria-hidden="true"></i>
-                        <span><b>Privacy</b><em>Guaranteed</em></span>
-                    </li>
-                    <li>
-                        <i class="fa fa-heart" aria-hidden="true"></i>
-                        <span><b>Successful</b><em>Matches</em></span>
-                    </li>
-                </ul>
-            </div>
-
-            <div class="ur-hero-a__visual">
-                <div class="ur-hero-a__photo-wrap">
-                    <img class="ur-hero-a__photo" src="/images/slider_images/slider_image_1.png" alt="Happy couple" loading="eager">
-                </div>
-               
             </div>
         </div>
 
@@ -1237,8 +1212,8 @@
                             <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-user"></i></span>
                             <select name="gender" id="gender" class="form-control form-control-sm selectpicker" required="required">
                                 <option value="">Select one...</option>
-                                <option value="female">Bride</option>
-                                <option value="male">Groom</option>
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
                             </select>
                         </div>
                         <div class="form-group has-feedback" data-field="aged_from">
@@ -1301,30 +1276,12 @@
     </div>
 </section>
 
-<section class="ur-feat-row" aria-label="Why Urgent Rishta">
-    <div class="ur-feat-row__inner">
-        <div class="ur-feat-row__item">
-            <div class="ur-feat-row__icon" aria-hidden="true"><i class="fa fa-users"></i></div>
-            <h3>Serious Matches</h3>
-            <p>Connect with people who are genuinely looking for a life partner.</p>
-        </div>
-        <div class="ur-feat-row__item">
-            <div class="ur-feat-row__icon" aria-hidden="true"><i class="fa fa-heart"></i></div>
-            <h3>Family Involved</h3>
-            <p>We believe in families playing a key role in finding the perfect match.</p>
-        </div>
-        <div class="ur-feat-row__item">
-            <div class="ur-feat-row__icon" aria-hidden="true"><i class="fa fa-shield"></i></div>
-            <h3>Safe &amp; Secure</h3>
-            <p>Your privacy is our priority with verified profiles and secure communication.</p>
-        </div>
-        <div class="ur-feat-row__item">
-            <div class="ur-feat-row__icon" aria-hidden="true"><i class="fa fa-headphones"></i></div>
-            <h3>Expert Support</h3>
-            <p>Our matchmakers are here to guide you at every step.</p>
-        </div>
-    </div>
-</section>
+<div class="ur-trust-bar" aria-label="Trust points">
+    <span>✓&nbsp; 15,000+ Verified Profiles</span>
+    <span>✓&nbsp; Mobile &amp; ID Verified Members</span>
+    <span>✓&nbsp; 5,000+ Successful Marriages</span>
+    <span>✓&nbsp; Private &amp; Family-Friendly</span>
+</div>
 
 
 <div class="ur-page">
@@ -1332,18 +1289,15 @@
     <section class="ur-sec ur-sec--cream">
         <div class="ur-wrap ur-promise">
             <div class="ab-wel-lhs">
-                <span class="ab-wel-3"></span>
                 <img src="images/about/1.jpg" alt="" loading="lazy" class="ab-wel-1">
                 <img src="images/couples/20.jpg" alt="" loading="lazy" class="ab-wel-2">
-                <span class="ab-wel-4"></span>
+                <div class="ur-years"><b>8+</b><span>YEARS OF SERVICE</span></div>
             </div>
             <div>
                 <div class="ur-eyebrow">Our Promise</div>
-                <p class="ur-welcome-kicker">Welcome to</p>
-                <h2 class="ur-welcome-brand">Urgent Rishta</h2>
-                <h3 class="ur-h2" style="margin-bottom:14px;font-size:clamp(24px,2.6vw,30px);">Matchmaking with dignity and discretion</h3>
-                <p class="ur-lead" style="max-width:480px;margin-bottom:18px;">Every profile is personally reviewed before approval. Every introduction is made with your family's values in mind — never an algorithm alone.</p>
-                <div style="max-width:480px;">
+                <h2 class="ur-h2" style="margin-bottom:18px;">Matchmaking with<br>dignity and discretion</h2>
+                <p class="ur-lead" style="max-width:470px;margin-bottom:16px;">Every profile is personally reviewed before approval. Every introduction is made with your family's values in mind — never an algorithm alone.</p>
+                <div style="max-width:440px;">
                     <div class="ur-check"><i>✓</i><div><b>Verified members only</b> — mobile and ID checked before a profile goes live</div></div>
                     <div class="ur-check"><i>✓</i><div><b>A named matchmaker</b> guides your search from first search to nikah</div></div>
                     <div class="ur-check"><i>✓</i><div><b>Privacy controls</b> — you decide who sees your photos and contact details</div></div>
@@ -1352,49 +1306,79 @@
                     <a href="/register" class="ur-btn ur-btn--solid">Start Your Journey</a>
                     <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--outline">Book a Consultation</a>
                 </div>
-                <div class="ur-contact-row">
-                    <a class="ur-contact" href="tel:+923040227000">
-                        <span class="ur-contact__icon"><i class="fa fa-phone"></i></span>
-                        <span>
-                            <span class="ur-contact__label">Enquiry</span>
-                            <span class="ur-contact__value">+92 304 0227000</span>
-                        </span>
-                    </a>
-                    <a class="ur-contact" href="mailto:urgentrishta.co@gmail.com">
-                        <span class="ur-contact__icon"><i class="fa fa-envelope"></i></span>
-                        <span>
-                            <span class="ur-contact__label">Get Support</span>
-                            <span class="ur-contact__value">urgentrishta.co@gmail.com</span>
-                        </span>
-                    </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ENQUIRY + COUNTS -->
+    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
+        <div class="ur-wrap">
+            <div class="ur-enquiry-bar">
+                <div class="ur-enquiry-bar__item">
+                    <div class="ur-enquiry-bar__label">Enquiry</div>
+                    <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
+                </div>
+                <div class="ur-enquiry-bar__item">
+                    <div class="ur-enquiry-bar__label">Get Support</div>
+                    <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
+                </div>
+                <div>
+                    <div class="ur-enquiry-bar__num">5K</div>
+                    <div class="ur-enquiry-bar__sub">Couples Paired</div>
+                </div>
+                <div>
+                    <div class="ur-enquiry-bar__num">15,000+</div>
+                    <div class="ur-enquiry-bar__sub">Registrants</div>
+                </div>
+                <div>
+                    <div class="ur-enquiry-bar__num">8,000+</div>
+                    <div class="ur-enquiry-bar__sub">Men</div>
+                </div>
+                <div>
+                    <div class="ur-enquiry-bar__num">7,000+</div>
+                    <div class="ur-enquiry-bar__sub">Women</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- COUNTS -->
-    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
+    <!-- HOW IT WORKS -->
+    <section class="ur-how-1a">
         <div class="ur-wrap">
-            <div class="ur-stats">
-                <div class="ur-stats__card">
-                    <div class="ur-stats__icon"><i class="fa fa-heart"></i></div>
-                    <div class="ur-stats__num">5K</div>
-                    <div class="ur-stats__sub">Couples Paired</div>
+            <div class="ur-center">
+                <div class="ur-eyebrow">Simple &amp; Respectful</div>
+                <h2 class="ur-h2">How it works</h2>
+            </div>
+            <div class="ur-steps">
+                <div class="ur-step">
+                    <div class="ur-step__num">01</div>
+                    <div class="ur-step__title">Register</div>
+                    <div class="ur-step__text">Create your profile with your details, preferences and family expectations.</div>
                 </div>
-                <div class="ur-stats__card">
-                    <div class="ur-stats__icon"><i class="fa fa-users"></i></div>
-                    <div class="ur-stats__num">15,000+</div>
-                    <div class="ur-stats__sub">Registrants</div>
+                <div class="ur-step">
+                    <div class="ur-step__num">02</div>
+                    <div class="ur-step__title">Get Matched</div>
+                    <div class="ur-step__text">Browse verified profiles filtered by age, city, education and values.</div>
                 </div>
-                <div class="ur-stats__card">
-                    <div class="ur-stats__icon"><i class="fa fa-male"></i></div>
-                    <div class="ur-stats__num">8,000+</div>
-                    <div class="ur-stats__sub">Men</div>
+                <div class="ur-step">
+                    <div class="ur-step__num">03</div>
+                    <div class="ur-step__title">Send Interest</div>
+                    <div class="ur-step__text">Express interest; on acceptance, full profile details are unlocked.</div>
                 </div>
-                <div class="ur-stats__card">
-                    <div class="ur-stats__icon"><i class="fa fa-female"></i></div>
-                    <div class="ur-stats__num">7,000+</div>
-                    <div class="ur-stats__sub">Women</div>
+                <div class="ur-step">
+                    <div class="ur-step__num">04</div>
+                    <div class="ur-step__title">Get Profile Information</div>
+                    <div class="ur-step__text">Once interest is accepted, full profile details unlock for both sides.</div>
+                </div>
+                <div class="ur-step">
+                    <div class="ur-step__num">05</div>
+                    <div class="ur-step__title">Start Meetups</div>
+                    <div class="ur-step__text">Speak, involve your families and arrange meetings with mutual consent.</div>
+                </div>
+                <div class="ur-step ur-step--dark">
+                    <div class="ur-step__num">06</div>
+                    <div class="ur-step__title">Getting Married</div>
+                    <div class="ur-step__text">When you find the right person, take the step toward nikah.</div>
                 </div>
             </div>
         </div>
@@ -1488,7 +1472,7 @@
 
     <!-- SUCCESS STORIES -->
     <section class="ur-sec ur-sec--cream">
-        <div class="ur-wrap">
+        <div class="ur-wrap ur-wrap--full">
             <div class="ur-stories-head">
                 <div>
                     <div class="ur-eyebrow">Happy Endings</div>
@@ -1571,20 +1555,20 @@
                 <div>
                     <div class="ur-quote">
                         <div class="ur-quote__stars">★★★★★</div>
-                        <div class="ur-quote__text">“A name of total trust and true professionalism with kind behaviour — dedicated and organised. Highly recommended.”</div>
+                        <div class="ur-quote__text">“They treated us like family, not clients. Outclass service throughout the whole process.”</div>
                         <div class="ur-quote__person">
-                            <img src="images/user/3.jpg" alt="" loading="lazy">
-                            <div><strong>Usman</strong><span>Saudi Arabia</span></div>
+                            <img src="images/user/5.jpg" alt="" loading="lazy">
+                            <div><strong>Javeria</strong><span>Manchester, UK</span></div>
                         </div>
                     </div>
                 </div>
                 <div>
                     <div class="ur-quote">
                         <div class="ur-quote__stars">★★★★★</div>
-                        <div class="ur-quote__text">“They treated us like family, not clients. Outclass service throughout the whole process.”</div>
+                        <div class="ur-quote__text">“A name of total trust and true professionalism with kind behaviour — dedicated and organised. Highly recommended.”</div>
                         <div class="ur-quote__person">
-                            <img src="images/user/5.jpg" alt="" loading="lazy">
-                            <div><strong>Javeria</strong><span>Manchester, UK</span></div>
+                            <img src="images/user/3.jpg" alt="" loading="lazy">
+                            <div><strong>Usman</strong><span>Saudi Arabia</span></div>
                         </div>
                     </div>
                 </div>
@@ -1595,7 +1579,7 @@
 
     <!-- TEAM -->
     <section class="ur-sec ur-sec--cream">
-        <div class="ur-wrap">
+        <div class="ur-wrap ur-wrap--full">
             <div class="ur-center">
                 <div class="ur-eyebrow">Our Professionals</div>
                 <h2 class="ur-h2">Meet our matchmaking team</h2>
@@ -1648,13 +1632,13 @@
             </div>
         </div>
     </section>
-</div>{{-- /ur-page — gallery + CTA sit outside wrappers for full page width --}}
+</div>{{-- /ur-page — gallery + CTA sit full width --}}
 
-    <!-- PHOTO GALLERY — full page width -->
+    <!-- PHOTO GALLERY — masonry -->
     <section class="ur-photo-gallery">
         <div class="container-fluid ur-photo-gallery__fluid">
             <div class="home-tit">
-                <p>Events</p>
+                <p>Moments</p>
                 <h2><span>Photo gallery</span></h2>
                 <span class="leaf1"></span>
                 <span class="tit-ani-"></span>
@@ -1747,20 +1731,13 @@
     <!-- CTA -->
     <section class="ur-cta">
         <div class="ur-cta__overlay"></div>
-        <div class="ur-cta__glow" aria-hidden="true"></div>
         <div class="ur-cta__inner">
-            <span class="ur-cta__eyebrow">Start your journey</span>
-            <h2>Find your perfect match, <em>today</em></h2>
+            <h2>Find your perfect match, today</h2>
             <p>Join 15,000+ members who trust Urgent Rishta for a respectful, halal path to marriage.</p>
             <div class="ur-cta__actions">
                 <a href="/register" class="ur-btn ur-cta__btn ur-cta__btn--primary">Register Now</a>
                 <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-cta__btn ur-cta__btn--ghost">Book a Consultation</a>
             </div>
-            <ul class="ur-cta__trust">
-                <li>15,000+ members</li>
-                <li>5,000+ marriages</li>
-                <li>Halal &amp; respectful</li>
-            </ul>
         </div>
     </section>
 

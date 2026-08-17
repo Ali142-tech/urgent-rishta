@@ -8,7 +8,7 @@ URL: https://www.activeitzone.com
   border-left: 1px solid #e6e6e6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #E91E63;
+  background: #C9974D;
 }
 .dropdown-menu-right .dropdown-menu,
 .navbar-right .dropdown-menu .dropdown-menu,
@@ -2893,10 +2893,10 @@ a:hover {
   width: 300px;
   height: 100%;
   overflow-y: scroll;
-  background: #1f1f1f;
+  background: linear-gradient(180deg, #123A2E 0%, #0F2E24 100%);
   -webkit-transition: all 0.5s;
   transition: all 0.5s;
-  border-left: 1px solid transparent; }
+  border-left: 1px solid rgba(201, 151, 77, 0.35); }
 
 .st-menu::after {
   position: absolute;
@@ -2904,7 +2904,7 @@ a:hover {
   right: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(15, 46, 36, 0.18);
   content: '';
   opacity: 1;
   -webkit-transition: opacity 0.5s;
@@ -2954,7 +2954,7 @@ a:hover {
   vertical-align: middle; }
 
 .st-profile .profile-user-name {
-  color: #E91E63;
+  color: #C9974D;
   font-size: 1rem;
   font-weight: 600; }
 
@@ -3025,7 +3025,7 @@ p:not(.lead) {
   line-height: 1.5rem; }
 
 a.link {
-  color: #E91E63;
+  color: #C9974D;
   display: inline-block;
   text-decoration: none; }
 
@@ -9946,7 +9946,7 @@ ul.meta-info-cells-v4 li .btn-link {
   display: block; }
 
 .sidebar .list-unstyled > li:hover > a {
-  color: #E91E63; }
+  color: #C9974D; }
 
 .vertical-info {
   margin: 0;

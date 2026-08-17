@@ -39,7 +39,8 @@ body.homepage .st-content-inner {
 }
 
 body.homepage #main-content > .ur-hero-a,
-body.homepage #main-content > .ur-feat-row {
+body.homepage #main-content > .ur-feat-row,
+body.homepage #main-content > .ur-trust-bar {
     width: 100%;
 }
 

@@ -11,8 +11,8 @@
     <meta name="revisit-after" content="2 day(s)">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="stylesheet" href="/css/app.css?1"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/pink/pace-theme-minimal.min.css" type="text/css" />
+    <link rel="stylesheet" href="/css/app.css?2"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/green/pace-theme-minimal.min.css" type="text/css" />
 <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" type="text/css" />
     <!-- Plugins -->
@@ -23,12 +23,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" type="text/css" />
     <!-- Global style (main) -->
-    <link id="stylesheet" type="text/css" href="/css/global-style-pink.css?2" rel="stylesheet" media="screen" />
+    <link id="stylesheet" type="text/css" href="/css/global-style-pink.css?3" rel="stylesheet" media="screen" />
     <!-- Custom style - Remove if not necessary -->
-    <link type="text/css" href="/css/custom-style.css?1" rel="stylesheet" />
-    <link type="text/css" href="/css/new-theme.css?1" rel="stylesheet" />
-    <link type="text/css" href="/css/new-animate.min.css?1" rel="stylesheet" />
-    <link type="text/css" href="/css/ur-navbar.css?12" rel="stylesheet" />
+    <link type="text/css" href="/css/custom-style.css?2" rel="stylesheet" />
+    <link type="text/css" href="/css/new-theme.css?2" rel="stylesheet" />
+    <link type="text/css" href="/css/new-animate.min.css?2" rel="stylesheet" />
+    <link type="text/css" href="/css/ur-navbar.css?13" rel="stylesheet" />
     <!-- SCRIPTS -->
     <!-- Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
@@ -71,7 +71,7 @@
     <title>Urgent Rishta</title>
 </head>
 
-<body class="pace-done">
+<body class="pace-done {{ request()->is('/') || request()->is('home') ? 'homepage' : 'normalpage' }}">
     <div class="pace pace-inactive">
         <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
             <div class="pace-progress-inner"></div>
@@ -81,21 +81,27 @@
     <style>
     @media screen and (max-width: 500px) {
     ul.navbar-nav {
-        background-color: #E91E63;
+        background-color: #0F2E24;
         
     }
     ul.navbar-nav a.nav-link.admin-link.p_nav.active{
         color: white !important;
     }
     }
-    @media (min-width: 1000px) {
-        .homepage #myHeader{
-            position: absolute;
-            top:0;
-            width: 100%;
-        }
+    .ur-footer-wa {
+        display: inline-block;
+        margin-top: 10px;
+        background: #25D366;
+        color: #fff !important;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 9px 16px;
+        border-radius: 8px;
+        text-decoration: none !important;
+    }
+    .ur-footer-touch a { color: inherit; }
         .normalpage img.img-responsive {
-            filter: drop-shadow(0px 0px) drop-shadow(2px 4px 6px #E91E63);
+            filter: drop-shadow(0px 0px) drop-shadow(2px 4px 6px #C9974D);
         }   
     }
     .navbar-light .navbar-nav .nav-link {
@@ -104,7 +110,7 @@
     .c-base-1 {
   color: white; }
   .navbar.bg-default {
-  background: #E91E63;
+  background: #0F2E24;
   /*border-bottom: 1px solid #f1f1f1;*/ }
     .navbar-brand{
         width:190px;
@@ -266,13 +272,23 @@ a.appointment-btn::before{
         }
 
         #loading {
-            background-color: #E91E63;
+            background-color: #0F2E24;
             height: 100%;
             width: 100%;
             position: fixed;
             z-index: 1050;
             margin-top: 0px;
             top: 0px;
+        }
+        .pace .pace-progress {
+            background: #C9974D !important;
+        }
+        .pace .pace-activity {
+            border-top-color: #C9974D !important;
+            border-left-color: #C9974D !important;
+        }
+        .pace .pace-progress-inner {
+            box-shadow: 0 0 10px #C9974D, 0 0 5px #C9974D !important;
         }
         @media screen and (max-width:1000px){
     #member-data a.c-base-1,#interest-data a.c-base-1 {
@@ -334,13 +350,20 @@ a.appointment-btn::before{
                                     <a class="navbar-brand" href="{{url('/')}}">
                                         <img src="/images/header_logo2.png" class="img-responsive" height="100%">
                                     </a>
-                                    <div class="d-inline-block ur-nav-toggler-wrap">
-                                        <!-- Navbar toggler  -->
-                                        <button class="navbar-toggler hamburger hamburger-js hamburger--spring" type="button" data-toggle="collapse" data-target="#navbar_main" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-                                            <span class="hamburger-box">
-                                                <span class="hamburger-inner"></span>
-                                            </span>
-                                        </button>
+                                    <div class="ur-mobile-actions d-lg-none">
+                                        @auth
+                                        <a href="{{ url('member/profile') }}" class="ur-mobile-profile" aria-label="Profile">
+                                            <i class="fa fa-user"></i>
+                                        </a>
+                                        @endauth
+                                        <div class="d-inline-block ur-nav-toggler-wrap">
+                                            <!-- Navbar toggler  -->
+                                            <button class="navbar-toggler hamburger hamburger-js hamburger--spring" type="button" data-toggle="collapse" data-target="#navbar_main" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+                                                <span class="hamburger-box">
+                                                    <span class="hamburger-inner"></span>
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="collapse navbar-collapse align-items-center justify-content-end" id="navbar_main">
                                         <!-- Navbar links -->
@@ -367,6 +390,44 @@ a.appointment-btn::before{
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">
                                                     Contact Us</a>
                                             </li>
+                                            @guest
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ route('login') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-power-off mr-2"></i> Log In
+                                                </a>
+                                            </li>
+                                            @if (Route::has('register'))
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ route('register') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-user mr-2"></i> Register
+                                                </a>
+                                            </li>
+                                            @endif
+                                            @endguest
+                                            @auth
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ url('member/profile') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-user-circle mr-2"></i> Profile
+                                                </a>
+                                            </li>
+                                            @if(User::retrieveUserObject()->admin==1)
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ url('admin/profiles') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-cogs mr-2"></i> Dashboard
+                                                </a>
+                                            </li>
+                                            @endif
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ url('/member/profile/listing/interests') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-heart mr-2"></i> Interests
+                                                </a>
+                                            </li>
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                                    <i class="fa fa-power-off mr-2"></i> Log Out
+                                                </a>
+                                            </li>
+                                            @endauth
                                             {{-- Mobile menu only; desktop uses .ur-header-actions copy --}}
                                             <li class="custom-nav ur-appt-in-nav">
                                                 <a class="appointment-btn" href="{{ url('appointments') }}" aria-haspopup="true" aria-expanded="false">
@@ -521,6 +582,17 @@ a.appointment-btn::before{
                                                                 Privacy Policy</a>
                                                         </li>
                                                     </ul>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 col-lg-3">
+                                                <div class="col">
+                                                    <h4 class="heading heading-xs strong-600 text-uppercase mb-1">
+                                                        Get in Touch</h4>
+                                                    <div class="ur-footer-touch">
+                                                        <a href="tel:+923040227000">+92 304 0227000</a><br>
+                                                        <a href="mailto:urgentrishta.co@gmail.com">urgentrishta.co@gmail.com</a>
+                                                    </div>
+                                                    <a class="ur-footer-wa" href="https://wa.me/923040227000" target="_blank" rel="noopener">WhatsApp Us</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -896,12 +968,6 @@ a.appointment-btn::before{
             $(".selectpicker").select2();
         });
         
-        if (window.location.pathname === "/" || window.location.pathname === "/home" || window.location.pathname === "/packages" || window.location.pathname.indexOf("/package-details") === 0) {
-            document.body.classList.add("homepage");
-        }else{
-            document.body.classList.add("normalpage");
-        }
-
     </script>
     
     <!-- Bootstrap Modal -->
