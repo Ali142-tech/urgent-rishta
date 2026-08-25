@@ -1829,6 +1829,8 @@ team, with senior-level involvement where applicable.</p>
     </section>
 </div>{{-- /ur-page — gallery + CTA sit full width --}}
 
+    @include('partials.partners-section')
+
     <!-- PHOTO GALLERY — masonry -->
     <section class="ur-photo-gallery">
         <div class="container-fluid ur-photo-gallery__fluid">
