@@ -320,6 +320,19 @@ class RegisterController extends Controller
         // New/changed email — require OTP
         Session::forget('register_verified');
 
+        // Local development: SMTP isn't configured/working here, so skip the email
+        // OTP step entirely instead of failing to send. Never bypasses in production
+        // or staging — only when APP_ENV is local or development.
+        if (app()->environment('local', 'development')) {
+            Session::put('register_verified', true);
+            Session::flash('message', 'success|Local environment — email OTP skipped.');
+            Log::info('Register OTP skipped (APP_ENV=local) for ' . $email);
+            if (Session::has('register_education')) {
+                return redirect()->route('register', ['mode' => 'build4']);
+            }
+            return redirect()->route('register', ['mode' => 'build']);
+        }
+
         // Send email OTP immediately, then show verify screen
         $identifier = 'reg:' . $email;
         $plainCode = (string) random_int(100000, 999999);
@@ -388,6 +401,15 @@ class RegisterController extends Controller
 
         if (!empty($google['id'])) {
             Session::put('register_verified', true);
+            return redirect()->route('register', ['mode' => 'build']);
+        }
+
+        // Local development: SMTP isn't configured/working here, so skip the email
+        // OTP step entirely instead of failing to send.
+        if (app()->environment('local', 'development')) {
+            Session::put('register_verified', true);
+            Session::flash('message', 'success|Local environment — email OTP skipped.');
+            Log::info('Register OTP skipped (APP_ENV=local) for ' . $email);
             return redirect()->route('register', ['mode' => 'build']);
         }
 

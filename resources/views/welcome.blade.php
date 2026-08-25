@@ -1278,7 +1278,7 @@
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
                     <span>5,000+ Successful Matches</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
-                    <span>8+ Years of Trust</span>
+                    <span>16+ Years of Trust</span>
                 </div>
             </div>
         </div>
