@@ -4,553 +4,391 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
 <?php use App\User; ?>
 <style>
-    .ss-banner {
-        padding: 160px 0px 200px !important;
-        border-bottom: 1px solid #f2f2f2;
-        color: rgb(255, 255, 255) !important;
-        background: linear-gradient(to right, rgb(137, 33, 107), rgb(218, 68, 83)) !important;
-        overflow: hidden;
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+    body.page-packages #main-content { background: #FBF7EF; }
+
+    .pk-page {
+        --pk-green: #123A2E;
+        --pk-green-deep: #0F2E24;
+        --pk-gold: #C9974D;
+        --pk-gold-light: #E8C27A;
+        --pk-cream: #FBF7EF;
+        --pk-sand: #EFE7D6;
+        --pk-line: #F0EADD;
+        --pk-terracotta: #B5674A;
+        --pk-text: #5B6560;
+        --pk-ink: #1C2321;
+        --pk-ink-2: #33403A;
+        --pk-cream-text: #EFE3C8;
+        --pk-cream-text-2: #D7E4DC;
+        font-family: 'Manrope', system-ui, sans-serif;
+        background: var(--pk-cream);
+        color: var(--pk-ink);
     }
-    .ss-banner::before, .ss-banner::after {
-        content: "";
-        position: absolute;
-        border-radius: 50%;
-        transition: all 0.5s ease;
-        animation: zoomout 5s infinite linear both;
-    }
-    .ss-banner::before {
-        left: -120px;
-        top: -75px;
-        width: 350px;
-        height: 350px;
-        background: rgb(158, 42, 101);
-    }
-     .ss-banner::after {
-        right: -120px;
-        bottom: -75px;
-        width: 350px;
-        height: 350px;
-        background: rgb(218, 68, 83);
-    }
-    .ss-banner span.pri {
-        margin: 0px auto;
+    .pk-page * { box-sizing: border-box; }
+    .pk-page a { text-decoration: none; }
+    .pk-eyebrow {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        color: var(--pk-terracotta);
         text-transform: uppercase;
-        font-weight: 400;
-        letter-spacing: 1px;
-        color: #fff;
+        margin-bottom: 10px;
     }
-    .ss-banner .heading{
-        font-family:"Playfair Display", serif !important;
-        color:white !important;
-        margin-bottom:10px !important;
+    .pk-h2 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 30px;
+        font-weight: 600;
+        margin: 0 0 14px;
+        color: var(--pk-ink);
     }
-    .ss-banner p {
-        width: 100%;
-        font-weight: 300;
-        font-size: 16px;
-        color: #f3f3f3;
+    .pk-lead {
+        font-size: 14.5px;
+        line-height: 1.75;
+        color: var(--pk-text);
+        margin: 0 0 20px;
     }
-    .ss-banner span.nocre {
-        margin: 0px auto;
-        background: rgb(219, 33, 76);
-        font-size: 12px;
-        font-weight: 500;
-        padding: 5px 10px;
-        border-radius: 25px;
-        color: #fff;
-        width: auto;
-    }
-    .ss-container .feature--boxed-border.active:after{
-        display:none;
-    }
-    .navbar-light .navbar-nav .nav-link{
-        color:white !important;
-    }
-    .ss-container{
-        margin-top:-125px;
-    }
-    .ss-package_bg {
-        color: rgb(0, 0, 0);
-        background: rgb(255, 255, 255);
-        padding: 25px 30px;
-        float: left;
-        width: 100%;
-        border: 2px solid rgb(253 37 109);
-        border-radius: 35px;
-        box-shadow: rgba(51, 51, 51, 0.05) 0px 1px 12px 0px;
+
+    /* ============ 1. HERO ============ */
+    .pk-hero {
+        background: linear-gradient(135deg, var(--pk-green) 0%, #1F5C46 55%, var(--pk-green) 100%);
+        padding: 64px 20px 46px;
         text-align: center;
     }
-    .col-black{
-        color:black !important;
-    }
-    .package_items {
-        color: #818a91 !important;
-    }
-    .ss-container .c-base-1 {
-        color: #E91E63 !important;
-    }
-    .ss-container .feature--bg-2 *:not(.btn):not(.alert):not(.form-control):not(.heading):not(a), .feature-inverse *:not(.btn):not(.alert):not(.form-control):not(.heading):not(a) {
-        color: unset !important;
-    }
-    .bank-details .para{
-        position: relative; 
-    }
-     .copy-text{
-
-    position: absolute;
-    right: 4px;
-    top: -20px;
-    font-size: 10px;
-    background: #e91628;
-    color: wheat;
-    padding: 0 4px;
-    border-radius: 7px;
-
-    }
-    .ss-package_bg.ss-online {
-    min-height: 427px;
-    margin-bottom: 20px;
-}
-
-
-    .special-image { position: absolute; width: 66px; height: auto; top: -20px; right: -20px; }
-
-    /* Separate sections: Online vs Admin packages */
-    .package-section-online {
-        margin-bottom: 3rem;
-        padding-bottom: 2.5rem;
-        /* border-bottom: 2px solid rgba(233, 30, 99, 0.2); */
-    }
-    .package-section-admin {
-        padding-top: 0.5rem;
-    }
-    .package-section-title {
-        margin-bottom: 0.5rem;
-    }
-    .package-section-desc {
-        font-size: 15px;
-        color: #6c757d;
-        max-width: 640px;
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 1.5rem;
-    }
-    .ss-package_bg.ss-online {
-        border-color: rgb(33, 150, 243);
-        background: linear-gradient(to bottom, #fff 0%, #f8fbff 100%);
-    }
-    .ss-package_bg.ss-admin {
-        border-color: rgb(253, 37, 109);
-        background: linear-gradient(to bottom, #fff 0%, #fff8fb 100%);
-    }
-
-    .package-active-badge {
+    .pk-hero-badge {
         display: inline-block;
-        background: #2196F3;
-        color: #fff;
-        font-size: 12px;
-        font-weight: 600;
-        padding: 4px 10px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(239,227,200,0.3);
+        padding: 6px 16px;
         border-radius: 20px;
-        margin-bottom: 6px;
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        color: var(--pk-cream-text);
+        margin-bottom: 20px;
+        text-transform: uppercase;
     }
-    .package-expiry-text {
+    .pk-hero h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: clamp(30px, 4vw, 44px);
+        font-weight: 600;
+        color: #fff;
+        margin: 0 0 14px;
+        line-height: 1.2;
+    }
+    .pk-hero h1 em {
+        color: var(--pk-gold);
+        font-style: italic;
+    }
+    .pk-hero p {
+        font-size: 15.5px;
+        color: var(--pk-cream-text-2);
+        max-width: 520px;
+        margin: 0 auto 22px;
+        line-height: 1.6;
+    }
+    .pk-hero-trust {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 28px;
+        justify-content: center;
         font-size: 13px;
-        color: #2e7d32;
-        font-weight: 500;
-        margin-bottom: 8px;
+        color: var(--pk-cream-text);
     }
+    .pk-hero-trust > div { display: flex; gap: 7px; align-items: center; }
+    .pk-hero-trust > div span { color: var(--pk-gold); }
 
-    /* Package tabs */
-    .package-tabs {
+    /* ============ 2. TABS ============ */
+    .pk-tabs-wrap {
+        background: var(--pk-cream);
+        padding: 28px 20px 0;
         display: flex;
         justify-content: center;
-        gap: 0;
-        margin-bottom: 2rem; 
-        /* flex-wrap: wrap; */
     }
-    
+    .pk-tabs {
+        display: inline-flex;
+        background: var(--pk-sand);
+        border-radius: 99px;
+        padding: 5px;
+        gap: 4px;
+    }
+    .pk-tabs .tab-btn {
+        border: none;
+        background: transparent;
+        color: #41504A;
+        font-weight: 700;
+        font-size: 13.5px;
+        padding: 11px 24px;
+        border-radius: 99px;
+        cursor: pointer;
+        font-family: 'Manrope', system-ui, sans-serif;
+        transition: background .2s ease, color .2s ease;
+    }
+    .pk-tabs .tab-btn.active {
+        background: var(--pk-green);
+        color: var(--pk-cream-text);
+    }
 
-    
-     
-    
-    .package-tab-panel {
-        display: none;
+    .package-tab-panel { display: none; }
+    .package-tab-panel.active { display: block; }
+
+    /* ============ Two-col intro sections ============ */
+    .pk-intro {
+        padding: 44px 56px 8px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 56px;
+        align-items: start;
     }
-    .package-tab-panel.active {
+    .pk-note {
+        background: var(--pk-sand);
+        border-left: 3px solid var(--pk-gold);
+        border-radius: 6px;
+        padding: 16px 18px;
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--pk-text);
+    }
+    .pk-check-cards { display: flex; flex-direction: column; gap: 12px; }
+    .pk-check-cards .pk-cc {
+        display: flex;
+        gap: 12px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 14px 16px;
+    }
+    .pk-check-cards .pk-cc > i, .pk-check-cards .pk-cc > .em { color: var(--pk-gold); flex-shrink: 0; }
+    .pk-check-cards .pk-cc div.txt { font-size: 13.5px; line-height: 1.6; color: var(--pk-ink-2); }
+    .pk-icon-lines { display: flex; flex-direction: column; gap: 12px; }
+    .pk-icon-lines > div { display: flex; gap: 12px; }
+    .pk-icon-lines > div > .em { color: var(--pk-gold); flex-shrink: 0; }
+    .pk-icon-lines > div > .txt { font-size: 13.5px; line-height: 1.6; color: var(--pk-ink-2); }
+    .pk-side-title { font-weight: 700; font-size: 14.5px; margin-bottom: 14px; }
+
+    .pk-dark-box {
+        background: var(--pk-green);
+        border-radius: 16px;
+        padding: 30px;
+        color: #fff;
+    }
+    .pk-dark-box .pk-db-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
+    .pk-dark-box p { font-size: 13.5px; line-height: 1.75; color: var(--pk-cream-text-2); margin: 0 0 14px; }
+    .pk-dark-box p:last-child { margin-bottom: 0; }
+    .pk-dark-box strong { color: var(--pk-gold); }
+    .pk-dark-box .pk-quote { font-style: italic; }
+
+    /* ============ Package grids ============ */
+    .pk-pkg-section { padding: 36px 56px 70px; }
+    .pk-pkg-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 22px;
+    }
+    .pk-card {
+        background: #fff;
+        border: 1px solid var(--pk-line);
+        border-radius: 18px;
+        padding: 28px 24px;
+        text-align: center;
+        position: relative;
+    }
+    .pk-card.pk-card--dark {
+        background: var(--pk-green);
+        border: none;
+        box-shadow: 0 16px 36px rgba(18,58,46,0.25);
+    }
+    .pk-card-ribbon {
+        position: absolute;
+        top: -11px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--pk-gold);
+        color: var(--pk-green);
+        font-size: 11px;
+        font-weight: 800;
+        padding: 5px 14px;
+        border-radius: 99px;
+        white-space: nowrap;
+    }
+    .pk-card-eyebrow {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        color: var(--pk-terracotta);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .pk-card--dark .pk-card-eyebrow { color: var(--pk-gold); }
+    .pk-card-price {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: 2px;
+        color: var(--pk-ink);
+    }
+    .pk-card--dark .pk-card-price { color: #fff; }
+    .pk-card-sub { font-size: 12.5px; color: var(--pk-text); margin-bottom: 20px; }
+    .pk-card--dark .pk-card-sub { color: var(--pk-cream-text-2); }
+    .pk-card-divider { height: 1px; background: var(--pk-line); margin-bottom: 20px; }
+    .pk-card--dark .pk-card-divider { background: rgba(255,255,255,0.14); }
+    .pk-card-img { width: 100%; height: 120px; border-radius: 12px; overflow: hidden; margin-bottom: 16px; background: var(--pk-cream); display: flex; align-items: center; justify-content: center; }
+    .pk-card-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .pk-card-name {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 19px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: var(--pk-ink);
+    }
+    .pk-card--dark .pk-card-name { color: #fff; }
+    .pk-card-tag { font-size: 12.5px; color: var(--pk-text); margin-bottom: 18px; }
+    .pk-card--dark .pk-card-tag { color: var(--pk-cream-text-2); }
+    .pk-btn-outline, .pk-btn-solid, .pk-btn-solid-gold {
         display: block;
+        width: 100%;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 13px;
+        padding: 11px;
+        text-align: center;
+        cursor: pointer;
+        font-family: 'Manrope', system-ui, sans-serif;
     }
-
-
-
-    .ss-package_bg 
-        { 
-            display: flex; 
-            justify-content: center;
-        }
-
-        .icon-block--style-1-v5 {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.buttonWrapper{
-    display:flex;
-    gap:40px;
-}
-
-/* Common Button Style */
-.customBtn {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 17px 40px;
-    border-radius: 14px;
-    font-size: 20px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.3s ease;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.15);
-    outline: none;
-}
-button:focus{
-    outline: none;
-    border: none;
-}
-/* White Button */
-.customBtn.btnLight{
-    background:#f5f5f5;
-    color:#c73c61;
-}
-
-.customBtn.btnlight i{
-    color:#2b8dbf;
-    font-size:26px;
-}
-
-/* Pink Gradient Button */
-.btnlight.active{
-    background:linear-gradient(135deg,#d83b6a,#b91d4f);
-    color:#fff;
-}
-/* .customBtn.btnGradient{
-    background:linear-gradient(135deg,#d83b6a,#b91d4f);
-    color:#fff;
-} */
-
-.customBtn.btnlight.active i{
-    color:#fff;
-    font-size:24px;
-}
-
-/* Hover Effect */
-.customBtn:hover{
-    transform:translateY(-3px);
-    box-shadow:0 12px 25px rgba(0,0,0,0.2);
-}
-
-    @keyframes zoomout {
-        0% {
-            transform: scale(1);
-        }
-    
-        50% {
-            transform: scale(2);
-            opacity: 0.7;
-        }
-    
-        100% {
-            transform: scale(1);
-        }
+    .pk-btn-outline {
+        border: 1.5px solid var(--pk-green);
+        color: var(--pk-green);
+        background: transparent;
+        margin-bottom: 10px;
     }
-    @media screen and (min-width: 767px) {
-        .col-sm-6 {
-            flex: 0 0 33% !important;
-            max-width: 33% !important;
-        }
-        .ss-1, .ss-2, .ss-3  {
-            margin-top: -70px;
-        }
-
-        .ss-2 .block-content {
-            margin-top: 75px;
-        }
+    .pk-card--dark .pk-btn-outline { border-color: var(--pk-cream-text); color: var(--pk-cream-text); }
+    .pk-btn-solid { background: var(--pk-green); color: var(--pk-cream-text); border: none; }
+    .pk-btn-solid-gold { background: var(--pk-gold); color: var(--pk-green); border: none; }
+    .pk-card-active-badge {
+        display: inline-block;
+        background: var(--pk-gold);
+        color: var(--pk-green);
+        font-size: 11px;
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 99px;
+        margin-bottom: 10px;
     }
-    @media (max-width: 767px) {
-        .package-tabs .tab-btn {
-            padding: 12px 24px;
-            font-size: 13px;
-            width: 100%;
-            justify-content: center;
-        }
-        .package-tabs { 
-        margin-bottom: 1rem; 
+    .pk-card-expiry { font-size: 12px; color: var(--pk-terracotta); margin-top: 8px; }
+    .pk-empty { text-align: center; color: var(--pk-text); padding: 30px 0; }
+
+    /* ============ Consultation + payment ============ */
+    .pk-consult {
+        padding: 64px 56px;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 40px;
+    }
+    .pk-consult-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 2px 14px rgba(18,58,46,0.06);
+    }
+    .pk-video-row {
+        background: var(--pk-sand);
+        border-radius: 12px;
+        padding: 18px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 12px;
         flex-wrap: wrap;
     }
-    .buttonWrapper {
-    display: flex;
-    gap: 25px;
-    margin-bottom: 29px !important;
-}
-
-
-    }
-
-
-
-
-    
-      .online-service .container {
-        max-width: 1000px;
-        margin: 0 auto;
-      }
-      .online-service .card {
-        background: #fff;
-        border-radius: 16px;  
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.04);
-    overflow: hidden;
-    border: 1px solid rgba(0, 0, 0, 0.06); 
-      }
-      .online-service .card-header {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    .pk-video-row .vt { font-weight: 700; font-size: 14.5px; }
+    .pk-video-row .vs { font-size: 12.5px; color: var(--pk-text); }
+    .pk-video-row .price { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; color: var(--pk-green); }
+    .pk-consult-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .pk-btn-appt { background: var(--pk-green); color: var(--pk-cream-text); font-weight: 700; font-size: 13.5px; padding: 13px 24px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; }
+    .pk-btn-wa { background: #25D366; color: #fff; font-weight: 700; font-size: 13.5px; padding: 13px 24px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; }
+    .pk-payment-card {
+        background: var(--pk-green);
+        border-radius: 18px;
+        padding: 32px;
         color: #fff;
-        padding: 1.5rem 1.75rem;
-      }
-      .online-service .card-header h5 {
-        margin: 0;
-        font-size: 1.35rem;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-      .online-service .search-wrap {
-        padding: 1.25rem 1.75rem;
-        border-bottom: 1px solid #e2e8f0;
-        background: #f8fafc;
-      }
-      .online-service .search-box {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        background: #fff;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 0.65rem 1rem;
-        transition:
-          border-color 0.2s,
-          box-shadow 0.2s;
-      }
-      .online-service .search-box:focus-within {
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-      }
-      .online-service .search-box svg {
-        flex-shrink: 0;
-        color: #64748b;
-      }
-      .online-service .search-box input {
-        flex: 1;
-        border: none;
-        outline: none;
-        font-size: 0.95rem;
-        font-family: inherit;
-        color: #0f172a;
-      }
-      .online-service .search-box input::placeholder {
-        color: #94a3b8;
-      }
-      .online-service .contentWrap {
-        padding: 1.75rem 1.75rem 1.5rem;
-        color: #334155;
-        font-size: 0.9375rem;
-        line-height: 1.7;
-        text-align: left !important;
-      }
-      .online-service .contentWrap .lead {
-        color: #475569;
-        margin-bottom: 1rem;
-      }
-      .online-service .contentWrap h6 {
-        color: #0f172a;
-        font-size: 1rem;
-        font-weight: 600;
-        margin: 1.25rem 0 0.5rem;
-      }
-      .online-service .contentWrap ul {
-        margin: 0.5rem 0 0 1.25rem;
-        padding: 0;
-        list-style: none;
-      }
-      .online-service .contentWrap ul li {
-        position: relative;
-        padding-left: 1.25rem !important;
-        /* margin-bottom: 0.5rem !important; */
-        padding-top: 0 !important;
-    text-align: left !important;
-    color: #0000009c !important;
-      }
-      .online-service .contentWrap ul li::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0.5rem;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #3b82f6;
-      }
-      .online-service .contentWrap .note {
-        background: #fef3c7;
-        border-left: 4px solid #f59e0b;
-        padding: 0.875rem 1rem;
-        margin: 1rem 0;
-        border-radius: 0 8px 8px 0;
-        font-size: 0.9rem;
-        color: #92400e;
-      }
-      .online-service .contentWrap .highlights {
-        margin-top: 1rem;
-      }
-      .online-service .read-more-wrap {
-        margin-top: 1.25rem;
-        text-align: center;
-      }
-      .online-service .read-more-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: black !important;
-        background: #00000008;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem 0.75rem;
-        border-radius: 8px;
-        font-family: inherit;
-        transition:
-          background 0.2s,
-          color 0.2s;
-      }
-      .online-service .read-more-btn:hover {
-        background: #eff6ff;
-        color: #2563eb;
-      }
-      .online-service .read-more-btn .chevron {
-        transition: transform 0.25s ease;
-      }
-      .online-service .content-full {
-        display: none;
-      }
-      .online-service .content-full.is-open {
-        display: block;
-      }
-      .online-service p.lead.content-preview{
-        color: black !important;
-      }
-      .online-service .content-preview {
-        display: block;
-      }
-      .online-service .content-preview.is-hidden {
-        display: block;
-      }
-      .online-service .card + .card {
-        margin-top: 2rem;
-      }
-      .online-service .personalized-card .card-header {
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-      }
-      .online-service .personalized-card .contentWrap li::before {
-        background: #7c3aed;
-      }
-      .online-service .personalized-card .read-more-btn {
-        color: #7c3aed;
-      }
-      .online-service .personalized-card .read-more-btn:hover {
-        background: #f5f3ff;
-        color: #6d28d9;
-      }
-      .online-service .personalized-card .search-box:focus-within {
-        border-color: #7c3aed;
-        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
-      }
-      .online-service .contentWrap .quote {
-        font-style: italic;
-        color: #64748b;
-        margin: 0.75rem 0;
-        padding-left: 1rem;
-        border-left: 3px solid #e2e8f0;
-      }
-      .online-service .contentWrap .payment-box {
-        background: #f1f5f9;
-        border-radius: 10px;
-        padding: 1rem 1.25rem;
-        margin: 1rem 0;
-        font-size: 0.9rem;
-        color: #334155;
-      }
-      .online-service .contentWrap .payment-box strong {
-        color: #0f172a;
-      }
-      .online-service .contentWrap .check {
-        color: #059669;
-        margin-right: 0.35rem;
-      }
-      p.content-preview,
-      .contentWrap p {
-    color: #0000009c !important;
-}
-.paymantBox-details {
-    display: flex;
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 20px;
-    max-width: 100%;
-    justify-content: space-between;
-}
-.paymantBox-details .payment-box {
-    max-width: 100%;
-    width: 48%;
-}
-
-@media (max-width: 567px) { 
-    .paymantBox-details .payment-box {
-        width: 100%;
     }
-    .paymantBox-details {
-        flex-direction: column; 
-    width: 100%; 
-    gap: 0;
-    max-width: 100%; 
-    margin-bottom: 0 !IMPORTANT;
-}
-}
-.personalised-btn{
-  pointer-events: none;
-}
+    .pk-payment-card .pt { font-weight: 700; font-size: 15px; margin-bottom: 18px; }
+    .pk-payment-card .pl { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--pk-gold); text-transform: uppercase; margin-bottom: 8px; }
+    .pk-payment-card .pd { font-size: 13px; line-height: 1.9; color: var(--pk-cream-text-2); margin-bottom: 16px; }
+    .pk-payment-card .pd:last-child { margin-bottom: 0; }
 
+    /* ============ Service comparison ============ */
+    .pk-compare { padding: 64px 56px; }
+    .pk-compare-head { text-align: center; max-width: 560px; margin: 0 auto 40px; }
+    .pk-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1080px; margin: 0 auto; }
+    .pk-compare-card { border-radius: 18px; padding: 32px; }
+    .pk-compare-card.light { background: #fff; }
+    .pk-compare-card.dark { background: var(--pk-green); color: #fff; }
+    .pk-compare-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+    .pk-compare-card.light .pk-compare-icon { background: var(--pk-cream-text); }
+    .pk-compare-card.dark .pk-compare-icon { background: rgba(255,255,255,0.12); }
+    .pk-compare-title { font-family: 'Playfair Display', Georgia, serif; font-size: 21px; font-weight: 600; margin-bottom: 10px; }
+    .pk-compare-title span { font-size: 12px; font-family: 'Manrope', sans-serif; font-weight: 700; color: var(--pk-text); }
+    .pk-compare-card.dark .pk-compare-title span { color: var(--pk-cream-text-2); }
+    .pk-compare-card p { font-size: 13.5px; line-height: 1.7; margin: 0 0 14px; }
+    .pk-compare-card.light p { color: var(--pk-text); }
+    .pk-compare-card.dark p { color: var(--pk-cream-text-2); }
+    .pk-discount-pill { background: var(--pk-sand); border-radius: 8px; padding: 10px 14px; font-size: 12.5px; font-weight: 700; color: #7A5A22; margin-bottom: 18px; display: inline-block; }
+    .pk-compare-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; font-size: 12.5px; color: var(--pk-cream-text); }
+    .pk-cta-outline, .pk-cta-solid {
+        display: block; text-align: center; font-weight: 700; font-size: 13.5px; padding: 12px; border-radius: 10px;
+    }
+    .pk-cta-outline { border: 1.5px solid var(--pk-green); color: var(--pk-green); }
+    .pk-compare-card.dark .pk-cta-solid { background: var(--pk-gold); color: var(--pk-green); }
 
+    /* ============ Why choose us + Final CTA ============ */
+    .pk-why { padding: 64px 56px; text-align: center; }
+    .pk-why p { font-size: 14.5px; line-height: 1.75; color: var(--pk-text); max-width: 640px; margin: 0 auto; }
+    .pk-final-cta { background: var(--pk-green); padding: 56px 56px; text-align: center; }
+    .pk-final-cta h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 30px; font-weight: 600; color: #fff; margin: 0 0 12px; }
+    .pk-final-cta p { font-size: 14.5px; color: var(--pk-cream-text-2); max-width: 440px; margin: 0 auto 24px; }
+    .pk-final-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .pk-final-actions .solid { background: var(--pk-gold); color: var(--pk-green); font-weight: 700; font-size: 14px; padding: 14px 28px; border-radius: 99px; }
+    .pk-final-actions .outline { border: 1.5px solid var(--pk-cream-text); color: var(--pk-cream-text); font-weight: 700; font-size: 14px; padding: 14px 28px; border-radius: 99px; }
 
+    @media (max-width: 900px) {
+        .pk-wrap, .pk-intro, .pk-pkg-section, .pk-consult, .pk-compare { padding-left: 24px; padding-right: 24px; }
+        .pk-intro, .pk-consult, .pk-compare-grid { grid-template-columns: 1fr; }
+        .pk-hero { padding: 48px 20px 36px; }
+        .pk-final-cta { padding: 48px 24px; }
+    }
 
-     
+    /* ============ FOOTER (page-scoped: keep the deep-green footer) ============ */
+    body.page-packages .footer,
+    body.page-packages .footer-top,
+    body.page-packages .footer-bottom {
+        background: #0F2E24 !important;
+        color: #B9C7BF;
+        border-color: rgba(255,255,255,0.08) !important;
+    }
+    body.page-packages .footer .heading { color: #fff !important; }
+    body.page-packages .footer .footer-links > li > a { color: #B9C7BF !important; }
+    body.page-packages .footer-bottom .copyright,
+    body.page-packages .footer-bottom .copyright a { color: #B9C7BF !important; }
+    body.page-packages .ur-footer-touch,
+    body.page-packages .ur-footer-touch a { color: #B9C7BF !important; }
 </style>
 
+<div class="pk-page">
 
-<section class="page-title page-title--style-1 ss-banner">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-12 text-center">
-                <span class="pri">Pricing</span>
-                <h1 class="heading heading-1 strong-700 mb-0">Get Started <br>Pick your Plan Now</h1>
-                <p>Your Journey To Love Starts With The Perfect Package.</p>
-                <span class="nocre">No credit card required</span>
-            </div>
-        </div>
+<!-- 1. HERO -->
+<section class="pk-hero">
+    <div class="pk-hero-badge">Pricing</div>
+    <h1>Pick the Plan That Fits<br>Your <em>Journey to Forever</em></h1>
+    <p>Two ways to search — go at your own pace with Online Services, or let our matchmakers lead with Personalized Service. No credit card required to get started.</p>
+    <div class="pk-hero-trust">
+        <div><span>✓</span> No credit card required</div>
+        <div><span>✓</span> Personalised service available</div>
+        <div><span>✓</span> Cancel anytime</div>
     </div>
 </section>
+
 @php
     $standardPackages = $standardPackages ?? collect();
     $premiumPackages = $premiumPackages ?? collect();
@@ -560,386 +398,171 @@ button:focus{
     if ($standardPackages->isEmpty() && $premiumPackages->isEmpty()) {
         $standardPackages = collect($packages ?? []);
     }
+    $planTaglines = [
+        'Platinum' => 'Guided search, weekly matches',
+        'Diamond' => 'Priority matchmaker attention',
+        'Royal' => 'CEO-overseen, confidential search',
+        'Imperial' => 'Our most exclusive, full-service tier',
+    ];
 @endphp
-<section class="slice sct-color-1 pricing-plans pricing-plans--style-1 has-bg-cover bg-size-cover" style=" background-position: bottom bottom;">
-    <div class="container ss-container mt-5">
-        <span class="clearfix"></span>
 
-        <div class="package-tabs buttonWrapper" role="tablist">
-            <!-- <button type="button" class="tab-btn active customBtn btnlight" data-tab="online" role="tab" aria-selected="true">
-            <i class="fa-solid fa-globe"></i>
-            Online Services
-            </button> -->
-            <button type="button" class="tab-btn customBtn btnlight mt-2 personalised-btn" data-tab="premium" role="tab" aria-selected="true">
-            <i class="fa-solid fa-gem"></i>
-            Personalised Service
-            </button>
-        </div>
-
-        <div id="tab-online" class="package-tab-panel " role="tabpanel">
-        <div class="package-section-online">
-        <div class="row justify-content-center">
-            <div class="col-12 text-center mb-3">
-                
-<div class="online-service">
-      <div class="container">
-        <div class="card">
-          <div class="contentWrap">
-          <h2 class="heading heading-3 strong-600 col-black package-section-title text-left mb-4">Online Services: Take Control of Your Journey</h2>
-            <p class=" content-preview" id="preview">
-              Our Online Service is a self-managed platform designed for those
-              who prefer to explore and connect at their own pace. This
-              automated service empowers you to find your perfect match using
-              our advanced search tools.
-            </p>
-
-            <div class="content-full" id="fullContent">
-              <h6>How it Works:</h6>
-              <ul>
-                <li>
-                  <strong>Self-Exploration:</strong> Upon account activation,
-                  you gain full access to our extensive database. You can search
-                  for profiles based on your specific preferences (Education,
-                  Cast, City, etc.) by yourself.
-                </li>
-                <li>
-                  <strong>Direct Interaction:</strong> You can send 'Interests'
-                  to profiles that catch your eye. Once your interest is
-                  accepted, you can initiate direct communication with the other
-                  party.
-                </li>
-                <li>
-                  <strong>Tiered Access:</strong> Your search and
-                  interest-sending limits are defined by your chosen
-                  Subscription Package.
-                </li>
-                <li>
-                  <strong>Premium Profiles:</strong> Access to our most elite
-                  and verified premium profiles is exclusively reserved for our
-                  top-tier package holders.
-                </li>
-              </ul>
-
-              <h6>Important Note:</h6>
-              <div class="note">
-                Please Note: This is a DIY (Do-It-Yourself) service. Our
-                dedicated matchmaking team does not personally suggest or find
-                matches for you in this plan. From profile signup to final
-                contact, you have the freedom and responsibility to manage your
-                own search journey.
-              </div>
-
-              <h6>Key Highlights for Your Website:</h6>
-              <ul class="highlights">
-                <li>
-                  <strong>Full Privacy Control:</strong> Manage who sees your
-                  profile.
-                </li>
-                <li>
-                  <strong>Instant Connectivity:</strong> No middleman; connect
-                  as soon as there is mutual interest.
-                </li>
-                <li>
-                  <strong>Flexible Packages:</strong> Choose a plan that fits
-                  your search frequency.
-                </li>
-              </ul>
-            </div>
-
-            <div class="read-more-wrap">
-              <button
-                type="button"
-                class="read-more-btn"
-                id="toggleBtn"
-                aria-expanded="false"
-              >
-                <span class="btn-text">Read more</span>
-                <svg
-                  class="chevron"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div> 
-      </div>
+<!-- 2. TABS -->
+<div class="pk-tabs-wrap">
+    <div class="pk-tabs" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="online" role="tab" aria-selected="true">📱 Online Services</button>
+        <button type="button" class="tab-btn" data-tab="premium" role="tab" aria-selected="false">🤝 Personalized Service</button>
+    </div>
 </div>
+
+<div id="tab-online" class="package-tab-panel active" role="tabpanel">
+
+    <!-- 3. ONLINE SERVICES INTRO -->
+    <div class="pk-intro">
+        <div>
+            <div class="pk-eyebrow">Take Control of Your Journey</div>
+            <h2 class="pk-h2">Online Services: search at your own pace</h2>
+            <p class="pk-lead">A self-managed platform for those who prefer to explore and connect independently. Search our full database, send interests, and connect directly once matched.</p>
+            <div class="pk-note">This is a DIY plan — our matchmaking team doesn't personally suggest matches here. From signup to contact, you manage your own search.</div>
+        </div>
+        <div>
+            <div class="pk-side-title">How it works</div>
+            <div class="pk-check-cards">
+                <div class="pk-cc"><span class="em">✅</span><div class="txt"><b>Self-exploration</b> — full access to search by education, caste, city &amp; more</div></div>
+                <div class="pk-cc"><span class="em">✅</span><div class="txt"><b>Direct interaction</b> — send interests, chat once accepted</div></div>
+                <div class="pk-cc"><span class="em">✅</span><div class="txt"><b>Tiered access</b> — limits set by your chosen package</div></div>
+                <div class="pk-cc"><span class="em">✅</span><div class="txt"><b>Premium profiles</b> — reserved for top-tier package holders</div></div>
             </div>
         </div>
+    </div>
+
+    <!-- ONLINE PACKAGES -->
+    <div class="pk-pkg-section">
         @if(!$standardPackages->isEmpty())
-        <div class="row justify-content-center">
+        <div class="pk-pkg-grid">
             @foreach ($standardPackages as $package)
             @if($package->dataid!="99")
-            <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12 ss-{{$loop->iteration}} ss mt-2">
-                <div class="feature feature--boxed-border feature--bg-2 active ss-package_bg ss-online height">
-                    <div class="icon-block--style-1-v5 text-center">
-                        <div class="block-icon c-gray-dark">
-                            <li style="list-style-type: none;">
-                                @php
-                                    $imgPath = '/images/package_'.$package->dataid.'.png';
-                                    if (!file_exists(public_path($imgPath))) $imgPath = '/images/package_10.png';
-                                    $meta = method_exists($package, 'meta') ? $package->meta() : [];
-                                @endphp
-                                <img src="{{ $imgPath }}" class="img-sm" height="100">
-                            </li>
-                        </div>
-                        {{--
-                            NOTE:
-                            Do NOT use HTML comments to "disable" Blade expressions.
-                            Blade still evaluates {{ ... }} inside <!-- ... --> which can crash the page.
-
-                            Old offline package markup removed from here.
-                        --}}
-                        <div class="block-content mt-3">
-                            @if($userHasActiveOnlinePackage && $userOnlinePackageDataid === $package->dataid)
-                            <div class="package-active-badge">Current plan</div>
-                            <div class="package-expiry-text">Expires: {{ $userOnlineExpiresAtFormatted }}</div>
-                            @endif
-                            <h3 class="col-black heading heading-5 strong-500 mb-2"><strong>{{ $package->name }}</strong></h3>
-                            @if(!empty($meta) && isset($meta['price']))
-                                <div class="price-tag col-black" style="font-size: 20px;">
-                                    {{ $meta['currency'] ?? 'USD' }} {{ number_format((float)$meta['price'], 2) }}
-                                    <span class="c-gray-light" style="font-size: 14px;">/ {{ $meta['duration_label'] ?? '' }}</span>
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="py-2 text-center mb-2">
-                                <a href="{{ url('package-details/'.$package->id) }}" class="btn btn-styled btn-sm btn-base-1 btn-outline btn-circle">
-    View Package Details
-</a>
-                                @auth
-                                    @if($userHasActiveOnlinePackage)
-                                        <p class="package-expiry-text mt-2 mb-0">Subscribe again after {{ $userOnlineExpiresAtFormatted }}</p>
-                                    @else
-                                        <a href="{{ route('packages.checkout', ['id' => $package->id]) }}" class="btn btn-styled btn-sm btn-base-1 btn-circle mt-2">
-                                            Buy Now
-                                        </a>
-                                    @endif
-                                @else
-                                    <a href="{{ url('login') }}" class="btn btn-styled btn-sm btn-base-1 btn-circle mt-2">
-                                        Login to Buy
-                                    </a>
-                                @endauth
-
-                            </div>
-                    </div>
-                </div>
+            @php
+                $meta = method_exists($package, 'meta') ? $package->meta() : [];
+                $isCurrent = $userHasActiveOnlinePackage && $userOnlinePackageDataid === $package->dataid;
+            @endphp
+            <div class="pk-card">
+                @if($isCurrent)
+                <div class="pk-card-active-badge">Current Plan</div>
+                @endif
+                @if(!empty($meta) && isset($meta['duration_label']))
+                <div class="pk-card-eyebrow">{{ $meta['duration_label'] }}</div>
+                @endif
+                @if(!empty($meta) && isset($meta['price']))
+                <div class="pk-card-price">{{ $meta['currency'] ?? 'USD' }} {{ number_format((float)$meta['price'], 2) }}</div>
+                <div class="pk-card-sub">{{ $package->name }}</div>
+                @else
+                <div class="pk-card-price">{{ $package->name }}</div>
+                @endif
+                <div class="pk-card-divider"></div>
+                <a href="{{ url('package-details/'.$package->id) }}" class="pk-btn-outline">View Details</a>
+                @auth
+                    @if($userHasActiveOnlinePackage)
+                        <div class="pk-card-expiry">{{ $isCurrent ? 'Expires: '.$userOnlineExpiresAtFormatted : 'Subscribe again after '.$userOnlineExpiresAtFormatted }}</div>
+                    @else
+                        <a href="{{ route('packages.checkout', ['id' => $package->id]) }}" class="pk-btn-solid">Buy Now</a>
+                    @endif
+                @else
+                    <a href="{{ url('login') }}" class="pk-btn-solid">Log In to Buy</a>
+                @endauth
             </div>
             @endif
             @endforeach
         </div>
         @else
-        <p class="text-center text-muted py-4">No online packages available at the moment.</p>
+        <p class="pk-empty">No online packages available at the moment.</p>
         @endif
-        </div>
-        </div>
-        </div>
+    </div>
+</div>
 
-        <div id="tab-premium" class="package-tab-panel active" role="tabpanel">
-        <div class="package-section-admin">
-        <div class="row justify-content-center">
-            <div class="col-12 text-center mb-3">
-                
-                <!-- <p class="package-section-desc">Assigned by admin (e.g. Platinum, Diamond, Royal, Sovereign Matchmaking). These define which Soul Mate categories you can search. Contact admin to get a package assigned.</p> -->
+<div id="tab-premium" class="package-tab-panel" role="tabpanel">
 
-<div class="online-service">
-      <div class="container">
-        <!-- Personalized (Confidential) Service -->
-        <div class="card personalized-card">
-          <div class="contentWrap">
-          <h2 class="heading heading-3 strong-600 col-black package-section-title text-left mb-4">Personalized (Confidential) Service: Expert Matchmaking</h2>
-
-            <p class=" content-preview" id="preview2">
-              Our Personalized Service is a premium, high-touch experience
-              designed for those who value privacy, accuracy, and expert
-              guidance. Here, we don't just provide a platform; we provide a
-              Dedicated Matchmaking Partner.
-            </p>
-            <div class="content-full" id="fullContent2">
-              <h6>Our Exclusive Process</h6>
-              <ul>
-                <li>
-                  <strong>Complete Confidentiality:</strong> We handle your
-                  profile with the utmost discretion. Your information is never
-                  made public and is only shared with potential matches after
-                  your explicit approval.
-                </li>
-                <li>
-                  <strong>Profile Assessment:</strong> Upon receiving your
-                  details and requirements, our experts carefully review them.
-                  We believe in transparency—if we feel we can successfully find
-                  a match, we proceed; otherwise, we offer an immediate and
-                  respectful apology to save your time.
-                </li>
-                <li>
-                  <strong>Curated Matching:</strong> If a suitable match is
-                  available in our exclusive database, we guide you through
-                  every step, from introduction to family meetings.
-                </li>
-                <li>
-                  <strong>Tailored Plans:</strong> Our personalized service
-                  offers various premium plans, each designed to cater to your
-                  specific demands, lifestyle, and preferences.
-                </li>
-              </ul>
-              <h6>Why Choose This?</h6>
-              <p>
-                <strong>Maximum Results, Minimum Effort:</strong> This service
-                is ideal for busy professionals and elite families. We do the
-                manual searching, screening, and coordination so you can focus
-                on making the right decision.
-              </p>
-              <h6>Private &amp; Targeted Search</h6>
-              <div class="note">
-                We understand that many families prefer a discreet approach
-                without any public advertisement. You desire a match that aligns
-                perfectly with your values and mindset. To honor this, we offer
-                <strong>Special Executive Plans</strong> where our CEO
-                personally oversees the search based on your criteria. Our
-                expert team takes the time to deeply understand your specific
-                demands, ensuring we find a match that truly fits your family's
-                vision.
-              </div>
-              <p class="quote">
-                Great matches are not based on status or education—they are
-                built on understanding and compatibility.
-              </p>
-              <p>
-                Our experienced consultants take the time to speak with you,
-                understand your personality, and then share carefully selected
-                profiles that truly match your preferences.
-              </p>
-              <h6>Consultation Services Available</h6>
-              <p>
-                Senior marriage consultants are available for both office
-                appointments and scheduled call sessions.
-              </p>
-              <p class="note">
-                📌 Please note: Calls are only accepted with prior booking.
-              </p>
-              <h6>How Our Service Works</h6>
-              <ul>
-                <li>
-                  Our team can guide you through the entire process via an
-                  online or physical appointment.
-                </li>
-                <li>
-                  Once you book your appointment, our consultants will explain
-                  how our service works and assist you step by step.
-                </li>
-                <li>
-                  <span class="check">✅</span> After booking, our team will
-                  contact you directly within 24 to 48 hours.
-                </li>
-              </ul>
-              <p>
-                Book your consultation today and take the first step toward
-                finding the right match.
-              </p>
-              <h6>Video Session Booking</h6>
-              <p>
-                A video consultation session can be booked for
-                <strong>Rs. 2000</strong>. If you are genuinely interested,
-                please book a session to:
-              </p>
-              <ul>
-                <li>View suitable profiles</li>
-                <li>Communicate directly with compatible matches</li>
-              </ul>
-              <h6>Payment Details</h6>
-              <div class="paymantBox-details">
-              <div class="payment-box">
-                <strong>Bank Transfer</strong><br />
-                Account Title: Urgent Rishta<br />
-                Bank: UBL<br />
-                IBAN: PK98UNIL0109000343139629
-              </div>
-              <div class="payment-box">
-                <strong>Easypaisa / JazzCash</strong><br />
-                Mobile Number: 03040227000<br />
-                Account Name: Usman Zaheer
-              </div>
-              </div>
-            </div>
-            <div class="read-more-wrap">
-              <button
-                type="button"
-                class="read-more-btn"
-                id="toggleBtn2"
-                aria-expanded="false"
-              >
-                <span class="btn-text">Read more</span>
-                <svg
-                  class="chevron"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                >
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-                        </div>
+    <!-- 4. PERSONALIZED SERVICE INTRO -->
+    <div class="pk-intro" style="background:#EFE7D6;">
+        <div>
+            <div class="pk-eyebrow">Expert Matchmaking</div>
+            <h2 class="pk-h2">Personalized (Confidential) Service</h2>
+            <p class="pk-lead">A premium, high-touch experience for those who value privacy, accuracy and expert guidance — with a dedicated matchmaking partner, not just a platform.</p>
+            <div class="pk-icon-lines">
+                <div><span class="em">🔒</span><div class="txt"><b>Complete confidentiality</b> — shared only after your approval</div></div>
+                <div><span class="em">🔍</span><div class="txt"><b>Profile assessment</b> — honest, transparent feedback before we proceed</div></div>
+                <div><span class="em">💍</span><div class="txt"><b>Curated matching</b> — guided from introduction to family meetings</div></div>
+                <div><span class="em">📋</span><div class="txt"><b>Tailored plans</b> — designed around your demands, lifestyle &amp; preferences</div></div>
             </div>
         </div>
+        <div class="pk-dark-box">
+            <div class="pk-db-title">Private &amp; Targeted Search</div>
+            <p>For families who prefer discretion without public advertisement, our <strong>Special Executive Plans</strong> are personally overseen by our CEO — matched to your family's values and vision.</p>
+            <p class="pk-quote">&ldquo;Great matches are not based on status or education — they are built on understanding and compatibility.&rdquo;</p>
+        </div>
+    </div>
+
+    <!-- PERSONALIZED PACKAGES -->
+    <div class="pk-pkg-section" style="background:#EFE7D6;">
         @if(!$premiumPackages->isEmpty())
-        <div class="container ss-container mt-2 ">
-        <div class="row justify-content-center">
+        <div class="pk-pkg-grid">
             @foreach ($premiumPackages as $package)
             @if($package->dataid!="99")
             @php
                 $imgPath = '/images/package_'.$package->dataid.'.png';
                 if (!file_exists(public_path($imgPath))) $imgPath = '/images/package_10.png';
+                $isExecutive = trim($package->name) === 'Royal';
+                $tagline = $planTaglines[trim($package->name)] ?? 'Dedicated matchmaker & priority introductions';
             @endphp
-            <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12 ss-{{$loop->iteration}} ss mt-2">
-                <div class="feature feature--boxed-border feature--bg-2 active ss-package_bg ss-admin  height">
-                    <div class="icon-block--style-1-v5 text-center">
-                        <div class="block-icon c-gray-dark">
-                            <li style="list-style-type: none;">
-                                <img src="{{ $imgPath }}" class="img-sm" height="100">
-                            </li>
-                        </div>
-                        <div class="block-content mt-3">
-                            <h3 class="col-black heading heading-5 strong-500 mb-2"><strong>{{ $package->name }}</strong></h3>
-                        </div>
-                        <div class="py-2 text-center mb-2">
-                            <a href="{{ url('package-details/'.$package->id) }}" class="btn btn-styled btn-sm btn-base-1 btn-outline btn-circle">
-                                View Package Details
-                            </a>
-                        </div>
-                    </div>
-                </div>
+            <div class="pk-card {{ $isExecutive ? 'pk-card--dark' : '' }}">
+                @if($isExecutive)
+                <div class="pk-card-ribbon">EXECUTIVE PICK</div>
+                @endif
+                <div class="pk-card-img"><img src="{{ $imgPath }}" alt="{{ $package->name }}"></div>
+                <div class="pk-card-name">{{ $package->name }}</div>
+                <div class="pk-card-tag">{{ $tagline }}</div>
+                <a href="{{ url('package-details/'.$package->id) }}" class="{{ $isExecutive ? 'pk-btn-solid-gold' : 'pk-btn-outline' }}" style="margin-bottom:0;">View Package Details</a>
             </div>
             @endif
             @endforeach
         </div>
+        <div style="text-align:center;font-size:12.5px;color:#5B6560;margin-top:16px;">Pricing for Personalized packages is shared during your consultation.</div>
         @else
-        <p class="text-center text-muted py-4">No premium packages available at the moment.</p>
+        <p class="pk-empty">No premium packages available at the moment.</p>
         @endif
+    </div>
+
+    <!-- 6. CONSULTATION + PAYMENT -->
+    <div class="pk-consult">
+        <div class="pk-consult-card">
+            <div class="pk-eyebrow">Consultation Services</div>
+            <div class="pk-h2" style="font-size:24px;">Speak with a senior marriage consultant</div>
+            <p class="pk-lead">Available for both office appointments and scheduled calls. Calls are only accepted with prior booking — after booking, our team contacts you within 24&ndash;48 hours.</p>
+            <div class="pk-video-row">
+                <div>
+                    <div class="vt">Video Session Booking</div>
+                    <div class="vs">View suitable profiles &amp; connect directly</div>
+                </div>
+                <div class="price">Rs. 2,000</div>
+            </div>
+            <div class="pk-consult-actions">
+                <a href="{{ url('appointments') }}" class="pk-btn-appt"><i class="fa-solid fa-calendar-check"></i> Book Appointment</a>
+                <a href="https://wa.me/923040227000" target="_blank" rel="noopener" class="pk-btn-wa"><i class="fa-brands fa-whatsapp"></i> WhatsApp Us</a>
+            </div>
         </div>
-        </div>
-        </div>
+        <div class="pk-payment-card">
+            <div class="pt">Payment Details</div>
+            <div class="pl">Bank Transfer</div>
+            <div class="pd">Account Title: Urgent Rishta<br>Bank: UBL<br>IBAN: PK98UNIL0109000343139629</div>
+            <div class="pl">Easypaisa / JazzCash</div>
+            <div class="pd">Mobile: 0304 0227000<br>Account Name: Usman Zaheer</div>
         </div>
     </div>
-</section>
+</div>
 
+<!-- Tab switcher -->
 <script>
 (function() {
-    var tabBtns = document.querySelectorAll('.package-tabs .tab-btn');
+    var tabBtns = document.querySelectorAll('.pk-tabs .tab-btn');
     var panels = document.querySelectorAll('.package-tab-panel');
     tabBtns.forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -954,194 +577,61 @@ button:focus{
     });
 })();
 </script>
-   
-     <div class="home-tit" style="background: black; margin-bottom:0;">
-                        <p></p>
-                        <h2><span>Our Services</span></h2>
 
-                    </div>
-    
-<div class="match-buttons">
-    
-  <a href="#" class="match-btn digital-match" onclick="openPopupDetail()">Digital Match (Online Services)</a>
-  <a href="#" class="match-btn personal-match" onclick="openPopupOffline()">Personal Match (Offline Service)</a>
+<!-- 7. SERVICE COMPARISON -->
+<div class="pk-compare" style="background:#EFE7D6;">
+    <div class="pk-compare-head">
+        <div class="pk-eyebrow">Our Services</div>
+        <h2 class="pk-h2" style="font-size:32px;">Digital Match vs. Personal Match</h2>
+    </div>
+    <div class="pk-compare-grid">
+        <div class="pk-compare-card light">
+            <div class="pk-compare-icon">📱</div>
+            <div class="pk-compare-title">Digital Match <span>(Online)</span></div>
+            <p>Create your profile, choose a plan, and see matches based on your preferences. Express interest — if accepted, connect directly.</p>
+            <div class="pk-discount-pill">🎉 50% launch discount available</div>
+            <a href="https://urgentrishta.co/packages" class="pk-cta-outline">I'm Interested</a>
+        </div>
+        <div class="pk-compare-card dark">
+            <div class="pk-compare-icon">🤝</div>
+            <div class="pk-compare-title">Personal Match <span>(Offline)</span></div>
+            <p>Four exclusive services: private database access, weekly curated matches, a daily broadcast list, and video consultations.</p>
+            <div class="pk-compare-list">
+                <div>✓ Exclusive private-database access</div>
+                <div>✓ Personalized weekly matches</div>
+                <div>✓ Daily broadcast list</div>
+                <div>✓ Video consultation sessions</div>
+            </div>
+            <a href="http://urgentrishta.wedlock204.com" class="pk-cta-solid">I'm Interested</a>
+        </div>
+    </div>
 </div>
 
-<!-- Popup Modal -->
-<div id="popup-modal-detail" class="popup-overlay">
-<span class="close-btn" onclick="closePopupDetail()">&times;</span>
-  <div class="popup-content">
-    <h2>Digital Match (Online Services)</h2>
-    <p>With our online service, clients create their own profiles and choose a plan according to their preferences. Based on the selected plan, they will see potential matches. They can express interest in a match, and if the other party accepts, both will be able to connect.</p>
-    
-    <p><strong>Special Offer:</strong> We are currently offering a <strong>50% discount</strong> on our website!</p>
-
-    <p>For the best results, we highly recommend uploading a profile picture, as it increases the chances of receiving better responses.</p>
-
-    
-    
-    <a href="https://urgentrishta.co/packages" class="popup-btn">I am Interested</a>
-  </div>
+<!-- 8. WHY CHOOSE US -->
+<div class="pk-why">
+    <div class="pk-eyebrow">Why Choose Us</div>
+    <h2 class="pk-h2">We stay with you until you succeed</h2>
+    <p>We never disappoint our clients! Unlike other services that show only a couple of proposals and disappear, we stay in touch with our clients and work continuously to find the perfect match based on their expectations. This level of commitment and service is unmatched — you won't find it anywhere else.</p>
 </div>
 
-<!-- Personal Match Popup -->
-<div id="popup-modal-offline" class="popup-overlay">
-  <div class="popup-content">
-    <span class="close-btn" onclick="closePopupOffline()">&times;</span>
-    <h2>Personal Match (Offline Service)</h2>
-    <p>In our offline service, we provide four exclusive matchmaking services based on the client’s selected plan. Unlike online services, no discounts are available for this premium matchmaking experience.</p>
-
-    <h3>1. Exclusive Access</h3>
-    <p>Clients receive a unique login with a username and password to a private database where they can view detailed profiles (excluding photos). If they find a suitable match, they provide us with a code, and we will share the picture separately.</p>
-
-    <h3>2. Personalized Weekly Matches</h3>
-    <p>Our expert team curates and sends weekly match suggestions tailored to the client’s preferences.</p>
-
-    <h3>3. Broadcast List</h3>
-    <p>Clients are added to our exclusive broadcast list, where they receive new proposals daily.</p>
-
-    <h3>4. Video Consultation</h3>
-    <p>We arrange video sessions to present multiple matchmaking options, ensuring a smooth and transparent process.</p>
-
-    <h2>Why Choose Us?</h2>
-    <p>We never disappoint our clients! Unlike other services that show only a couple of proposals and disappear, we stay in touch with our clients and work continuously to find the perfect match based on their expectations.</p>
-
-    <p><strong>This level of commitment and service is unmatched—you won’t find it anywhere else!</strong> So, get ready to enjoy a stress-free and professional matchmaking experience with us.</p>
-
-    <a href="http://urgentrishta.wedlock204.com" class="popup-btn">I am Interested</a>
-  </div>
+<!-- 9. FINAL CTA -->
+<div class="pk-final-cta">
+    <h2>Ready to begin your search?</h2>
+    <p>Choose Online Services to start today, or book a consultation for a fully guided experience.</p>
+    <div class="pk-final-actions">
+        @guest
+        @if (Route::has('register'))
+        <a href="{{ route('register') }}" class="solid">Register Free</a>
+        @endif
+        @endguest
+        @auth
+        <a href="{{ url('member/profile') }}" class="solid">My Profile</a>
+        @endauth
+        <a href="{{ url('appointments') }}" class="outline">Book a Private Consultation</a>
+    </div>
 </div>
-<style>
-.match-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  padding-top: 20px;
-  background: black;
-}
 
-a.match-btn.personal-match{
-  background-color: transparent;
-  color: #E91E63;
-  border:1px solid #E91E63;
-  padding: 12px 24px;
-  text-decoration: none;
-  font-size: 18px;
-  border-radius: 6px;
-  transition: 0.3s;
-}
-a.match-btn.personal-match:hover{
-    background-color:  #E91E63;
-  color: white;
-  border:1px solid #E91E63;
-}
-a.match-btn.digital-match{
-  background-color: #E91E63;
-  color: #fff;
-  padding: 12px 24px;
-  text-decoration: none;
-  font-size: 18px;
-  border-radius: 6px;
-  transition: 0.3s;
-}
-a.match-btn.digital-match:hover {
-  background-color: transparent;
-  color: #E91E63;
-  border:1px solid #E91E63;
-}
-
-@media (max-width: 768px) {
-  .match-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .match-btn {
-    width: 80%;
-    text-align: center;
-  }
-}
-
-.popup-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  justify-content: center;
-  align-items: center;
-}
-
-div#popup-modal-detail .popup-content, #popup-modal-offline .popup-content{
-  background: #fff;
-  padding: 20px;
-  width: 80%;
-  max-height:85vh;
-  max-width: 600px;
-  height: auto; 
-  overflow-y: auto;
-  border-radius: 8px;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-}
-div#popup-modal-detail .popup-content h2, div#popup-modal-detail .popup-content h3, #popup-modal-offline .popup-content h2, #popup-modal-offline .popup-content h3{
-    font-size: 20px;
-}
-
-div#popup-modal-detail .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 24px;
-  cursor: pointer;
-}
-
-div#popup-modal-detail .popup-btn, #popup-modal-offline .popup-btn{
-  display: inline-block;
-  background-color: #D10000;
-  color: #fff;
-  padding: 10px 20px;
-  margin-top: 15px;
-  text-decoration: none;
-  font-size: 16px;
-  border-radius: 5px;
-  transition: 0.3s;
-  text-align: center;
-}
-
-div#popup-modal-detail .popup-btn:hover, #popup-modal-offline .popup-btn:hover {
-  background-color: #E91E63;
-}
-.no-scroll {
-  overflow: hidden;
-  height: 100vh;
-}
-</style>
-
-<script>
-function openPopupDetail() {
-  document.getElementById("popup-modal-detail").style.display = "flex";
-  document.body.classList.add("no-scroll");
-}
-
-function closePopupDetail() {
-  document.getElementById("popup-modal-detail").style.display = "none";
-  document.body.classList.remove("no-scroll");
-}
-
-function openPopupOffline() {
-  document.getElementById("popup-modal-offline").style.display = "flex";
-  document.body.classList.add("no-scroll");
-}
-
-function closePopupOffline() {
-  document.getElementById("popup-modal-offline").style.display = "none";
-  document.body.classList.remove("no-scroll");
-}
-</script>
+</div><!-- /.pk-page -->
 
 @auth
     @if(empty(User::retrieveUserObject()->online_package))
@@ -1150,32 +640,6 @@ function closePopupOffline() {
                 swalAlert("info", "Select a Package", "Review packages available and contact Usman at 0304-0227000 for package activation.", null);
             });
         </script>
-        
     @endif
 @endauth
-
-
-
-
-<script>
-      (function () {
-        function setupToggle(btnId, fullId, previewId) {
-          var btn = document.getElementById(btnId);
-          var full = document.getElementById(fullId);
-          var preview = document.getElementById(previewId);
-          if (!btn || !full || !preview) return;
-          var btnText = btn.querySelector(".btn-text");
-          var chevron = btn.querySelector(".chevron");
-          btn.addEventListener("click", function () {
-            var isOpen = full.classList.toggle("is-open");
-            preview.classList.toggle("is-hidden", isOpen);
-            btn.setAttribute("aria-expanded", isOpen);
-            btnText.textContent = isOpen ? "Show less" : "Read more";
-            chevron.style.transform = isOpen ? "rotate(180deg)" : "rotate(0)";
-          });
-        }
-        setupToggle("toggleBtn", "fullContent", "preview");
-        setupToggle("toggleBtn2", "fullContent2", "preview2");
-      })();
-    </script>
 @endsection

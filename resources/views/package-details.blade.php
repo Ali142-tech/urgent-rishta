@@ -2,592 +2,517 @@
 
 @section('main-content')
 <style>
-/* General Styling */
-body {
-    font-family: 'Roboto', sans-serif;
-}
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
-}
+    body.page-package-details #main-content { background: #FBF7EF; }
 
-/* Card Styles */
-.card {
-    border-radius: 15px;
-    overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border: none;
-}
-
-.card-header {
-    background-color: #d71a44;
-    color: white;
-    font-size: 22px;
-    font-weight: bold;
-    text-align: center;
-    padding: 15px;
-    border-radius: 15px 15px 0 0;
-}
-
-.card-body ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.card-body ul li {
-    font-size: 16px;
-    padding: 10px 15px;
-    border-bottom: 1px solid #f1f1f1;
-    color: #555;
-}
-
-.card-body ul li strong {
-    color: #d71a44;
-}
-.card-body strong {
-    color: #d71a44;
-}
-.list-group-item:last-child {
-    border-bottom: none;
-}
-
-.btn-lg {
-    font-size: 18px;
-    padding: 12px 25px;
-    border-radius: 30px;
-}
-
-.bg-secondary {
-    background-color: #6c757d !important;
-    color: white;
-}
-
-.text-white {
-    color: #fff !important;
-}
-
-/* Banner Styling */
-.ss-banner {
-    background: linear-gradient(to right, #d71a44, #e94c5b);
-    color: white;
-    text-align: center;
-    padding: 100px 0;
-}
-
-.ss-banner h1 {
-    font-size: 40px;
-    font-weight: bold;
-}
-
-.ss-banner p {
-    font-size: 18px;
-    margin-top: 10px;
-}
-
-/* Scrollable Terms & Conditions Section */
-.scrollable-section {
-    max-height: 400px;
-    overflow-y: auto;
-    padding-right: 15px;
-    border: 1px solid #f1f1f1;
-    border-radius: 15px;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
-    background: #ffffff;
-}
-</style>
-<style>
-    .ss-banner {
-        padding: 183px 0px 50px !important;
-        border-bottom: 1px solid #f2f2f2;
-        color: rgb(255, 255, 255) !important;
-        background: linear-gradient(to right, rgb(137, 33, 107), rgb(218, 68, 83)) !important;
-        overflow: hidden;
+    .pd-page {
+        --pd-green: #123A2E;
+        --pd-green-deep: #0F2E24;
+        --pd-gold: #C9974D;
+        --pd-cream: #FBF7EF;
+        --pd-sand: #EFE7D6;
+        --pd-line: #F0EADD;
+        --pd-terracotta: #B5674A;
+        --pd-text: #5B6560;
+        --pd-ink: #1C2321;
+        --pd-ink-2: #33403A;
+        --pd-cream-text: #EFE3C8;
+        --pd-cream-text-2: #D7E4DC;
+        font-family: 'Manrope', system-ui, sans-serif;
+        background: var(--pd-cream);
+        color: var(--pd-ink);
     }
-    .ss-banner::before, .ss-banner::after {
+    .pd-page * { box-sizing: border-box; }
+    .pd-page a { text-decoration: none; }
+
+    .pd-breadcrumb {
+        padding: 20px 56px 0;
+        font-size: 12.5px;
+        color: var(--pd-text);
+    }
+    .pd-breadcrumb a { color: var(--pd-text); }
+    .pd-breadcrumb a:hover { color: var(--pd-green); }
+    .pd-breadcrumb span { color: var(--pd-green); font-weight: 700; }
+
+    .pd-summary {
+        padding: 32px 56px 64px;
+        display: grid;
+        grid-template-columns: 0.85fr 1.15fr;
+        gap: 48px;
+        align-items: start;
+    }
+    .pd-sticky { position: sticky; top: 90px; }
+    .pd-img-wrap {
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(18,58,46,0.12);
+        margin-bottom: 20px;
+        background: #fff;
+    }
+    .pd-img-wrap img { width: 100%; height: 340px; object-fit: contain; display: block; }
+    .pd-fee-card {
+        background: var(--pd-green);
+        border-radius: 16px;
+        padding: 24px;
+        color: #fff;
+    }
+    .pd-fee-eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .1em;
+        color: var(--pd-gold);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .pd-fee-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+        gap: 12px;
+    }
+    .pd-fee-row:last-child { border-bottom: none; }
+    .pd-fee-row span:first-child { font-size: 13px; color: var(--pd-cream-text-2); }
+    .pd-fee-row span:last-child { font-weight: 700; text-align: right; }
+
+    .pd-eyebrow {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        color: var(--pd-terracotta);
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .pd-h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: clamp(28px, 3.4vw, 38px);
+        font-weight: 600;
+        margin: 0 0 18px;
+        color: var(--pd-ink);
+    }
+    .pd-lead {
+        font-size: 15px;
+        line-height: 1.8;
+        color: var(--pd-text);
+        margin: 0 0 24px;
+        max-width: 640px;
+    }
+    .pd-cta-row { display: flex; gap: 14px; margin-bottom: 36px; flex-wrap: wrap; }
+    .pd-btn-gold, .pd-btn-green {
+        font-weight: 700;
+        font-size: 14px;
+        padding: 14px 28px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        cursor: pointer;
+        font-family: 'Manrope', system-ui, sans-serif;
+    }
+    .pd-btn-gold { background: var(--pd-gold); color: var(--pd-green); }
+    .pd-btn-green { background: #25D366; color: #fff; }
+    .pd-muted-note { font-size: 13.5px; color: var(--pd-text); }
+
+    .pd-section-label {
+        font-size: 11.5px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        color: var(--pd-terracotta);
+        text-transform: uppercase;
+        margin-bottom: 14px;
+    }
+
+    .pd-timeline { display: flex; flex-direction: column; gap: 0; position: relative; margin-bottom: 36px; }
+    .pd-timeline::before {
         content: "";
         position: absolute;
+        left: 15px;
+        top: 8px;
+        bottom: 8px;
+        width: 1.5px;
+        background: var(--pd-line);
+    }
+    .pd-step { display: flex; gap: 16px; padding: 10px 0; position: relative; }
+    .pd-step-num {
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        transition: all 0.5s ease;
-        animation: zoomout 5s infinite linear both;
+        background: var(--pd-green);
+        color: var(--pd-cream-text);
+        font-weight: 800;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        flex-shrink: 0;
     }
-    .ss-banner::before {
-        left: -120px;
-        top: -75px;
-        width: 350px;
-        height: 350px;
-        background: rgb(158, 42, 101);
+    .pd-step.pd-step--final .pd-step-num { background: var(--pd-gold); color: var(--pd-green); }
+    .pd-step-text { font-size: 13.5px; line-height: 1.7; color: var(--pd-ink-2); padding-top: 5px; }
+    .pd-step.pd-step--final .pd-step-text { font-weight: 700; }
+    .pd-step-text a { color: var(--pd-green); font-weight: 700; }
+
+    .pd-terms-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 8px 20px;
+        box-shadow: 0 2px 14px rgba(18,58,46,0.06);
+        max-height: 280px;
+        overflow-y: auto;
+        margin-bottom: 8px;
     }
-     .ss-banner::after {
-        right: -120px;
-        bottom: -75px;
-        width: 350px;
-        height: 350px;
-        background: rgb(218, 68, 83);
+    /* The site's global reset (new-theme.css) sets ol/ul/li { list-style: none } —
+       override it here so the clauses actually show their numbers. */
+    .pd-terms-card ol { margin: 0; padding: 12px 0 12px 20px; list-style: decimal !important; }
+    .pd-terms-card li {
+        font-size: 13px;
+        line-height: 2.1;
+        color: #41504A;
+        list-style: decimal !important;
+        display: list-item !important;
     }
-    .ss-banner span.pri {
-        margin: 0px auto;
-        text-transform: uppercase;
-        font-weight: 400;
-        letter-spacing: 1px;
-        color: #fff;
+    .pd-terms-card li::marker { color: var(--pd-terracotta); font-weight: 700; }
+
+    .pd-fine-print { font-size: 12.5px; color: var(--pd-text); line-height: 1.6; margin-bottom: 24px; }
+
+    .pd-agreement {
+        background: var(--pd-sand);
+        border-radius: 14px;
+        padding: 22px;
+        display: flex;
+        gap: 14px;
+        align-items: flex-start;
+        margin-bottom: 24px;
     }
-    .ss-banner .heading{
-        font-family:"Playfair Display", serif !important;
-        color:white !important;
-        margin-bottom:10px !important;
+    .pd-agreement input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        border-radius: 5px;
+        border: 2px solid var(--pd-green);
+        flex-shrink: 0;
+        margin: 2px 0 0;
+        accent-color: var(--pd-green);
+        cursor: pointer;
     }
-    .ss-banner p {
-        width: 100%;
-        font-weight: 300;
-        font-size: 16px;
-        color: #f3f3f3;
-    }
-    .ss-banner span.nocre {
-        margin: 0px auto;
-        background: rgb(219, 33, 76);
-        font-size: 12px;
-        font-weight: 500;
-        padding: 5px 10px;
-        border-radius: 25px;
-        color: #fff;
-        width: auto;
-    }
-    .ss-container .feature--boxed-border.active:after{
-        display:none;
-    }
-    .navbar-light .navbar-nav .nav-link{
-        color:white !important;
-    }
-    .ss-container{
-        margin-top:-125px;
-    }
-    .ss-package_bg {
-        color: rgb(0, 0, 0);
-        background: rgb(255, 255, 255);
-        padding: 25px 30px;
-        float: left;
-        width: 100%;
-        border: 2px solid rgb(253 37 109);
-        border-radius: 35px;
-        box-shadow: rgba(51, 51, 51, 0.05) 0px 1px 12px 0px;
+    .pd-agreement label { font-size: 13px; line-height: 1.7; color: #41504A; cursor: pointer; }
+    .pd-agreement strong { color: var(--pd-green); }
+
+    .pd-btn-confirm {
+        background: var(--pd-green);
+        color: var(--pd-cream-text);
+        font-weight: 700;
+        font-size: 14px;
+        padding: 14px 28px;
+        border-radius: 10px;
         text-align: center;
+        max-width: 280px;
+        display: inline-block;
+        border: none;
+        cursor: pointer;
+        font-family: 'Manrope', system-ui, sans-serif;
+        transition: opacity .2s ease;
     }
-    .col-black{
-        color:black !important;
-    }
-    .package_items {
-        color: #818a91 !important;
-    }
-    .ss-container .c-base-1 {
-        color: #E91E63 !important;
-    }
-    .ss-container .feature--bg-2 *:not(.btn):not(.alert):not(.form-control):not(.heading):not(a), .feature-inverse *:not(.btn):not(.alert):not(.form-control):not(.heading):not(a) {
-        color: unset !important;
-    }
-    .bank-details .para{
-        position: relative; 
-    }
-     .copy-text{
-
-    position: absolute;
-    right: 4px;
-    top: -20px;
-    font-size: 10px;
-    background: #e91628;
-    color: wheat;
-    padding: 0 4px;
-    border-radius: 7px;
-
-    }
-    .special-image { position: absolute; width: 66px; height: auto; top: -20px; right: -20px; }
-
-    @keyframes zoomout {
-        0% {
-            transform: scale(1);
-        }
-    
-        50% {
-            transform: scale(2);
-            opacity: 0.7;
-        }
-    
-        100% {
-            transform: scale(1);
-        }
-    }
-    @media screen and (min-width: 767px) {
-        .col-sm-6 {
-            flex: 0 0 33% !important;
-            max-width: 33% !important;
-        }
-        .ss-2 {
-            margin-top: -70px;
-        }
-        .ss-2 .height {
-            height: 96%;
-        }
-        .ss-2 .block-content {
-            margin-top: 75px;
-        }
+    .pd-btn-confirm[disabled],
+    .pd-btn-confirm.is-disabled {
+        opacity: .45;
+        pointer-events: none;
+        cursor: not-allowed;
     }
 
-</style>
-<style>
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 25;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex; /* Use flex to center modal */
-    align-items: center; /* Center content vertically */
-    justify-content: center; /* Center content horizontally */
-}
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 20px;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 90%;
-    max-width: 500px; /* Set a max width for larger screens */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-    position: relative; /* Position relative for close button */
-}
-.modal-content h2 {
-    font-family: "Playfair Display", serif !important;
-    font-size: 28px;
-    color: black;
-}
-.modal-content h3 {
-    font-family: "Playfair Display", serif !important;
-    font-size: 24px;
-    color: black;
-}
-.close {
-    color: #aaa;
-    font-size: 28px;
-    font-weight: bold;
-    position: absolute; /* Position the close button */
-    right: 15px;
-    top: 15px;
-}
-
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.bank-details p {
-    margin: 5px 0; /* Margin for spacing */
-}
-
-.customer-note {
-    margin: 15px 0; /* Margin for spacing around the note */
-    background-color: #f8d7da; /* Light red background */
-    padding: 10px; /* Padding around the note */
-    border-radius: 4px; /* Rounded corners */
-}
-button.copy-button {
-    background: transparent;
-    border: 0;
-    position: absolute;
-    right: 10px;
-}
-button.copy-button:hover {
-    color:pink;
-}
-button.copy-button svg{
-    width:16px;
-    height:16px;
-}
-@media (max-width: 768px) {
-    .modal-content {
-        width: 95%; /* Adjust width for smaller screens */
+    @media (max-width: 900px) {
+        .pd-breadcrumb, .pd-summary { padding-left: 22px; padding-right: 22px; }
+        .pd-summary { grid-template-columns: 1fr; }
+        .pd-sticky { position: static; }
     }
 
-    .close {
-        font-size: 24px; /* Smaller close button */
+    /* ============ Payment modal ============ */
+    .pd-modal-overlay {
+        display: none;
+        position: fixed;
+        z-index: 2000;
+        inset: 0;
+        background: rgba(15,46,36,0.55);
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
     }
-}
+    .pd-modal-overlay.is-open { display: flex; }
+    .pd-modal-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 32px;
+        max-width: 460px;
+        width: 100%;
+        box-shadow: 0 30px 60px rgba(18,58,46,0.18);
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    .pd-modal-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; gap: 10px; }
+    .pd-modal-title { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 600; color: var(--pd-ink); }
+    .pd-modal-sub { font-size: 13px; color: var(--pd-text); margin-top: 2px; }
+    .pd-modal-close {
+        width: 26px; height: 26px; border-radius: 50%; background: var(--pd-line); color: var(--pd-text);
+        font-size: 16px; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; flex-shrink: 0;
+    }
+    .pd-amount-row {
+        background: var(--pd-green);
+        color: #fff;
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+    .pd-amount-row .lbl { font-size: 13px; color: var(--pd-cream-text-2); }
+    .pd-amount-row .val { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; color: var(--pd-gold); }
+    .pd-bank-label {
+        font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--pd-terracotta);
+        text-transform: uppercase; margin-bottom: 10px;
+    }
+    .pd-bank-rows { display: flex; flex-direction: column; margin-bottom: 18px; }
+    .pd-bank-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--pd-line); gap: 12px; }
+    .pd-bank-row:last-child { border-bottom: none; }
+    .pd-bank-row .k { font-size: 12.5px; color: var(--pd-text); }
+    .pd-bank-row .v { font-size: 13px; font-weight: 700; color: var(--pd-ink); display: flex; align-items: center; gap: 6px; text-align: right; }
+    .pd-copy-btn { background: transparent; border: none; color: var(--pd-gold); cursor: pointer; padding: 0; display: inline-flex; }
+    .pd-copy-btn svg { width: 14px; height: 14px; fill: currentColor; }
+    .pd-copy-text { font-size: 11px; color: var(--pd-green); }
+    .pd-modal-note { font-size: 12.5px; color: var(--pd-text); line-height: 1.6; margin-bottom: 18px; }
+    .pd-modal-wa {
+        background: #25D366; color: #fff; font-weight: 700; font-size: 13.5px; padding: 13px; border-radius: 10px;
+        text-align: center; display: block;
+    }
+
+    /* ============ FOOTER (page-scoped: keep the deep-green footer, matches the packages page) ============ */
+    body.page-package-details .footer,
+    body.page-package-details .footer-top,
+    body.page-package-details .footer-bottom {
+        background: #0F2E24 !important;
+        color: #B9C7BF;
+        border-color: rgba(255,255,255,0.08) !important;
+    }
+    body.page-package-details .footer .heading { color: #fff !important; }
+    body.page-package-details .footer .footer-links > li > a { color: #B9C7BF !important; }
+    body.page-package-details .footer-bottom .copyright,
+    body.page-package-details .footer-bottom .copyright a { color: #B9C7BF !important; }
+    body.page-package-details .ur-footer-touch,
+    body.page-package-details .ur-footer-touch a { color: #B9C7BF !important; }
 </style>
 
+@php
+    $descriptionParts = explode('|', (string) $package->description);
+    $meta = [];
+    $decoded = json_decode((string) $package->description, true);
+    if (is_array($decoded)) $meta = $decoded;
+    $isOnlinePackage = !empty($meta) && isset($meta['price']);
+    $imgPath = '/images/package_'.$package->dataid.'.png';
+    if (!file_exists(public_path($imgPath))) $imgPath = '/images/package_10.png';
+    $whatsappNumber = '447445723296';
+    $waHref = 'https://api.whatsapp.com/send?phone='.$whatsappNumber.'&text='.rawurlencode('Hello, I am interested in the '.$package->name.' package.');
+@endphp
 
-<section class="page-title page-title--style-1 ss-banner">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-12 text-center">
+<div class="pd-page">
 
-                <h1 class="heading heading-1 strong-700 mb-0">Package Details<br>{{ $package->name }} Package</h1>
-            </div>
-        </div>
+    <div class="pd-breadcrumb">
+        <a href="{{ url('packages') }}">Premium Plans</a> &nbsp;/&nbsp; <span>{{ $package->name }} Package</span>
     </div>
-</section>
 
-<section class="slice sct-color-1 py-5">
-    <div class="container">
-        <div class="row">
-            <!-- Left Section -->
-            <div class="col-md-8">
-                <!-- Package Details Card -->
-                <div class="card shadow-lg mb-4">
-                    <div class="card-header">
-                        {{ $package->name }} Package
-                    </div>
-                    <div class="card-body">
-                        @php
-                            $descriptionParts = explode('|', (string) $package->description);
-                            $meta = [];
-                            $decoded = json_decode((string) $package->description, true);
-                            if (is_array($decoded)) $meta = $decoded;
-                        @endphp
-                        <ul class="list-group list-group-flush">
-                            @if(!empty($meta) && isset($meta['price']))
-                                <li class="list-group-item">
-                                    <strong>Price:</strong> {{ $meta['currency'] ?? 'USD' }} {{ number_format((float)$meta['price'], 2) }}
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Duration:</strong> {{ $meta['duration_label'] ?? 'N/A' }}
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Access:</strong> Online services active until expiry.
-                                </li>
-                            @else
-                                <li class="list-group-item">
-                                    <strong>Registration Fee:</strong> {{ $descriptionParts[0] ?? 'N/A' }}
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Success Fee:</strong> {{ $descriptionParts[1] ?? 'N/A' }}
-                                </li>
-                                <li class="list-group-item">
-                                    <strong>Additional Benefits:</strong> 
-                                    {{ $descriptionParts[2] ?? 'N/A' }}
-                                    @if (isset($descriptionParts[3]))
-                                        <br><small>{{ $descriptionParts[3] }}</small>
-                                    @endif
-                                </li>
-                            @endif
-                        </ul>
-                        <div class="py-2 text-left mb-2">
-                            @if(!empty($meta) && isset($meta['price']))
-                                @auth
-                                    @if($userHasActiveOnlinePackage ?? false)
-                                        <p class="text-muted mb-0" style="font-size: 14px;">You have an active subscription. Subscribe again after {{ $userOnlineExpiresAtFormatted ?? '' }}.</p>
-                                    @else
-                                        <a class="btn btn-styled btn-sm btn-base-1 btn-outline btn-circle" href="{{ route('packages.checkout', ['id' => $package->id]) }}">
-                                            Subscribe Now
-                                        </a>
-                                    @endif
-                                @else
-                                    <a class="btn btn-styled btn-sm btn-base-1 btn-outline btn-circle" href="{{ url('login') }}">
-                                        Login to Subscribe
-                                    </a>
-                                @endauth
-                            @else
-                                <button
-                                    class="btn btn-styled btn-sm btn-base-1 btn-outline btn-circle"
-                                    data-package-name="{{ $package->name }}"
-                                    data-package-price="{{ $descriptionParts[0] ?? '' }}"
-                                    onclick="openBankDetails(this.dataset.packageName, this.dataset.packagePrice)">
-                                    Subscibe Now
-                                </button>
-                            @endif
-                        </div>
-                    </div>
-                </div>
+    <div class="pd-summary">
+        <div class="pd-sticky">
+            <div class="pd-img-wrap">
+                <img src="{{ $imgPath }}" alt="{{ $package->name }}">
             </div>
-
-            <!-- Right Section -->
-            <div class="col-md-4">
-                <!-- Package Image -->
-                <div class="card shadow-lg mb-3">
-                    @php
-                        $imgPath = '/images/package_'.$package->dataid.'.png';
-                        if (!file_exists(public_path($imgPath))) $imgPath = '/images/package_10.png';
-                    @endphp
-                    <img 
-                        src="{{ $imgPath }}"
-                        sizes="(max-width: 768px) 100vw, 50vw" 
-                        alt="{{ $package->name }}" 
-                        class="card-img-top" 
-                        style="object-fit: cover; width: 100%; height: auto;">
-                </div>
-
-                <!-- Call to Action -->
-                <div class="text-center mt-4">
-                    <a href="https://api.whatsapp.com/send?phone=447445723296&text=Hello, I am interested in the {{ $package->name }} package." 
-                       class="btn btn-success btn-lg btn-block" target="_blank">
-                        <i class="fa fa-whatsapp"></i> Contact Us on WhatsApp
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="slice bg-light py-5">
-    <div class="container">
-        <!-- Our Process Section -->
-        <div class="card shadow-lg mb-4">
-            <div class="card-header">
-                Our Process
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">
-                        <strong>Step 1:</strong> Our Bio data form would be downloaded to your system once you Register.
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Step 2:</strong> Kindly fill the Bio data form and send it back to us along with your Photos on <a href="mailto:urgentrishta.co@gmail.com" style="color: #d71a44;">urgentrishta.co@gmail.com</a>
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Step 3:</strong> We receive your complete profile with your detailed Requirements.
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Step 4:</strong> We verify your details.
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Step 5:</strong> We receive our Registration fee.
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Step 6:</strong> Registration fee can be paid through Debit card / Net Banking / Cash to our Company's Account <strong>"URGENT RISHTA"</strong>.
-                    </li>
-                    <li class="list-group-item">
-                        <strong>Step 7:</strong> We share profiles, arrange meetings, and facilitate until your matchmaking is done.
-                    </li>
-                </ul>
+            <div class="pd-fee-card">
+                @if($isOnlinePackage)
+                    <div class="pd-fee-eyebrow">Online Package</div>
+                    <div class="pd-fee-row"><span>Price</span><span>{{ $meta['currency'] ?? 'USD' }} {{ number_format((float)$meta['price'], 2) }}</span></div>
+                    <div class="pd-fee-row"><span>Duration</span><span>{{ $meta['duration_label'] ?? 'N/A' }}</span></div>
+                    <div class="pd-fee-row"><span>Access</span><span>Until expiry</span></div>
+                @else
+                    <div class="pd-fee-eyebrow">Personalized Service</div>
+                    <div class="pd-fee-row"><span>Registration Fee</span><span  class="text-white">{{ $descriptionParts[0] ?? 'N/A' }}</span></div>
+                    <div class="pd-fee-row"><span>Success Fee</span><span class="text-white">{{ $descriptionParts[1] ?? 'N/A' }}</span></div>
+                @endif
             </div>
         </div>
 
-        <!-- Terms & Conditions Section -->
-        <div class="card shadow-lg">
-            <div class="card-header">
-                Terms & Conditions
+        <div>
+            <div class="pd-eyebrow">Package Details</div>
+            <h1 class="pd-h1">{{ $package->name }} Package</h1>
+
+            @if(!$isOnlinePackage)
+            <p class="pd-lead">
+                {{ $descriptionParts[2] ?? 'Tailored matchmaking curated around your preferences and lifestyle.' }}
+                @if(isset($descriptionParts[3]))
+                    <br><small>{{ $descriptionParts[3] }}</small>
+                @endif
+            </p>
+            @endif
+
+            <div class="pd-cta-row">
+                @if($isOnlinePackage)
+                    @auth
+                        @if($userHasActiveOnlinePackage ?? false)
+                            <div class="pd-muted-note">You have an active subscription. Subscribe again after {{ $userOnlineExpiresAtFormatted ?? '' }}.</div>
+                        @else
+                            <a class="pd-btn-gold" href="{{ route('packages.checkout', ['id' => $package->id]) }}">Subscribe Now</a>
+                        @endif
+                    @else
+                        <a class="pd-btn-gold" href="{{ url('login') }}">Login to Subscribe</a>
+                    @endauth
+                @else
+                    <button type="button" class="pd-btn-gold"
+                        data-package-name="{{ $package->name }}"
+                        data-package-price="{{ $descriptionParts[0] ?? '' }}"
+                        onclick="openBankDetails(this.dataset.packageName, this.dataset.packagePrice)">
+                        Subscribe Now
+                    </button>
+                @endif
+                <a class="pd-btn-green" href="{{ $waHref }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Contact Us on WhatsApp</a>
             </div>
-            <div class="card-body scrollable-section">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">1. We provide services according to the client's requirements and preferences.</li>
-                    <li class="list-group-item">2. The registration process involves collecting client information, conducting interviews, and verifying documents. We reserve the right to verify the accuracy of the information provided by clients.</li>
-                    <li class="list-group-item">3. Client will pay advance registration fees to start working & searching for their spouses. This isn't part of the full fee which both parties are bound to settle in advance.</li>
-                    <li class="list-group-item">4. Additional fees may apply for special demands, such as a doctor or foreign national for widower or divorcee proposals.</li>
-                    <li class="list-group-item">5. The registration fee is non-refundable and non-transferable.</li>
-                    <li class="list-group-item">6. We will not share client information or photographs on social media but may share with other consultants to find a suitable match.</li>
-                    <li class="list-group-item">7. Only serious clients interested in each other's profiles will be entitled to meet each other.</li>
-                    <li class="list-group-item">8. If you directly access a proposal once met by us, it will be double charged and legal action may also be taken against you.</li>
-                    <li class="list-group-item">9. We will share proposals as per your requirements. You should reply ASAP.</li>
-                    <li class="list-group-item">10. If a client cancels the service, the advance fee will not be refunded.</li>
-                    <li class="list-group-item">11. Changes in client requirements may affect our charges.</li>
-                    <li class="list-group-item">12. Clients must provide identification documents and age proof.</li>
-                    <li class="list-group-item">13. We will share profiles and photographs of potential matches with clients and facilitate communication.</li>
-                    <li class="list-group-item">14. No work will begin until the advance fee is paid, and the agreement is signed.</li>
-                    <li class="list-group-item">15. There is no time limit to find your matching proposals.</li>
-                    <li class="list-group-item">16. If the match is not successful within 3 months, we will refund 50% of the advance fee. (See & ask for our refund policy).</li>
-                    <li class="list-group-item">17. Clients are not allowed to share our terms of the agreement with anyone.</li>
-                </ul>
+
+            <!-- OUR PROCESS -->
+            <div class="pd-section-label">Our Process</div>
+            <div class="pd-timeline">
+                <div class="pd-step"><div class="pd-step-num">1</div><div class="pd-step-text">Our Bio Data form downloads to your system once you register.</div></div>
+                <div class="pd-step"><div class="pd-step-num">2</div><div class="pd-step-text">Fill the Bio Data form and send it back with your photos to <a href="mailto:urgentrishta.co@gmail.com">urgentrishta.co@gmail.com</a>.</div></div>
+                <div class="pd-step"><div class="pd-step-num">3</div><div class="pd-step-text">We receive your complete profile with your detailed requirements.</div></div>
+                <div class="pd-step"><div class="pd-step-num">4</div><div class="pd-step-text">We verify your details.</div></div>
+                <div class="pd-step"><div class="pd-step-num">5</div><div class="pd-step-text">We receive our registration fee.</div></div>
+                <div class="pd-step"><div class="pd-step-num">6</div><div class="pd-step-text">Registration fee is payable via Debit Card, Net Banking, or Cash to our company account <strong>&quot;URGENT RISHTA&quot;</strong>.</div></div>
+                <div class="pd-step pd-step--final"><div class="pd-step-num">7</div><div class="pd-step-text">We share profiles, arrange meetings and facilitate until your matchmaking is done.</div></div>
             </div>
-        </div>
 
-        <!-- Note Section -->
-        <div class="card shadow-lg mt-4">
-            <div class="card-body">
-                <p class="mb-3" style="font-size: 16px; color: #555;">
-                    <strong>Note:</strong> If you agree to our terms and conditions, we welcome you to Urgent Rishta. Otherwise, we apologize for being unable to provide our services.
-                </p>
-                <p style="font-size: 16px; color: #555;">
-                    I certify that all the information provided is accurate, and I am responsible for any inaccuracies. I have read and understood the terms and conditions of <strong>Urgent Rishta</strong> and agree to abide by them. I promise to keep the agency updated during the matching process and pay the full fee immediately after the match is confirmed. If I fail to comply, the agency reserves the right to take legal action against me.
-                </p>
+            <!-- TERMS -->
+            <div class="pd-section-label">Terms &amp; Conditions</div>
+            <div class="pd-terms-card">
+                <ol>
+                    <li>We provide services according to the client's requirements and preferences.</li>
+                    <li>The registration process involves collecting client information, conducting interviews, and verifying documents. We reserve the right to verify the accuracy of the information provided by clients.</li>
+                    <li>Client will pay advance registration fees to start working &amp; searching for their spouses. This isn't part of the full fee which both parties are bound to settle in advance.</li>
+                    <li>Additional fees may apply for special demands, such as a doctor or foreign national for widower or divorcee proposals.</li>
+                    <li>The registration fee is non-refundable and non-transferable.</li>
+                    <li>We will not share client information or photographs on social media but may share with other consultants to find a suitable match.</li>
+                    <li>Only serious clients interested in each other's profiles will be entitled to meet each other.</li>
+                    <li>If you directly access a proposal once met by us, it will be double charged and legal action may also be taken against you.</li>
+                    <li>We will share proposals as per your requirements. You should reply ASAP.</li>
+                    <li>If a client cancels the service, the advance fee will not be refunded.</li>
+                    <li>Changes in client requirements may affect our charges.</li>
+                    <li>Clients must provide identification documents and age proof.</li>
+                    <li>We will share profiles and photographs of potential matches with clients and facilitate communication.</li>
+                    <li>No work will begin until the advance fee is paid, and the agreement is signed.</li>
+                    <li>There is no time limit to find your matching proposals.</li>
+                    <li>If the match is not successful within 3 months, we will refund 50% of the advance fee. (See &amp; ask for our refund policy).</li>
+                    <li>Clients are not allowed to share our terms of the agreement with anyone.</li>
+                </ol>
             </div>
-        </div>
-    </div>
-</section>
+            <div class="pd-fine-print">If you agree to our terms and conditions, we welcome you to Urgent Rishta. Otherwise, we apologize for being unable to provide our services.</div>
 
+            <!-- AGREEMENT -->
+            <div class="pd-agreement">
+                <input type="checkbox" id="pdAgree" onchange="document.getElementById('pdConfirmBtn').classList.toggle('is-disabled', !this.checked)">
+                <label for="pdAgree">I certify that all the information I provide is accurate and I am responsible for any inaccuracies. I have read and understood the terms and conditions of <strong>Urgent Rishta</strong> and agree to abide by them, and to pay the full fee immediately after a match is confirmed.</label>
+            </div>
 
-
-<!-- Popup Modal -->
-<div id="bankDetailsModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <h2 id="modalTitle"></h2>
-        <h3>Package Price: <span id="packagePrice" style="color: green;"></span></h3> <!-- Display package price here -->
-        <h3>Bank Details:</h3>
-        <div class="bank-details">
-            <p><strong>Account Title:</strong> Urgent Rishta</p>
-            <p class="para">
-                <strong>Account Number: </strong> 
-                <span id="accountNumber">2640343139629</span>
-                <button onclick="copyToClipboard('accountNumber', 'copyAccount')" class="copy-button" title="Copy Account Number">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M384 336l-192 0c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l140.1 0L400 115.9 400 320c0 8.8-7.2 16-16 16zM192 384l192 0c35.3 0 64-28.7 64-64l0-204.1c0-12.7-5.1-24.9-14.1-33.9L366.1 14.1c-9-9-21.2-14.1-33.9-14.1L192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-32-48 0 0 32c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l32 0 0-48-32 0z"/></svg>
+            @if($isOnlinePackage)
+                @auth
+                    @if($userHasActiveOnlinePackage ?? false)
+                        <div class="pd-muted-note">You have an active subscription. Subscribe again after {{ $userOnlineExpiresAtFormatted ?? '' }}.</div>
+                    @else
+                        <a id="pdConfirmBtn" class="pd-btn-confirm is-disabled" href="{{ route('packages.checkout', ['id' => $package->id]) }}">Subscribe Now</a>
+                    @endif
+                @else
+                    <a id="pdConfirmBtn" class="pd-btn-confirm is-disabled" href="{{ url('login') }}">Login to Subscribe</a>
+                @endauth
+            @else
+                <button type="button" id="pdConfirmBtn" class="pd-btn-confirm is-disabled"
+                    data-package-name="{{ $package->name }}"
+                    data-package-price="{{ $descriptionParts[0] ?? '' }}"
+                    onclick="if(!this.classList.contains('is-disabled')) openBankDetails(this.dataset.packageName, this.dataset.packagePrice)">
+                    Subscribe Now
                 </button>
-                <span id="copyAccount" class="copy-text" style="display: none;">Copied</span>
-            </p>
-            <p>
-                <strong>Bank Name:</strong> United Bank Limited
-            </p>
-            <p class="para">
-                <strong>IBAN: </strong> 
-                <span id="iban">PK98UNIL0109000343139629</span>
-                <button onclick="copyToClipboard('iban', 'copyIban')" class="copy-button" title="Copy IBAN">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M384 336l-192 0c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l140.1 0L400 115.9 400 320c0 8.8-7.2 16-16 16zM192 384l192 0c35.3 0 64-28.7 64-64l0-204.1c0-12.7-5.1-24.9-14.1-33.9L366.1 14.1c-9-9-21.2-14.1-33.9-14.1L192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-32-48 0 0 32c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l32 0 0-48-32 0z"/></svg>
-                </button>
-                <span id="copyIban" class="copy-text" style="display: none;">Copied</span>
-            </p>
-            <!--<p><strong>SWIFT Code:</strong> ABPAPKKA</p>-->
+            @endif
         </div>
+    </div>
 
-        <!-- Customer Note -->
-        <div class="customer-note">
-            <p style="color: red; font-weight: bold;">Note:</p>
-            <p>Please provide a screenshot of your payment on our WhatsApp after completing the transaction.</p>
-        </div>
+</div><!-- /.pd-page -->
 
-        <div class="text-center mb-2">
-            <a id="whatsappLink" href="#" class="btn btn-styled btn-sm btn-base-1 btn-outline btn-circle" target="_blank">
-                Contact Us on WhatsApp
-            </a>
+<!-- Payment modal -->
+<div id="bankDetailsModal" class="pd-modal-overlay">
+    <div class="pd-modal-card">
+        <div class="pd-modal-head">
+            <div>
+                <div class="pd-modal-title">Package Price</div>
+                <div class="pd-modal-sub" id="modalTitle"></div>
+            </div>
+            <button type="button" class="pd-modal-close" onclick="closeModal()">&times;</button>
         </div>
+        <div class="pd-amount-row">
+            <span class="lbl">Amount Due</span>
+            <span class="val" id="packagePrice"></span>
+        </div>
+        <div class="pd-bank-label">Bank Details</div>
+        <div class="pd-bank-rows">
+            <div class="pd-bank-row"><span class="k">Account Title</span><span class="v">Urgent Rishta</span></div>
+            <div class="pd-bank-row">
+                <span class="k">Account Number</span>
+                <span class="v">
+                    <span id="accountNumber">2640343139629</span>
+                    <button type="button" onclick="copyToClipboard('accountNumber', 'copyAccount')" class="pd-copy-btn" title="Copy Account Number">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M384 336l-192 0c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l140.1 0L400 115.9 400 320c0 8.8-7.2 16-16 16zM192 384l192 0c35.3 0 64-28.7 64-64l0-204.1c0-12.7-5.1-24.9-14.1-33.9L366.1 14.1c-9-9-21.2-14.1-33.9-14.1L192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-32-48 0 0 32c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l32 0 0-48-32 0z"/></svg>
+                    </button>
+                    <span id="copyAccount" class="pd-copy-text" style="display:none;">Copied</span>
+                </span>
+            </div>
+            <div class="pd-bank-row"><span class="k">Bank Name</span><span class="v">United Bank Limited</span></div>
+            <div class="pd-bank-row">
+                <span class="k">IBAN</span>
+                <span class="v">
+                    <span id="iban">PK98UNIL0109000343139629</span>
+                    <button type="button" onclick="copyToClipboard('iban', 'copyIban')" class="pd-copy-btn" title="Copy IBAN">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M384 336l-192 0c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l140.1 0L400 115.9 400 320c0 8.8-7.2 16-16 16zM192 384l192 0c35.3 0 64-28.7 64-64l0-204.1c0-12.7-5.1-24.9-14.1-33.9L366.1 14.1c-9-9-21.2-14.1-33.9-14.1L192 0c-35.3 0-64 28.7-64 64l0 256c0 35.3 28.7 64 64 64zM64 128c-35.3 0-64 28.7-64 64L0 448c0 35.3 28.7 64 64 64l192 0c35.3 0 64-28.7 64-64l0-32-48 0 0 32c0 8.8-7.2 16-16 16L64 464c-8.8 0-16-7.2-16-16l0-256c0-8.8 7.2-16 16-16l32 0 0-48-32 0z"/></svg>
+                    </button>
+                    <span id="copyIban" class="pd-copy-text" style="display:none;">Copied</span>
+                </span>
+            </div>
+        </div>
+        <div class="pd-modal-note"><strong style="color:#B5674A;">Note:</strong> Please provide a screenshot of your payment on our WhatsApp after completing the transaction.</div>
+        <a id="whatsappLink" href="#" class="pd-modal-wa" target="_blank" rel="noopener">Contact Us on WhatsApp</a>
     </div>
 </div>
 
-
 <script>
     function openBankDetails(packageName, packagePrice) {
-        document.getElementById('modalTitle').innerText = 'Bank Details for ' + packageName;
-        document.getElementById('packagePrice').innerText = packagePrice; // Set the package price in the modal
-        
-        // Update WhatsApp link with the correct package name
-        const whatsappMessage = encodeURIComponent('Hello, I would like to proceed with the purchase of the ' + packageName + ' package.');
-        document.getElementById('whatsappLink').href = 'https://api.whatsapp.com/send?phone=447445723296&text=' + whatsappMessage;
-    
-        document.getElementById('bankDetailsModal').style.display = 'flex'; // Use flex for centering
+        document.getElementById('modalTitle').innerText = packageName + ' — Registration Fee';
+        document.getElementById('packagePrice').innerText = packagePrice;
+
+        var whatsappMessage = encodeURIComponent('Hello, I would like to proceed with the purchase of the ' + packageName + ' package.');
+        document.getElementById('whatsappLink').href = 'https://api.whatsapp.com/send?phone={{ $whatsappNumber }}&text=' + whatsappMessage;
+
+        document.getElementById('bankDetailsModal').classList.add('is-open');
     }
-    
+
     function closeModal() {
-        document.getElementById('bankDetailsModal').style.display = 'none';
+        document.getElementById('bankDetailsModal').classList.remove('is-open');
     }
-    
+
     function copyToClipboard(elementId, copyTextId) {
-        const textToCopy = document.getElementById(elementId).innerText; // Get the text content of the specified element
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            // Show "Copied" text next to the SVG icon
-            const copyTextElement = document.getElementById(copyTextId);
-            copyTextElement.style.display = 'inline'; // Show the "Copied" text
-            setTimeout(() => {
-                copyTextElement.style.display = 'none'; // Hide it after 2 seconds
+        var textToCopy = document.getElementById(elementId).innerText;
+        navigator.clipboard.writeText(textToCopy).then(function () {
+            var copyTextElement = document.getElementById(copyTextId);
+            copyTextElement.style.display = 'inline';
+            setTimeout(function () {
+                copyTextElement.style.display = 'none';
             }, 2000);
-        }).catch(err => {
-            console.error('Could not copy text: ', err); // Log any errors
+        }).catch(function (err) {
+            console.error('Could not copy text: ', err);
         });
     }
 </script>
 
-
 @endsection
-

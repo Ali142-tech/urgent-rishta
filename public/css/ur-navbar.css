@@ -1,16 +1,16 @@
 /**
  * Urgent Rishta — site navbar (Editorial Luxe mock)
- * Deep berry bar · uppercase links · outline auth · cream appointment
+ * Deep emerald bar · uppercase links · outline auth · gold appointment
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap');
 
 #myHeader {
-    --ur-nav-bg: #8B0A3D;
-    --ur-nav-bg-2: #A0124A;
-    --ur-nav-bg-3: #C2185B;
-    --ur-nav-cream: #E8D5B5;
-    --ur-nav-cream-text: #5C1435;
+    --ur-nav-bg: #0F2E24;
+    --ur-nav-bg-2: #123A2E;
+    --ur-nav-bg-3: #16493A;
+    --ur-nav-cream: #C9974D;
+    --ur-nav-cream-text: #0F2E24;
     font-family: 'Montserrat', 'DM Sans', system-ui, sans-serif;
 }
 
@@ -86,8 +86,8 @@
         width: 100%;
         z-index: 1040;
         padding: 0;
-        /* Deep berry + fine vertical stripe texture (matches mock) */
-        background-color: #8B0A3D !important;
+        /* Deep emerald + fine vertical stripe texture (matches mock) */
+        background-color: #0F2E24 !important;
         background-image:
             repeating-linear-gradient(
                 90deg,
@@ -96,8 +96,8 @@
                 transparent 1px,
                 transparent 5px
             ),
-            linear-gradient(90deg, #7A0835 0%, #8B0A3D 28%, #A0124A 62%, #8B0A3D 100%) !important;
-        box-shadow: 0 8px 28px rgba(90, 8, 40, 0.35);
+            linear-gradient(90deg, #0B241C 0%, #0F2E24 28%, #16493A 62%, #0F2E24 100%) !important;
+        box-shadow: 0 8px 28px rgba(6, 20, 15, 0.35);
         border-bottom: none !important;
         pointer-events: none;
     }
@@ -319,7 +319,7 @@
         color: #fff !important;
     }
 
-    /* Book An Appointment — cream / pale gold */
+    /* Book An Appointment — gold */
     #myHeader .appointment-btn {
         margin: 0 !important;
         padding: 11px 20px !important;
@@ -329,8 +329,8 @@
         border-radius: 999px !important;
         white-space: nowrap;
         letter-spacing: 0.02em;
-        background: #E8D5B5 !important;
-        color: #5C1435 !important;
+        background: #C9974D !important;
+        color: #0F2E24 !important;
         box-shadow: none !important;
         transform: none !important;
         border: none !important;
@@ -344,8 +344,8 @@
     }
 
     #myHeader .appointment-btn:hover {
-        background: #F2E4C8 !important;
-        color: #4A102A !important;
+        background: #E8C27A !important;
+        color: #0F2E24 !important;
         filter: none;
         transform: translateY(-1px) !important;
         box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
@@ -355,7 +355,7 @@
         width: 15px;
         height: 15px;
         margin-right: 8px;
-        fill: #5C1435 !important;
+        fill: #0F2E24 !important;
         display: inline-block;
         vertical-align: -2px;
         animation: none !important;
@@ -364,7 +364,7 @@
     }
 
     #myHeader .appointment-btn:hover svg {
-        fill: #4A102A !important;
+        fill: #0F2E24 !important;
         transform: none;
     }
 
@@ -415,7 +415,7 @@
         position: sticky;
         top: 0;
         z-index: 1040;
-        background-color: #8B0A3D !important;
+        background-color: #0F2E24 !important;
         background-image:
             repeating-linear-gradient(
                 90deg,
@@ -424,8 +424,8 @@
                 transparent 1px,
                 transparent 5px
             ),
-            linear-gradient(90deg, #7A0835 0%, #8B0A3D 50%, #A0124A 100%) !important;
-        box-shadow: 0 8px 24px rgba(90, 8, 40, 0.3);
+            linear-gradient(90deg, #0B241C 0%, #0F2E24 50%, #16493A 100%) !important;
+        box-shadow: 0 8px 24px rgba(6, 20, 15, 0.3);
     }
 
     #myHeader .top-navbar {
@@ -643,10 +643,10 @@
         padding: 12px 16px !important;
         font-size: 13px !important;
         font-weight: 700;
-        background: #E8D5B5 !important;
+        background: #C9974D !important;
         border: none !important;
         box-shadow: none !important;
-        color: #5C1435 !important;
+        color: #0F2E24 !important;
     }
 
     /* Hide top header appointment — only keep the one inside the hamburger menu */
@@ -668,7 +668,7 @@
         width: 16px;
         height: 16px;
         margin-right: 8px;
-        fill: #5C1435 !important;
+        fill: #0F2E24 !important;
     }
 
     #myHeader .navbar-collapse::before,

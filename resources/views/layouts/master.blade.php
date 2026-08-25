@@ -71,7 +71,7 @@
     <title>Urgent Rishta</title>
 </head>
 
-<body class="pace-done {{ request()->is('/') || request()->is('home') ? 'homepage' : 'normalpage' }}">
+<body class="pace-done {{ request()->is('/') || request()->is('home') ? 'homepage' : 'normalpage' }}{{ request()->is('packages') ? ' page-packages' : '' }}{{ request()->is('package-details/*') ? ' page-package-details' : '' }}">
     <div class="pace pace-inactive">
         <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
             <div class="pace-progress-inner"></div>
@@ -88,18 +88,36 @@
         color: white !important;
     }
     }
-    .ur-footer-wa {
-        display: inline-block;
-        margin-top: 10px;
-        background: #25D366;
-        color: #fff !important;
-        font-size: 12px;
-        font-weight: 700;
-        padding: 9px 16px;
-        border-radius: 8px;
-        text-decoration: none !important;
-    }
     .ur-footer-touch a { color: inherit; }
+    .ur-footer-social {
+        display: flex;
+        gap: 10px;
+        margin: 14px 0 0;
+        padding: 0;
+        list-style: none;
+    }
+    .ur-footer-social a,
+    .ur-footer-social__disabled {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        color: inherit;
+        text-decoration: none;
+        transition: opacity .2s ease, border-color .2s ease;
+    }
+    .ur-footer-social a:hover {
+        border-color: rgba(255,255,255,0.5);
+        opacity: .85;
+    }
+    .ur-footer-social__disabled {
+        opacity: .32;
+        cursor: default;
+    }
         .normalpage img.img-responsive {
             filter: drop-shadow(0px 0px) drop-shadow(2px 4px 6px #C9974D);
         }   
@@ -372,6 +390,10 @@ a.appointment-btn::before{
                                                 <a class="nav-link" href="{{url('/')}}" aria-haspopup="true" aria-expanded="false">
                                                     Home</a>
                                             </li>
+                                            <li class="custom-nav">
+                                                <a class="nav-link " href="{{ url('/') }}#how-it-works" aria-haspopup="true" aria-expanded="false">
+                                                    How It Works</a>
+                                            </li>
                                             @auth
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('member/profile')}}" aria-haspopup="true" aria-expanded="false">
@@ -384,11 +406,11 @@ a.appointment-btn::before{
                                             </li>
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('stories')}}" aria-haspopup="true" aria-expanded="false">
-                                                    Happy Stories</a>
+                                                    Success Stories</a>
                                             </li>
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">
-                                                    Contact Us</a>
+                                                    Contact</a>
                                             </li>
                                             @guest
                                             <li class="custom-nav d-lg-none">
@@ -396,13 +418,6 @@ a.appointment-btn::before{
                                                     <i class="fa fa-power-off mr-2"></i> Log In
                                                 </a>
                                             </li>
-                                            @if (Route::has('register'))
-                                            <li class="custom-nav d-lg-none">
-                                                <a class="nav-link" href="{{ route('register') }}" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-user mr-2"></i> Register
-                                                </a>
-                                            </li>
-                                            @endif
                                             @endguest
                                             @auth
                                             <li class="custom-nav d-lg-none">
@@ -430,9 +445,15 @@ a.appointment-btn::before{
                                             @endauth
                                             {{-- Mobile menu only; desktop uses .ur-header-actions copy --}}
                                             <li class="custom-nav ur-appt-in-nav">
+                                                @if(request()->is('/') || request()->is('home'))
+                                                <a class="appointment-btn" href="javascript:void(0);" onclick="openPopup()" aria-haspopup="true" aria-expanded="false">
+                                                @elseif(auth()->check())
                                                 <a class="appointment-btn" href="{{ url('appointments') }}" aria-haspopup="true" aria-expanded="false">
+                                                @else
+                                                <a class="appointment-btn" href="{{ url('contact-us') }}" aria-haspopup="true" aria-expanded="false">
+                                                @endif
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M216 64C229.3 64 240 74.7 240 88L240 128L400 128L400 88C400 74.7 410.7 64 424 64C437.3 64 448 74.7 448 88L448 128L480 128C515.3 128 544 156.7 544 192L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 192C96 156.7 124.7 128 160 128L192 128L192 88C192 74.7 202.7 64 216 64zM480 496C488.8 496 496 488.8 496 480L496 416L408 416L408 496L480 496zM496 368L496 288L408 288L408 368L496 368zM360 368L360 288L280 288L280 368L360 368zM232 368L232 288L144 288L144 368L232 368zM144 416L144 480C144 488.8 151.2 496 160 496L232 496L232 416L144 416zM280 416L280 496L360 496L360 416L280 416zM216 176L160 176C151.2 176 144 183.2 144 192L144 240L496 240L496 192C496 183.2 488.8 176 480 176L216 176z"/></svg>
-                                                Book An Appointment</a>
+                                                Book a Private Consultation</a>
                                             </li>
                                         </ul>
                                     </div>
@@ -469,11 +490,6 @@ a.appointment-btn::before{
                                             <li>
                                                 <a href="{{ route('login') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow" aria-label="Log In"><i class="fa fa-power-off"></i> Log In</a>
                                             </li>
-                                            @if (Route::has('register'))
-                                            <li>
-                                                <a href="{{ route('register') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow" aria-label="Register"><i class="fa fa-user"></i> Register</a>
-                                            </li>
-                                            @endif
                                             @endguest
                                             @auth
                                             <li>
@@ -490,9 +506,15 @@ a.appointment-btn::before{
                                             @endauth
                                             </li>
                                         </ul>
+                                        @if(request()->is('/') || request()->is('home'))
+                                        <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="javascript:void(0);" onclick="openPopup()" aria-haspopup="true" aria-expanded="false">
+                                        @elseif(auth()->check())
                                         <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="{{ url('appointments') }}" aria-haspopup="true" aria-expanded="false">
+                                        @else
+                                        <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="{{ url('contact-us') }}" aria-haspopup="true" aria-expanded="false">
+                                        @endif
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M216 64C229.3 64 240 74.7 240 88L240 128L400 128L400 88C400 74.7 410.7 64 424 64C437.3 64 448 74.7 448 88L448 128L480 128C515.3 128 544 156.7 544 192L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 192C96 156.7 124.7 128 160 128L192 128L192 88C192 74.7 202.7 64 216 64zM480 496C488.8 496 496 488.8 496 480L496 416L408 416L408 496L480 496zM496 368L496 288L408 288L408 368L496 368zM360 368L360 288L280 288L280 368L360 368zM232 368L232 288L144 288L144 368L232 368zM144 416L144 480C144 488.8 151.2 496 160 496L232 496L232 416L144 416zM280 416L280 496L360 496L360 416L280 416zM216 176L160 176C151.2 176 144 183.2 144 192L144 240L496 240L496 192C496 183.2 488.8 176 480 176L216 176z"/></svg>
-                                            Book An Appointment</a>
+                                            Book a Private Consultation</a>
                                     </div>
                                 </div>
                             </nav>
@@ -534,8 +556,8 @@ a.appointment-btn::before{
                                                                 Premium Plans</a>
                                                         </li>
                                                         <li>
-                                                            <a href="{{url('stories')}}" title="Happy Stories">
-                                                                Happy Stories</a>
+                                                            <a href="{{url('stories')}}" title="Success Stories">
+                                                                Success Stories</a>
                                                         </li>
                                                         <li>
                                                             <a href="{{url('contact-us')}}" title="Contact Us">
@@ -592,7 +614,13 @@ a.appointment-btn::before{
                                                         <a href="tel:+923040227000">+92 304 0227000</a><br>
                                                         <a href="mailto:urgentrishta.co@gmail.com">urgentrishta.co@gmail.com</a>
                                                     </div>
-                                                    <a class="ur-footer-wa" href="https://wa.me/923040227000" target="_blank" rel="noopener">WhatsApp Us</a>
+                                                    <ul class="ur-footer-social" aria-label="Follow Urgent Rishta">
+                                                        <li><span class="ur-footer-social__disabled" title="Facebook page not yet available" aria-label="Facebook (coming soon)"><i class="fa fa-facebook"></i></span></li>
+                                                        <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
+                                                        <li><span class="ur-footer-social__disabled" title="YouTube channel not yet available" aria-label="YouTube (coming soon)"><i class="fa fa-youtube"></i></span></li>
+                                                        <li><span class="ur-footer-social__disabled" title="TikTok not yet available" aria-label="TikTok (coming soon)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 3c.4 2.2 1.9 3.9 4.5 4.1v3.1c-1.6 0-3.1-.5-4.4-1.4v6.7c0 3.4-2.8 6-6.1 6-3.4 0-6.1-2.7-6.1-6s2.8-6 6.1-6c.4 0 .8 0 1.2.1v3.2c-.4-.1-.8-.2-1.2-.2-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 3-1.3 3-3V3h3z"/></svg></span></li>
+                                                        <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><i class="fa fa-whatsapp"></i></a></li>
+                                                    </ul>
                                                 </div>
                                             </div>
                                         </div>
@@ -603,9 +631,9 @@ a.appointment-btn::before{
                                         <div class="row row-cols-xs-spaced flex flex-items-xs-middle">
                                             <div class="col col-md-7">
                                                 <div class="copyright text-center text-sm-left mt-2">
-                                                    Copyright © 2021 <a href="{{url('/')}}" class="c-base-1" target="_blank" title="Urgent Rishta - Official Website">
-                                                        <strong class="strong-400">Urgent Rishta (pvt) Ltd.</strong>
-                                                    </a> - All Rights Reserved </div>
+                                                    © {{ date('Y') }} <a href="{{url('/')}}" class="c-base-1" target="_blank" title="Urgent Rishta - Official Website">
+                                                        <strong class="strong-400">Urgent Rishta (Pvt.) Ltd.</strong>
+                                                    </a> All Rights Reserved. </div>
                                             </div>
                                         </div>
                                     </div>

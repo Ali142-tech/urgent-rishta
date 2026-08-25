@@ -38,10 +38,6 @@ Route::post('register/mobile/verify', [App\Http\Controllers\Auth\RegisterControl
 Route::post('register/otp/send', [App\Http\Controllers\Auth\RegisterController::class, 'sendOtp'])->name('register.otp.send');
 Route::post('register/otp/verify', [App\Http\Controllers\Auth\RegisterController::class, 'verifyOtp'])->name('register.otp.verify');
 
-Route::get('/info', function () {
-    phpinfo();
-});
-
 // index/home routes
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('index');
 Route::get('home', [App\Http\Controllers\HomeController::class, 'home'])->name('home');

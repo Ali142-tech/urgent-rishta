@@ -21,7 +21,7 @@
     background-color: #1a0610;
     background-image:
         linear-gradient(105deg, #1a0610 0%, #2a0a18 38%, rgba(26,6,16,0.35) 62%, rgba(26,6,16,0.55) 100%),
-        url(/images/slider_images/slider_image_1.png);
+        url(/images/couples/pakistani-couple.jpg);
     background-size: cover, cover;
     background-position: center, 68% center;
     background-repeat: no-repeat;
@@ -57,7 +57,7 @@ body.homepage #main-content > .ur-trust-bar {
     .ur-hero-a {
         background-image:
             linear-gradient(180deg, rgba(18,4,12,0.55) 0%, rgba(18,4,12,0.72) 42%, rgba(18,4,12,0.94) 100%),
-            url(/images/slider_images/slider_image_1_1.png);
+            url(/images/couples/pakistani-couple.jpg);
         background-position: center, center 18%;
         background-size: cover, cover;
     }
@@ -848,8 +848,8 @@ body.homepage #main-content > .ur-trust-bar {
         min-height: auto;
         /* Option A: full-bleed couple — hide floating circle on tablet too */
         background-image:
-            linear-gradient(180deg, rgba(14,3,10,0.45) 0%, rgba(14,3,10,0.65) 40%, rgba(14,3,10,0.92) 78%, #120208 100%),
-            url(/images/slider_images/slider_image_1_1.png);
+            linear-gradient(80deg, rgba(14,3,10,0.45) 0%, rgba(14,3,10,0.65) 40%, rgba(14,3,10,0.92) 78%, #120208 100%),
+            url(/images/couples/pakistani-couple.jpg);
         background-position: center, center 14%;
         background-size: cover, cover;
     }
@@ -1059,7 +1059,7 @@ body.homepage #main-content > .ur-trust-bar {
         /* Full-bleed couple photo — no cramped circular crop on phones */
         background-image:
             linear-gradient(180deg, rgba(14,3,10,0.42) 0%, rgba(14,3,10,0.62) 38%, rgba(14,3,10,0.92) 72%, #120208 100%),
-            url(/images/slider_images/slider_image_1_1.png);
+            url(/images/couples/pakistani-couple.jpg);
         background-position: center, center 12%;
         background-size: cover, cover;
     }

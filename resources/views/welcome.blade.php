@@ -141,55 +141,95 @@
     .ur-btn--light { background: transparent; border: 1.5px solid #FFE0EC; color: #FFE0EC !important; }
     .ur-btn--light:hover { background: #fff; color: var(--pink) !important; }
 
-    .ur-promise { display: grid; grid-template-columns: 1.05fr 1fr; gap: 40px 48px; align-items: center; }
-    .ur-promise .ab-wel-lhs {
+    .ur-promise2__top { display: grid; grid-template-columns: 1fr 1.15fr; gap: 40px 48px; align-items: center; margin-bottom: 56px; }
+    .ur-promise2__top .ur-eyebrow,
+    .ur-promise2__top .ur-h2,
+    .ur-promise2__top .ur-lead { text-align: left; }
+    .ur-promise2__top .ab-wel-lhs {
         position: relative;
-        min-height: 560px;
-        display: block !important;
-        margin-bottom: 0;
+        min-height: 430px;
+        height: 430px;
     }
-    .ur-promise .ab-wel-1 {
+    .ur-promise2__top .ab-wel-1 {
         position: absolute;
-        width: 75%;
-        height: 550px;
+        width: 74%;
+        height: 80%;
         object-fit: cover;
         left: 0;
         top: 0;
-        border-radius: 15px;
+        border-radius: 4px;
     }
-    .ur-promise .ab-wel-2 {
-        width: 80%;
-        height: 300px;
+    .ur-promise2__top .ab-wel-2 {
+        width: 56%;
+        height: 56%;
         object-fit: cover;
-        z-index: 1;
-        position: relative;
-        margin: 47% 10% 5% 15%;
-        border-width: 15px 0 0 15px;
-        border-top-style: solid;
-        border-left-style: solid;
-        border-top-color: #fff;
-        border-left-color: #fff;
-        border-radius: 0 100px 15px;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        border: 8px solid var(--cream);
+        border-radius: 4px;
     }
-    .ur-promise .ab-wel-3 {
-        width: 100px;
-        height: 100px;
-        border: 7px solid rgb(240, 168, 5);
+    .ur-promise2__top .ur-years {
+        position: absolute;
+        bottom: 18%;
+        left: 0;
+        z-index: 3;
+        background: var(--pink);
+        color: #fff;
+        padding: 14px 20px;
+        border-radius: 4px;
+    }
+    .ur-promise2__top .ur-years b {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 26px;
+        font-weight: 700;
+        display: block;
+        line-height: 1;
+    }
+    .ur-promise2__top .ur-years span {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .06em;
+    }
+    .ur-promise2__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .ur-promise2__card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 38px 30px;
+        text-align: center;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .ur-promise2__card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(0,0,0,.07);
+    }
+    .ur-promise2__icon {
+        width: 56px;
+        height: 56px;
         border-radius: 50%;
-        left: -39px;
-        top: -32px;
-        z-index: 0;
-        position: absolute;
+        background: var(--cream2);
+        color: var(--pink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin: 0 auto 20px;
     }
-    .ur-promise .ab-wel-4 {
-        width: 200px;
-        height: 200px;
-        border: 7px solid rgb(255, 226, 240);
-        border-radius: 20px;
-        right: 9px;
-        bottom: -4px;
-        position: absolute;
+    .ur-promise2__card-title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 19px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 10px;
     }
+    .ur-promise2__card-text {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+        margin: 0;
+    }
+    .ur-promise2__cta { text-align: center; margin-top: 44px; }
     .ur-welcome-kicker {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 28px;
@@ -207,35 +247,6 @@
         line-height: 1.15;
         text-transform: uppercase;
     }
-    .ur-check {
-        display: flex;
-        gap: 12px;
-        align-items: flex-start;
-        font-size: 14.5px;
-        line-height: 1.6;
-        color: #33403A;
-        margin-bottom: 12px;
-        padding: 10px 12px;
-        background: #fff;
-        border-radius: 10px;
-        border: 1px solid rgba(233,30,99,.08);
-    }
-    .ur-check i {
-        color: #fff;
-        font-style: normal;
-        font-weight: 700;
-        width: 22px;
-        height: 22px;
-        min-width: 22px;
-        border-radius: 50%;
-        background: var(--pink);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        margin-top: 1px;
-    }
-    .ur-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 26px; }
     .ur-contact-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -325,233 +336,178 @@
     }
 
     .ur-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-    .ur-step { background: var(--cream); padding: 30px 24px; border-top: 3px solid var(--pink); }
+    .ur-step {
+        position: relative;
+        background: var(--cream);
+        padding: 34px 26px;
+        border-top: 3px solid var(--pink);
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .ur-step:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 36px rgba(0,0,0,.06);
+    }
     .ur-step--dark { background: var(--pink); }
     .ur-step--dark .ur-step__title, .ur-step--dark .ur-step__num { color: #fff; }
     .ur-step--dark .ur-step__text { color: #FFE0EC; }
+    .ur-step__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: var(--cream2);
+        color: var(--pink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        margin-bottom: 18px;
+    }
+    .ur-step--dark .ur-step__icon { background: rgba(255,255,255,.12); color: #fff; }
     .ur-step__num { font-family: 'Playfair Display', Georgia, serif; font-size: 34px; color: var(--pink); line-height: 1; margin-bottom: 12px; }
-    .ur-step__title { font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--ink); }
+    .ur-step__title { font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 18px; margin-bottom: 8px; color: var(--ink); }
     .ur-step__text { font-size: 13.5px; line-height: 1.65; color: var(--muted); }
+    .ur-how-1a__cta { text-align: center; margin-top: 48px; }
 
-    /* Restored classic How-it-works timeline */
-    .ur-how-timeline {
+    /* Premium Matchmaking */
+    .ur-premium__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 8px; }
+    .ur-premium__card {
         background: #fff;
-        padding: 70px 0 40px;
-        overflow: visible;
-    }
-    .ur-how-timeline .home-tit {
-        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 42px 26px;
         text-align: center;
-        margin-bottom: 40px;
-        padding: 8px 16px 0;
-        overflow: visible;
+        transition: transform .25s ease, box-shadow .25s ease;
     }
-    .ur-how-timeline .home-tit p {
-        line-height: 1.3;
-        margin-bottom: 6px;
+    .ur-premium__card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(0,0,0,.08);
     }
-    .ur-how-timeline .wedd-tline .inn {
-        float: none;
-        margin: 0 auto;
-        width: 70%;
+    .ur-premium__card--dark {
+        background: var(--pink);
+        border-color: var(--pink);
     }
-    .ur-how-timeline .wedd-tline .inn ul {
-        position: relative;
-        float: left; /* keeps height so the center line can stretch */
-        width: 100%;
-        list-style: none;
-        margin: 0;
-        padding: 0;
+    .ur-premium__icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--cream2);
+        color: var(--pink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin: 0 auto 22px;
     }
-    /* Vertical link between step dots */
-    .ur-how-timeline .wedd-tline .inn ul:before {
-        content: '';
-        background: #ddcebc !important;
-        position: absolute !important;
-        width: 2px !important;
-        top: 12px !important;
-        bottom: 40px !important;
-        height: auto !important;
-        left: 50% !important;
-        margin-left: -1px;
-        z-index: 0;
-        display: block !important;
+    .ur-premium__card--dark .ur-premium__icon { background: rgba(255,255,255,.12); color: #C9974D; }
+    .ur-premium__tier {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--ink);
+        letter-spacing: .02em;
+        margin-bottom: 10px;
     }
-    .ur-how-timeline .wedd-tline .inn ul li {
-        position: relative;
-        float: left;
-        width: 100%;
-        padding-bottom: 50px;
-        list-style: none;
-    }
-    .ur-how-timeline .wedd-tline .inn ul li:before {
-        content: '';
-        position: absolute;
-        width: 25px;
-        height: 25px;
-        background: #66451c;
-        z-index: 2;
-        border-radius: 50px;
-        border: 5px solid #fff;
-        box-sizing: border-box;
-        margin-top: 2px;
-        box-shadow: 0 0 10px 0.6px rgb(40 30 20 / 8%);
-        left: calc(50% - 12px);
+    .ur-premium__card--dark .ur-premium__tier { color: #fff; }
+    .ur-premium__desc { font-size: 13.5px; line-height: 1.6; color: var(--muted); margin: 0; }
+    .ur-premium__card--dark .ur-premium__desc { color: #D7E4DC; }
+    .ur-premium__cta {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 46px;
     }
 
-    /* Tablet + phone: clean left-rail timeline (icon then text, always) */
-    @media (max-width: 991px) {
-        .ur-how-timeline {
-            padding: 48px 0 28px;
-            overflow: visible;
-        }
-        .ur-how-timeline .home-tit {
-            margin-bottom: 28px;
-            padding: 12px 12px 0;
-        }
-        .ur-how-timeline .home-tit h2 {
-            font-size: 32px !important;
-            line-height: 1.2 !important;
-        }
-        .ur-how-timeline .home-tit h2 span {
-            font-size: inherit !important;
-        }
-        .ur-how-timeline .home-tit .leaf1 {
-            margin-top: 6px;
-            height: 44px;
-        }
-        .ur-how-timeline .wedd-tline .inn {
-            width: 100% !important;
-            float: none !important;
-            padding: 8px 16px 0 !important;
-            box-sizing: border-box;
-        }
-        .ur-how-timeline .wedd-tline .inn ul {
-            float: none !important;
-            display: block !important;
-            overflow: visible;
-            padding-left: 0 !important;
-        }
-        .ur-how-timeline .wedd-tline .inn ul:before {
-            left: 31px !important;
-            margin-left: 0 !important;
-            top: 18px !important;
-            bottom: 24px !important;
-        }
-        .ur-how-timeline .wedd-tline .inn ul li {
-            float: none !important;
-            width: 100% !important;
-            padding: 0 0 28px !important;
-            clear: both;
-        }
-        .ur-how-timeline .wedd-tline .inn ul li:before {
-            left: 20px !important;
-            top: 18px;
-            margin-top: 0;
-            width: 22px;
-            height: 22px;
-            border-width: 4px;
-        }
-        .ur-how-timeline .tline-inn,
-        .ur-how-timeline .tline-inn-reve {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: flex-start !important;
-            float: none !important;
-            width: 100% !important;
-            gap: 14px;
-            padding-left: 56px !important;
-            box-sizing: border-box;
-            position: relative !important;
-        }
-        /* Always: icon first, text second (fixes reversed steps) */
-        .ur-how-timeline .tline-im,
-        .ur-how-timeline .tline-inn-reve .tline-im {
-            order: 1 !important;
-            float: none !important;
-            width: 58px !important;
-            flex: 0 0 58px !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-        }
-        .ur-how-timeline .tline-im img,
-        .ur-how-timeline .tline-inn-reve .tline-im img {
-            float: none !important;
-            display: block !important;
-            width: 58px !important;
-            height: auto !important;
-            max-width: 100%;
-            margin: 0 auto;
-        }
-        .ur-how-timeline .tline-con,
-        .ur-how-timeline .tline-inn-reve .tline-con {
-            order: 2 !important;
-            float: none !important;
-            width: 100% !important;
-            flex: 1 1 auto !important;
-            padding: 4px 0 0 !important;
-            margin: 0 !important;
-            text-align: left !important;
-            min-width: 0;
-        }
-        .ur-how-timeline .tline-inn div h5,
-        .ur-how-timeline .tline-con h5 {
-            font-size: 22px !important;
-            line-height: 1.25 !important;
-            margin: 0 0 6px !important;
-            padding-right: 4px;
-        }
-        .ur-how-timeline .tline-inn div p,
-        .ur-how-timeline .tline-con p {
-            font-size: 14px !important;
-            line-height: 1.55 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .ur-how-timeline .animate {
-            opacity: 1 !important;
-            transform: none !important;
-        }
+    /* Two Ways to Find Your Match */
+    .ur-choice__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; margin-top: 8px; }
+    .ur-choice__card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 40px 34px;
+        transition: transform .25s ease, box-shadow .25s ease;
     }
+    .ur-choice__card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(0,0,0,.07);
+    }
+    .ur-choice__card--dark {
+        background: var(--pink);
+        border-color: var(--pink);
+    }
+    .ur-choice__icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 50%;
+        background: var(--cream2);
+        color: var(--pink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 22px;
+    }
+    .ur-choice__card--dark .ur-choice__icon { background: rgba(255,255,255,.14); color: #fff; }
+    .ur-choice__title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 10px;
+    }
+    .ur-choice__card--dark .ur-choice__title { color: #fff; }
+    .ur-choice__desc { font-size: 14px; line-height: 1.7; color: var(--muted); margin: 0 0 20px; }
+    .ur-choice__card--dark .ur-choice__desc { color: #FFE0EC; }
+    .ur-choice__list { list-style: none; margin: 0 0 26px; padding: 0; }
+    .ur-choice__list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 13.5px;
+        line-height: 1.5;
+        color: var(--muted);
+        margin-bottom: 10px;
+    }
+    .ur-choice__card--dark .ur-choice__list li { color: #FFE0EC; }
+    .ur-choice__list li i { color: var(--pink); margin-top: 2px; font-size: 12px; }
+    .ur-choice__card--dark .ur-choice__list li i { color: #fff; }
 
-    @media (max-width: 575px) {
-        .ur-how-timeline .wedd-tline .inn {
-            padding: 4px 12px 0 !important;
-        }
-        .ur-how-timeline .tline-inn,
-        .ur-how-timeline .tline-inn-reve {
-            padding-left: 52px !important;
-            gap: 10px;
-        }
-        .ur-how-timeline .wedd-tline .inn ul:before {
-            left: 28px !important;
-        }
-        .ur-how-timeline .wedd-tline .inn ul li:before {
-            left: 17px !important;
-            width: 20px;
-            height: 20px;
-        }
-        .ur-how-timeline .tline-im,
-        .ur-how-timeline .tline-inn-reve .tline-im {
-            width: 52px !important;
-            flex-basis: 52px !important;
-        }
-        .ur-how-timeline .tline-im img,
-        .ur-how-timeline .tline-inn-reve .tline-im img {
-            width: 52px !important;
-        }
-        .ur-how-timeline .tline-inn div h5,
-        .ur-how-timeline .tline-con h5 {
-            font-size: 20px !important;
-        }
-        .ur-how-timeline .tline-inn div p,
-        .ur-how-timeline .tline-con p {
-            font-size: 13.5px !important;
-        }
+    /* International Matchmaking */
+    .ur-intl__note {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+        max-width: 560px;
+        margin: 14px auto 0;
     }
+    .ur-intl__regions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+        margin: 44px 0 8px;
+    }
+    .ur-intl__region {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 99px;
+        padding: 14px 26px;
+        transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    }
+    .ur-intl__region:hover { transform: translateY(-3px); }
+    .ur-intl__flag { font-size: 22px; line-height: 1; }
+    .ur-intl__name {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--ink);
+        letter-spacing: .01em;
+    }
+    .ur-intl__cta { text-align: center; margin-top: 40px; }
 
     /* Full-width photo gallery — outside ur-page / ur-wrap */
     .ur-photo-gallery {
@@ -570,12 +526,17 @@
         margin-left: 0;
         margin-right: 0;
     }
-    .ur-photo-gallery .home-tit {
-        width: 100%;
-        text-align: center;
-        margin: 0 auto 36px;
-        float: none;
+    .ur-photo-gallery__head {
         padding: 0 12px;
+        margin-bottom: 36px;
+    }
+    .ur-photo-gallery .gal-im .gal-label {
+        font-family: 'Manrope', system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: #fff;
     }
     .ur-photo-gallery .gall-inn {
         width: 100%;
@@ -696,18 +657,19 @@
     }
 
     .ur-stories-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
+    .ur-stories-sub { font-size: 15.5px; line-height: 1.8; color: var(--muted); max-width: 640px; margin: -22px 0 30px; }
     .ur-stories-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 22px; }
     .ur-story { position: relative; border-radius: 6px; overflow: hidden; }
     .ur-story--lg { height: 360px; }
     .ur-story--sm { height: 169px; }
-    .ur-story img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .ur-story img { width: 100%; height: 100%; object-fit: cover; display: block; object-position: center 20%; }
+    .ur-story--sm img { object-position: center 12%; }
     .ur-story__overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(26,6,16,.9)); }
     .ur-story__meta { position: absolute; bottom: 18px; left: 18px; right: 18px; color: #fff; }
     .ur-story__meta h4 { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 600; margin: 0; }
     .ur-story__meta span { font-size: 12.5px; color: #F8D7E5; }
     .ur-story-col { display: flex; flex-direction: column; gap: 22px; }
-    .ur-link { font-size: 14px; font-weight: 700; color: var(--pink); text-decoration: none !important; }
-    .ur-link:hover { color: var(--pink-dark); }
+    .ur-stories__cta { text-align: center; margin-top: 40px; }
 
     .ur-quotes-head {
         display: flex;
@@ -722,6 +684,14 @@
         max-width: none;
         margin: 0;
     }
+    .ur-quotes-sub {
+        font-size: 15px;
+        line-height: 1.7;
+        color: #D7E4DC;
+        max-width: 640px;
+        margin: -20px 0 32px;
+    }
+    .ur-quotes__cta { text-align: center; margin-top: 40px; }
     .ur-quotes-nav {
         display: flex;
         gap: 10px;
@@ -849,7 +819,52 @@
         }
     }
 
+    /* Founder — prominent presentation */
+    .ur-founder {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 48px;
+        align-items: center;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 40px;
+        margin-bottom: 56px;
+        box-shadow: 0 18px 44px rgba(0,0,0,.06);
+    }
+    .ur-founder__photo { border-radius: 14px; overflow: hidden; }
+    .ur-founder__photo img { width: 100%; height: 380px; object-fit: cover; display: block; }
+    .ur-founder__name {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 6px;
+    }
+    .ur-founder__role {
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #C9974D;
+        margin-bottom: 18px;
+    }
+    .ur-founder__desc { font-size: 14.5px; line-height: 1.75; color: var(--muted); margin: 0 0 14px; max-width: 560px; }
+    .ur-founder__actions { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; margin-top: 18px; }
+    .ur-founder__actions .ur-team__social { justify-content: flex-start; margin: 0; }
+
+    .ur-team__label {
+        font-size: 12.5px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-align: center;
+        margin: 0 0 24px;
+    }
+
     .ur-team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 70px; }
+    .ur-team--rest { grid-template-columns: repeat(3, 1fr); }
     .ur-team__card { text-align: center; }
     .ur-team__card img { width: 100%; height: 230px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 14px; }
     .ur-team__card h4 { font-weight: 700; font-size: 15px; margin: 0 0 4px; color: var(--ink); }
@@ -861,6 +876,50 @@
     .ur-gallery { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 130px; gap: 12px; }
     .ur-gallery img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
     .ur-gallery img.span2 { grid-row: span 2; }
+
+    /* Privacy & Safety */
+    .ur-privacy__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 8px; }
+    .ur-privacy__card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 34px 26px;
+        text-align: center;
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .ur-privacy__card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(0,0,0,.07);
+    }
+    .ur-privacy__icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: var(--cream2);
+        color: var(--pink);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin: 0 auto 16px;
+    }
+    .ur-privacy__num {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        color: #C9974D;
+        margin-bottom: 10px;
+    }
+    .ur-privacy__title {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--ink);
+        margin: 0 0 8px;
+    }
+    .ur-privacy__text { font-size: 13.5px; line-height: 1.65; color: var(--muted); margin: 0; }
+    .ur-privacy__cta { text-align: center; margin-top: 40px; }
 
     .ur-cta {
         position: relative;
@@ -1007,19 +1066,23 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        gap: 10px 22px;
+        gap: 10px 14px;
         list-style: none;
         margin: 0;
         padding: 0;
-        color: rgba(255, 232, 240, 0.88);
         font-size: 12.5px;
-        font-weight: 600;
+        font-weight: 700;
         letter-spacing: .04em;
     }
     .ur-cta__trust li {
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(232, 196, 138, 0.45);
+        border-radius: 999px;
+        padding: 7px 16px;
+        color: #FFEFD9;
     }
     .ur-cta__trust li::before {
         content: '';
@@ -1028,6 +1091,13 @@
         border-radius: 50%;
         background: #E8C48A;
         box-shadow: 0 0 8px rgba(232, 196, 138, 0.7);
+    }
+    .ur-cta__disclaimer {
+        margin: 22px 0 0;
+        font-size: 11.5px;
+        font-weight: 600;
+        letter-spacing: .03em;
+        color: rgba(255, 232, 240, 0.62);
     }
     @media (prefers-reduced-motion: reduce) {
         .ur-cta { background-attachment: scroll; }
@@ -1039,47 +1109,57 @@
     .ur-sec--pink .ur-trust-note { color: #FFF5F8; }
 
     @media (max-width: 991px) {
-        .ur-promise, .ur-stories-grid, .ur-team { grid-template-columns: 1fr; }
+        .ur-stories-grid { grid-template-columns: 1fr; }
+        .ur-promise2__top { grid-template-columns: 1fr; margin-bottom: 40px; }
+        .ur-promise2__top .ab-wel-lhs { min-height: 380px; height: 380px; margin-bottom: 8px; }
+        .ur-promise2__top .ur-eyebrow,
+        .ur-promise2__top .ur-h2,
+        .ur-promise2__top .ur-lead { text-align: center; }
+        .ur-promise2__grid { grid-template-columns: 1fr 1fr; }
         .ur-stats { grid-template-columns: 1fr 1fr; }
         .ur-stats__card:nth-child(2) { border-right: none; }
         .ur-stats__card:nth-child(1),
         .ur-stats__card:nth-child(2) { border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 8px; }
         .ur-steps { grid-template-columns: 1fr 1fr; }
-        .ur-promise .ab-wel-lhs {
-            min-height: 480px;
-        }
-        .ur-promise .ab-wel-1 {
-            height: 460px;
-        }
+        .ur-choice__grid { grid-template-columns: 1fr; }
+        .ur-premium__grid { grid-template-columns: 1fr 1fr; }
+        .ur-privacy__grid { grid-template-columns: 1fr 1fr; }
         .ur-gallery { grid-template-columns: repeat(3, 1fr); }
         .ur-contact-row { grid-template-columns: 1fr; }
         .ur-team { grid-template-columns: 1fr 1fr; }
+        .ur-team--rest { grid-template-columns: 1fr 1fr 1fr; }
+        .ur-founder { grid-template-columns: 1fr; text-align: center; padding: 32px 28px; }
+        .ur-founder__photo img { height: 320px; }
+        .ur-founder__desc { max-width: none; margin-left: auto; margin-right: auto; }
+        .ur-founder__actions { justify-content: center; }
+        .ur-founder__actions .ur-team__social { justify-content: center; }
         .ur-story--lg { height: 280px; }
         .ur-story--sm { height: 160px; }
         .ur-wrap { padding-left: 16px; padding-right: 16px; box-sizing: border-box; }
     }
     @media (max-width: 767px) {
-        .ur-promise, .ur-stories-grid, .ur-team, .ur-steps, .ur-stats, .ur-gallery { grid-template-columns: 1fr; }
+        .ur-stories-grid, .ur-team, .ur-steps, .ur-stats, .ur-gallery { grid-template-columns: 1fr; }
+        .ur-promise2__grid { grid-template-columns: 1fr; }
+        .ur-premium__grid { grid-template-columns: 1fr; }
+        .ur-premium__cta { flex-direction: column; align-items: stretch; }
+        .ur-privacy__grid { grid-template-columns: 1fr; }
+        .ur-intl__region { padding: 12px 18px; gap: 8px; }
+        .ur-intl__name { font-size: 14px; }
         .ur-stats__card { border-right: none !important; border-bottom: 1px solid var(--line); padding: 16px 8px; }
         .ur-stats__card:last-child { border-bottom: none; }
         .ur-story--lg,
         .ur-story--sm { height: 220px; }
         .ur-story-col { gap: 14px; }
+        .ur-team--rest { grid-template-columns: 1fr; }
         .ur-team__card img { height: 200px; }
+        .ur-founder { padding: 28px 20px; }
+        .ur-founder__photo img { height: 260px; }
         .ur-quote { min-height: 0; padding: 22px 18px; }
         .ur-gallery { grid-auto-rows: 160px; }
         .ur-gallery img.span2 { grid-row: auto; }
         .ur-sec { padding: 56px 16px; }
-        .ur-promise .ab-wel-lhs {
-            min-height: 420px;
-            margin-bottom: 20px;
-        }
-        .ur-promise .ab-wel-1 {
-            height: 380px;
-        }
-        .ur-promise .ab-wel-2 {
-            height: 220px;
-        }
+        .ur-promise2__top .ab-wel-lhs { min-height: 320px; height: 320px; }
+        .ur-promise2__card { padding: 30px 22px; }
         .ur-welcome-kicker { font-size: 24px; }
     }
 
@@ -1100,9 +1180,6 @@
     .ur-wrap {
         width: 100%;
         box-sizing: border-box;
-    }
-    .ur-actions .ur-btn {
-        max-width: 100%;
     }
 
     /* Phones + small tablets (non-hero page sections) */
@@ -1130,14 +1207,6 @@
         }
         .ur-photo-gallery .gal-im .txt span {
             font-size: 11px;
-        }
-
-        .ur-actions {
-            gap: 10px;
-        }
-        .ur-actions .ur-btn {
-            width: 100%;
-            justify-content: center;
         }
         .ur-cta {
             min-height: 0;
@@ -1189,16 +1258,27 @@
     <div class="ur-hero-a__inner">
         <div class="ur-hero-a__main">
             <div class="ur-hero-a__content">
-                <div class="ur-hero-a__badge">EST. 2018 · 5,000+ MARRIAGES</div>
+                <div class="ur-hero-a__badge">Private &bull; Verified &bull; Professional Matchmaking</div>
                 <h1 class="ur-hero-a__title">
-                    A Respectful Path to
-                    <span class="ur-hero-line2">
-                        <em>Your Rishta</em>
-                    </span>
+                    Where <em>Meaningful Matches</em> Begin
                 </h1>
                 <p class="ur-hero-a__subtitle">
-                    Verified profiles and dedicated matchmakers serving Pakistani &amp; Muslim families in Pakistan, the UK, USA, Canada and the Gulf.
+                    Pakistan&rsquo;s trusted premium matchmaking service for serious individuals and families in Pakistan, UK, USA, Canada, Australia, Europe &amp; the Gulf.
                 </p>
+                <p class="ur-hero-a__subtitle ur-hero-a__subtitle--sm">
+                    Every profile is carefully reviewed, with privacy, discretion and personal matchmaking support at every stage.
+                </p>
+                <div class="ur-hero-a__cta-row">
+                    <a href="javascript:void(0);" onclick="openPopup()" class="ur-hero-a__btn ur-hero-a__btn--primary">Book a Private Consultation</a>
+                    <a href="/register" class="ur-hero-a__btn ur-hero-a__btn--secondary">Create Your Profile</a>
+                </div>
+                <div class="ur-hero-a__trust" aria-label="Trust points">
+                    <span>15,000+ Verified Profiles</span>
+                    <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
+                    <span>5,000+ Successful Matches</span>
+                    <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
+                    <span>8+ Years of Trust</span>
+                </div>
             </div>
         </div>
 
@@ -1276,196 +1356,285 @@
     </div>
 </section>
 
-<div class="ur-trust-bar" aria-label="Trust points">
-    <span>✓&nbsp; 15,000+ Verified Profiles</span>
-    <span>✓&nbsp; Mobile &amp; ID Verified Members</span>
-    <span>✓&nbsp; 5,000+ Successful Marriages</span>
-    <span>✓&nbsp; Private &amp; Family-Friendly</span>
-</div>
-
 
 <div class="ur-page">
     <!-- WELCOME / PROMISE -->
     <section class="ur-sec ur-sec--cream">
-        <div class="ur-wrap ur-promise">
-            <div class="ab-wel-lhs">
-                <img src="images/about/1.jpg" alt="" loading="lazy" class="ab-wel-1">
-                <img src="images/couples/20.jpg" alt="" loading="lazy" class="ab-wel-2">
-                <div class="ur-years"><b>8+</b><span>YEARS OF SERVICE</span></div>
-            </div>
-            <div>
-                <div class="ur-eyebrow">Our Promise</div>
-                <h2 class="ur-h2" style="margin-bottom:18px;">Matchmaking with<br>dignity and discretion</h2>
-                <p class="ur-lead" style="max-width:470px;margin-bottom:16px;">Every profile is personally reviewed before approval. Every introduction is made with your family's values in mind — never an algorithm alone.</p>
-                <div style="max-width:440px;">
-                    <div class="ur-check"><i>✓</i><div><b>Verified members only</b> — mobile and ID checked before a profile goes live</div></div>
-                    <div class="ur-check"><i>✓</i><div><b>A named matchmaker</b> guides your search from first search to nikah</div></div>
-                    <div class="ur-check"><i>✓</i><div><b>Privacy controls</b> — you decide who sees your photos and contact details</div></div>
+        <div class="ur-wrap">
+            <div class="ur-promise2__top">
+                <div class="ab-wel-lhs">
+                    <img src="images/about/1.jpg" alt="" loading="lazy" class="ab-wel-1">
+                    <img src="images/couples/20.jpg" alt="" loading="lazy" class="ab-wel-2">
+                    <div class="ur-years"><b>8+</b><span>YEARS OF SERVICE</span></div>
                 </div>
-                <div class="ur-actions">
-                    <a href="/register" class="ur-btn ur-btn--solid">Start Your Journey</a>
-                    <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--outline">Book a Consultation</a>
+                <div>
+                    <div class="ur-eyebrow">Private Matchmaking, Personally Managed</div>
+                    <h2 class="ur-h2" style="margin-bottom:16px;">More Than a Matrimonial Website</h2>
+                    <p class="ur-lead">
+                        Finding the right life partner requires more than browsing profiles. Urgent Rishta combines technology with
+experienced human matchmaking to create a private, structured and respectful experience</p>
+                </div>
+            </div>
+
+            <div class="ur-promise2__grid">
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-check-circle" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Verified &amp; Genuine</h3>
+                    <p class="ur-promise2__card-text">Profiles and key information are reviewed before approval.</p>
+                </div>
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-lock" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Private &amp; Confidential</h3>
+                    <p class="ur-promise2__card-text">Your personal information and photographs are handled with discretion.</p>
+                </div>
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-users" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Human Matchmaking Support</h3>
+                    <p class="ur-promise2__card-text">Our team personally assists you from profile creation to family introductions.</p>
+                </div>
+            </div>
+
+            <div class="ur-promise2__cta">
+                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--solid">Speak to a Matchmaker</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- TWO WAYS TO FIND YOUR MATCH -->
+    <section class="ur-sec ur-sec--soft">
+        <div class="ur-wrap">
+            <div class="ur-center">
+            
+                <h2 class="ur-h2">Choose the Service That Suits You</h2>
+            </div>
+            <div class="ur-choice__grid">
+                <div class="ur-choice__card">
+                    <div class="ur-choice__icon"><i class="fa fa-desktop" aria-hidden="true"></i></div>
+                    <h3 class="ur-choice__title">Online Matchmaking</h3>
+                    <p class="ur-choice__desc">For members who prefer to explore suitable profiles through our online platform.</p>
+                    <ul class="ur-choice__list">
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Access to suitable profiles</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Search based on preferences</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Interest requests</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Privacy controls</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Matchmaking support</li>
+                    </ul>
+                    <a href="/register" class="ur-btn ur-btn--outline">Explore Online Plans</a>
+                </div>
+                <div class="ur-choice__card ur-choice__card--dark">
+                    <div class="ur-choice__icon"><i class="fa fa-user-circle" aria-hidden="true"></i></div>
+                    <h3 class="ur-choice__title">Personalized Confidential Matchmaking</h3>
+                    <p class="ur-choice__desc">For individuals and families who prefer their search to be personally managed by our matchmaking team.</p>
+                    <ul class="ur-choice__list">
+                        <li><i class="fa fa-check" aria-hidden="true"></i> We understand your requirements</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> We review suitable prospects</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> We coordinate introductions privately</li>
+                    </ul>
+                    <a href="{{ url('packages') }}" class="ur-btn ur-btn--light">Explore Personalized Services</a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ENQUIRY + COUNTS -->
-    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
+    {{-- <section class="ur-sec ur-sec--cream" style="padding-top:0;">
         <div class="ur-wrap">
             <div class="ur-enquiry-bar">
-                <div class="ur-enquiry-bar__item">
-                    <div class="ur-enquiry-bar__label">Enquiry</div>
-                    <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
+                <div class="ur-enquiry-bar__contact">
+                    <div class="ur-enquiry-bar__item">
+                        <div class="ur-enquiry-bar__label">Enquiry</div>
+                        <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
+                    </div>
+                    <div class="ur-enquiry-bar__item">
+                        <div class="ur-enquiry-bar__label">Get Support</div>
+                        <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
+                    </div>
                 </div>
-                <div class="ur-enquiry-bar__item">
-                    <div class="ur-enquiry-bar__label">Get Support</div>
-                    <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
-                </div>
-                <div>
-                    <div class="ur-enquiry-bar__num">5K</div>
-                    <div class="ur-enquiry-bar__sub">Couples Paired</div>
-                </div>
-                <div>
-                    <div class="ur-enquiry-bar__num">15,000+</div>
-                    <div class="ur-enquiry-bar__sub">Registrants</div>
-                </div>
-                <div>
-                    <div class="ur-enquiry-bar__num">8,000+</div>
-                    <div class="ur-enquiry-bar__sub">Men</div>
-                </div>
-                <div>
-                    <div class="ur-enquiry-bar__num">7,000+</div>
-                    <div class="ur-enquiry-bar__sub">Women</div>
+                <div class="ur-enquiry-bar__stats">
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num">15,000+</div>
+                        <div class="ur-enquiry-bar__sub">Verified Profiles</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num">5,000+</div>
+                        <div class="ur-enquiry-bar__sub">Successful Matches</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num">8+ Years</div>
+                        <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num">Worldwide</div>
+                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Muslim Community</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </section>
+    </section> --}}
 
     <!-- HOW IT WORKS -->
-    <section class="ur-how-1a">
+    <section class="ur-how-1a" id="how-it-works">
         <div class="ur-wrap">
             <div class="ur-center">
-                <div class="ur-eyebrow">Simple &amp; Respectful</div>
-                <h2 class="ur-h2">How it works</h2>
+                <div class="ur-eyebrow">A MORE PRIVATE WAY TO FIND THE RIGHT PERSON</div>
+                <h2 class="ur-h2">Your Search. Personally Managed</h2>
+                <p class="ur-lead" style="margin-top:14px;">Some searches require more than access to a database. Our personalized matchmaking service is designed for
+clients who value privacy, discretion and individual attention.</p>
             </div>
             <div class="ur-steps">
                 <div class="ur-step">
+                    <div class="ur-step__icon"><i class="fa fa-user-plus" aria-hidden="true"></i></div>
                     <div class="ur-step__num">01</div>
-                    <div class="ur-step__title">Register</div>
-                    <div class="ur-step__text">Create your profile with your details, preferences and family expectations.</div>
+                    <div class="ur-step__title"> Private Consultation</div>
+                    <div class="ur-step__text">We understand your background, expectations and preferences.</div>
                 </div>
                 <div class="ur-step">
+                    <div class="ur-step__icon"><i class="fa fa-search" aria-hidden="true"></i></div>
                     <div class="ur-step__num">02</div>
-                    <div class="ur-step__title">Get Matched</div>
-                    <div class="ur-step__text">Browse verified profiles filtered by age, city, education and values.</div>
+                    <div class="ur-step__title">Profile Review</div>
+                    <div class="ur-step__text">Your information and requirements are carefully reviewed. </div>
                 </div>
                 <div class="ur-step">
+                    <div class="ur-step__icon"><i class="fa fa-star" aria-hidden="true"></i></div>
                     <div class="ur-step__num">03</div>
-                    <div class="ur-step__title">Send Interest</div>
-                    <div class="ur-step__text">Express interest; on acceptance, full profile details are unlocked.</div>
+                    <div class="ur-step__title">Curated Search</div>
+                    <div class="ur-step__text">Our team identifies potentially compatible profiles.</div>
                 </div>
                 <div class="ur-step">
+                    <div class="ur-step__icon"><i class="fa fa-comments" aria-hidden="true"></i></div>
                     <div class="ur-step__num">04</div>
-                    <div class="ur-step__title">Get Profile Information</div>
-                    <div class="ur-step__text">Once interest is accepted, full profile details unlock for both sides.</div>
+                    <div class="ur-step__title"> Private Introductions</div>
+                    <div class="ur-step__text">Suitable profiles are presented discreetly.</div>
                 </div>
                 <div class="ur-step">
+                    <div class="ur-step__icon"><i class="fa fa-users" aria-hidden="true"></i></div>
                     <div class="ur-step__num">05</div>
-                    <div class="ur-step__title">Start Meetups</div>
-                    <div class="ur-step__text">Speak, involve your families and arrange meetings with mutual consent.</div>
+                    <div class="ur-step__title"> Mutual Interest</div>
+                    <div class="ur-step__text">Personal contact details are shared only after appropriate approval.</div>
                 </div>
                 <div class="ur-step ur-step--dark">
+                    <div class="ur-step__icon"><i class="fa fa-heart" aria-hidden="true"></i></div>
                     <div class="ur-step__num">06</div>
-                    <div class="ur-step__title">Getting Married</div>
-                    <div class="ur-step__text">When you find the right person, take the step toward nikah.</div>
+                    <div class="ur-step__title"> Family Connection</div>
+                    <div class="ur-step__text">Where appropriate, our team helps facilitate communication between families.</div>
                 </div>
+            </div>
+            <div class="ur-how-1a__cta">
+                <a href="/register" class="ur-btn ur-btn--solid">Start Your Journey</a>
             </div>
         </div>
     </section>
 
-    <!-- HOW IT WORKS — original vertical timeline (preferred) -->
-    <section class="ur-how-timeline">
-        <div class="wedd-tline">
-            <div class="container">
-                <div class="row">
-                    <div class="home-tit">
-                        <p>Moments</p>
-                        <h2><span>How it works</span></h2>
-                        <span class="leaf1"></span>
-                        <span class="tit-ani-"></span>
-                    </div>
-                    <div class="inn">
-                        <ul>
-                            <li>
-                                <div class="tline-inn">
-                                    <div class="tline-im animate animate__animated animate__slower" data-ani="animate__fadeInUp">
-                                        <img src="images/icon/rings.png" alt="" loading="lazy">
-                                    </div>
-                                    <div class="tline-con animate animate__animated animate__slow" data-ani="animate__fadeInUp">
-                                        <h5>Register</h5>
-                                        <p>Create your account by providing essential details and preferences. A complete profile increases your chances of finding the perfect match.</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="tline-inn tline-inn-reve">
-                                    <div class="tline-con animate animate__animated animate__slower" data-ani="animate__fadeInUp">
-                                        <h5>Find your Match</h5>
-                                        <p>Explore a wide range of verified profiles based on your desired criteria, such as age, education, background, and personal values.</p>
-                                    </div>
-                                    <div class="tline-im animate animate__animated animate__slow" data-ani="animate__fadeInUp">
-                                        <img src="images/icon/wedding-2.png" alt="" loading="lazy">
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="tline-inn">
-                                    <div class="tline-im animate animate__animated animate__slower" data-ani="animate__fadeInUp">
-                                        <img src="images/icon/love-birds.png" alt="" loading="lazy">
-                                    </div>
-                                    <div class="tline-con animate animate__animated animate__slow" data-ani="animate__fadeInUp">
-                                        <h5>Send Interest</h5>
-                                        <p>Show your interest in a potential match by sending a request. If they accept, you can take the next step toward meaningful communication.</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="tline-inn tline-inn-reve">
-                                    <div class="tline-con animate animate__animated animate__slower" data-ani="animate__fadeInUp">
-                                        <h5>Get Profile Information</h5>
-                                        <p>Once your interest is accepted, gain access to detailed profile information to ensure compatibility before proceeding further.</p>
-                                    </div>
-                                    <div class="tline-im animate animate__animated animate__slow" data-ani="animate__fadeInUp">
-                                        <img src="images/icon/network.png" alt="" loading="lazy">
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="tline-inn">
-                                    <div class="tline-im animate animate__animated animate__slower" data-ani="animate__fadeInUp">
-                                        <img src="images/icon/chat.png" alt="" loading="lazy">
-                                    </div>
-                                    <div class="tline-con animate animate__animated animate__slow" data-ani="animate__fadeInUp">
-                                        <h5>Start Meetups</h5>
-                                        <p>Engage in conversations, build a connection, and arrange meetups with mutual consent to understand each other better.</p>
-                                    </div>
-                                </div>
-                            </li>
-                            <li>
-                                <div class="tline-inn tline-inn-reve">
-                                    <div class="tline-con animate animate__animated animate__slower" data-ani="animate__fadeInUp">
-                                        <h5>Getting Married</h5>
-                                        <p>When you find the right person, take the next step toward a lifelong commitment and begin your journey toward marriage.</p>
-                                    </div>
-                                    <div class="tline-im animate animate__animated animate__slow" data-ani="animate__fadeInUp">
-                                        <img src="images/icon/wedding-couple.png" alt="" loading="lazy">
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
+    <!-- PREMIUM MATCHMAKING -->
+    <section class="ur-sec ur-sec--cream">
+        <div class="ur-wrap ur-wrap--full">
+            <div class="ur-center">
+                <div class="ur-eyebrow">For Clients Who Value Privacy</div>
+                <h2 class="ur-h2">A Level of Service for Every Search</h2>
+                {{-- <p class="ur-lead" style="margin-top:14px;">For professionals, entrepreneurs, overseas Pakistanis and families seeking a more personalised experience, our premium matchmaking plans provide dedicated support, greater privacy and carefully curated introductions.</p> --}}
+            </div>
+
+            <div class="ur-premium__grid">
+                <div class="ur-premium__card">
+                    <div class="ur-premium__icon"><i class="fa fa-shield" aria-hidden="true"></i></div>
+                    <div class="ur-premium__tier">Platinum</div>
+                    <p class="ur-premium__desc">Personal matchmaking support for clients seeking a professionally managed search.</p>
                 </div>
+                <div class="ur-premium__card">
+                    <div class="ur-premium__icon"><i class="fa fa-diamond" aria-hidden="true"></i></div>
+                    <div class="ur-premium__tier">Diamond</div>
+                    <p class="ur-premium__desc">Priority matchmaking with broader search support and dedicated assistance.</p>
+                </div>
+                <div class="ur-premium__card">
+                    <div class="ur-premium__icon"><i class="fa fa-star" aria-hidden="true"></i></div>
+                    <div class="ur-premium__tier">Royal - Executive Matchmaking</div>
+                    <p class="ur-premium__desc">A highly personalized and confidential search with priority handling and senior-level oversight.</p>
+                </div>
+                <div class="ur-premium__card ur-premium__card--dark">
+                    <div class="ur-premium__icon"><i class="fa fa-trophy" aria-hidden="true"></i></div>
+                    <div class="ur-premium__tier">Imperial - Bespoke Private Matchmaking</div>
+                    <p class="ur-premium__desc">Our most exclusive service for individuals and families with highly specific requirements who expect maximum
+discretion and individually managed search.</p>
+                </div>
+            </div>
+
+            <div class="ur-premium__cta">
+                <a href="{{ url('packages') }}" class="ur-btn ur-btn--solid">Compare Premium Plans</a>
+                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--outline">Book a Private Consultation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRIVACY & SAFETY -->
+    <section class="ur-sec ur-sec--cream">
+        <div class="ur-wrap">
+            <div class="ur-center" style="max-width:640px;">
+                <div class="ur-eyebrow">Privacy &amp; Safety</div>
+                <h2 class="ur-h2">Your Privacy Comes First</h2>
+                <p class="ur-lead" style="margin-top:14px;">Marriage is personal. Your search should be too.</p>
+                <p class="ur-lead" style="margin-top:10px;">Urgent Rishta is designed around confidentiality. Personal information is handled carefully, and sensitive details are not intended for unrestricted public disclosure.</p>
+            </div>
+
+            <div class="ur-privacy__grid">
+                <div class="ur-privacy__card">
+                    <div class="ur-privacy__icon"><i class="fa fa-phone" aria-hidden="true"></i></div>
+                    <div class="ur-privacy__num">01</div>
+                    <h3 class="ur-privacy__title">Your Phone Number</h3>
+                    <p class="ur-privacy__text">Not displayed publicly.</p>
+                </div>
+                <div class="ur-privacy__card">
+                    <div class="ur-privacy__icon"><i class="fa fa-picture-o" aria-hidden="true"></i></div>
+                    <div class="ur-privacy__num">02</div>
+                    <h3 class="ur-privacy__title">Your Photographs</h3>
+                    <p class="ur-privacy__text">Shared according to applicable privacy settings and matchmaking procedures.</p>
+                </div>
+                <div class="ur-privacy__card">
+                    <div class="ur-privacy__icon"><i class="fa fa-shield" aria-hidden="true"></i></div>
+                    <div class="ur-privacy__num">03</div>
+                    <h3 class="ur-privacy__title">Your Personal Information</h3>
+                    <p class="ur-privacy__text">Used for matchmaking, verification and service delivery in accordance with our Privacy Policy.</p>
+                </div>
+                <div class="ur-privacy__card">
+                    <div class="ur-privacy__icon"><i class="fa fa-users" aria-hidden="true"></i></div>
+                    <div class="ur-privacy__num">04</div>
+                    <h3 class="ur-privacy__title">Family Introductions</h3>
+                    <p class="ur-privacy__text">Facilitated after appropriate interest and approval.</p>
+                </div>
+            </div>
+
+            <div class="ur-privacy__cta">
+                <a href="{{ url('privacy') }}" class="ur-btn ur-btn--outline">Read Our Privacy Policy</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERNATIONAL MATCHMAKING -->
+    <section class="ur-sec ur-sec--soft">
+        <div class="ur-wrap">
+            <div class="ur-center" style="max-width:640px;">
+                <div class="ur-eyebrow">GLOBAL REACH • PERSONAL SERVICE</div>
+                <h2 class="ur-h2">Matchmaking Beyond Borders</h2>
+                <p class="ur-lead" style="margin-top:14px;">Whether you are living in Pakistan or overseas, our team helps connect serious individuals and families across</p>
+                {{-- <p class="ur-intl__note">Whether you are looking locally or overseas, our team helps identify suitable introductions while maintaining privacy and family values.</p> --}}
+            </div>
+
+            <div class="ur-intl__regions">
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇵🇰</span><span class="ur-intl__name">Pakistan</span></div>
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇬🇧</span><span class="ur-intl__name">United Kingdom</span></div>
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇺🇸</span><span class="ur-intl__name">United States</span></div>
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇨🇦</span><span class="ur-intl__name">Canada</span></div>
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇦🇺</span><span class="ur-intl__name">Australia</span></div>
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇦🇪</span><span class="ur-intl__name">UAE &amp; Gulf</span></div>
+                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇪🇺</span><span class="ur-intl__name">Europe</span></div>
+            </div>
+
+            <div class="ur-center" style="max-width:640px;">
+            <p class="ur-lead" style="margin-top:14px;">Our overseas matchmaking service is particularly suited to professionals, business families and individuals seeking compatible Pakistani matches internationally.</p>
+            </div>
+
+
+            <div class="ur-intl__cta">
+                <a href="/register" class="ur-btn ur-btn--solid">Explore Overseas Matchmaking</a>
             </div>
         </div>
     </section>
@@ -1476,13 +1645,14 @@
             <div class="ur-stories-head">
                 <div>
                     <div class="ur-eyebrow">Happy Endings</div>
-                    <h2 class="ur-h2">Recent success stories</h2>
+                    <h2 class="ur-h2">Real Introductions. Meaningful Outcomes.</h2>
                 </div>
-                <a href="{{ url('stories') }}" class="ur-link">View all stories →</a>
             </div>
+            <p class="ur-stories-sub">Behind every successful match are two individuals and two families who found the confidence to take the next
+step.</p>
             <div class="ur-stories-grid">
                 <div class="ur-story ur-story--lg">
-                    <img src="images/couples/6.jpg" alt="" loading="lazy">
+                    <img src="images/couples/pakistani-couple.jpg" alt="" loading="lazy">
                     <div class="ur-story__overlay"></div>
                     <div class="ur-story__meta">
                         <h4>Bilal &amp; Fatima</h4>
@@ -1491,28 +1661,31 @@
                 </div>
                 <div class="ur-story-col">
                     <div class="ur-story ur-story--sm">
-                        <img src="images/couples/7.jpg" alt="" loading="lazy">
-                        <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Zain &amp; Ayesha</h4><span>London, UK</span></div>
-                    </div>
-                    <div class="ur-story ur-story--sm">
-                        <img src="images/couples/8.jpg" alt="" loading="lazy">
-                        <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Hamza &amp; Zara</h4><span>Toronto, Canada</span></div>
-                    </div>
-                </div>
-                <div class="ur-story-col">
-                    <div class="ur-story ur-story--sm">
-                        <img src="images/couples/9.jpg" alt="" loading="lazy">
+                        <img src="images/couples/arabic-couple.jpg" alt="" loading="lazy">
                         <div class="ur-story__overlay"></div>
                         <div class="ur-story__meta"><h4 style="font-size:18px;">Ali &amp; Mahnoor</h4><span>Dubai, UAE</span></div>
                     </div>
                     <div class="ur-story ur-story--sm">
-                        <img src="images/couples/10.jpg" alt="" loading="lazy">
+                        <img src="images/couples/second-marriage-couple.jpg" alt="" loading="lazy">
                         <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Omar &amp; Hira</h4><span>Houston, USA</span></div>
+                        <div class="ur-story__meta"><h4 style="font-size:18px;">Omar &amp; Hira</h4><span>Abu Dhabi, UAE</span></div>
                     </div>
                 </div>
+                <div class="ur-story-col">
+                    <div class="ur-story ur-story--sm">
+                        <img src="images/couples/usa-couple.jpg" alt="" loading="lazy">
+                        <div class="ur-story__overlay"></div>
+                        <div class="ur-story__meta"><h4 style="font-size:18px;">Zain &amp; Ayesha</h4><span>New York, USA</span></div>
+                    </div>
+                    <div class="ur-story ur-story--sm">
+                        <img src="images/couples/indian-couple.jpg" alt="" loading="lazy">
+                        <div class="ur-story__overlay"></div>
+                        <div class="ur-story__meta"><h4 style="font-size:18px;">Hamza &amp; Zara</h4><span>Udaipur, India</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="ur-stories__cta">
+                <a href="{{ url('stories') }}" class="ur-btn ur-btn--solid">View More Success Stories</a>
             </div>
         </div>
     </section>
@@ -1523,13 +1696,14 @@
             <div class="ur-quotes-head">
                 <div class="ur-center">
                     <div class="ur-eyebrow">Real Words, Real Trust</div>
-                    <h2 class="ur-h2">Trusted by 5,000+ families</h2>
+                    <h2 class="ur-h2">Trusted by Families Worldwide</h2>
                 </div>
                 <div class="ur-quotes-nav">
                     <button type="button" class="ur-quotes-prev" aria-label="Previous review">‹</button>
                     <button type="button" class="ur-quotes-next" aria-label="Next review">›</button>
                 </div>
             </div>
+            <p class="ur-quotes-sub">Real experiences from individuals and families who trusted Urgent Rishta with one of life's most important decisions.</p>
             <div class="ur-quotes-wrap">
             <div class="ur-quotes">
                 <div>
@@ -1574,6 +1748,9 @@
                 </div>
             </div>
             </div>
+            <div class="ur-quotes__cta">
+                <a href="{{ url('stories') }}" class="ur-btn ur-btn--light">Read Our Client Reviews</a>
+            </div>
         </div>
     </section>
 
@@ -1581,23 +1758,39 @@
     <section class="ur-sec ur-sec--cream">
         <div class="ur-wrap ur-wrap--full">
             <div class="ur-center">
-                <div class="ur-eyebrow">Our Professionals</div>
-                <h2 class="ur-h2">Meet our matchmaking team</h2>
+                <div class="ur-eyebrow">FOUNDER-LED MATCHMAKING</div>
+                <h2 class="ur-h2">Matchmaking With Accountability</h2>
             </div>
-            <div class="ur-team">
-                <div class="ur-team__card">
-                    <img src="images/profiles/6.jpg" alt="Usman Zaheer" loading="lazy">
-                    <h4>Usman Zaheer</h4>
-                    <p>CEO &amp; Founder</p>
-                    <ul class="ur-team__social">
-                        <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
-                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
-                        <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
-                        <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
-                    </ul>
+
+            <div class="ur-founder">
+                <div class="ur-founder__photo">
+                    <img src="images/profiles/5.jpeg" alt="Usman Zaheer" loading="lazy">
                 </div>
+                <div class="ur-founder__body">
+                    <h3 class="ur-founder__name">Usman Zaheer</h3>
+                    <div class="ur-founder__role">Founder &amp; CEO — Urgent Rishta</div>
+                    <p class="ur-founder__desc"> Urgent Rishta was built around a simple principle: finding a life partner should be handled with seriousness,
+privacy and respect.</p>
+                    <p class="ur-founder__desc"> Our team combines years of matchmaking experience with a structured process to help individuals and families
+navigate one of life's most important decisions.</p>
+                    <p class="ur-founder__desc">For clients choosing our premium services, the search receives personalized attention from our matchmaking
+team, with senior-level involvement where applicable.</p>
+                    <div class="ur-founder__actions">
+                        <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--solid">Book a Private Consultation</a>
+                        <ul class="ur-team__social">
+                            <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
+                            <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                            <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
+                            <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ur-team__label">Your Matchmaking Team</div>
+            <div class="ur-team ur-team--rest">
                 <div class="ur-team__card">
-                    <img src="images/profiles/7.jpg" alt="Qanita Sundas" loading="lazy">
+                    <img src="images/profiles/Qanita.jpeg" alt="Qanita Sundas" loading="lazy">
                     <h4>Qanita Sundas</h4>
                     <p>Co-Founder</p>
                     <ul class="ur-team__social">
@@ -1608,7 +1801,7 @@
                     </ul>
                 </div>
                 <div class="ur-team__card">
-                    <img src="images/profiles/8.jpg" alt="Minahil Malik" loading="lazy">
+                    <img src="images/profiles/minahil.jpeg" alt="Minahil Malik" loading="lazy">
                     <h4>Minahil Malik</h4>
                     <p>Relationship Manager</p>
                     <ul class="ur-team__social">
@@ -1637,91 +1830,52 @@
     <!-- PHOTO GALLERY — masonry -->
     <section class="ur-photo-gallery">
         <div class="container-fluid ur-photo-gallery__fluid">
-            <div class="home-tit">
-                <p>Moments</p>
-                <h2><span>Photo gallery</span></h2>
-                <span class="leaf1"></span>
-                <span class="tit-ani-"></span>
+            <div class="ur-center ur-photo-gallery__head">
+                <div class="ur-eyebrow">Behind The Scenes</div>
+                <h2 class="ur-h2">Inside Urgent Rishta</h2>
             </div>
             <div class="row no-gutters gall-inn">
                 <div class="col-6 col-md-2">
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/1.jpg" class="gal-siz-1" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/1.jpg" class="gal-siz-1" alt="Urgent Rishta team at an industry matchmaking seminar" loading="lazy">
                     </div>
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/2.jpg" class="gal-siz-2" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/2.jpg" class="gal-siz-2" alt="Urgent Rishta founder in conversation at an industry event" loading="lazy">
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/3.jpg" class="gal-siz-2" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/3.jpg" class="gal-siz-2" alt="Urgent Rishta representatives at a professional marriage consultants seminar" loading="lazy">
                     </div>
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/4.jpg" class="gal-siz-1" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/4.jpg" class="gal-siz-1" alt="Certificate presentation at an industry seminar" loading="lazy">
                     </div>
                 </div>
                 <div class="col-6 col-md-2">
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/5.jpg" class="gal-siz-1" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/5.jpg" class="gal-siz-1" alt="Certificate presentation at an industry seminar" loading="lazy">
                     </div>
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/6.jpg" class="gal-siz-2" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/6.jpg" class="gal-siz-2" alt="Certificate presentation at an industry seminar" loading="lazy">
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/7.jpg" class="gal-siz-2" alt="" loading="lazy">
+                        <img src="images/gallery/7.jpg" class="gal-siz-2" alt="Urgent Rishta Services recognised at an industry seminar" loading="lazy">
                         <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
+                            <span class="gal-label">Recognised for Urgent Rishta Services</span>
                         </div>
                     </div>
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/8.jpg" class="gal-siz-1" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/8.jpg" class="gal-siz-1" alt="Urgent Rishta representatives with fellow delegates at an industry seminar" loading="lazy">
                     </div>
                 </div>
                 <div class="col-12 col-md-2">
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/9.jpg" class="gal-siz-2" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/9.jpg" class="gal-siz-2" alt="Urgent Rishta founder speaking with the media" loading="lazy">
                     </div>
                     <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/10.jpg" class="gal-siz-1" alt="" loading="lazy">
-                        <div class="txt">
-                            <span>Find your match with us</span>
-                            <h4>Urgent Rishta</h4>
-                        </div>
+                        <img src="images/gallery/10.jpg" class="gal-siz-1" alt="Urgent Rishta team and guests at an industry gathering" loading="lazy">
                     </div>
                 </div>
             </div>
@@ -1732,12 +1886,18 @@
     <section class="ur-cta">
         <div class="ur-cta__overlay"></div>
         <div class="ur-cta__inner">
-            <h2>Find your perfect match, today</h2>
-            <p>Join 15,000+ members who trust Urgent Rishta for a respectful, halal path to marriage.</p>
+            <h2>Your Right Match Could Be One Introduction Away</h2>
+            <p>Start your search with a matchmaking service built around privacy, professionalism and personal attention.</p>
             <div class="ur-cta__actions">
-                <a href="/register" class="ur-btn ur-cta__btn ur-cta__btn--primary">Register Now</a>
-                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-cta__btn ur-cta__btn--ghost">Book a Consultation</a>
+                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-cta__btn ur-cta__btn--primary">Book a Private Consultation</a>
+                <a href="/register" class="ur-btn ur-cta__btn ur-cta__btn--ghost">Create Your Profile</a>
             </div>
+            <ul class="ur-cta__trust">
+                <li>Confidential</li>
+                <li>Verified</li>
+                <li>Family-Friendly</li>
+            </ul>
+            <p class="ur-cta__disclaimer">Strictly for genuine marriage proposals. No dating or casual relationships.</p>
         </div>
     </section>
 
@@ -1950,6 +2110,6 @@
         elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
         elem.prop('disabled', true);
     });
-    
+
 </script>
 @endsection
