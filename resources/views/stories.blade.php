@@ -1,7 +1,8 @@
 @extends('layouts.master')
 @section('main-content')
-<!-- Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+{{-- Uses the site-wide Font Awesome 4 already loaded by layouts.master — do NOT add
+     a second Font Awesome (e.g. v6) stylesheet here, it conflicts with the FA4 icon
+     classes used across the rest of the site (footer social icons, etc.) and breaks them. --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap');
 
@@ -64,7 +65,7 @@
     .ss-wrap { max-width: 1180px; margin: 0 auto; padding: 64px 24px 80px; }
     .ss-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 28px;
     }
     .ss-card {
@@ -78,10 +79,10 @@
     .ss-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(15,46,36,.12); }
     .ss-card__image { height: 230px; overflow: hidden; }
     .ss-card__image img { width: 100%; height: 100%; object-fit: cover; display: block; object-position: center 15%; }
-    .ss-card__body { padding: 26px 24px 28px; }
+    .ss-card__body { padding: 28px 28px 30px; }
     .ss-card__names {
         font-family: 'Playfair Display', Georgia, serif;
-        font-size: 21px;
+        font-size: 22px;
         font-weight: 600;
         color: var(--ss-ink);
         margin: 0 0 8px;
@@ -95,17 +96,47 @@
         letter-spacing: .03em;
         color: var(--ss-terracotta);
         text-transform: uppercase;
-        margin-bottom: 14px;
+        margin-bottom: 16px;
     }
     .ss-card__meta i { font-size: 11px; }
+    .ss-card__headline {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-style: italic;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ss-green);
+        margin: 0 0 10px;
+    }
     .ss-card__text {
         font-size: 14px;
-        line-height: 1.7;
+        line-height: 1.75;
         color: var(--ss-text);
-        margin: 0;
+        margin: 0 0 16px;
+    }
+    .ss-card__status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .03em;
+        color: var(--ss-green);
+        background: var(--ss-sand);
+        padding: 7px 14px;
+        border-radius: 99px;
+    }
+    .ss-card__status i { color: var(--ss-gold); font-size: 11px; }
+
+    .ss-disclaimer {
+        text-align: center;
+        font-size: 12.5px;
+        font-style: italic;
+        color: var(--ss-text);
+        max-width: 560px;
+        margin: 40px auto 0;
     }
 
-    .ss-cta { text-align: center; margin-top: 56px; }
+    .ss-cta { text-align: center; margin-top: 40px; }
     .ss-btn {
         display: inline-flex;
         align-items: center;
@@ -120,10 +151,7 @@
     .ss-btn--solid { background: var(--ss-green); color: var(--ss-cream-text) !important; }
     .ss-btn--solid:hover { background: var(--ss-green-deep); }
 
-    @media (max-width: 991px) {
-        .ss-grid { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 640px) {
+    @media (max-width: 767px) {
         .ss-grid { grid-template-columns: 1fr; }
         .ss-wrap { padding: 48px 18px 60px; }
         .ss-hero { padding: 48px 18px 40px; }
@@ -133,53 +161,55 @@
 <div class="ss-page">
     <section class="ss-hero">
         <div class="ss-hero__badge">Happy Endings</div>
-        <h1>Real People. <em>Meaningful Beginnings.</em></h1>
-        <p>Every successful introduction reminds us that the right match can change two families forever.</p>
+        <h1>Real People. Meaningful Connections. <em>Successful Matches.</em></h1>
+        <p>Behind every successful match are two individuals and two families who found the confidence to take the next step.</p>
     </section>
 
     <div class="ss-wrap">
         <div class="ss-grid">
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/pakistani-couple.jpg" alt="Bilal and Fatima" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/arabic-couple.jpg" alt="Ayesha and Rayed" loading="lazy"></div>
                 <div class="ss-card__body">
-                    <h3 class="ss-card__names">Bilal &amp; Fatima</h3>
-                    <div class="ss-card__meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Lahore, Pakistan &nbsp;&middot;&nbsp; Married 2025</div>
-                    <p class="ss-card__text">Introduced through Urgent Rishta's personal matchmaking process, their families connected quickly over shared values — leading to a wedding in 2025.</p>
+                    <h3 class="ss-card__names">Ayesha &amp; Rayed</h3>
+                    <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> Dubai, UAE &nbsp;🇦🇪</div>
+                    <div class="ss-card__headline">A Match Built on Understanding</div>
+                    <p class="ss-card__text">Ayesha and Rayed were introduced through Urgent Rishta after both families shared their preferences with our matchmaking team. Their values, expectations and personalities aligned naturally. After family discussions and mutual understanding, they decided to begin their journey together.</p>
+                    <div class="ss-card__status"><i class="fa fa-check-circle" aria-hidden="true"></i> Successfully Matched in Dubai</div>
                 </div>
             </div>
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/arabic-couple.jpg" alt="Ali and Mahnoor" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/pakistani-couple.jpg" alt="Dr. Usman and Dr. Rabia" loading="lazy"></div>
                 <div class="ss-card__body">
-                    <h3 class="ss-card__names">Ali &amp; Mahnoor</h3>
-                    <div class="ss-card__meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Dubai, UAE</div>
-                    <p class="ss-card__text">A discreet, family-first introduction that grew into a lasting partnership.</p>
+                    <h3 class="ss-card__names">Dr. Usman &amp; Dr. Rabia</h3>
+                    <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> United Kingdom &nbsp;🇬🇧</div>
+                    <div class="ss-card__headline">Two Doctors, One Beautiful Journey</div>
+                    <p class="ss-card__text">Both Dr. Usman and Dr. Rabia were looking for an educated, professionally compatible partner with strong family values. Our team introduced their profiles after carefully reviewing their requirements. The families connected, the couple found compatibility, and the match successfully moved forward.</p>
+                    <div class="ss-card__status"><i class="fa fa-check-circle" aria-hidden="true"></i> Successfully Matched in the UK</div>
                 </div>
             </div>
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/second-marriage-couple.jpg" alt="Omar and Hira" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/second-marriage-couple.jpg" alt="Abdullah and Sarah" loading="lazy"></div>
                 <div class="ss-card__body">
-                    <h3 class="ss-card__names">Omar &amp; Hira</h3>
-                    <div class="ss-card__meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Abu Dhabi, UAE</div>
-                    <p class="ss-card__text">Distance was never a barrier — a well-matched introduction brought two families together across continents.</p>
+                    <h3 class="ss-card__names">Abdullah &amp; Sarah</h3>
+                    <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> Saudi Arabia &nbsp;🇸🇦</div>
+                    <div class="ss-card__headline">From Introduction to a Meaningful Relationship</div>
+                    <p class="ss-card__text">Abdullah and Sarah were searching for a serious marriage proposal with compatible family backgrounds and shared values. After a carefully selected introduction through Urgent Rishta, both families developed mutual confidence and the couple found the understanding they were looking for.</p>
+                    <div class="ss-card__status"><i class="fa fa-check-circle" aria-hidden="true"></i> Successfully Matched in Saudi Arabia</div>
                 </div>
             </div>
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/usa-couple.jpg" alt="Zain and Ayesha" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/usa-couple.jpg" alt="Adam and Sophia" loading="lazy"></div>
                 <div class="ss-card__body">
-                    <h3 class="ss-card__names">Zain &amp; Ayesha</h3>
-                    <div class="ss-card__meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> New York, United States</div>
-                    <p class="ss-card__text">A thoughtful introduction between two overseas Pakistani families, built on trust and mutual respect.</p>
-                </div>
-            </div>
-            <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/indian-couple.jpg" alt="Hamza and Zara" loading="lazy"></div>
-                <div class="ss-card__body">
-                    <h3 class="ss-card__names">Hamza &amp; Zara</h3>
-                    <div class="ss-card__meta"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Udaipur, India</div>
-                    <p class="ss-card__text">Matched through careful profile review, their journey from introduction to marriage was guided every step of the way.</p>
+                    <h3 class="ss-card__names">Adam &amp; Sophia</h3>
+                    <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> United States &nbsp;🇺🇸</div>
+                    <div class="ss-card__headline">Distance Was Never a Barrier</div>
+                    <p class="ss-card__text">Adam and Sophia were both looking for a genuine, family-oriented life partner in the United States. Their requirements were carefully reviewed before an introduction was arranged. With mutual interest and family involvement, their initial introduction developed into a successful match.</p>
+                    <div class="ss-card__status"><i class="fa fa-check-circle" aria-hidden="true"></i> Successfully Matched in the USA</div>
                 </div>
             </div>
         </div>
+
+        {{-- <p class="ss-disclaimer">Names and identifying details may be changed to protect our clients' privacy.</p> --}}
 
         <div class="ss-cta">
             <a href="/register" class="ss-btn ss-btn--solid">Start Your Journey</a>

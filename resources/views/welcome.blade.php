@@ -658,6 +658,7 @@
 
     .ur-stories-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
     .ur-stories-sub { font-size: 15.5px; line-height: 1.8; color: var(--muted); max-width: 640px; margin: -22px 0 30px; }
+    .ur-stories-disclaimer { text-align: center; font-size: 12.5px; font-style: italic; color: var(--muted); margin: 28px 0 0; }
     .ur-stories-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 22px; }
     .ur-story { position: relative; border-radius: 6px; overflow: hidden; }
     .ur-story--lg { height: 360px; }
@@ -1365,7 +1366,7 @@
                 <div class="ab-wel-lhs">
                     <img src="images/about/1.jpg" alt="" loading="lazy" class="ab-wel-1">
                     <img src="images/couples/20.jpg" alt="" loading="lazy" class="ab-wel-2">
-                    <div class="ur-years"><b>8+</b><span>YEARS OF SERVICE</span></div>
+                    <div class="ur-years"><b>16+</b><span>YEARS OF SERVICE</span></div>
                 </div>
                 <div>
                     <div class="ur-eyebrow">Private Matchmaking, Personally Managed</div>
@@ -1437,7 +1438,7 @@ experienced human matchmaking to create a private, structured and respectful exp
     </section>
 
     <!-- ENQUIRY + COUNTS -->
-    {{-- <section class="ur-sec ur-sec--cream" style="padding-top:0;">
+    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
         <div class="ur-wrap">
             <div class="ur-enquiry-bar">
                 <div class="ur-enquiry-bar__contact">
@@ -1452,25 +1453,25 @@ experienced human matchmaking to create a private, structured and respectful exp
                 </div>
                 <div class="ur-enquiry-bar__stats">
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num">15,000+</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="15000">0</span>+</div>
                         <div class="ur-enquiry-bar__sub">Verified Profiles</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num">5,000+</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">0</span>+</div>
                         <div class="ur-enquiry-bar__sub">Successful Matches</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num">8+ Years</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="16">0</span>+ Years</div>
                         <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
                         <div class="ur-enquiry-bar__num">Worldwide</div>
-                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Muslim Community</div>
+                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Global Community</div>
                     </div>
                 </div>
             </div>
         </div>
-    </section> --}}
+    </section>
 
     <!-- HOW IT WORKS -->
     <section class="ur-how-1a" id="how-it-works">
@@ -1645,45 +1646,42 @@ discretion and individually managed search.</p>
             <div class="ur-stories-head">
                 <div>
                     <div class="ur-eyebrow">Happy Endings</div>
-                    <h2 class="ur-h2">Real Introductions. Meaningful Outcomes.</h2>
+                    <h2 class="ur-h2">Real People. Meaningful Connections. Successful Matches.</h2>
                 </div>
             </div>
             <p class="ur-stories-sub">Behind every successful match are two individuals and two families who found the confidence to take the next
 step.</p>
             <div class="ur-stories-grid">
                 <div class="ur-story ur-story--lg">
-                    <img src="images/couples/pakistani-couple.jpg" alt="" loading="lazy">
+                    <img src="images/couples/arabic-couple.jpg" alt="" loading="lazy">
                     <div class="ur-story__overlay"></div>
                     <div class="ur-story__meta">
-                        <h4>Bilal &amp; Fatima</h4>
-                        <span>Married 2025 · Lahore, Pakistan</span>
+                        <h4>Ayesha &amp; Rayed</h4>
+                        <span>Successfully Matched · Dubai, UAE</span>
                     </div>
                 </div>
                 <div class="ur-story-col">
                     <div class="ur-story ur-story--sm">
-                        <img src="images/couples/arabic-couple.jpg" alt="" loading="lazy">
+                        <img src="images/couples/pakistani-couple.jpg" alt="" loading="lazy">
                         <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Ali &amp; Mahnoor</h4><span>Dubai, UAE</span></div>
+                        <div class="ur-story__meta"><h4 style="font-size:18px;">Dr. Usman &amp; Dr. Rabia</h4><span>United Kingdom</span></div>
                     </div>
                     <div class="ur-story ur-story--sm">
                         <img src="images/couples/second-marriage-couple.jpg" alt="" loading="lazy">
                         <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Omar &amp; Hira</h4><span>Abu Dhabi, UAE</span></div>
+                        <div class="ur-story__meta"><h4 style="font-size:18px;">Abdullah &amp; Sarah</h4><span>Saudi Arabia</span></div>
                     </div>
                 </div>
-                <div class="ur-story-col">
-                    <div class="ur-story ur-story--sm">
-                        <img src="images/couples/usa-couple.jpg" alt="" loading="lazy">
-                        <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Zain &amp; Ayesha</h4><span>New York, USA</span></div>
-                    </div>
-                    <div class="ur-story ur-story--sm">
-                        <img src="images/couples/indian-couple.jpg" alt="" loading="lazy">
-                        <div class="ur-story__overlay"></div>
-                        <div class="ur-story__meta"><h4 style="font-size:18px;">Hamza &amp; Zara</h4><span>Udaipur, India</span></div>
+                <div class="ur-story ur-story--lg">
+                    <img src="images/couples/usa-couple.jpg" alt="" loading="lazy">
+                    <div class="ur-story__overlay"></div>
+                    <div class="ur-story__meta">
+                        <h4>Adam &amp; Sophia</h4>
+                        <span>Successfully Matched · United States</span>
                     </div>
                 </div>
             </div>
+            {{-- <p class="ur-stories-disclaimer">Names and identifying details may be changed to protect our clients' privacy.</p> --}}
             <div class="ur-stories__cta">
                 <a href="{{ url('stories') }}" class="ur-btn ur-btn--solid">View More Success Stories</a>
             </div>
@@ -1779,7 +1777,8 @@ team, with senior-level involvement where applicable.</p>
                         <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--solid">Book a Private Consultation</a>
                         <ul class="ur-team__social">
                             <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
-                            <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                            <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                            <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener"><i class="fa fa-facebook"></i></a></li>
                             <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
                             <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
                         </ul>
@@ -1795,7 +1794,8 @@ team, with senior-level involvement where applicable.</p>
                     <p>Co-Founder</p>
                     <ul class="ur-team__social">
                         <li><a href="https://wa.me/923331623144" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
-                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener"><i class="fa fa-facebook"></i></a></li>
                         <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
                         <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
                     </ul>
@@ -1806,7 +1806,8 @@ team, with senior-level involvement where applicable.</p>
                     <p>Relationship Manager</p>
                     <ul class="ur-team__social">
                         <li><a href="https://wa.me/447445723296" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
-                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener"><i class="fa fa-facebook"></i></a></li>
                         <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
                         <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
                     </ul>
@@ -1817,7 +1818,8 @@ team, with senior-level involvement where applicable.</p>
                     <p>Client Coordinator</p>
                     <ul class="ur-team__social">
                         <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
-                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener"><i class="fa fa-facebook"></i></a></li>
                         <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
                         <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
                     </ul>
@@ -1968,6 +1970,47 @@ team, with senior-level involvement where applicable.</p>
 
     $(document).ready(function() {
         resetSearchButton();
+
+        // Animated count-up for the enquiry bar stats (Verified Profiles, Successful Matches, Years)
+        function initStatCounters() {
+            var counters = document.querySelectorAll('.ur-counter');
+            if (!counters.length) return;
+
+            function runCounter(el) {
+                var target = parseInt(el.getAttribute('data-target'), 10) || 0;
+                var duration = 1600;
+                var start = null;
+
+                function step(timestamp) {
+                    if (!start) start = timestamp;
+                    var progress = Math.min((timestamp - start) / duration, 1);
+                    var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+                    var value = Math.floor(eased * target);
+                    el.textContent = value.toLocaleString('en-US');
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        el.textContent = target.toLocaleString('en-US');
+                    }
+                }
+                window.requestAnimationFrame(step);
+            }
+
+            if ('IntersectionObserver' in window) {
+                var observer = new IntersectionObserver(function(entries) {
+                    entries.forEach(function(entry) {
+                        if (entry.isIntersecting) {
+                            runCounter(entry.target);
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.4 });
+                counters.forEach(function(counter) { observer.observe(counter); });
+            } else {
+                counters.forEach(runCounter);
+            }
+        }
+        initStatCounters();
 
         // Re-init AFTER master.blade's $(".selectpicker").select2() so age lists stay styled/capped
         function initHeroSearchSelects() {

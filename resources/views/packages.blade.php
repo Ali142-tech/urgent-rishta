@@ -1,7 +1,8 @@
 @extends('layouts.master')
 @section('main-content')
-<!-- Font Awesome for icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+{{-- Uses the site-wide Font Awesome 4 already loaded by layouts.master — do NOT add
+     a second Font Awesome (e.g. v6) stylesheet here, it conflicts with the FA4 icon
+     classes used across the rest of the site (footer social icons, etc.) and breaks them. --}}
 <?php use App\User; ?>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap');
@@ -99,39 +100,44 @@
     .pk-hero-trust > div { display: flex; gap: 7px; align-items: center; }
     .pk-hero-trust > div span { color: var(--pk-gold); }
 
-    /* ============ 2. TABS ============ */
-    .pk-tabs-wrap {
-        background: var(--pk-cream);
-        padding: 28px 20px 0;
+    /* ============ 2. SIDE-BY-SIDE SERVICES ============ */
+    .pk-services-split {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        border-top: 1px solid var(--pk-line);
+    }
+    .pk-service-col {
+        min-width: 0;
+    }
+    .pk-service-col--online {
+        border-right: 1px solid var(--pk-line);
+    }
+    .pk-service-col-label {
         display: flex;
+        align-items: center;
         justify-content: center;
-    }
-    .pk-tabs {
-        display: inline-flex;
-        background: var(--pk-sand);
-        border-radius: 99px;
-        padding: 5px;
-        gap: 4px;
-    }
-    .pk-tabs .tab-btn {
-        border: none;
-        background: transparent;
-        color: #41504A;
-        font-weight: 700;
+        gap: 8px;
+        padding: 22px 20px;
+        font-weight: 800;
         font-size: 13.5px;
-        padding: 11px 24px;
-        border-radius: 99px;
-        cursor: pointer;
-        font-family: 'Manrope', system-ui, sans-serif;
-        transition: background .2s ease, color .2s ease;
+        letter-spacing: .04em;
+        text-align: center;
+        color: var(--pk-green);
+        background: var(--pk-sand);
     }
-    .pk-tabs .tab-btn.active {
+    .pk-service-col--premium .pk-service-col-label {
         background: var(--pk-green);
         color: var(--pk-cream-text);
     }
-
-    .package-tab-panel { display: none; }
-    .package-tab-panel.active { display: block; }
+    .pk-service-col .pk-intro {
+        grid-template-columns: 1fr;
+        padding: 32px 32px 4px;
+        gap: 24px;
+    }
+    .pk-service-col .pk-pkg-section {
+        padding: 24px 32px 44px;
+    }
 
     /* ============ Two-col intro sections ============ */
     .pk-intro {
@@ -232,8 +238,20 @@
     .pk-card--dark .pk-card-sub { color: var(--pk-cream-text-2); }
     .pk-card-divider { height: 1px; background: var(--pk-line); margin-bottom: 20px; }
     .pk-card--dark .pk-card-divider { background: rgba(255,255,255,0.14); }
-    .pk-card-img { width: 100%; height: 120px; border-radius: 12px; overflow: hidden; margin-bottom: 16px; background: var(--pk-cream); display: flex; align-items: center; justify-content: center; }
-    .pk-card-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .pk-card-badge {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        background: var(--pk-cream);
+        color: var(--pk-gold);
+        border: 1px solid var(--pk-line);
+    }
+    .pk-card--dark .pk-card-badge { background: rgba(255,255,255,0.12); color: var(--pk-gold-light); border-color: transparent; }
     .pk-card-name {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 19px;
@@ -242,7 +260,7 @@
         color: var(--pk-ink);
     }
     .pk-card--dark .pk-card-name { color: #fff; }
-    .pk-card-tag { font-size: 12.5px; color: var(--pk-text); margin-bottom: 18px; }
+    .pk-card-tag { font-size: 12.5px; line-height: 1.6; color: var(--pk-text); margin-bottom: 18px; }
     .pk-card--dark .pk-card-tag { color: var(--pk-cream-text-2); }
     .pk-btn-outline, .pk-btn-solid, .pk-btn-solid-gold {
         display: block;
@@ -357,22 +375,14 @@
         .pk-intro, .pk-consult, .pk-compare-grid { grid-template-columns: 1fr; }
         .pk-hero { padding: 48px 20px 36px; }
         .pk-final-cta { padding: 48px 24px; }
+        .pk-services-split { grid-template-columns: 1fr; }
+        .pk-service-col--online { border-right: none; border-bottom: 1px solid var(--pk-line); }
+        .pk-service-col .pk-intro { padding-left: 24px; padding-right: 24px; }
+        .pk-service-col .pk-pkg-section { padding-left: 24px; padding-right: 24px; }
     }
 
-    /* ============ FOOTER (page-scoped: keep the deep-green footer) ============ */
-    body.page-packages .footer,
-    body.page-packages .footer-top,
-    body.page-packages .footer-bottom {
-        background: #0F2E24 !important;
-        color: #B9C7BF;
-        border-color: rgba(255,255,255,0.08) !important;
-    }
-    body.page-packages .footer .heading { color: #fff !important; }
-    body.page-packages .footer .footer-links > li > a { color: #B9C7BF !important; }
-    body.page-packages .footer-bottom .copyright,
-    body.page-packages .footer-bottom .copyright a { color: #B9C7BF !important; }
-    body.page-packages .ur-footer-touch,
-    body.page-packages .ur-footer-touch a { color: #B9C7BF !important; }
+    /* Footer intentionally NOT overridden here — uses the single shared footer
+       styling from layouts/master.blade.php, same as every other page on the site. */
 </style>
 
 <div class="pk-page">
@@ -399,22 +409,28 @@
         $standardPackages = collect($packages ?? []);
     }
     $planTaglines = [
-        'Platinum' => 'Guided search, weekly matches',
-        'Diamond' => 'Priority matchmaker attention',
-        'Royal' => 'CEO-overseen, confidential search',
-        'Imperial' => 'Our most exclusive, full-service tier',
+        'Platinum' => 'Personal matchmaking support for clients seeking a professionally managed search.',
+        'Diamond' => 'Priority matchmaking with broader search support and dedicated assistance.',
+        'Royal' => 'A highly personalized and confidential search with priority handling and senior-level oversight.',
+        'Imperial' => 'Our most exclusive service for individuals and families with highly specific requirements who expect maximum discretion and individually managed search.',
+    ];
+    $planIcons = [
+        'Platinum' => 'fa-shield',
+        'Diamond' => 'fa-diamond',
+        'Royal' => 'fa-star',
+        'Imperial' => 'fa-trophy',
+    ];
+    $planFullNames = [
+        'Royal' => 'Royal - Executive Matchmaking',
+        'Imperial' => 'Imperial - Bespoke Private Matchmaking',
     ];
 @endphp
 
-<!-- 2. TABS -->
-<div class="pk-tabs-wrap">
-    <div class="pk-tabs" role="tablist">
-        <button type="button" class="tab-btn active" data-tab="online" role="tab" aria-selected="true">📱 Online Services</button>
-        <button type="button" class="tab-btn" data-tab="premium" role="tab" aria-selected="false">🤝 Personalized Service</button>
-    </div>
-</div>
+<!-- 2 & 3/5. ONLINE SERVICES (left) + PERSONALIZED SERVICE (right), side by side -->
+<div class="pk-services-split">
 
-<div id="tab-online" class="package-tab-panel active" role="tabpanel">
+<div class="pk-service-col pk-service-col--online">
+    <div class="pk-service-col-label">📱 Online Services</div>
 
     <!-- 3. ONLINE SERVICES INTRO -->
     <div class="pk-intro">
@@ -477,9 +493,10 @@
         <p class="pk-empty">No online packages available at the moment.</p>
         @endif
     </div>
-</div>
+</div><!-- /.pk-service-col--online -->
 
-<div id="tab-premium" class="package-tab-panel" role="tabpanel">
+<div class="pk-service-col pk-service-col--premium">
+    <div class="pk-service-col-label">🤝 Personalized Service</div>
 
     <!-- 4. PERSONALIZED SERVICE INTRO -->
     <div class="pk-intro" style="background:#EFE7D6;">
@@ -508,17 +525,17 @@
             @foreach ($premiumPackages as $package)
             @if($package->dataid!="99")
             @php
-                $imgPath = '/images/package_'.$package->dataid.'.png';
-                if (!file_exists(public_path($imgPath))) $imgPath = '/images/package_10.png';
                 $isExecutive = trim($package->name) === 'Royal';
                 $tagline = $planTaglines[trim($package->name)] ?? 'Dedicated matchmaker & priority introductions';
+                $icon = $planIcons[trim($package->name)] ?? 'fa-crown';
+                $displayName = $planFullNames[trim($package->name)] ?? $package->name;
             @endphp
             <div class="pk-card {{ $isExecutive ? 'pk-card--dark' : '' }}">
                 @if($isExecutive)
                 <div class="pk-card-ribbon">EXECUTIVE PICK</div>
                 @endif
-                <div class="pk-card-img"><img src="{{ $imgPath }}" alt="{{ $package->name }}"></div>
-                <div class="pk-card-name">{{ $package->name }}</div>
+                <div class="pk-card-badge"><i class="fa {{ $icon }}" aria-hidden="true"></i></div>
+                <div class="pk-card-name">{{ $displayName }}</div>
                 <div class="pk-card-tag">{{ $tagline }}</div>
                 <a href="{{ url('package-details/'.$package->id) }}" class="{{ $isExecutive ? 'pk-btn-solid-gold' : 'pk-btn-outline' }}" style="margin-bottom:0;">View Package Details</a>
             </div>
@@ -530,53 +547,36 @@
         <p class="pk-empty">No premium packages available at the moment.</p>
         @endif
     </div>
+</div><!-- /.pk-service-col--premium -->
 
-    <!-- 6. CONSULTATION + PAYMENT -->
-    <div class="pk-consult">
-        <div class="pk-consult-card">
-            <div class="pk-eyebrow">Consultation Services</div>
-            <div class="pk-h2" style="font-size:24px;">Speak with a senior marriage consultant</div>
-            <p class="pk-lead">Available for both office appointments and scheduled calls. Calls are only accepted with prior booking — after booking, our team contacts you within 24&ndash;48 hours.</p>
-            <div class="pk-video-row">
-                <div>
-                    <div class="vt">Video Session Booking</div>
-                    <div class="vs">View suitable profiles &amp; connect directly</div>
-                </div>
-                <div class="price">Rs. 2,000</div>
+</div><!-- /.pk-services-split -->
+
+<!-- 6. CONSULTATION + PAYMENT -->
+<div class="pk-consult">
+    <div class="pk-consult-card">
+        <div class="pk-eyebrow">Consultation Services</div>
+        <div class="pk-h2" style="font-size:24px;">Speak with a senior marriage consultant</div>
+        <p class="pk-lead">Available for both office appointments and scheduled calls. Calls are only accepted with prior booking — after booking, our team contacts you within 24&ndash;48 hours.</p>
+        <div class="pk-video-row">
+            <div>
+                <div class="vt">Video Session Booking</div>
+                <div class="vs">View suitable profiles &amp; connect directly</div>
             </div>
-            <div class="pk-consult-actions">
-                <a href="{{ url('appointments') }}" class="pk-btn-appt"><i class="fa-solid fa-calendar-check"></i> Book Appointment</a>
-                <a href="https://wa.me/923040227000" target="_blank" rel="noopener" class="pk-btn-wa"><i class="fa-brands fa-whatsapp"></i> WhatsApp Us</a>
-            </div>
+            <div class="price">Rs. 2,000</div>
         </div>
-        <div class="pk-payment-card">
-            <div class="pt">Payment Details</div>
-            <div class="pl">Bank Transfer</div>
-            <div class="pd">Account Title: Urgent Rishta<br>Bank: UBL<br>IBAN: PK98UNIL0109000343139629</div>
-            <div class="pl">Easypaisa / JazzCash</div>
-            <div class="pd">Mobile: 0304 0227000<br>Account Name: Usman Zaheer</div>
+        <div class="pk-consult-actions">
+            <a href="{{ url('appointments') }}" class="pk-btn-appt"><i class="fa fa-calendar-check-o"></i> Book Appointment</a>
+            <a href="https://wa.me/923040227000" target="_blank" rel="noopener" class="pk-btn-wa"><i class="fa fa-whatsapp"></i> WhatsApp Us</a>
         </div>
     </div>
+    <div class="pk-payment-card">
+        <div class="pt">Payment Details</div>
+        <div class="pl">Bank Transfer</div>
+        <div class="pd">Account Title: Urgent Rishta<br>Bank: UBL<br>IBAN: PK98UNIL0109000343139629</div>
+        <div class="pl">Easypaisa / JazzCash</div>
+        <div class="pd">Mobile: 0304 0227000<br>Account Name: Usman Zaheer</div>
+    </div>
 </div>
-
-<!-- Tab switcher -->
-<script>
-(function() {
-    var tabBtns = document.querySelectorAll('.pk-tabs .tab-btn');
-    var panels = document.querySelectorAll('.package-tab-panel');
-    tabBtns.forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            var tab = this.getAttribute('data-tab');
-            tabBtns.forEach(function(b) { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
-            panels.forEach(function(p) { p.classList.remove('active'); });
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            var panel = document.getElementById('tab-' + tab);
-            if (panel) panel.classList.add('active');
-        });
-    });
-})();
-</script>
 
 <!-- 7. SERVICE COMPARISON -->
 <div class="pk-compare" style="background:#EFE7D6;">
@@ -621,7 +621,7 @@
     <div class="pk-final-actions">
         @guest
         @if (Route::has('register'))
-        <a href="{{ route('register') }}" class="solid">Register Free</a>
+        <a href="{{ route('register') }}" class="solid">Create your profile free</a>
         @endif
         @endguest
         @auth

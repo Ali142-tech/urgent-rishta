@@ -43,7 +43,10 @@ Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('in
 Route::get('home', [App\Http\Controllers\HomeController::class, 'home'])->name('home');
 Route::get('states/{id}', [App\Http\Controllers\HomeController::class, 'states']);
 Route::get('cities/{id}/{iscountry}', [App\Http\Controllers\HomeController::class, 'cities']);
-Route::post('member/searchresults/{refresh?}', [App\Http\Controllers\HomeController::class, 'search'])->name('searchresults');
+// Also accepts GET (not just the form's POST) so that a guest's search can be replayed
+// automatically via redirect after they log in — see Authenticate::redirectTo() and
+// LoginController::finishLogin(), which resume the search instead of losing the filters.
+Route::match(['get', 'post'], 'member/searchresults/{refresh?}', [App\Http\Controllers\HomeController::class, 'search'])->name('searchresults');
 
 // Admin page routes
 Route::get('admin/profiles', [App\Http\Controllers\AdminController::class, 'profiles']); // route to index which will list profiles

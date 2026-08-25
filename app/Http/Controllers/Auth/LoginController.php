@@ -289,6 +289,12 @@ class LoginController extends Controller
             return redirect('packages');
         }
 
+        // Resume a search that was interrupted by the login gate (see Authenticate::redirectTo())
+        // instead of dropping the user's filters and sending them to the homepage.
+        if ($pendingSearch = session()->pull('pending_search')) {
+            return redirect()->route('searchresults', $pendingSearch);
+        }
+
         return redirect('home');
     }
 

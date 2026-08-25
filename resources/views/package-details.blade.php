@@ -48,9 +48,24 @@
         overflow: hidden;
         box-shadow: 0 20px 40px rgba(18,58,46,0.12);
         margin-bottom: 20px;
-        background: #fff;
+        background: linear-gradient(160deg, var(--pd-green) 0%, #1F5C46 100%);
+        height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .pd-img-wrap img { width: 100%; height: 340px; object-fit: contain; display: block; }
+    .pd-badge {
+        width: 128px;
+        height: 128px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.24);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 48px;
+        color: var(--pd-gold);
+    }
     .pd-fee-card {
         background: var(--pd-green);
         border-radius: 16px;
@@ -288,20 +303,8 @@
         text-align: center; display: block;
     }
 
-    /* ============ FOOTER (page-scoped: keep the deep-green footer, matches the packages page) ============ */
-    body.page-package-details .footer,
-    body.page-package-details .footer-top,
-    body.page-package-details .footer-bottom {
-        background: #0F2E24 !important;
-        color: #B9C7BF;
-        border-color: rgba(255,255,255,0.08) !important;
-    }
-    body.page-package-details .footer .heading { color: #fff !important; }
-    body.page-package-details .footer .footer-links > li > a { color: #B9C7BF !important; }
-    body.page-package-details .footer-bottom .copyright,
-    body.page-package-details .footer-bottom .copyright a { color: #B9C7BF !important; }
-    body.page-package-details .ur-footer-touch,
-    body.page-package-details .ur-footer-touch a { color: #B9C7BF !important; }
+    /* Footer intentionally NOT overridden here — uses the single shared footer
+       styling from layouts/master.blade.php, same as every other page on the site. */
 </style>
 
 @php
@@ -310,8 +313,18 @@
     $decoded = json_decode((string) $package->description, true);
     if (is_array($decoded)) $meta = $decoded;
     $isOnlinePackage = !empty($meta) && isset($meta['price']);
-    $imgPath = '/images/package_'.$package->dataid.'.png';
-    if (!file_exists(public_path($imgPath))) $imgPath = '/images/package_10.png';
+    $planIcons = [
+        'Platinum' => 'fa-shield',
+        'Diamond' => 'fa-diamond',
+        'Royal' => 'fa-star',
+        'Imperial' => 'fa-trophy',
+    ];
+    $badgeIcon = $planIcons[trim($package->name)] ?? 'fa-certificate';
+    $planFullNames = [
+        'Royal' => 'Royal - Executive Matchmaking',
+        'Imperial' => 'Imperial - Bespoke Private Matchmaking',
+    ];
+    $displayName = $planFullNames[trim($package->name)] ?? $package->name;
     $whatsappNumber = '447445723296';
     $waHref = 'https://api.whatsapp.com/send?phone='.$whatsappNumber.'&text='.rawurlencode('Hello, I am interested in the '.$package->name.' package.');
 @endphp
@@ -319,13 +332,13 @@
 <div class="pd-page">
 
     <div class="pd-breadcrumb">
-        <a href="{{ url('packages') }}">Premium Plans</a> &nbsp;/&nbsp; <span>{{ $package->name }} Package</span>
+        <a href="{{ url('packages') }}">Premium Plans</a> &nbsp;/&nbsp; <span>{{ $displayName }} Package</span>
     </div>
 
     <div class="pd-summary">
         <div class="pd-sticky">
             <div class="pd-img-wrap">
-                <img src="{{ $imgPath }}" alt="{{ $package->name }}">
+                <div class="pd-badge"><i class="fa {{ $badgeIcon }}" aria-hidden="true"></i></div>
             </div>
             <div class="pd-fee-card">
                 @if($isOnlinePackage)
@@ -343,7 +356,7 @@
 
         <div>
             <div class="pd-eyebrow">Package Details</div>
-            <h1 class="pd-h1">{{ $package->name }} Package</h1>
+            <h1 class="pd-h1">{{ $displayName }} Package</h1>
 
             @if(!$isOnlinePackage)
             <p class="pd-lead">
