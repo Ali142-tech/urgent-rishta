@@ -264,7 +264,7 @@
     <!-- UK TEAM — group/event photos (individual profile cards pending named headshots) -->
     <div class="tm-wrap" style="padding-top:0;">
         <div class="tm-team-label"><h2 class="tm-h2">UK Team</h2></div>
-        <p class="tm-team-note">Supporting Pakistani and Muslim families across the United Kingdom with the same personal, private matchmaking approach.</p>
+        <p class="tm-team-note">Supporting overseas families across the United Kingdom with the same personal, private matchmaking approach.</p>
         <div class="tm-uk-gallery">
             <img src="/images/team/uk/uk-team-1.jpg" alt="Urgent Rishta UK team" loading="lazy">
             <img src="/images/team/uk/uk-team-2.jpg" alt="Urgent Rishta UK team" loading="lazy">
