@@ -124,6 +124,7 @@ Route::get('payment/stripe/success/{reference}', [App\Http\Controllers\PaymentCo
 Route::get('payment/stripe/cancel/{reference}', [App\Http\Controllers\PaymentController::class, 'stripeCancel'])
     ->name('stripe.cancel');
 Route::get('stories', [App\Http\Controllers\HomeController::class, 'storiesView']);
+Route::get('team', [App\Http\Controllers\HomeController::class, 'teamView']);
 Route::get('faqs', [App\Http\Controllers\HomeController::class, 'faqsView']);
 Route::get('tandc', [App\Http\Controllers\HomeController::class, 'termsAndConditionsView']);
 Route::get('privacy', [App\Http\Controllers\HomeController::class, 'privacyPolicyView']);

@@ -22,26 +22,64 @@
     .footer .footer-links > li > a { color: #B9C7BF !important; }
     .footer-bottom .copyright,
     .footer-bottom .copyright a { color: #B9C7BF !important; }
-    .ur-footer-touch,
-    .ur-footer-touch a { color: #B9C7BF !important; }
+    /* "Get in Touch" — one unified list: office address, phone, email, then socials.
+       All info rows share the same icon + text layout so they read as one coherent
+       block instead of mismatched pieces. */
+    .ur-footer-contact {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 4px;
+    }
+    .ur-footer-office__label {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #C9974D;
+        margin-bottom: 5px;
+    }
+    .ur-footer-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 9px;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: #fff !important;
+        font-weight: 600;
+    }
+    .ur-footer-row i {
+        margin-top: 3px;
+        color: #C9974D;
+        font-size: 12px;
+        width: 14px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+    a.ur-footer-row:hover { color: #fff !important; }
+
     .ur-footer-social {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        margin: 18px 0 0;
+        gap: 8px;
+        margin: 4px 0 0;
         padding: 0;
         list-style: none;
     }
-    .ur-footer-social a {
-        width: 30px;
-        height: 30px;
+    .ur-footer-social a,
+    .ur-footer-social__disabled {
+        width: 28px;
+        height: 28px;
         border-radius: 50%;
-        border: 1.5px solid rgba(153,111,42,0.65);
-        background: rgba(153,111,42,0.18);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 13px;
+        font-size: 12px;
+        flex-shrink: 0;
+    }
+    .ur-footer-social a {
+        border: 1.5px solid rgba(153,111,42,0.65);
+        background: rgba(153,111,42,0.18);
         color: #A9793B;
         text-decoration: none;
         transition: background .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
@@ -55,14 +93,7 @@
         box-shadow: 0 8px 18px rgba(153,111,42,0.35);
     }
     .ur-footer-social__disabled {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
         border: 1.5px solid rgba(255,255,255,0.16);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 13px;
         color: rgba(255,255,255,0.35);
         opacity: .55;
         cursor: default;
@@ -93,6 +124,10 @@
                             <li>
                                 <a href="{{url('packages')}}" title="Premium Plans">
                                     Premium Plans</a>
+                            </li>
+                            <li>
+                                <a href="{{url('team')}}" title="Our Team">
+                                    Our Team</a>
                             </li>
                             <li>
                                 <a href="{{url('stories')}}" title="Success Stories">
@@ -149,18 +184,31 @@
                     <div class="col">
                         <h4 class="heading heading-xs strong-600 text-uppercase mb-1">
                             Get in Touch</h4>
-                        <div class="ur-footer-touch">
-                            <a href="tel:+923040227000">+92 304 0227000</a><br>
-                            <a href="mailto:urgentrishta.co@gmail.com">urgentrishta.co@gmail.com</a>
+                        <div class="ur-footer-contact">
+                            <div>
+                                <div class="ur-footer-office__label text-white">UK Office</div>
+                                <a class="ur-footer-row" href="https://maps.google.com/?q=Universal+Square,+Devonshire+St+N,+Manchester+M12+6JH" target="_blank" rel="noopener">
+                                    <i class="fa fa-map-marker" aria-hidden="true"></i>
+                                    <span class="text-white">Universal Square, Devonshire St N, Manchester M12 6JH</span>
+                                </a>
+                            </div>
+                            <a class="ur-footer-row text-white" href="tel:+923040227000">
+                                <i class="fa fa-phone" aria-hidden="true"></i>
+                                <span class="text-white">+92 304 0227000</span>
+                            </a>
+                            <a class="ur-footer-row text-white" href="mailto:urgentrishta.co@gmail.com">
+                                <i class="fa fa-envelope" aria-hidden="true"></i>
+                                <span class="text-white">urgentrishta.co@gmail.com</span>
+                            </a>
+                            <ul class="ur-footer-social" aria-label="Follow Urgent Rishta">
+                                <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener" title="Facebook" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
+                                <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn"><i class="fa fa-linkedin"></i></a></li>
+                                <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
+                                <li><span class="ur-footer-social__disabled" title="YouTube channel not yet available" aria-label="YouTube (coming soon)"><i class="fa fa-youtube"></i></span></li>
+                                <li><span class="ur-footer-social__disabled" title="TikTok not yet available" aria-label="TikTok (coming soon)"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 3c.4 2.2 1.9 3.9 4.5 4.1v3.1c-1.6 0-3.1-.5-4.4-1.4v6.7c0 3.4-2.8 6-6.1 6-3.4 0-6.1-2.7-6.1-6s2.8-6 6.1-6c.4 0 .8 0 1.2.1v3.2c-.4-.1-.8-.2-1.2-.2-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 3-1.3 3-3V3h3z"/></svg></span></li>
+                                <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><i class="fa fa-whatsapp"></i></a></li>
+                            </ul>
                         </div>
-                        <ul class="ur-footer-social" aria-label="Follow Urgent Rishta">
-                            <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener" title="Facebook" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
-                            <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn"><i class="fa fa-linkedin"></i></a></li>
-                            <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
-                            <li><span class="ur-footer-social__disabled" title="YouTube channel not yet available" aria-label="YouTube (coming soon)"><i class="fa fa-youtube"></i></span></li>
-                            <li><span class="ur-footer-social__disabled" title="TikTok not yet available" aria-label="TikTok (coming soon)"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.5 3c.4 2.2 1.9 3.9 4.5 4.1v3.1c-1.6 0-3.1-.5-4.4-1.4v6.7c0 3.4-2.8 6-6.1 6-3.4 0-6.1-2.7-6.1-6s2.8-6 6.1-6c.4 0 .8 0 1.2.1v3.2c-.4-.1-.8-.2-1.2-.2-1.6 0-2.9 1.3-2.9 2.9s1.3 2.9 2.9 2.9 3-1.3 3-3V3h3z"/></svg></span></li>
-                            <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><i class="fa fa-whatsapp"></i></a></li>
-                        </ul>
                     </div>
                 </div>
             </div>

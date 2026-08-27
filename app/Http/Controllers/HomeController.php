@@ -24,7 +24,7 @@ class HomeController extends Controller {
      */
     public function __construct() {
         $this->middleware(['auth', 'verified'])->except(['index', 'contactUsEmail',
-            'packagesView','storiesView', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
+            'packagesView','storiesView', 'teamView', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
             'contactUsView', 'states', 'cities']);
     }
 
@@ -78,6 +78,10 @@ class HomeController extends Controller {
 
     public function storiesView() {
         return view('stories');
+    }
+
+    public function teamView() {
+        return view('team');
     }
 
     public function faqsView () {

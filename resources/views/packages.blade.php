@@ -635,9 +635,29 @@
 
 @auth
     @if(empty(User::retrieveUserObject()->online_package))
+        <style>
+            .swal-button--whatsapp { background: #25D366 !important; color: #fff !important; }
+            .swal-button--whatsapp:hover { background: #1ebe57 !important; }
+        </style>
         <script type="text/javascript">
             $(document).ready(function() {
-                swalAlert("info", "Select a Package", "Review packages available and contact Usman at 0304-0227000 for package activation.", null);
+                swal({
+                    icon: "info",
+                    title: "Select a Package",
+                    text: "Review packages available and contact Usman at 0304-0227000 for package activation.",
+                    buttons: {
+                        cancel: "OK",
+                        whatsapp: {
+                            text: "Contact via WhatsApp",
+                            value: "whatsapp",
+                            className: "swal-button--whatsapp",
+                        },
+                    },
+                }).then(function(value) {
+                    if (value === "whatsapp") {
+                        window.open("https://wa.me/923040227000", "_blank");
+                    }
+                });
             });
         </script>
     @endif

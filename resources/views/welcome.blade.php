@@ -1364,8 +1364,8 @@
         <div class="ur-wrap">
             <div class="ur-promise2__top">
                 <div class="ab-wel-lhs">
-                    <img src="images/about/1.jpg" alt="" loading="lazy" class="ab-wel-1">
-                    <img src="images/couples/20.jpg" alt="" loading="lazy" class="ab-wel-2">
+                    <img src="images/about/formal-couple.jpg" alt="" loading="lazy" class="ab-wel-1">
+                    <img src="images/couples/wedding-attire-couple.jpg" alt="" loading="lazy" class="ab-wel-2">
                     <div class="ur-years"><b>16+</b><span>YEARS OF SERVICE</span></div>
                 </div>
                 <div>

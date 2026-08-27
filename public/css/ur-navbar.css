@@ -123,14 +123,14 @@
     #myHeader .navbar-container,
     .container .navbar-container {
         position: relative;
-        max-width: 1280px !important;
+        max-width: none !important;
         width: 100% !important;
         margin: 0 auto !important;
         display: grid !important;
         grid-template-columns: 160px 1fr auto;
         align-items: center;
         gap: 24px;
-        padding: 16px 36px !important;
+        padding: 16px 48px !important;
         border-radius: 0 !important;
         background: transparent !important;
         border: none !important;

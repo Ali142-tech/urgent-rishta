@@ -71,7 +71,7 @@
     <title>Urgent Rishta</title>
 </head>
 
-<body class="pace-done {{ request()->is('/') || request()->is('home') ? 'homepage' : 'normalpage' }}{{ request()->is('packages') ? ' page-packages' : '' }}{{ request()->is('package-details/*') ? ' page-package-details' : '' }}">
+<body class="pace-done {{ request()->is('/') || request()->is('home') ? 'homepage' : 'normalpage' }}{{ request()->is('packages') ? ' page-packages' : '' }}{{ request()->is('package-details/*') ? ' page-package-details' : '' }}{{ request()->is('team') ? ' page-team' : '' }}">
     <div class="pace pace-inactive">
         <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
             <div class="pace-progress-inner"></div>
@@ -376,6 +376,10 @@ a.appointment-btn::before{
                                                     Premium Plans</a>
                                             </li>
                                             <li class="custom-nav">
+                                                <a class="nav-link " href="{{url('team')}}" aria-haspopup="true" aria-expanded="false">
+                                                    Our Team</a>
+                                            </li>
+                                            <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('stories')}}" aria-haspopup="true" aria-expanded="false">
                                                     Success Stories</a>
                                             </li>
@@ -414,18 +418,20 @@ a.appointment-btn::before{
                                                 </a>
                                             </li>
                                             @endauth
-                                            {{-- Mobile menu only; desktop uses .ur-header-actions copy --}}
+                                            {{-- Mobile menu only; desktop uses .ur-header-actions copy. Logged-in users
+                                                 don't need this — they already have Interests/Log Out actions, and it
+                                                 was crowding the navbar. --}}
+                                            @guest
                                             <li class="custom-nav ur-appt-in-nav">
                                                 @if(request()->is('/') || request()->is('home'))
                                                 <a class="appointment-btn" href="javascript:void(0);" onclick="openPopup()" aria-haspopup="true" aria-expanded="false">
-                                                @elseif(auth()->check())
-                                                <a class="appointment-btn" href="{{ url('appointments') }}" aria-haspopup="true" aria-expanded="false">
                                                 @else
                                                 <a class="appointment-btn" href="{{ url('contact-us') }}" aria-haspopup="true" aria-expanded="false">
                                                 @endif
                                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M216 64C229.3 64 240 74.7 240 88L240 128L400 128L400 88C400 74.7 410.7 64 424 64C437.3 64 448 74.7 448 88L448 128L480 128C515.3 128 544 156.7 544 192L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 192C96 156.7 124.7 128 160 128L192 128L192 88C192 74.7 202.7 64 216 64zM480 496C488.8 496 496 488.8 496 480L496 416L408 416L408 496L480 496zM496 368L496 288L408 288L408 368L496 368zM360 368L360 288L280 288L280 368L360 368zM232 368L232 288L144 288L144 368L232 368zM144 416L144 480C144 488.8 151.2 496 160 496L232 496L232 416L144 416zM280 416L280 496L360 496L360 416L280 416zM216 176L160 176C151.2 176 144 183.2 144 192L144 240L496 240L496 192C496 183.2 488.8 176 480 176L216 176z"/></svg>
                                                 Book a Private Consultation</a>
                                             </li>
+                                            @endguest
                                         </ul>
                                     </div>
                                     <div class="ur-header-actions">
@@ -477,15 +483,17 @@ a.appointment-btn::before{
                                             @endauth
                                             </li>
                                         </ul>
+                                        {{-- Logged-in users don't need this — they already have Interests/Log Out
+                                             actions, and it was crowding the navbar. --}}
+                                        @guest
                                         @if(request()->is('/') || request()->is('home'))
                                         <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="javascript:void(0);" onclick="openPopup()" aria-haspopup="true" aria-expanded="false">
-                                        @elseif(auth()->check())
-                                        <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="{{ url('appointments') }}" aria-haspopup="true" aria-expanded="false">
                                         @else
                                         <a class="appointment-btn ur-appt-in-actions d-none d-lg-inline-flex" href="{{ url('contact-us') }}" aria-haspopup="true" aria-expanded="false">
                                         @endif
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M216 64C229.3 64 240 74.7 240 88L240 128L400 128L400 88C400 74.7 410.7 64 424 64C437.3 64 448 74.7 448 88L448 128L480 128C515.3 128 544 156.7 544 192L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 192C96 156.7 124.7 128 160 128L192 128L192 88C192 74.7 202.7 64 216 64zM480 496C488.8 496 496 488.8 496 480L496 416L408 416L408 496L480 496zM496 368L496 288L408 288L408 368L496 368zM360 368L360 288L280 288L280 368L360 368zM232 368L232 288L144 288L144 368L232 368zM144 416L144 480C144 488.8 151.2 496 160 496L232 496L232 416L144 416zM280 416L280 496L360 496L360 416L280 416zM216 176L160 176C151.2 176 144 183.2 144 192L144 240L496 240L496 192C496 183.2 488.8 176 480 176L216 176z"/></svg>
                                             Book a Private Consultation</a>
+                                        @endguest
                                     </div>
                                 </div>
                             </nav>

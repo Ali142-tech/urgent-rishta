@@ -17,99 +17,13 @@ body.homepage {
     font-family: 'Manrope', 'DM Sans', system-ui, sans-serif;
 }
 
-/* ----- Navbar (global) ----- */
-@media (min-width: 1000px) {
-    #myHeader {
-        position: absolute !important;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: transparent !important;
-        background-image: none !important;
-        box-shadow: none !important;
-        border: none !important;
-    }
-    #myHeader .navbar-light .navbar-nav .nav-link {
-        color: #E4EDE8 !important;
-        font-family: 'Manrope', system-ui, sans-serif !important;
-        letter-spacing: 0.02em !important;
-        text-transform: none !important;
-        font-size: 14px !important;
-        font-weight: 600 !important;
-    }
-    #myHeader .navbar-light .navbar-nav .nav-link.is-active::after,
-    #myHeader .navbar-light .navbar-nav .nav-link.is-active::before {
-        display: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="login"].btn.btn-styled,
-    #myHeader .ur-header-actions a[href*="login"].btn.btn-styled.btn-xs.btn-base-1 {
-        background: transparent !important;
-        border: none !important;
-        color: #E4EDE8 !important;
-        border-radius: 0 !important;
-        padding: 8px 4px !important;
-        font-family: 'Manrope', system-ui, sans-serif !important;
-        font-size: 14px !important;
-        box-shadow: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled,
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled.btn-xs,
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled.btn-xs.btn-base-1,
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled.btn-xs.btn-base-1.btn-shadow {
-        background: #C9974D !important;
-        border: none !important;
-        color: #0F2E24 !important;
-        border-radius: 8px !important;
-        padding: 11px 22px !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
-        font-family: 'Manrope', system-ui, sans-serif !important;
-        box-shadow: none !important;
-        letter-spacing: 0 !important;
-        text-transform: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="register"] i {
-        display: none !important;
-    }
-    #myHeader .appointment-btn {
-        display: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="login"] i {
-        display: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled:hover,
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled.btn-xs.btn-base-1:hover,
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled.btn-xs.btn-base-1.btn-shadow:hover {
-        background: #C9974D !important;
-        border: none !important;
-        color: #0F2E24 !important;
-        transform: none !important;
-        filter: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="login"].btn.btn-styled:hover {
-        background: transparent !important;
-        border: none !important;
-        color: #fff !important;
-        transform: none;
-    }
-}
-
-@media (max-width: 999px) {
-    #myHeader,
-    #myHeader .navbar.bg-default,
-    #myHeader ul.navbar-nav {
-        background: #0F2E24 !important;
-        background-image: none !important;
-    }
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled,
-    #myHeader .ur-header-actions a[href*="register"].btn.btn-styled.btn-xs.btn-base-1 {
-        background: #C9974D !important;
-        border: none !important;
-        color: #0F2E24 !important;
-        border-radius: 8px !important;
-        font-weight: 700 !important;
-    }
-}
+/* ----- Navbar -----
+   Intentionally NOT overridden here anymore. The navbar is one shared component
+   (layouts/master.blade.php + public/css/ur-navbar.css) used identically on every
+   page. This file used to make the homepage navbar transparent/absolute so it sat
+   over the hero photo — that gave the homepage a different-looking navbar than
+   every other page, so it was removed. Do not re-add page-specific navbar rules
+   here; edit ur-navbar.css if the shared navbar itself needs to change. */
 
 /* ----- Hero ----- */
 body.homepage .ur-hero-a {
