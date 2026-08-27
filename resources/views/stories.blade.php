@@ -64,11 +64,13 @@
     /* Stories grid */
     .ss-wrap { max-width: 1180px; margin: 0 auto; padding: 64px 24px 80px; }
     .ss-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        display: flex;
+        flex-direction: column;
         gap: 28px;
     }
     .ss-card {
+        display: flex;
+        align-items: stretch;
         background: #fff;
         border: 1px solid var(--ss-line);
         border-radius: 16px;
@@ -77,9 +79,11 @@
         transition: transform .25s ease, box-shadow .25s ease;
     }
     .ss-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(15,46,36,.12); }
-    .ss-card__image { height: 230px; overflow: hidden; }
-    .ss-card__image img { width: 100%; height: 100%; object-fit: cover; display: block; object-position: center 15%; }
-    .ss-card__body { padding: 28px 28px 30px; }
+    /* Alternate: odd cards -> image left, text right. even cards -> image right, text left. */
+    .ss-card:nth-child(even) { flex-direction: row-reverse; }
+    .ss-card__image { flex: 0 0 50%; max-width: 50%; overflow: hidden; }
+    .ss-card__image img { width: 100%; height: 100%; min-height: 340px; object-fit: cover; display: block; object-position: center 15%; }
+    .ss-card__body { flex: 0 0 50%; max-width: 50%; padding: 40px 44px; display: flex; flex-direction: column; justify-content: center; }
     .ss-card__names {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 22px;
@@ -152,7 +156,12 @@
     .ss-btn--solid:hover { background: var(--ss-green-deep); }
 
     @media (max-width: 767px) {
-        .ss-grid { grid-template-columns: 1fr; }
+        .ss-card,
+        .ss-card:nth-child(even) { flex-direction: column; }
+        .ss-card__image,
+        .ss-card__body { flex: 0 0 100%; max-width: 100%; }
+        .ss-card__image img { min-height: 230px; }
+        .ss-card__body { padding: 28px 28px 30px; }
         .ss-wrap { padding: 48px 18px 60px; }
         .ss-hero { padding: 48px 18px 40px; }
     }
@@ -168,7 +177,7 @@
     <div class="ss-wrap">
         <div class="ss-grid">
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/arabic-couple.jpg" alt="Ayesha and Rayed" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/dubai-couple.jpg" alt="Ayesha and Rayed" loading="lazy"></div>
                 <div class="ss-card__body">
                     <h3 class="ss-card__names">Ayesha &amp; Rayed</h3>
                     <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> Dubai, UAE &nbsp;🇦🇪</div>
@@ -178,7 +187,7 @@
                 </div>
             </div>
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/pakistani-couple.jpg" alt="Dr. Usman and Dr. Rabia" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/uk-couple.jpg" alt="Dr. Usman and Dr. Rabia" loading="lazy"></div>
                 <div class="ss-card__body">
                     <h3 class="ss-card__names">Dr. Usman &amp; Dr. Rabia</h3>
                     <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> United Kingdom &nbsp;🇬🇧</div>
@@ -198,7 +207,7 @@
                 </div>
             </div>
             <div class="ss-card">
-                <div class="ss-card__image"><img src="/images/couples/usa-couple.jpg" alt="Adam and Sophia" loading="lazy"></div>
+                <div class="ss-card__image"><img src="/images/couples/us-couple.jpg" alt="Adam and Sophia" loading="lazy"></div>
                 <div class="ss-card__body">
                     <h3 class="ss-card__names">Adam &amp; Sophia</h3>
                     <div class="ss-card__meta"><i class="fa fa-map-marker" aria-hidden="true"></i> United States &nbsp;🇺🇸</div>

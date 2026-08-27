@@ -1264,7 +1264,7 @@
                     Where <em>Meaningful Matches</em> Begin
                 </h1>
                 <p class="ur-hero-a__subtitle">
-                    Pakistan&rsquo;s trusted premium matchmaking service for serious individuals and families in Pakistan, UK, USA, Canada, Australia, Europe &amp; the Gulf.
+                    Global trusted premium matchmaking service for serious individuals and families in Pakistan, UK, USA, Canada, Australia, Europe &amp; the Gulf.
                 </p>
                 <p class="ur-hero-a__subtitle ur-hero-a__subtitle--sm">
                     Every profile is carefully reviewed, with privacy, discretion and personal matchmaking support at every stage.
@@ -1364,7 +1364,7 @@
         <div class="ur-wrap">
             <div class="ur-promise2__top">
                 <div class="ab-wel-lhs">
-                    <img src="images/about/formal-couple.jpg" alt="" loading="lazy" class="ab-wel-1">
+                    <img src="images/about/elegant-couple.jpg" alt="" loading="lazy" class="ab-wel-1">
                     <img src="images/couples/wedding-attire-couple.jpg" alt="" loading="lazy" class="ab-wel-2">
                     <div class="ur-years"><b>16+</b><span>YEARS OF SERVICE</span></div>
                 </div>
@@ -1653,7 +1653,7 @@ discretion and individually managed search.</p>
 step.</p>
             <div class="ur-stories-grid">
                 <div class="ur-story ur-story--lg">
-                    <img src="images/couples/arabic-couple.jpg" alt="" loading="lazy">
+                    <img src="images/couples/dubai-couple.jpg" alt="" loading="lazy">
                     <div class="ur-story__overlay"></div>
                     <div class="ur-story__meta">
                         <h4>Ayesha &amp; Rayed</h4>
@@ -1662,7 +1662,7 @@ step.</p>
                 </div>
                 <div class="ur-story-col">
                     <div class="ur-story ur-story--sm">
-                        <img src="images/couples/pakistani-couple.jpg" alt="" loading="lazy">
+                        <img src="images/couples/uk-couple.jpg" alt="" loading="lazy">
                         <div class="ur-story__overlay"></div>
                         <div class="ur-story__meta"><h4 style="font-size:18px;">Dr. Usman &amp; Dr. Rabia</h4><span>United Kingdom</span></div>
                     </div>
@@ -1673,7 +1673,7 @@ step.</p>
                     </div>
                 </div>
                 <div class="ur-story ur-story--lg">
-                    <img src="images/couples/usa-couple.jpg" alt="" loading="lazy">
+                    <img src="images/couples/us-couple.jpg" alt="" loading="lazy">
                     <div class="ur-story__overlay"></div>
                     <div class="ur-story__meta">
                         <h4>Adam &amp; Sophia</h4>

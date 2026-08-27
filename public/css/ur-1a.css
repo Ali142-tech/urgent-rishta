@@ -673,6 +673,33 @@ body.homepage .footer-bottom a {
     body.homepage .ur-hero-a__inner { padding: 88px 20px 60px; }
     body.homepage .ur-hero-a__search-grid { grid-template-columns: 1fr 1fr; }
     body.homepage .ur-hero-a__search-card { border-radius: 16px; padding: 18px 16px; }
+    /* ur-hero.css has a generic (non-homepage-scoped) tablet rule at
+       700–991px that turns .ur-hero-a__inner into a 2-column grid — text left,
+       search card right — for the OTHER (pink/dark) hero variant. It bleeds
+       into this Editorial Luxe variant too and makes the search card float
+       over/clip the hero text. Force this variant back to its intended
+       stacked, centered layout at that breakpoint. */
+    body.homepage .ur-hero-a__inner {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    body.homepage .ur-hero-a__main {
+        width: 100%;
+    }
+    body.homepage .ur-hero-a__content {
+        align-items: center !important;
+        text-align: center !important;
+        max-width: 640px !important;
+        margin: 0 auto !important;
+    }
+    body.homepage .ur-hero-a__search-wrap {
+        margin: 32px auto 0 !important;
+        max-width: 640px !important;
+        width: 100%;
+    }
+    body.homepage .ur-hero-a__search-card {
+        height: auto !important;
+    }
     .ur-enquiry-bar__contact { padding: 22px 24px; gap: 16px 32px; }
     .ur-enquiry-bar__stats { grid-template-columns: 1fr 1fr; padding: 28px 24px; row-gap: 26px; }
     .ur-enquiry-bar__stat:nth-child(even) { border-right: none; }
