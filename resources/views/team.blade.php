@@ -97,7 +97,7 @@
         box-shadow: 0 18px 44px rgba(15,46,36,.08);
     }
     .tm-founder__photo { border-radius: 14px; overflow: hidden; }
-    .tm-founder__photo img { width: 100%; height: 380px; object-fit: cover; display: block; }
+    .tm-founder__photo img { width: 100%; height: 380px; object-fit: cover; object-position: center 20%; display: block; }
     .tm-founder__name {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 28px;
@@ -135,6 +135,7 @@
     .tm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 8px; }
     .tm-card { text-align: center; }
     .tm-card img { width: 100%; height: 260px; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 16px; box-shadow: 0 10px 24px rgba(15,46,36,.08); }
+    .tm-card-img--top { object-position: center 12%; }
     .tm-card h4 { font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 17px; margin: 0 0 4px; color: var(--tm-ink); }
     .tm-card p { font-size: 12.5px; color: var(--tm-text); margin: 0 0 10px; }
 
@@ -249,7 +250,7 @@
                 </ul>
             </div>
             <div class="tm-card">
-                <img src="/images/profiles/9.jpg" alt="Usman Idrees" loading="lazy">
+                <img src="/images/profiles/usman-idrees.jpg" alt="Usman Idrees" loading="lazy" class="tm-card-img--top">
                 <h4>Usman Idrees</h4>
                 <p>Client Coordinator</p>
                 <ul class="tm-social">

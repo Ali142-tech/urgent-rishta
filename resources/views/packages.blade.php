@@ -590,7 +590,7 @@
             <div class="pk-compare-title">Digital Match <span>(Online)</span></div>
             <p>Create your profile, choose a plan, and see matches based on your preferences. Express interest — if accepted, connect directly.</p>
             <div class="pk-discount-pill">🎉 50% launch discount available</div>
-            <a href="https://urgentrishta.co/packages" class="pk-cta-outline">I'm Interested</a>
+            <a href="https://wa.me/447424527639" target="_blank" rel="noopener" class="pk-cta-outline">I'm Interested</a>
         </div>
         <div class="pk-compare-card dark">
             <div class="pk-compare-icon">🤝</div>
@@ -602,7 +602,7 @@
                 <div>✓ Daily broadcast list</div>
                 <div>✓ Video consultation sessions</div>
             </div>
-            <a href="http://urgentrishta.wedlock204.com" class="pk-cta-solid">I'm Interested</a>
+            <a href="https://wa.me/447424527639" target="_blank" rel="noopener" class="pk-cta-solid">I'm Interested</a>
         </div>
     </div>
 </div>

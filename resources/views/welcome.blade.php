@@ -155,6 +155,7 @@
         width: 74%;
         height: 80%;
         object-fit: cover;
+        object-position: center 15%;
         left: 0;
         top: 0;
         border-radius: 4px;
@@ -163,6 +164,7 @@
         width: 56%;
         height: 56%;
         object-fit: cover;
+        object-position: center 15%;
         position: absolute;
         bottom: 0;
         right: 0;
@@ -834,7 +836,7 @@
         box-shadow: 0 18px 44px rgba(0,0,0,.06);
     }
     .ur-founder__photo { border-radius: 14px; overflow: hidden; }
-    .ur-founder__photo img { width: 100%; height: 380px; object-fit: cover; display: block; }
+    .ur-founder__photo img { width: 100%; height: 380px; object-fit: cover; object-position: center 20%; display: block; }
     .ur-founder__name {
         font-family: 'Playfair Display', Georgia, serif;
         font-size: 28px;
@@ -868,6 +870,7 @@
     .ur-team--rest { grid-template-columns: repeat(3, 1fr); }
     .ur-team__card { text-align: center; }
     .ur-team__card img { width: 100%; height: 230px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 14px; }
+    .ur-team__card-img--top { object-position: center 12%; }
     .ur-team__card h4 { font-weight: 700; font-size: 15px; margin: 0 0 4px; color: var(--ink); }
     .ur-team__card p { font-size: 12.5px; color: var(--muted); margin: 0 0 10px; }
     .ur-team__social { display: flex; gap: 8px; justify-content: center; list-style: none; padding: 0; margin: 0; }
@@ -1813,7 +1816,7 @@ team, with senior-level involvement where applicable.</p>
                     </ul>
                 </div>
                 <div class="ur-team__card">
-                    <img src="images/profiles/9.jpg" alt="Usman Idrees" loading="lazy">
+                    <img src="images/profiles/usman-idrees.jpg" alt="Usman Idrees" loading="lazy" class="ur-team__card-img--top">
                     <h4>Usman Idrees</h4>
                     <p>Client Coordinator</p>
                     <ul class="ur-team__social">
