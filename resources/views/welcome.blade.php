@@ -1129,6 +1129,21 @@
         .ur-premium__grid { grid-template-columns: 1fr 1fr; }
         .ur-privacy__grid { grid-template-columns: 1fr 1fr; }
         .ur-gallery { grid-template-columns: repeat(3, 1fr); }
+        /* "Inside Urgent Rishta" masonry gallery: the markup jumps straight from
+           col-6 (mobile, <768px) to col-md-2/col-md-3 (>=768px) — those narrow
+           desktop column widths combined with the fixed 280px/42vh image
+           heights below squeeze each photo into a tall, cramped sliver at
+           tablet widths. Widen the columns back up and shorten the images
+           until the roomier desktop breakpoint. */
+        .ur-photo-gallery .gall-inn > [class*="col-"] {
+            flex: 0 0 33.333%;
+            max-width: 33.333%;
+        }
+        .ur-photo-gallery .gal-im img.gal-siz-1,
+        .ur-photo-gallery .gal-im img.gal-siz-2 {
+            height: 220px;
+            min-height: 0;
+        }
         .ur-contact-row { grid-template-columns: 1fr; }
         .ur-team { grid-template-columns: 1fr 1fr; }
         .ur-team--rest { grid-template-columns: 1fr 1fr 1fr; }
@@ -1274,7 +1289,7 @@
                 </p>
                 <div class="ur-hero-a__cta-row">
                     <a href="javascript:void(0);" onclick="openPopup()" class="ur-hero-a__btn ur-hero-a__btn--primary">Book a Private Consultation</a>
-                    <a href="/register" class="ur-hero-a__btn ur-hero-a__btn--secondary">Create Your Profile</a>
+                    <a href="{{ auth()->check() ? url('member/profile') : url('register') }}" class="ur-hero-a__btn ur-hero-a__btn--secondary">Create Your Profile</a>
                 </div>
                 <div class="ur-hero-a__trust" aria-label="Trust points">
                     <span>15,000+ Verified Profiles</span>
@@ -1897,7 +1912,7 @@ team, with senior-level involvement where applicable.</p>
             <p>Start your search with a matchmaking service built around privacy, professionalism and personal attention.</p>
             <div class="ur-cta__actions">
                 <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-cta__btn ur-cta__btn--primary">Book a Private Consultation</a>
-                <a href="/register" class="ur-btn ur-cta__btn ur-cta__btn--ghost">Create Your Profile</a>
+                <a href="{{ auth()->check() ? url('member/profile') : url('register') }}" class="ur-btn ur-cta__btn ur-cta__btn--ghost">Create Your Profile</a>
             </div>
             <ul class="ur-cta__trust">
                 <li>Confidential</li>

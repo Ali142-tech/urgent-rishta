@@ -222,6 +222,8 @@ class HomeController extends Controller {
         $obj = new \stdClass();
         $obj->sender = $request->get('name');
         $obj->sender_email = $request->get('email');
+        $obj->sender_phone = $request->get('phone');
+        $obj->sender_city = $request->get('city');
         $obj->subject = $request->get('subject');
         $obj->message = $request->get('message');
 

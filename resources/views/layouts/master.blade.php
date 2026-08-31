@@ -5,9 +5,9 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="urgentrishta.co is a Pakistani matrimonial website.">
-    <meta name="keywords" content="matrimonial,urgentrishta.co">
-    <meta name="author" content="urgentrishta.co">
+    <meta name="description" content="urgentrishta.com is a Global matrimonial website.">
+    <meta name="keywords" content="matrimonial,urgentrishta.com">
+    <meta name="author" content="urgentrishta.com">
     <meta name="revisit-after" content="2 day(s)">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -79,6 +79,94 @@
         <div class="pace-activity"></div>
     </div>
     <style>
+    /* ---------- Toast notifications (#message_alert / showAlert()) ---------- */
+    .ur-toast-stack {
+        position: fixed;
+        top: 90px;
+        right: 20px;
+        z-index: 99999;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-width: min(380px, calc(100vw - 40px));
+        pointer-events: none;
+    }
+    .ur-toast {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px 40px 18px 16px;
+        box-shadow: 0 16px 36px rgba(15,46,36,.18), 0 2px 8px rgba(15,46,36,.08);
+        border-left: 4px solid #C9974D;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateX(24px);
+        transition: opacity .3s ease, transform .3s ease;
+        pointer-events: auto;
+    }
+    .ur-toast--show { opacity: 1; transform: translateX(0); }
+    .ur-toast--hide { opacity: 0; transform: translateX(24px); }
+    .ur-toast--success { border-left-color: #123A2E; }
+    .ur-toast--success .ur-toast__icon { color: #123A2E; }
+    .ur-toast--danger { border-left-color: #B5674A; }
+    .ur-toast--danger .ur-toast__icon { color: #B5674A; }
+    .ur-toast--warning { border-left-color: #C9974D; }
+    .ur-toast--warning .ur-toast__icon { color: #C9974D; }
+    .ur-toast--info { border-left-color: #5B6560; }
+    .ur-toast--info .ur-toast__icon { color: #5B6560; }
+    .ur-toast__icon {
+        font-size: 20px;
+        line-height: 1.4;
+        flex-shrink: 0;
+    }
+    .ur-toast__body {
+        font-family: 'Manrope', system-ui, sans-serif;
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: #1C2321;
+        word-break: break-word;
+    }
+    .ur-toast__body div { margin-bottom: 4px; }
+    .ur-toast__body div:last-child { margin-bottom: 0; }
+    .ur-toast__close {
+        position: absolute;
+        top: 8px;
+        right: 10px;
+        border: none;
+        background: transparent;
+        font-size: 18px;
+        line-height: 1;
+        color: #9AA5A0;
+        cursor: pointer;
+        padding: 4px;
+    }
+    .ur-toast__close:hover { color: #1C2321; }
+    .ur-toast__bar {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 3px;
+        width: 100%;
+        background: currentColor;
+        color: #C9974D;
+        opacity: .35;
+        transform-origin: left;
+        animation: urToastShrink linear forwards;
+    }
+    .ur-toast--success .ur-toast__bar { color: #123A2E; }
+    .ur-toast--danger .ur-toast__bar { color: #B5674A; }
+    .ur-toast--info .ur-toast__bar { color: #5B6560; }
+    @keyframes urToastShrink {
+        from { transform: scaleX(1); }
+        to { transform: scaleX(0); }
+    }
+    @media (max-width: 500px) {
+        .ur-toast-stack { top: 70px; right: 10px; left: 10px; max-width: none; }
+    }
+
     @media screen and (max-width: 500px) {
     ul.navbar-nav {
         background-color: #0F2E24;
@@ -501,9 +589,9 @@ a.appointment-btn::before{
                         <div class="sticky-content">
                             <div class="container">
                                 <div class="row">
-                                    <!-- Alerts for actions -->
-                                    <div id="message_alert" style="display: none; position: fixed; top: 25%; margin: auto; z-index: 9999"></div>
-                                    <!-- Alerts for actions -->
+                                    <!-- Toast notifications for actions -->
+                                    <div id="message_alert" class="ur-toast-stack"></div>
+                                    <!-- Toast notifications for actions -->
                                 </div>
                             </div>
                             <div id="main-content">
@@ -570,16 +658,63 @@ a.appointment-btn::before{
         }
 
         function showAlert(type, message, timeout, code) {
-            var alertDiv = $("#message_alert");
-            var width = screen.width;
-            var alertWidth = width*0.5;
-            alertDiv.css({'text-align': 'center', 'width': alertWidth, 'left': (width-alertWidth)/2});
-            alertDiv.show();
-            alertDiv.html("<div class=\"alert alert-" + type + " fade show\" role=\"alert\">" + message + "</div>");
-            setTimeout(function() {
-                alertDiv.fadeOut("slow", "swing");
-                if (code) eval(code);
-            }, timeout ? timeout : 10000);
+            var stack = document.getElementById('message_alert');
+            if (!stack) return;
+
+            // Normalize the many type spellings used across the codebase
+            // ('success', 'danger', 'error', 'warning', 'info', ...) to one
+            // of our four toast variants.
+            var variant = 'info';
+            if (/success/i.test(type)) variant = 'success';
+            else if (/danger|error/i.test(type)) variant = 'danger';
+            else if (/warning/i.test(type)) variant = 'warning';
+
+            var icons = {
+                success: 'fa-check-circle',
+                danger: 'fa-times-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+
+            var duration = timeout ? timeout : 10000;
+
+            var toast = document.createElement('div');
+            toast.className = 'ur-toast ur-toast--' + variant;
+            toast.innerHTML =
+                '<i class="fa ' + icons[variant] + ' ur-toast__icon" aria-hidden="true"></i>' +
+                '<div class="ur-toast__body">' + message + '</div>' +
+                '<button type="button" class="ur-toast__close" aria-label="Dismiss">&times;</button>' +
+                '<div class="ur-toast__bar" style="animation-duration:' + duration + 'ms"></div>';
+
+            stack.appendChild(toast);
+            // Force layout before adding the "show" class so the slide-in transition runs.
+            void toast.offsetWidth;
+            toast.classList.add('ur-toast--show');
+
+            var dismissed = false;
+            function dismiss() {
+                if (dismissed) return;
+                dismissed = true;
+                toast.classList.remove('ur-toast--show');
+                toast.classList.add('ur-toast--hide');
+                setTimeout(function() {
+                    toast.remove();
+                    if (code) eval(code);
+                }, 300);
+            }
+
+            toast.querySelector('.ur-toast__close').addEventListener('click', dismiss);
+            var autoTimer = setTimeout(dismiss, duration);
+
+            // Pause the countdown while the user is reading it.
+            toast.addEventListener('mouseenter', function() {
+                clearTimeout(autoTimer);
+                toast.querySelector('.ur-toast__bar').style.animationPlayState = 'paused';
+            });
+            toast.addEventListener('mouseleave', function() {
+                autoTimer = setTimeout(dismiss, 1500);
+                toast.querySelector('.ur-toast__bar').style.animationPlayState = 'running';
+            });
         }
 
         // highlight link with icon
