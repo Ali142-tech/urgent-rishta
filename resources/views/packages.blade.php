@@ -589,7 +589,7 @@
             <div class="pk-compare-icon">📱</div>
             <div class="pk-compare-title">Digital Match <span>(Online)</span></div>
             <p>Create your profile, choose a plan, and see matches based on your preferences. Express interest — if accepted, connect directly.</p>
-            <div class="pk-discount-pill">🎉 50% launch discount available</div>
+            {{-- <div class="pk-discount-pill">🎉 50% launch discount available</div> --}}
             <a href="https://wa.me/447424527639" target="_blank" rel="noopener" class="pk-cta-outline">I'm Interested</a>
         </div>
         <div class="pk-compare-card dark">

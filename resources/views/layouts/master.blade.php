@@ -11,6 +11,9 @@
     <meta name="revisit-after" content="2 day(s)">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <link rel="icon" type="image/png" href="/images/header_logo2.png?1">
+    <link rel="apple-touch-icon" href="/images/header_logo2.png?1">
+
     <link rel="stylesheet" href="/css/app.css?2"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/themes/green/pace-theme-minimal.min.css" type="text/css" />
 <!-- Bootstrap -->
