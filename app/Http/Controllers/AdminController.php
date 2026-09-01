@@ -28,7 +28,13 @@ class AdminController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth')->except(['phpInfo', 'artisanAllClear', 'registerPublishImageVendor']);
+        // Website Upgrade Brief §12 P0: every action in this controller is
+        // admin-only — there is no public or "logged in but not admin"
+        // exception. 'phpInfo', 'artisanAllClear' and
+        // 'registerPublishImageVendor' used to be excluded from even the
+        // 'auth' check, meaning literally anyone on the internet could call
+        // them; that exemption was a live vulnerability, not a convenience.
+        $this->middleware(['auth', 'admin']);
     }
 
     public function phpInfo()
@@ -79,29 +85,9 @@ class AdminController extends Controller
         } else return $view;
     }
 
-    /**
-     * Website Upgrade Brief §9 "Photo & Identity Verification" module.
-     *
-     * Note: like the rest of AdminController, route access here only
-     * requires being logged in (see __construct() above) — there's no
-     * separate admin role/guard yet (brief §12 P0 "Separate admin
-     * authentication/authorization from users" is a known, unaddressed gap).
-     * Since this queue can change a member's verification status, it checks
-     * the `admin` flag itself rather than adding to that exposure.
-     */
-    private function requireAdmin()
-    {
-        $loggedInUser = User::retrieveUserObject();
-        if (empty($loggedInUser) || $loggedInUser->admin != 1) {
-            abort(403, 'Admin access required.');
-        }
-        return $loggedInUser;
-    }
-
+    /** Website Upgrade Brief §9 "Photo & Identity Verification" module. */
     function photoVerificationQueue()
     {
-        $this->requireAdmin();
-
         $pageSize = 15;
         $required = ProfileController::REQUIRED_PHOTO_COUNT;
 
@@ -134,7 +120,7 @@ class AdminController extends Controller
 
     function approvePhotoVerification($dataid)
     {
-        $admin = $this->requireAdmin();
+        $admin = User::retrieveUserObject();
         $user = User::where('dataid', $dataid)->first();
 
         if (!$user) {
@@ -158,7 +144,7 @@ class AdminController extends Controller
 
     function rejectPhotoVerification(Request $request, $dataid)
     {
-        $admin = $this->requireAdmin();
+        $admin = User::retrieveUserObject();
         $user = User::where('dataid', $dataid)->first();
 
         if (!$user) {
@@ -192,7 +178,7 @@ class AdminController extends Controller
      */
     function reopenPhotoVerification($dataid)
     {
-        $admin = $this->requireAdmin();
+        $admin = User::retrieveUserObject();
         $user = User::where('dataid', $dataid)->first();
 
         if (!$user) {
