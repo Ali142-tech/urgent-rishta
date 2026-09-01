@@ -31,7 +31,7 @@
     <link type="text/css" href="/css/custom-style.css?2" rel="stylesheet" />
     <link type="text/css" href="/css/new-theme.css?2" rel="stylesheet" />
     <link type="text/css" href="/css/new-animate.min.css?2" rel="stylesheet" />
-    <link type="text/css" href="/css/ur-navbar.css?14" rel="stylesheet" />
+    <link type="text/css" href="/css/ur-navbar.css?16" rel="stylesheet" />
     <!-- SCRIPTS -->
     <!-- Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.0.2/pace.min.js"></script>
@@ -462,9 +462,23 @@ a.appointment-btn::before{
                                                     Profile</a>
                                             </li>
                                             @endauth
-                                            <li class="custom-nav">
-                                                <a class="nav-link " href="{{url('packages')}}" aria-haspopup="true" aria-expanded="false">
+                                            <li class="custom-nav dropdown ur-plans-dropdown">
+                                                <a class="nav-link dropdown-toggle" href="{{url('packages')}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                     Premium Plans</a>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{url('packages')}}?type=personalized">
+                                                            <i class="fa fa-user-circle" aria-hidden="true"></i>
+                                                            <span>Personalized Plan</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{url('packages')}}?type=online">
+                                                            <i class="fa fa-desktop" aria-hidden="true"></i>
+                                                            <span>Online Plan</span>
+                                                        </a>
+                                                    </li>
+                                                </ul>
                                             </li>
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('team')}}" aria-haspopup="true" aria-expanded="false">
@@ -473,6 +487,10 @@ a.appointment-btn::before{
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('stories')}}" aria-haspopup="true" aria-expanded="false">
                                                     Success Stories</a>
+                                            </li>
+                                            <li class="custom-nav">
+                                                <a class="nav-link " href="{{url('photo-gallery')}}" aria-haspopup="true" aria-expanded="false">
+                                                    Gallery</a>
                                             </li>
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">

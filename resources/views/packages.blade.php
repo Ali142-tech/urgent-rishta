@@ -113,6 +113,34 @@
     .pk-service-col--online {
         border-right: 1px solid var(--pk-line);
     }
+    /* Filtered view (?type=online or ?type=personalized from the nav dropdown —
+       Website Upgrade Brief-style "show only this service" request): hide the
+       other column and let the remaining one take the full width instead of
+       squeezing into a half-width grid track. */
+    .pk-services-split--online-only .pk-service-col--premium,
+    .pk-services-split--personalized-only .pk-service-col--online {
+        display: none;
+    }
+    .pk-services-split--online-only,
+    .pk-services-split--personalized-only {
+        grid-template-columns: 1fr;
+    }
+    .pk-services-split--online-only .pk-service-col--online,
+    .pk-services-split--personalized-only .pk-service-col--premium {
+        border-right: none;
+    }
+    .pk-services-split--online-only .pk-intro,
+    .pk-services-split--personalized-only .pk-intro {
+        grid-template-columns: 1fr 1fr;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    .pk-services-split--online-only .pk-pkg-grid,
+    .pk-services-split--personalized-only .pk-pkg-grid {
+        max-width: 1000px;
+        margin: 0 auto;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    }
     .pk-service-col-label {
         display: flex;
         align-items: center;
@@ -426,8 +454,18 @@
     ];
 @endphp
 
-<!-- 2 & 3/5. ONLINE SERVICES (left) + PERSONALIZED SERVICE (right), side by side -->
-<div class="pk-services-split">
+@php
+    // Nav dropdown ("Premium Plans" -> Online Plan / Personalized Plan) passes
+    // ?type=online|personalized so this page can show just that service's
+    // data instead of the default side-by-side comparison.
+    $planTypeFilter = request('type');
+    $splitClass = $planTypeFilter === 'online' ? 'pk-services-split--online-only'
+        : ($planTypeFilter === 'personalized' ? 'pk-services-split--personalized-only' : '');
+@endphp
+
+<!-- 2 & 3/5. ONLINE SERVICES (left) + PERSONALIZED SERVICE (right), side by side
+     (or just one side, full width, when filtered via ?type=) -->
+<div class="pk-services-split {{ $splitClass }}">
 
 <div class="pk-service-col pk-service-col--online">
     <div class="pk-service-col-label">📱 Online Services</div>

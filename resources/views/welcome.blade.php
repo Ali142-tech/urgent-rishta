@@ -193,7 +193,7 @@
         font-weight: 700;
         letter-spacing: .06em;
     }
-    .ur-promise2__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .ur-promise2__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
     .ur-promise2__card {
         background: #fff;
         border: 1px solid var(--line);
@@ -512,156 +512,13 @@
     .ur-intl__cta { text-align: center; margin-top: 40px; }
 
     /* Full-width photo gallery — outside ur-page / ur-wrap */
-    .ur-photo-gallery {
-        width: 100%;
-        max-width: none;
-        background: #FBF7EF;
-        padding: 24px 0 40px;
-        overflow: hidden;
-        clear: both;
-    }
-    .ur-photo-gallery__fluid.container-fluid {
-        width: 100%;
-        max-width: 100%;
-        padding-left: 8px;
-        padding-right: 8px;
-        margin-left: 0;
-        margin-right: 0;
-    }
-    .ur-photo-gallery__head {
-        padding: 0 12px;
-        margin-bottom: 36px;
-    }
-    .ur-photo-gallery .gal-im .gal-label {
-        font-family: 'Manrope', system-ui, sans-serif;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: .05em;
-        text-transform: uppercase;
-        color: #fff;
-    }
-    .ur-photo-gallery .gall-inn {
-        width: 100%;
-        margin: 0;
-        display: flex;
-        flex-wrap: wrap;
-    }
-    .ur-photo-gallery .gall-inn > [class*="col-"] {
-        padding-left: 6px;
-        padding-right: 6px;
-    }
-    .ur-photo-gallery .gal-im {
-        margin-bottom: 12px;
-        border-radius: 14px;
-        overflow: hidden;
-        opacity: 0;
-        box-shadow: 0 8px 24px rgba(26, 6, 16, 0.08);
-    }
-    .ur-photo-gallery .gal-im.anistart {
-        opacity: 1;
-    }
-    .ur-photo-gallery .gal-im:before {
-        background: linear-gradient(180deg, transparent 20%, rgba(26, 6, 16, 0.78) 100%);
-        opacity: 0.35;
-        transition: opacity .45s ease;
-    }
-    .ur-photo-gallery .gal-im:hover:before {
-        opacity: 1;
-    }
-    .ur-photo-gallery .gal-im::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        z-index: 2;
-        pointer-events: none;
-        background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.32) 48%, transparent 66%);
-        transform: translateX(-130%);
-        transition: transform .75s ease;
-    }
-    .ur-photo-gallery .gal-im:hover::after {
-        transform: translateX(130%);
-    }
-    .ur-photo-gallery .gal-im img {
-        transform: scale(1.04);
-        transition: transform 1.15s cubic-bezier(.22,1,.36,1), filter .45s ease;
-        will-change: transform;
-    }
-    .ur-photo-gallery .gal-im:hover img {
-        transform: scale(1.16);
-        filter: saturate(1.1) brightness(1.04);
-    }
-    .ur-photo-gallery .gal-im img.gal-siz-1 {
-        height: 280px;
-    }
-    .ur-photo-gallery .gal-im img.gal-siz-2 {
-        height: 42vh;
-        min-height: 280px;
-    }
-    .ur-photo-gallery .gal-im .txt span,
-    .ur-photo-gallery .gal-im .txt h4 {
-        color: #fff;
-    }
-    .ur-photo-gallery .gal-im .txt h4 {
-        font-family: 'Playfair Display', Georgia, serif;
-        font-weight: 600;
-    }
-
-    @keyframes urGalReveal {
-        from {
-            opacity: 0;
-            transform: translateY(36px) scale(.94);
-            filter: blur(8px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            filter: blur(0);
-        }
-    }
-    .urGalReveal {
-        animation-name: urGalReveal;
-        animation-duration: .85s;
-        animation-timing-function: cubic-bezier(.22, 1, .36, 1);
-        animation-fill-mode: both;
-    }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(1) .gal-im:nth-child(1) { animation-delay: .04s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(1) .gal-im:nth-child(2) { animation-delay: .16s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(2) .gal-im:nth-child(1) { animation-delay: .10s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(2) .gal-im:nth-child(2) { animation-delay: .22s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(3) .gal-im:nth-child(1) { animation-delay: .16s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(3) .gal-im:nth-child(2) { animation-delay: .28s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(4) .gal-im:nth-child(1) { animation-delay: .22s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(4) .gal-im:nth-child(2) { animation-delay: .34s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(5) .gal-im:nth-child(1) { animation-delay: .28s; }
-    .ur-photo-gallery .gall-inn > [class*="col-"]:nth-child(5) .gal-im:nth-child(2) { animation-delay: .40s; }
-
-    @media (prefers-reduced-motion: reduce) {
-        .ur-photo-gallery .gal-im.animate,
-        .ur-photo-gallery .gal-im.anistart {
-            opacity: 1;
-            animation: none !important;
-            transform: none;
-            filter: none;
-        }
-        .ur-photo-gallery .gal-im img,
-        .ur-photo-gallery .gal-im:hover img,
-        .ur-photo-gallery .gal-im::after {
-            transform: none !important;
-            transition: none !important;
-        }
-    }
-    @media (max-width: 767px) {
-        .ur-photo-gallery .gal-im img.gal-siz-1,
-        .ur-photo-gallery .gal-im img.gal-siz-2 {
-            height: 220px;
-            min-height: 0;
-        }
-    }
+    {{-- .ur-photo-gallery ("Inside Urgent Rishta") CSS moved to resources/views/gallery.blade.php
+         along with the section itself — see Website Upgrade Brief §2/§3. --}}
 
     .ur-stories-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
     .ur-stories-sub { font-size: 15.5px; line-height: 1.8; color: var(--muted); max-width: 640px; margin: -22px 0 30px; }
     .ur-stories-disclaimer { text-align: center; font-size: 12.5px; font-style: italic; color: var(--muted); margin: 28px 0 0; }
-    .ur-stories-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 22px; }
+    .ur-stories-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 22px; }
     .ur-story { position: relative; border-radius: 6px; overflow: hidden; }
     .ur-story--lg { height: 360px; }
     .ur-story--sm { height: 169px; }
@@ -1129,21 +986,6 @@
         .ur-premium__grid { grid-template-columns: 1fr 1fr; }
         .ur-privacy__grid { grid-template-columns: 1fr 1fr; }
         .ur-gallery { grid-template-columns: repeat(3, 1fr); }
-        /* "Inside Urgent Rishta" masonry gallery: the markup jumps straight from
-           col-6 (mobile, <768px) to col-md-2/col-md-3 (>=768px) — those narrow
-           desktop column widths combined with the fixed 280px/42vh image
-           heights below squeeze each photo into a tall, cramped sliver at
-           tablet widths. Widen the columns back up and shorten the images
-           until the roomier desktop breakpoint. */
-        .ur-photo-gallery .gall-inn > [class*="col-"] {
-            flex: 0 0 33.333%;
-            max-width: 33.333%;
-        }
-        .ur-photo-gallery .gal-im img.gal-siz-1,
-        .ur-photo-gallery .gal-im img.gal-siz-2 {
-            height: 220px;
-            min-height: 0;
-        }
         .ur-contact-row { grid-template-columns: 1fr; }
         .ur-team { grid-template-columns: 1fr 1fr; }
         .ur-team--rest { grid-template-columns: 1fr 1fr 1fr; }
@@ -1191,7 +1033,6 @@
     }
     .ur-hero-a,
     .ur-feat-row,
-    .ur-photo-gallery,
     .ur-cta {
         max-width: 100%;
     }
@@ -1203,30 +1044,6 @@
 
     /* Phones + small tablets (non-hero page sections) */
     @media (max-width: 767px) {
-        /* Gallery */
-        .ur-photo-gallery {
-            padding: 40px 0 12px;
-        }
-        .ur-photo-gallery__fluid.container-fluid {
-            padding-left: 6px;
-            padding-right: 6px;
-        }
-        .ur-photo-gallery .gall-inn > [class*="col-"] {
-            padding-left: 4px;
-            padding-right: 4px;
-        }
-        .ur-photo-gallery .gal-im {
-            margin-bottom: 8px;
-        }
-        .ur-photo-gallery .gal-im .txt {
-            padding: 14px 12px 16px;
-        }
-        .ur-photo-gallery .gal-im .txt h4 {
-            font-size: 15px;
-        }
-        .ur-photo-gallery .gal-im .txt span {
-            font-size: 11px;
-        }
         .ur-cta {
             min-height: 0;
             background-attachment: scroll;
@@ -1301,120 +1118,45 @@
             </div>
         </div>
 
-        <div class="ur-hero-a__search-wrap">
-            <div class="ur-hero-a__search-card s-search">
-                <form name="search_form" id="search_form" data-toggle="validator" role="form" action="{{route('searchresults')}}" method="POST">
-                    @csrf
-                    <div class="ur-hero-a__search-grid">
-                        <div class="form-group has-feedback" data-field="gender">
-                            <label for="gender">Looking for</label>
-                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-user"></i></span>
-                            <select name="gender" id="gender" class="form-control form-control-sm selectpicker" required="required">
-                                <option value="">Select one...</option>
-                                <option value="female">Female</option>
-                                <option value="male">Male</option>
-                            </select>
-                        </div>
-                        <div class="form-group has-feedback" data-field="aged_from">
-                            <label for="aged_from">Age From</label>
-                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-calendar"></i></span>
-                            <select name="aged_from" id="aged_from" class="form-control form-control-sm selectpicker">
-                                <option value="">From</option>
-                                @for ($i=18; $i<=75; $i++)
-                                <option>{{$i<10?"0".$i:$i}}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div class="form-group has-feedback" data-field="aged_to">
-                            <label for="aged_to">Age To</label>
-                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-calendar"></i></span>
-                            <select name="aged_to" id="aged_to" class="form-control form-control-sm selectpicker">
-                                <option value="">To</option>
-                                @for ($i=18; $i<=75; $i++)
-                                <option>{{$i<10?"0".$i:$i}}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div class="form-group has-feedback" data-field="marital_status">
-                            <label for="marital_status">Marital Status</label>
-                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-heart"></i></span>
-                            <select name="marital_status" id="marital_status" class="form-control form-control-sm selectpicker">
-                                <option value="">Select one...</option>
-                                @foreach($maritalstatuses as $maritalstatus)
-                                <option value="{{$maritalstatus->dataid}}">{{$maritalstatus->name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group has-feedback" data-field="country">
-                            <label for="country">Country</label>
-                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-globe"></i></span>
-                            <select name="country" id="country" class="form-control form-control-sm selectpicker">
-                                <option value="">Select one...</option>
-                                @foreach($countries as $country)
-                                <option value="{{$country->dataid}}">{{$country->name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="form-group has-feedback" data-field="language">
-                            <label for="mother_tongue">Language</label>
-                            <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-comments"></i></span>
-                            <select name="mother_tongue" id="mother_tongue" class="form-control form-control-sm selectpicker">
-                                <option value="">Select one...</option>
-                                @foreach($mothertongues as $mothertongue)
-                                <option value="{{$mothertongue->dataid}}">{{$mothertongue->name}}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="ur-hero-a__search-actions">
-                            <button id="search_button" type="submit" class="btn btn-styled btn-sm btn-base-1 btn-search"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
     </div>
 </section>
 
 
 <div class="ur-page">
-    <!-- WELCOME / PROMISE -->
-    <section class="ur-sec ur-sec--cream">
+    <!-- TRUST STRIP (Website Upgrade Brief §3, position 2 — moved up from
+         further down the page so it lands right after the hero, per the
+         brief's recommended section order) -->
+    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
         <div class="ur-wrap">
-            <div class="ur-promise2__top">
-                <div class="ab-wel-lhs">
-                    <img src="images/about/elegant-couple.jpg" alt="" loading="lazy" class="ab-wel-1">
-                    <img src="images/couples/wedding-attire-couple.jpg" alt="" loading="lazy" class="ab-wel-2">
-                    <div class="ur-years"><b>16+</b><span>YEARS OF SERVICE</span></div>
+            <div class="ur-enquiry-bar">
+                <div class="ur-enquiry-bar__contact">
+                    <div class="ur-enquiry-bar__item">
+                        <div class="ur-enquiry-bar__label">Enquiry</div>
+                        <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
+                    </div>
+                    <div class="ur-enquiry-bar__item">
+                        <div class="ur-enquiry-bar__label">Get Support</div>
+                        <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
+                    </div>
                 </div>
-                <div>
-                    <div class="ur-eyebrow">Private Matchmaking, Personally Managed</div>
-                    <h2 class="ur-h2" style="margin-bottom:16px;">More Than a Matrimonial Website</h2>
-                    <p class="ur-lead">
-                        Finding the right life partner requires more than browsing profiles. Urgent Rishta combines technology with
-experienced human matchmaking to create a private, structured and respectful experience</p>
+                <div class="ur-enquiry-bar__stats">
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="15000">15,000</span>+</div>
+                        <div class="ur-enquiry-bar__sub">Verified Profiles</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">5,000</span>+</div>
+                        <div class="ur-enquiry-bar__sub">Successful Matches</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="16">16</span>+ Years</div>
+                        <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num">Worldwide</div>
+                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Global Community</div>
+                    </div>
                 </div>
-            </div>
-
-            <div class="ur-promise2__grid">
-                <div class="ur-promise2__card">
-                    <div class="ur-promise2__icon"><i class="fa fa-check-circle" aria-hidden="true"></i></div>
-                    <h3 class="ur-promise2__card-title">Verified &amp; Genuine</h3>
-                    <p class="ur-promise2__card-text">Profiles and key information are reviewed before approval.</p>
-                </div>
-                <div class="ur-promise2__card">
-                    <div class="ur-promise2__icon"><i class="fa fa-lock" aria-hidden="true"></i></div>
-                    <h3 class="ur-promise2__card-title">Private &amp; Confidential</h3>
-                    <p class="ur-promise2__card-text">Your personal information and photographs are handled with discretion.</p>
-                </div>
-                <div class="ur-promise2__card">
-                    <div class="ur-promise2__icon"><i class="fa fa-users" aria-hidden="true"></i></div>
-                    <h3 class="ur-promise2__card-title">Human Matchmaking Support</h3>
-                    <p class="ur-promise2__card-text">Our team personally assists you from profile creation to family introductions.</p>
-                </div>
-            </div>
-
-            <div class="ur-promise2__cta">
-                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--solid">Speak to a Matchmaker</a>
             </div>
         </div>
     </section>
@@ -1455,38 +1197,134 @@ experienced human matchmaking to create a private, structured and respectful exp
         </div>
     </section>
 
-    <!-- ENQUIRY + COUNTS -->
-    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
+    <!-- ONLINE MATCHMAKING SEARCH (Website Upgrade Brief §2/§3: no large
+         search form directly under the hero — "the first impression becomes
+         a database search website instead of a private matchmaking
+         service." Moved here, under Online Matchmaking, instead. -->
+    <section class="ur-sec ur-sec--soft" id="online-search">
         <div class="ur-wrap">
-            <div class="ur-enquiry-bar">
-                <div class="ur-enquiry-bar__contact">
-                    <div class="ur-enquiry-bar__item">
-                        <div class="ur-enquiry-bar__label">Enquiry</div>
-                        <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
-                    </div>
-                    <div class="ur-enquiry-bar__item">
-                        <div class="ur-enquiry-bar__label">Get Support</div>
-                        <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
-                    </div>
+            <div class="ur-center">
+                <div class="ur-eyebrow">Online Matchmaking</div>
+                <h2 class="ur-h2">Search Profiles Yourself</h2>
+                <p class="ur-lead">Filter by age, location, education and more — browse verified profiles at your own pace.</p>
+            </div>
+            <div class="ur-hero-a__search-wrap" style="margin-top:8px;">
+                <div class="ur-hero-a__search-card s-search">
+                    <form name="search_form" id="search_form" data-toggle="validator" role="form" action="{{route('searchresults')}}" method="POST">
+                        @csrf
+                        <div class="ur-hero-a__search-grid">
+                            <div class="form-group has-feedback" data-field="gender">
+                                <label for="gender">Looking for</label>
+                                <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-user"></i></span>
+                                <select name="gender" id="gender" class="form-control form-control-sm selectpicker" required="required">
+                                    <option value="">Select one...</option>
+                                    <option value="female">Female</option>
+                                    <option value="male">Male</option>
+                                </select>
+                            </div>
+                            <div class="form-group has-feedback" data-field="aged_from">
+                                <label for="aged_from">Age From</label>
+                                <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-calendar"></i></span>
+                                <select name="aged_from" id="aged_from" class="form-control form-control-sm selectpicker">
+                                    <option value="">From</option>
+                                    @for ($i=18; $i<=75; $i++)
+                                    <option>{{$i<10?"0".$i:$i}}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="form-group has-feedback" data-field="aged_to">
+                                <label for="aged_to">Age To</label>
+                                <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-calendar"></i></span>
+                                <select name="aged_to" id="aged_to" class="form-control form-control-sm selectpicker">
+                                    <option value="">To</option>
+                                    @for ($i=18; $i<=75; $i++)
+                                    <option>{{$i<10?"0".$i:$i}}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <div class="form-group has-feedback" data-field="marital_status">
+                                <label for="marital_status">Marital Status</label>
+                                <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-heart"></i></span>
+                                <select name="marital_status" id="marital_status" class="form-control form-control-sm selectpicker">
+                                    <option value="">Select one...</option>
+                                    @foreach($maritalstatuses as $maritalstatus)
+                                    <option value="{{$maritalstatus->dataid}}">{{$maritalstatus->name}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group has-feedback" data-field="country">
+                                <label for="country">Country</label>
+                                <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-globe"></i></span>
+                                <select name="country" id="country" class="form-control form-control-sm selectpicker">
+                                    <option value="">Select one...</option>
+                                    @foreach($countries as $country)
+                                    <option value="{{$country->dataid}}">{{$country->name}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group has-feedback" data-field="language">
+                                <label for="mother_tongue">Language</label>
+                                <span class="ur-field-ico" aria-hidden="true"><i class="fa fa-comments"></i></span>
+                                <select name="mother_tongue" id="mother_tongue" class="form-control form-control-sm selectpicker">
+                                    <option value="">Select one...</option>
+                                    @foreach($mothertongues as $mothertongue)
+                                    <option value="{{$mothertongue->dataid}}">{{$mothertongue->name}}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="ur-hero-a__search-actions">
+                                <button id="search_button" type="submit" class="btn btn-styled btn-sm btn-base-1 btn-search"><i class="fa fa-search" aria-hidden="true"></i> Search</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-                <div class="ur-enquiry-bar__stats">
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="15000">0</span>+</div>
-                        <div class="ur-enquiry-bar__sub">Verified Profiles</div>
-                    </div>
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">0</span>+</div>
-                        <div class="ur-enquiry-bar__sub">Successful Matches</div>
-                    </div>
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="16">0</span>+ Years</div>
-                        <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
-                    </div>
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num">Worldwide</div>
-                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Global Community</div>
-                    </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WELCOME / PROMISE -->
+    <section class="ur-sec ur-sec--cream">
+        <div class="ur-wrap">
+            <div class="ur-promise2__top">
+                <div class="ab-wel-lhs">
+                    <img src="images/about/elegant-couple.jpg" alt="" loading="lazy" class="ab-wel-1">
+                    <img src="images/couples/wedding-attire-couple.jpg" alt="" loading="lazy" class="ab-wel-2">
+                    <div class="ur-years"><b>16+</b><span>YEARS OF SERVICE</span></div>
                 </div>
+                <div>
+                    <div class="ur-eyebrow">Private Matchmaking, Personally Managed</div>
+                    <h2 class="ur-h2" style="margin-bottom:16px;">Why Urgent Rishta</h2>
+                    <p class="ur-lead">
+                        Finding the right life partner requires more than browsing profiles. Urgent Rishta combines technology with
+experienced human matchmaking to create a private, structured and respectful experience</p>
+                </div>
+            </div>
+
+            <div class="ur-promise2__grid">
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-check-circle" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Verified &amp; Genuine</h3>
+                    <p class="ur-promise2__card-text">Profiles and key information are reviewed before approval.</p>
+                </div>
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-lock" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Private &amp; Confidential</h3>
+                    <p class="ur-promise2__card-text">Your personal information and photographs are handled with discretion.</p>
+                </div>
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-users" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Dedicated Matchmakers</h3>
+                    <p class="ur-promise2__card-text">Our team personally assists you from profile creation to family introductions.</p>
+                </div>
+                <div class="ur-promise2__card">
+                    <div class="ur-promise2__icon"><i class="fa fa-globe" aria-hidden="true"></i></div>
+                    <h3 class="ur-promise2__card-title">Global Network</h3>
+                    <p class="ur-promise2__card-text">Trusted by families across Pakistan, the UK, USA, Canada, Australia, Europe &amp; the Gulf.</p>
+                </div>
+            </div>
+
+            <div class="ur-promise2__cta">
+                <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--solid">Speak to a Matchmaker</a>
             </div>
         </div>
     </section>
@@ -1627,37 +1465,6 @@ discretion and individually managed search.</p>
         </div>
     </section>
 
-    <!-- INTERNATIONAL MATCHMAKING -->
-    <section class="ur-sec ur-sec--soft">
-        <div class="ur-wrap">
-            <div class="ur-center" style="max-width:640px;">
-                <div class="ur-eyebrow">GLOBAL REACH • PERSONAL SERVICE</div>
-                <h2 class="ur-h2">Matchmaking Beyond Borders</h2>
-                <p class="ur-lead" style="margin-top:14px;">Whether you are living in Pakistan or overseas, our team helps connect serious individuals and families across</p>
-                {{-- <p class="ur-intl__note">Whether you are looking locally or overseas, our team helps identify suitable introductions while maintaining privacy and family values.</p> --}}
-            </div>
-
-            <div class="ur-intl__regions">
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇵🇰</span><span class="ur-intl__name">Pakistan</span></div>
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇬🇧</span><span class="ur-intl__name">United Kingdom</span></div>
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇺🇸</span><span class="ur-intl__name">United States</span></div>
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇨🇦</span><span class="ur-intl__name">Canada</span></div>
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇦🇺</span><span class="ur-intl__name">Australia</span></div>
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇦🇪</span><span class="ur-intl__name">UAE &amp; Gulf</span></div>
-                <div class="ur-intl__region"><span class="ur-intl__flag" aria-hidden="true">🇪🇺</span><span class="ur-intl__name">Europe</span></div>
-            </div>
-
-            <div class="ur-center" style="max-width:640px;">
-            <p class="ur-lead" style="margin-top:14px;">Our overseas matchmaking service is particularly suited to professionals, business families and individuals seeking compatible Pakistani matches internationally.</p>
-            </div>
-
-
-            <div class="ur-intl__cta">
-                <a href="/register" class="ur-btn ur-btn--solid">Explore Overseas Matchmaking</a>
-            </div>
-        </div>
-    </section>
-
     <!-- SUCCESS STORIES -->
     <section class="ur-sec ur-sec--cream">
         <div class="ur-wrap ur-wrap--full">
@@ -1688,14 +1495,6 @@ step.</p>
                         <img src="images/couples/second-marriage-couple.jpg" alt="" loading="lazy">
                         <div class="ur-story__overlay"></div>
                         <div class="ur-story__meta"><h4 style="font-size:18px;">Abdullah &amp; Sarah</h4><span>Saudi Arabia</span></div>
-                    </div>
-                </div>
-                <div class="ur-story ur-story--lg">
-                    <img src="images/couples/us-couple.jpg" alt="" loading="lazy">
-                    <div class="ur-story__overlay"></div>
-                    <div class="ur-story__meta">
-                        <h4>Adam &amp; Sophia</h4>
-                        <span>Successfully Matched · United States</span>
                     </div>
                 </div>
             </div>
@@ -1847,62 +1646,12 @@ team, with senior-level involvement where applicable.</p>
     </section>
 </div>{{-- /ur-page — gallery + CTA sit full width --}}
 
-    @include('partials.partners-section')
-
-    <!-- PHOTO GALLERY — masonry -->
-    <section class="ur-photo-gallery">
-        <div class="container-fluid ur-photo-gallery__fluid">
-            <div class="ur-center ur-photo-gallery__head">
-                <div class="ur-eyebrow">Behind The Scenes</div>
-                <h2 class="ur-h2">Inside Urgent Rishta</h2>
-            </div>
-            <div class="row no-gutters gall-inn">
-                <div class="col-6 col-md-2">
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/1.jpg" class="gal-siz-1" alt="Urgent Rishta team at an industry matchmaking seminar" loading="lazy">
-                    </div>
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/2.jpg" class="gal-siz-2" alt="Urgent Rishta founder in conversation at an industry event" loading="lazy">
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/3.jpg" class="gal-siz-2" alt="Urgent Rishta representatives at a professional marriage consultants seminar" loading="lazy">
-                    </div>
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/4.jpg" class="gal-siz-1" alt="Certificate presentation at an industry seminar" loading="lazy">
-                    </div>
-                </div>
-                <div class="col-6 col-md-2">
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/5.jpg" class="gal-siz-1" alt="Certificate presentation at an industry seminar" loading="lazy">
-                    </div>
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/6.jpg" class="gal-siz-2" alt="Certificate presentation at an industry seminar" loading="lazy">
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/7.jpg" class="gal-siz-2" alt="Urgent Rishta Services recognised at an industry seminar" loading="lazy">
-                        <div class="txt">
-                            <span class="gal-label">Recognised for Urgent Rishta Services</span>
-                        </div>
-                    </div>
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/8.jpg" class="gal-siz-1" alt="Urgent Rishta representatives with fellow delegates at an industry seminar" loading="lazy">
-                    </div>
-                </div>
-                <div class="col-12 col-md-2">
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/9.jpg" class="gal-siz-2" alt="Urgent Rishta founder speaking with the media" loading="lazy">
-                    </div>
-                    <div class="gal-im animate" data-ani="urGalReveal">
-                        <img src="images/gallery/10.jpg" class="gal-siz-1" alt="Urgent Rishta team and guests at an industry gathering" loading="lazy">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    {{-- Website Upgrade Brief §2/§3 "Remove or relocate from homepage": partner
+         logos and the event/gallery photography both cut from here per the
+         brief's explicit callout ("excessive event/gallery photography ...
+         low-priority partner content. Keep these on dedicated pages if still
+         useful."). partials/partners-section.blade.php is left on disk, just
+         no longer included here; images/gallery/*.jpg likewise untouched. --}}
 
     <!-- CTA -->
     <section class="ur-cta">

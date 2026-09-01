@@ -18,6 +18,74 @@
     display: none !important;
 }
 
+/* "Premium Plans" dropdown — Online Plan / Personalized Plan */
+#myHeader .ur-plans-dropdown .dropdown-toggle:after {
+    display: inline-block;
+    margin-left: 6px;
+    vertical-align: 2px;
+    border-top: 5px solid;
+    border-right: 5px solid transparent;
+    border-left: 5px solid transparent;
+    opacity: .75;
+    transition: transform .2s ease;
+}
+#myHeader .ur-plans-dropdown:hover .dropdown-toggle:after,
+#myHeader .ur-plans-dropdown.show .dropdown-toggle:after {
+    transform: rotate(180deg);
+}
+#myHeader .ur-plans-dropdown .dropdown-menu {
+    margin-top: 14px;
+    padding: 10px;
+    min-width: 220px;
+    background: #fff;
+    border: 1px solid rgba(201,151,77,.25);
+    border-radius: 12px;
+    box-shadow: 0 20px 44px rgba(15,46,36,.22);
+}
+#myHeader .ur-plans-dropdown .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-family: 'Montserrat', 'DM Sans', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--ur-nav-bg-2);
+    text-decoration: none !important;
+    transition: background .18s ease, color .18s ease, transform .18s ease;
+}
+#myHeader .ur-plans-dropdown .dropdown-item + .dropdown-item {
+    margin-top: 4px;
+}
+#myHeader .ur-plans-dropdown .dropdown-item i {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #EFE7D6;
+    color: var(--ur-nav-bg-2);
+    font-size: 13px;
+    transition: background .18s ease, color .18s ease;
+}
+#myHeader .ur-plans-dropdown .dropdown-item:hover,
+#myHeader .ur-plans-dropdown .dropdown-item:focus {
+    background: var(--ur-nav-bg-2);
+    color: #ffffff !important;
+    transform: translateX(3px);
+}
+#myHeader .ur-plans-dropdown .dropdown-item:hover span,
+#myHeader .ur-plans-dropdown .dropdown-item:focus span {
+    color: #ffffff !important;
+}
+#myHeader .ur-plans-dropdown .dropdown-item:hover i {
+    background: var(--ur-nav-cream);
+    color: var(--ur-nav-bg-2);
+}
+
 #myHeader .appointment-btn {
     align-items: center;
     text-decoration: none !important;

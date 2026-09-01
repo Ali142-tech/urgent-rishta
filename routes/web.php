@@ -137,6 +137,12 @@ Route::get('payment/stripe/cancel/{reference}', [App\Http\Controllers\PaymentCon
     ->name('stripe.cancel');
 Route::get('stories', [App\Http\Controllers\HomeController::class, 'storiesView']);
 Route::get('team', [App\Http\Controllers\HomeController::class, 'teamView']);
+// Named "photo-gallery" (not "gallery") — public/gallery/ already exists as a
+// static assets folder, which would collide with a route of that exact name
+// both locally (php artisan serve's built-in router) and in production
+// (public/.htaccess explicitly skips rewriting to index.php for any request
+// path that resolves to a real file or directory).
+Route::get('photo-gallery', [App\Http\Controllers\HomeController::class, 'galleryView']);
 Route::get('faqs', [App\Http\Controllers\HomeController::class, 'faqsView']);
 Route::get('tandc', [App\Http\Controllers\HomeController::class, 'termsAndConditionsView']);
 Route::get('privacy', [App\Http\Controllers\HomeController::class, 'privacyPolicyView']);
