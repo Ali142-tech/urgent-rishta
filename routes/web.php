@@ -94,6 +94,10 @@ Route::post('eiu', [App\Http\Controllers\Auth\RegisterController::class, 'emailI
 
 // profile routes
 Route::get('member/profile',[App\Http\Controllers\ProfileController::class, 'profile']);
+// Must be registered before member/profile/{id?} below — that catch-all matches
+// any single path segment (dataids never contain '/'), so a static route sharing
+// its depth has to come first or it never gets a chance to match.
+Route::get('member/profile/pictures', [App\Http\Controllers\ProfileController::class, 'picturesPage'])->name('member.pictures');
 Route::get('member/profile/{id?}',[App\Http\Controllers\ProfileController::class, 'profile']);
 Route::get('member/profile/notifications/refresh', [App\Http\Controllers\ProfileController::class, 'notifications']);
 Route::post('member/profile/account/terminate', [App\Http\Controllers\ProfileController::class, 'accountTerminate']);
@@ -104,7 +108,6 @@ Route::get('member/photos/required', [App\Http\Controllers\ProfileController::cl
 Route::get('member/photos/required/status', [App\Http\Controllers\ProfileController::class, 'photosRequiredStatus'])->name('member.photos.required.status');
 Route::post('member/photos/selfie', [App\Http\Controllers\ProfileController::class, 'uploadSelfie'])->name('member.photos.selfie');
 // profile images
-Route::get('member/profile/images/modal',[App\Http\Controllers\ProfileController::class, 'renderImagesModal']);
 Route::post('member/profile/images/update/{action}/{id}',[App\Http\Controllers\ProfileController::class, 'updateImage']);
 // profile update
 Route::post('member/profile/update/{section}',[App\Http\Controllers\ProfileController::class, 'updateProfile']);

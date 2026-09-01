@@ -1,227 +1,47 @@
-@extends('layouts.master')
+@extends('layouts.dashboard')
+@section('dashboard-title', 'My Profile')
+@push('styles')
+<link rel="stylesheet" href="/css/ur-profile.css?1">
+@endpush
 @section('main-content')
-<style type="text/css">
-    @media (max-width: 991px) {
-        .hidden_xs {
-            display: none !important;
-        }
-    }
-
-    @media (min-width: 992px) {
-        .visible_xs {
-            display: none !important;
-        }
-    }
-</style>
-<div class="hidden_xs">
-    <nav class="navbar navbar-expand-lg  navbar--style-1 navbar-light bg-default navbar--shadow navbar--uppercase profile-nav">
-        <div class="container navbar-container">
-            <!-- Brand/Logo -->
-
-            <div class="d-inline-block">
-                <!-- Navbar toggler  -->
-                <button class="navbar-toggler hamburger hamburger-js hamburger--spring" type="button" data-toggle="collapse" data-target="#navbar_main" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="hamburger-box">
-                        <span class="hamburger-inner"></span>
-                    </span>
-                </button>
-            </div>
-            <div class="collapse navbar-collapse justify-content-between align-items-center" id="navbar_main">
-                <ul class="navbar-nav " data-hover="dropdown" data-animations="zoomIn zoomIn zoomIn zoomIn">
-                <li class="nav-item">
-                        <a href="{{ url('/member/profile') }}" class="nav-link p_nav active">
-                            <i class="fa fa-user"></i>
-                            Profile
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link interests p_nav" href="{{ url('/member/profile/listing/interests') }}">
-                            <i class="fa fa-heart"></i>
-                            Interests
-                        </a>
-                    </li>
-                    <!-- <li class="nav-item">
-                        <a class="nav-link messaging p_nav" onclick="profile_load('messaging')">
-                            <i class="fa fa-comments-o"></i>
-                            Messaging
-                        </a>
-                    </li> -->
-                </ul>
-            </div>
-        </div>
-    </nav>
-</div>
-<!-- <script>
-    function profile_load(page, sp) {
-        // alert('here');
-        if (typeof message_interval !== 'undefined') {
-            clearInterval(message_interval);
-        }
-        if (page !== '') {
-            $.ajax({
-                url: "/home/profile/" + page,
-                success: function(response) {
-                    $("#profile_load").html(response);
-                    if (page == 'messaging') {
-                        $('body').find('#thread_' + sp).click();
-                    }
-                    // window.scrollTo(0, 0);
-                    if ($(window).width() < 992 && sp == 'alt-sm') {
-                        $("html, body").animate({
-                            scrollTop: $('.sidebar.sidebar-inverse').offset().top + $('.sidebar.sidebar-inverse').outerHeight(true) - 100
-                        }, 500);
-                    } else if (sp != 'no') {
-                        $(".btn-back-to-top").click();
-                    }
-                }
-            });
-            $('.p_nav').removeClass("active");
-            $('.l_nav').removeClass("li_active");
-            $('.m_nav').removeClass("m_nav_active");
-
-            if (page != 'gallery' || page != 'happy_story' || page != 'my_packages' || page != 'payments' || page == 'change_pass' || page == 'picture_privacy') {
-                $('.' + page).addClass("active");
-                $('.m_' + page).addClass("m_nav_active");
-            }
-            if (page == 'gallery' || page == 'happy_story' || page == 'my_packages' || page == 'payments' || page == 'change_pass' || page == 'picture_privacy') {
-                $('.' + page).addClass("li_active");
-            }
-
-        }
-    }
-</script> -->
-<section class="slice sct-color-2">
+<section class="slice sct-color-2 ur-profile-page">
     <div class="profile">
         <div class="container">
             <div class="row cols-md-space cols-sm-space cols-xs-space">
                 <div class="col-lg-4">
-                    <div class="sidebar sidebar-inverse sidebar--style-1 bg-base-1 z-depth-2-top">
-                        <div class="sidebar-object mb-0">
-                            <!-- Profile picture -->
-                            <div class="profile-picture profile-picture--style-2">
-                                <div style="border: 10px solid rgba(255, 255, 255, 0.1);width: 200px;border-radius: 50%;margin-top: 30px;">
-                                    <div class="profile_img" id="show_img" style="background-image: url('{{ $profile->getProfileImage() }}')"></div>
-                                </div>
-                                <!-- <div class="profile-connect mt-1 mb-0" id="save_button_section" style="display: none">
-                                    <button type="button" class="btn btn-styled btn-xs btn-base-2" id="save_image">Save Image</button>
-                                </div> -->
-                                <label id="btn_image_edit" class="btn-aux" for="images" style="cursor: pointer;"><i class="fa fa-edit"></i></label>
-                                <form id="images_form" enctype="multipart/form-data">
-                                    @csrf
-                                    <input type="file" accept="image/png,image/x-png,image/gif,image/jpeg" style="display: none;" id="images" name="images[]" multiple onchange="javascript:uploadImages($('#btn_image_edit'));" />
-                                </form>
-                            </div>
-                            <!-- Profile details -->
-                            <div class="profile-details">
-                                <h2 class="heading heading-3 strong-500 profile-name">{{$profile->first_name}} {{$profile->last_name}}</h2>
-                                <h3 class="heading heading-6 strong-400 profile-occupation mt-3">{{ $profile->profession }}</h3><br/>
-                                <div class="profile-stats clearfix mt-2">
-                                    <div class="stats-entry" style="width: 100%">
-                                        <span class="stats-count">0</span>
-                                        <span class="stats-label text-uppercase">Followers</span>
-                                    </div>
-                                </div>
-                                <!-- Profile connect -->
-                                <div class="profile-connect mt-5">
-                                    <!-- <a href="#" class="btn btn-styled btn-block btn-circle btn-sm btn-base-5">Follow</a>
-                                                                                <a href="#" class="btn btn-styled btn-block btn-circle btn-sm btn-base-2">Send message</a> -->
-                                    <h2 class="heading heading-5 strong-400">Package Information</h2>
-                                </div>
-                                <div class="profile-stats clearfix mt-0">
-                                    <div class="stats-entry">
-                                        <span class="stats-count">{{$profile->lbl_package}}</span>
-                                        <span class="stats-label text-uppercase">Current Package</span>
-                                    </div>
-                                    <!-- <div class="stats-entry">
-                                        <span class="stats-count">$0.00</span>
-                                        <span class="stats-label text-uppercase">Package Price</span>
-                                    </div>
-                                </div>
-                                <div class="profile-stats clearfix mt-2">
-                                    <div class="stats-entry">
-                                        <span class="stats-count">None</span>
-                                        <span class="stats-label text-uppercase">Payment Gateway</span>
-                                    </div>
-                                    <div class="stats-entry">
-                                        <span class="stats-count">4</span>
-                                        <span class="stats-label text-uppercase">Remaining Interest</span>
-                                    </div>
-                                </div>
-                                <div class="profile-stats clearfix mt-2">
-                                    <div class="stats-entry">
-                                        <span class="stats-count">6</span>
-                                        <span class="stats-label text-uppercase">Remaining Message</span>
-                                    </div> -->
-                                    <div class="stats-entry" id="images_stats">
-                                        <span class="stats-count">{{ $profile->getImageCount() }}</span>
-                                        <span class="stats-label text-uppercase">Photo in Gallery</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Profile stats -->
-                            <div class="profile-useful-links clearfix">
-                                <div class="useful-links">
-                                    <a class="btn btn-styled btn-sm btn-white z-depth-2-bottom mb-3 interests l_nav" href="{{ url('/member/profile/listing/interests') }}">
-                                        <b style="font-size: 12px"><i class="fa fa-heart"></i> Interests</b>
-                                    </a>
-                                    <a class="btn btn-styled btn-sm btn-white z-depth-2-bottom mb-3 gallery l_nav" id="gallery">
-                                        <b style="font-size: 12px"><i class="fa fa-camera"></i> Gallery</b>
-                                    </a>
-                                    <a class="btn btn-styled btn-sm btn-white z-depth-2-bottom mb-3 picture_privacy l_nav" onclick="javascript:renderImagesModal();">
-                                        <b style="font-size: 12px"><i class="fa fa-photo"></i> Manage Pictures</b>
-                                    </a>
-                                    <a class="btn btn-styled btn-sm btn-white z-depth-2-bottom mb-3 change_pass l_nav" href="{{ url('member/profile/password/update') }}">
-                                        <b style="font-size: 12px"><i class="fa fa-key"></i> Change Password</b>
-                                    </a>
-                                    <a class="btn btn-styled btn-sm btn-white z-depth-2-bottom mb-3 change_pass l_nav" onclick="javascript:deleteAccount($(this));">
-                                        <b style="font-size: 12px"><i class="fa fa-close"></i> Close Account</b>
-                                    </a>
-                                </div>
+                    <div class="ur-profile-hero">
+                        <div class="ur-profile-hero__avatar-wrap">
+                            <div class="profile_img ur-profile-hero__avatar" id="show_img" style="background-image: url('{{ $profile->getProfileImage() }}')"></div>
+                            <label id="btn_image_edit" class="ur-profile-hero__avatar-edit" for="images"><i class="fa fa-edit"></i></label>
+                            <form id="images_form" enctype="multipart/form-data">
+                                @csrf
+                                <input type="file" accept="image/png,image/x-png,image/gif,image/jpeg" style="display: none;" id="images" name="images[]" multiple onchange="javascript:uploadImages($('#btn_image_edit'));" />
+                            </form>
+                        </div>
+
+                        <h2 class="ur-profile-hero__name">{{$profile->first_name}} {{$profile->last_name}}</h2>
+                        <h3 class="ur-profile-hero__occupation">{{ $profile->profession }}</h3>
+
+                        <div class="ur-profile-hero__stats ur-profile-hero__stats--single">
+                            <div class="ur-profile-hero__stat">
+                                <span class="ur-profile-hero__stat-count">0</span>
+                                <span class="ur-profile-hero__stat-label">Followers</span>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="visible_xs align-items-center">
-                    <div class="container mb-4 text-center">
-                        <ul class="inline-links inline-links--style-3">
-                            <li>
-                                <a href="/home/profile" class="c-base-1 xs_nav_item m_profile m_nav m_nav_active">
-                                    <i class="fa fa-user"></i>
-                                    Profile
-                                </a>
-                            </li>
-                            <li>
-                                <a class="c-base-1 xs_nav_item m_my_interests m_nav" href="{{ url('/member/profile/listing/interests') }}">
-                                    <i class="fa fa-heart"></i>
-                                    My Interests
-                                </a>
-                            </li>
-                            <li>
-                                <a class="c-base-1 xs_nav_item m_short_list m_nav" href="{{ url('/member/profile/listing/shortlist') }}">
-                                    <i class="fa fa-list-ul"></i>
-                                    Shortlist
-                                </a>
-                            </li>
-                            <li>
-                                <a class="c-base-1 xs_nav_item m_followed_users m_nav" href="{{ url('/member/profile/listing/follow') }}">
-                                    <i class="fa fa-star"></i>
-                                    Followed Users
-                                </a>
-                            </li>
-                            <!-- <li>
-                                <a class="c-base-1 xs_nav_item m_messaging m_nav" onclick="profile_load('messaging', 'no')">
-                                    <i class="fa fa-comments-o"></i>
-                                    Messaging
-                                </a>
-                            </li> -->
-                            <li>
-                                <a class="c-base-1 xs_nav_item m_ignored_list m_nav" href="{{ url('/member/profile/listing/ignore') }}">
-                                    <i class="fa fa-ban"></i>
-                                    Ignored List
-                                </a>
-                            </li>
-                        </ul>
+                        <div class="ur-profile-hero__divider"></div>
+                        <div class="ur-profile-hero__section-label">Package Information</div>
+
+                        <div class="ur-profile-hero__stats">
+                            <div class="ur-profile-hero__stat">
+                                <span class="ur-profile-hero__stat-count">{{$profile->lbl_package}}</span>
+                                <span class="ur-profile-hero__stat-label">Current Package</span>
+                            </div>
+                            <div class="ur-profile-hero__stat" id="images_stats">
+                                <span class="ur-profile-hero__stat-count">{{ $profile->getImageCount() }}</span>
+                                <span class="ur-profile-hero__stat-label">Photo in Gallery</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -2323,10 +2143,6 @@
             showLightGallery($(this));
         });
 
-        $("#gallery").on('click', function() {
-            showLightGallery($(this));
-        });
-
         // preload city select
         @if(!empty($profile->con_of_residence))
         loadSelect('{{url('states')}}', '{{$profile->con_of_residence}}', $('#state'), '{{$profile->state}}');
@@ -2339,20 +2155,7 @@
     //     window.location.href = "{{ url('member/profile') }}";
     // });
 
-    function renderImagesModal() {
-        $.ajax({
-            type: "get",
-            url: "{{ url('member/profile/images/modal')}}",
-            success: function(result) {
-                if (result.code == '200') {
-                    $("#modal_dialog").html(result.html);
-                    $("#active_modal").modal("toggle");
-                }
-            }
-        });
-    }
-
-    function uploadImages(elem) { alert(elem.html());
+    function uploadImages(elem) {
         var oldHtml = elem.html();
         elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
         elem.prop('disabled', true);
@@ -2376,69 +2179,6 @@
                 } else {
                     if (message) showAlert('danger', message);
                 }
-            }
-        });
-    }
-
-    function deleteImage(elem, dataid) {
-        swalConfirm("Delete Image?", "Are you sure you want to delete this image? You will not be able to revert this!", () => {
-            updateImage(elem, 'd', dataid);
-        });
-    }
-
-    function deleteAccount(elem) {
-        swalConfirm("Delete Account?", "Are you sure you want to delete your account? You will not be able to revert this!", () => {
-            // var oldHtml = elem.html();
-            // $.ajax({
-            //     type: "post",
-            //     url: "{{ url('member/profile/account/terminate')}}",
-            //     data: {
-            //         '_token': '{{ csrf_token() }}',
-            //     },
-            //     success: function(result) {
-            //         elem.html(oldHtml);
-            //         elem.prop('disabled', false);
-            //         var message = result.message.split("|");
-            //         if (result.code == '200') {
-            //             showAlert(message[0], message[1], 3000);
-            //             location.href="/login";
-            //         } else showAlert('danger', message, 5000);
-            //     }
-            // });
-        });
-    }
-
-    function updateImage(elem, action, dataid) {
-        var oldHtml = elem.html();
-        elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
-        elem.prop('disabled', true);
-        $.ajax({
-            type: "post",
-            url: "{{ url('member/profile/images/update')}}"+"/"+action+"/"+dataid,
-            data: {
-                '_token': '{{ csrf_token() }}',
-            },
-            success: function(result) {
-                elem.html(oldHtml);
-                elem.prop('disabled', false);
-                var message = result.message.split("|");
-                if (result.code == '200') {
-                    showAlert(message[0], message[1], 3000);
-                    if (action=="d") {
-                        $("#image_"+dataid).remove();
-                    } else if (action=="dp") {
-                        $(".displaypic").html("<i class='fa fa-user-times'></i>");
-                        $("#displaypic_"+dataid).html("<i class='fa fa-user'></i>");
-                        //clickHighlight(null, null, $("#displaypic_"+dataid),
-                        //    $("#displaypic_"+dataid).children("i").hasClass("fa-user")?"user-slash":"user", "");
-                        //$("#active_modal").hide();
-                        //renderImagesModal();
-                    }
-                    if (result.html) {
-                        $("#top_nav_img").css("background-image", "url('" + result.nav_img + "')");;
-                        $('#main-content').html(result.html)
-                    };
-                } else showAlert('danger', message, 5000);
             }
         });
     }

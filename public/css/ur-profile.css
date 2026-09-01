@@ -1,0 +1,239 @@
+/* ============================================================
+   "My Profile" page (resources/views/member/user.blade.php).
+   Scoped entirely under .ur-profile-page so it can restyle the
+   legacy theme's generic Bootstrap classes (.card, .table, .btn-*)
+   without touching how those same classes render anywhere else
+   in the app (e.g. viewing another member's profile).
+   ============================================================ */
+
+.ur-profile-page {
+    padding: 6px 0 10px;
+    background: transparent;
+}
+.ur-profile-page .profile { padding: 24px 0 10px; }
+
+/* ---------------------------------------------------------- */
+/* Hero card (avatar, name, package)                            */
+/* ---------------------------------------------------------- */
+.ur-profile-hero {
+    background: linear-gradient(165deg, #16473A 0%, #0F2E24 100%);
+    border-radius: 18px;
+    padding: 34px 24px 28px;
+    text-align: center;
+    color: #fff;
+    box-shadow: 0 20px 45px rgba(15,46,36,.16);
+}
+
+.ur-profile-hero__avatar-wrap {
+    position: relative;
+    width: 148px;
+    height: 148px;
+    margin: 0 auto 18px;
+}
+.ur-profile-hero__avatar {
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: rgba(255,255,255,.08);
+    border: 4px solid #C9974D;
+    box-shadow: 0 10px 26px rgba(0,0,0,.25);
+    cursor: pointer;
+}
+.ur-profile-hero__avatar-edit {
+    position: absolute;
+    bottom: 0;
+    right: 2px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #C9974D;
+    color: #123A2E;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 13px;
+    border: 3px solid #123A2E;
+    transition: background .15s ease, color .15s ease;
+    margin: 0;
+}
+.ur-profile-hero__avatar-edit:hover { background: #fff; }
+
+.ur-profile-hero__name {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 21px;
+    margin: 0 0 2px;
+    color: #fff;
+}
+.ur-profile-hero__occupation {
+    font-weight: 400;
+    font-size: 13px;
+    color: rgba(255,255,255,.62);
+    margin: 0 0 22px;
+}
+
+.ur-profile-hero__stats { display: flex; }
+.ur-profile-hero__stats--single { justify-content: center; margin-bottom: 4px; }
+.ur-profile-hero__stat {
+    flex: 1 1 0;
+    padding: 4px 6px;
+    cursor: default;
+}
+.ur-profile-hero__stat-count {
+    display: block;
+    font-weight: 700;
+    font-size: 16px;
+    color: #C9974D;
+    word-break: break-word;
+}
+.ur-profile-hero__stat-label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: rgba(255,255,255,.55);
+    margin-top: 3px;
+}
+
+.ur-profile-hero__divider {
+    height: 1px;
+    background: rgba(255,255,255,.1);
+    margin: 18px 0 14px;
+}
+.ur-profile-hero__section-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,.45);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 991.98px) {
+    .ur-profile-hero { margin-bottom: 24px; }
+}
+
+/* ---------------------------------------------------------- */
+/* Right column info card                                        */
+/* ---------------------------------------------------------- */
+.ur-profile-page .card {
+    background: #fff;
+    border: none !important;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(15,46,36,.06);
+    overflow: hidden;
+}
+.ur-profile-page .card-title {
+    background: #fff;
+    padding: 20px 22px 14px;
+    border-bottom: 1px solid #EFEAE0;
+    display: flex;
+    align-items: center;
+}
+.ur-profile-page .card-title h3 {
+    float: none !important;
+    margin: 0;
+    font-size: 14.5px;
+    letter-spacing: .5px;
+    color: #123A2E;
+}
+.ur-profile-page .card-body { padding: 18px 20px 22px !important; }
+
+.ur-profile-page #section_introduction > .mb-2 {
+    font-size: 12.5px;
+    color: #6B7570;
+    margin-bottom: 16px !important;
+}
+.ur-profile-page #section_introduction .c-base-1 { color: #123A2E !important; font-weight: 700; }
+
+/* Each labelled section (Introduction, Basic Information, Education...) */
+.ur-profile-page .feature.feature--boxed-border {
+    background: #FBFAF7 !important;
+    border: 1px solid #EFEAE0 !important;
+    border-radius: 12px !important;
+    padding: 16px 18px 6px !important;
+    margin-bottom: 16px !important;
+}
+.ur-profile-page .card-inner-title-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.ur-profile-page .card-inner-title {
+    float: none !important;
+    margin: 0;
+    font-size: 11.5px;
+    letter-spacing: .8px;
+    font-weight: 700;
+    color: #123A2E;
+    padding-left: 10px;
+    border-left: 3px solid #C9974D;
+}
+.ur-profile-page .card-inner-title-wrapper .pull-right { float: none !important; display: flex; gap: 6px; }
+
+/* Edit / save / cancel action buttons */
+.ur-profile-page .btn-base-1,
+.ur-profile-page .btn-success,
+.ur-profile-page .btn-danger,
+.ur-profile-page .btn-dark {
+    width: 30px;
+    height: 30px;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none !important;
+    box-shadow: none !important;
+}
+.ur-profile-page .btn-base-1 { background: #123A2E !important; color: #fff !important; }
+.ur-profile-page .btn-base-1:hover { background: #0F2E24 !important; }
+.ur-profile-page .btn-success { background: #123A2E !important; color: #fff !important; }
+.ur-profile-page .btn-success:hover { background: #0F2E24 !important; }
+.ur-profile-page .btn-danger,
+.ur-profile-page .btn-dark { background: #B5674A !important; color: #fff !important; }
+.ur-profile-page .btn-danger:hover,
+.ur-profile-page .btn-dark:hover { background: #9c5640 !important; }
+
+/* Info tables (label + value rows) */
+.ur-profile-page .table.table-profile { margin-bottom: 0; }
+.ur-profile-page .table.table-profile td {
+    border: none !important;
+    background: transparent !important;
+    padding: 9px 10px !important;
+    font-size: 13px;
+    color: #1C2321;
+    vertical-align: middle;
+}
+.ur-profile-page .table.table-profile td.font-dark {
+    color: #6B7570 !important;
+    font-weight: 600 !important;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    width: 1%;
+    white-space: nowrap;
+}
+.ur-profile-page .table.table-profile tbody tr { border-bottom: 1px solid #EFEAE0; }
+.ur-profile-page .table.table-profile tbody tr:last-child { border-bottom: none; }
+
+/* Inline edit forms */
+.ur-profile-page .form-control {
+    border: 1px solid #E7E2D6 !important;
+    border-radius: 8px !important;
+    font-size: 13px;
+    box-shadow: none !important;
+}
+.ur-profile-page .form-control:focus { border-color: #C9974D !important; }
+.ur-profile-page .text-uppercase.c-gray-light {
+    color: #6B7570 !important;
+    font-size: 11px;
+    letter-spacing: .3px;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}

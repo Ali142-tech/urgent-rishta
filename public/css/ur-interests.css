@@ -1,0 +1,174 @@
+/* ============================================================
+   "My Interests" page (resources/views/member/interestdata.blade.php).
+   Scoped under .ur-interests-page so it doesn't affect other
+   listing pages (shortlist/follow/ignore) that reuse member.listing.
+   ============================================================ */
+
+.ur-interests-page { padding-top: 4px; }
+
+/* ---------------------------------------------------------- */
+/* Tab switcher                                                  */
+/* ---------------------------------------------------------- */
+.ur-interests-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid #EFEAE0;
+}
+.ur-interests-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #6B7570;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    margin-bottom: -1px;
+}
+.ur-interests-tab i { font-size: 14px; }
+.ur-interests-tab:hover { color: #123A2E; }
+.ur-interests-tab.is-active {
+    color: #123A2E;
+    border-bottom-color: #C9974D;
+}
+.ur-interests-tab__badge {
+    background: #EFEAE0;
+    color: #6B7570;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 8px;
+    border-radius: 20px;
+}
+.ur-interests-tab.is-active .ur-interests-tab__badge {
+    background: #C9974D;
+    color: #fff;
+}
+
+.ur-interests-panel { display: none; }
+.ur-interests-panel.is-active { display: block; }
+
+/* ---------------------------------------------------------- */
+/* Interest card (shared by both Received and Sent)              */
+/* ---------------------------------------------------------- */
+.ur-interest-card {
+    display: flex;
+    gap: 18px;
+    background: #fff;
+    border: 1px solid #EFEAE0;
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 6px 20px rgba(15,46,36,.05);
+    align-items: flex-start;
+}
+.ur-interest-card__avatar {
+    flex-shrink: 0;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: #F6F4EF;
+    border: 3px solid #F6F4EF;
+    cursor: pointer;
+}
+.ur-interest-card__body { flex: 1 1 auto; min-width: 0; }
+.ur-interest-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+.ur-interest-card__name {
+    font-family: 'Manrope', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: #123A2E;
+    margin: 0;
+}
+.ur-interest-card__name a { color: inherit; text-decoration: none; }
+.ur-interest-card__id { font-size: 12px; color: #6B7570; }
+.ur-interest-card__id a { color: #123A2E; font-weight: 600; }
+
+.ur-interest-card__status {
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 4px 11px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.ur-interest-card__status--pending { background: rgba(201,151,77,.15); color: #A9782F; }
+.ur-interest-card__status--accepted { background: rgba(18,58,46,.12); color: #123A2E; }
+.ur-interest-card__status--declined { background: rgba(181,103,74,.14); color: #B5674A; }
+/* acceptInterest()/declineInterest()/withdrawInterest() (global-scripts.blade.php) swap these
+   legacy class names on #status_X after an AJAX action — map them to the same three looks
+   so a live status change still renders correctly without needing JS changes. */
+.ur-interest-card__status.btn-base-1 { background: rgba(201,151,77,.15); color: #A9782F; }
+.ur-interest-card__status.btn-green { background: rgba(18,58,46,.12); color: #123A2E; }
+.ur-interest-card__status.btn-red { background: rgba(181,103,74,.14); color: #B5674A; }
+
+.ur-interest-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    margin: 8px 0 14px;
+}
+.ur-interest-card__tag {
+    font-size: 12px;
+    color: #4C554F;
+    background: #F6F4EF;
+    padding: 4px 10px;
+    border-radius: 8px;
+}
+.ur-interest-card__tag b { color: #123A2E; font-weight: 600; }
+
+.ur-interest-card__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ur-interest-card__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .15s ease;
+}
+.ur-interest-card__btn:hover { opacity: .85; text-decoration: none; }
+.ur-interest-card__btn--ghost {
+    background: #fff;
+    border-color: #E7E2D6;
+    color: #123A2E;
+}
+.ur-interest-card__btn--accept { background: #123A2E; color: #fff; }
+.ur-interest-card__btn--decline { background: #fff; border-color: #B5674A; color: #B5674A; }
+.ur-interest-card__btn--withdraw { background: #fff; border-color: #E7E2D6; color: #B5674A; }
+.ur-interest-card__btn--expressed { background: rgba(18,58,46,.08); color: #123A2E; cursor: default; }
+
+.ur-interests-empty {
+    background: #fff;
+    border: 1px dashed #E7E2D6;
+    border-radius: 14px;
+    padding: 40px 20px;
+    text-align: center;
+    color: #6B7570;
+    font-size: 13.5px;
+}
+.ur-interests-empty i { font-size: 28px; color: #C9974D; display: block; margin-bottom: 10px; }
+
+@media (max-width: 575.98px) {
+    .ur-interest-card { flex-direction: column; align-items: center; text-align: center; }
+    .ur-interest-card__head { justify-content: center; flex-direction: column; align-items: center; }
+    .ur-interest-card__tags { justify-content: center; }
+    .ur-interest-card__actions { justify-content: center; }
+}

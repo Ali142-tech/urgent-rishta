@@ -1,0 +1,102 @@
+/* ============================================================
+   "Manage Pictures" page (resources/views/member/pictures.blade.php).
+   ============================================================ */
+
+.ur-pictures-page__add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 320px;
+    padding: 14px;
+    margin-bottom: 24px;
+    border: 1.5px dashed #C9974D;
+    border-radius: 12px;
+    background: #FBF6EC;
+    color: #123A2E;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+}
+.ur-pictures-page__add:hover { background: #F5ECD8; }
+.ur-pictures-page__add i { color: #C9974D; }
+
+.ur-pictures-page__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 18px;
+}
+.ur-pictures-page__card {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    background: #F6F4EF;
+    box-shadow: 0 10px 26px rgba(15,46,36,.08);
+}
+.ur-pictures-page__card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.ur-pictures-page__badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #123A2E;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    z-index: 1;
+}
+.ur-pictures-page__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(15,46,36,0) 45%, rgba(15,46,36,.85) 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px;
+    opacity: 0;
+    transition: opacity .15s ease;
+}
+.ur-pictures-page__card:hover .ur-pictures-page__overlay,
+.ur-pictures-page__card:focus-within .ur-pictures-page__overlay { opacity: 1; }
+.ur-pictures-page__action {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    background: rgba(255,255,255,.95);
+    color: #123A2E;
+}
+.ur-pictures-page__action:hover { background: #fff; }
+.ur-pictures-page__action--delete { color: #B5674A; }
+
+.ur-pictures-page__empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #6B7570;
+    font-size: 14px;
+    background: #fff;
+    border: 1px dashed #E7E2D6;
+    border-radius: 14px;
+}
+.ur-pictures-page__empty i { font-size: 30px; color: #C9974D; display: block; margin-bottom: 12px; }
+
+@media (max-width: 575.98px) {
+    .ur-pictures-page__grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+}

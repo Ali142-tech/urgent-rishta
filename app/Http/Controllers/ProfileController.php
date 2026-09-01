@@ -359,57 +359,19 @@ class ProfileController extends Controller
         }
     }
 
-    public function renderImagesModal()
+    /**
+     * Dedicated "Manage Pictures" dashboard page. Was previously a Bootstrap
+     * modal (renderImagesModal()) opened from any page via AJAX — replaced
+     * with a real page so refreshing it after an upload/delete no longer
+     * depends on Bootstrap's modal/backdrop lifecycle at all (a stale modal
+     * re-render was leaving orphaned .modal-backdrop divs stacking on every
+     * action, compounding into what looked like a solid black screen).
+     */
+    public function picturesPage()
     {
         $loggedInUser = User::retrieveUserObject();
-
-        if (request()->ajax()) {
-            $images = Images::where('user_id', $loggedInUser->id)->get();
-            $body = '<label id="mdl_btn_image_edit" class="btn-aux" for="images" style="cursor: pointer;"><i class="fa fa-plus"></i> Add Pictures</label>
-                     <form id="mdl_images_form" enctype="multipart/form-data">
-                        <input name="_token" value="' . csrf_token() . '" type="hidden"/>
-                         <input type="file" accept="image/png,image/x-png,image/gif,image/jpeg" style="display: none;" id="mdl_images" name="images[]" multiple onchange="javascript:modalImagesUpload();" />
-                     </form>
-                     <script type="text/javascript">
-                        function modalImagesUpload() {alert("here");
-                            uploadImages($("#mdl_btn_image_edit"));
-                            renderImagesModal();
-                        }
-                     </script>';
-            foreach ($images as $image) {
-                $body = $body . '<div id="image_' . $image->dataid . '" class="block block--style-3 list z-depth-1-top" style="padding: 5px">' .
-                    '<div class="block-image" style="display:inline">' .
-                    '<span class="c-base-1 displaypic" style="border-radius: 5px; margin: 3px; padding: 3px; float: right; background-color: white" id="displaypic_' . $image->dataid . '" onclick="javascript:updateImage($(this), \'dp\', \'' . $image->dataid . '\');"><i class="fa fa-' . ($image->displaypic == 1 ? "user" : "user-times") . '"></i></span>' .
-                    '<img style="padding: 5px" src="' . Profile::MEMBER_IMAGES_PATH . '/thumbnail_' . $image->name . '" />' .
-                    '</div>' .
-                    '<ul class="inline-links inline-links--style-3" style="padding: 10px">' .
-                    '<li class="listing-hover">' .
-                    '<a onclick="javascript:deleteImage($(this), \'' . $image->dataid . '\');">' .
-                    '<i class="fa fa-trash"></i> Delete </a>' .
-                    '</li>' .
-                    '<li class="listing-hover">' .
-                    '<a onclick="javascript:updateImage($(this), \'dp\', \'' . $image->dataid . '\');">' .
-                    '<i class="fa fa-id-badge"></i> Set as Display Pic </a>' .
-                    '</li>' .
-                    '</ul>' .
-                    '</div>' .
-                    '<style>' .
-                    '.modal-dialog{' .
-                    'overflow-y: initial !important' .
-                    '}' .
-                    '.modal-body{' .
-                    'height: 50vh;' .
-                    'overflow-y: auto;' .
-                    '}' .
-                    '</style>';
-            }
-            return [
-                'code' => '200',
-                'html' => $this->renderModal("Image Settings Update", $body, "")
-            ];
-        } else return [
-            'code' => '200'
-        ];
+        $images = Images::where('user_id', $loggedInUser->id)->get();
+        return view('member.pictures', compact('images'));
     }
 
     public function updateImage(Request $request, $action, $dataid)
@@ -466,9 +428,8 @@ class ProfileController extends Controller
             return [
                 'code' => '200',
                 'nav_img' => User::retrieveUserObject()->getProfileImage(true),
-                'html' => $this->profile($request)->renderSections()['main-content'],
                 'message' => $message
-            ]; // only return whats in the main-content section
+            ];
         } else return [
             'code' => '200'
         ];
