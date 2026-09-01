@@ -79,6 +79,146 @@ class AdminController extends Controller
         } else return $view;
     }
 
+    /**
+     * Website Upgrade Brief §9 "Photo & Identity Verification" module.
+     *
+     * Note: like the rest of AdminController, route access here only
+     * requires being logged in (see __construct() above) — there's no
+     * separate admin role/guard yet (brief §12 P0 "Separate admin
+     * authentication/authorization from users" is a known, unaddressed gap).
+     * Since this queue can change a member's verification status, it checks
+     * the `admin` flag itself rather than adding to that exposure.
+     */
+    private function requireAdmin()
+    {
+        $loggedInUser = User::retrieveUserObject();
+        if (empty($loggedInUser) || $loggedInUser->admin != 1) {
+            abort(403, 'Admin access required.');
+        }
+        return $loggedInUser;
+    }
+
+    function photoVerificationQueue()
+    {
+        $this->requireAdmin();
+
+        $pageSize = 15;
+        $required = ProfileController::REQUIRED_PHOTO_COUNT;
+
+        $pending = User::where('photo_verification_status', 'pending')
+            ->has('regularImages', '>=', $required)
+            ->with(['regularImages', 'selfieImage'])
+            ->orderBy('updated_at', 'ASC') // oldest-waiting first
+            ->paginate($pageSize, ['*'], 'pending_page');
+
+        // Rejected accounts can no longer log in to resubmit themselves —
+        // an admin has to explicitly reopen them for another attempt.
+        $rejected = User::where('photo_verification_status', 'rejected')
+            ->with(['regularImages', 'selfieImage'])
+            ->orderBy('updated_at', 'DESC')
+            ->paginate($pageSize, ['*'], 'rejected_page');
+
+        $view = view('admin.dashboard.photo-verification', [
+            'pending' => $pending,
+            'rejected' => $rejected,
+            'required' => $required,
+        ]);
+
+        if (request()->ajax()) {
+            return [
+                'code' => '200',
+                'html' => $view->renderSections()['admin-content']
+            ];
+        } else return $view;
+    }
+
+    function approvePhotoVerification($dataid)
+    {
+        $admin = $this->requireAdmin();
+        $user = User::where('dataid', $dataid)->first();
+
+        if (!$user) {
+            return ['code' => '404', 'message' => 'User was not found.'];
+        }
+
+        $user->photo_verification_status = 'verified';
+        $user->photo_verified_at = now();
+        $user->photo_verified_by = $admin->id;
+        $user->photo_rejection_reason = null;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
+
+        Log::info('Admin (' . $admin->dataid . ') verified photos for ' . $user->dataid);
+
+        return [
+            'code' => '200',
+            'message' => 'success|Photos verified for ' . $user->first_name . ' ' . $user->last_name . '.'
+        ];
+    }
+
+    function rejectPhotoVerification(Request $request, $dataid)
+    {
+        $admin = $this->requireAdmin();
+        $user = User::where('dataid', $dataid)->first();
+
+        if (!$user) {
+            return ['code' => '404', 'message' => 'User was not found.'];
+        }
+
+        $reason = trim((string) $request->input('reason'));
+        if ($reason === '') {
+            return ['code' => '422', 'message' => 'danger|Please provide a reason so the member knows what to fix.'];
+        }
+
+        $user->photo_verification_status = 'rejected';
+        $user->photo_rejection_reason = $reason;
+        $user->photo_verified_at = null;
+        $user->photo_verified_by = $admin->id;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
+
+        Log::info('Admin (' . $admin->dataid . ') rejected photos for ' . $user->dataid . ': ' . $reason);
+
+        return [
+            'code' => '200',
+            'message' => 'success|Photos rejected for ' . $user->first_name . ' ' . $user->last_name . '. Their account is locked out of login until you reopen it for resubmission.'
+        ];
+    }
+
+    /**
+     * A rejected account can't log back in on its own (see
+     * User::photoVerificationBlockMessage()) — this is the only way for a
+     * rejected member to get another attempt.
+     */
+    function reopenPhotoVerification($dataid)
+    {
+        $admin = $this->requireAdmin();
+        $user = User::where('dataid', $dataid)->first();
+
+        if (!$user) {
+            return ['code' => '404', 'message' => 'User was not found.'];
+        }
+
+        // Wipe the rejected photos so re-login lands on an empty gate (0 of
+        // required) rather than one that already looks "satisfied" from the
+        // photos that were just rejected. Matches the existing (DB-row-only,
+        // no derivative-file cleanup) convention used by deleteProfile() above.
+        Images::where('user_id', $user->id)->delete();
+
+        $user->photo_verification_status = 'resubmit';
+        $user->photo_rejection_reason = null;
+        $user->photo_verified_at = null;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true);
+
+        Log::info('Admin (' . $admin->dataid . ') reopened photo verification for ' . $user->dataid . ' (old photos cleared)');
+
+        return [
+            'code' => '200',
+            'message' => 'success|' . $user->first_name . ' ' . $user->last_name . ' can now log in to resubmit their photos.'
+        ];
+    }
+
     function refreshProfiles(Request $request)
     {
         if ($request->ajax()) {

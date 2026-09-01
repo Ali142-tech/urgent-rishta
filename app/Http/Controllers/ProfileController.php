@@ -28,6 +28,9 @@ use Mail;
 
 class ProfileController extends Controller
 {
+    /** Website Upgrade Brief §5 "Mandatory photo policy": minimum before a profile is Active. */
+    const REQUIRED_PHOTO_COUNT = 2;
+
     /**
      * Display a listing of the resource.
      *
@@ -108,6 +111,65 @@ class ProfileController extends Controller
             Log::info("User (Name: " . $user->first_name . " " . $user->last_name . ", Email: " . $user->email . ") could not update their password. Error: " . $e->getMessage());
         }
         return redirect()->back();
+    }
+
+    /**
+     * Website Upgrade Brief §5 "Mandatory photo policy" — shown right after
+     * registration (see RegisterController@completeRegistration) so a new
+     * account uploads its 2 required photos + a live selfie before the
+     * account goes into admin review. Reuses the existing
+     * uploadImages()/Images model — nothing new stored, just a dedicated
+     * screen + a minimum-requirement gate around it.
+     *
+     * Once satisfied, the account is logged out and sent to admin review —
+     * it does NOT proceed into the site. It can't log back in until an
+     * admin approves the photos (see User::photoVerificationBlockMessage(),
+     * enforced in LoginController@finishLogin and GoogleAuthController).
+     */
+    public function mustUploadPhotos()
+    {
+        $user = User::retrieveUserObject();
+        $count = Images::where('user_id', $user->id)->where('is_selfie', 0)->count();
+        $hasSelfie = Images::where('user_id', $user->id)->where('is_selfie', 1)->exists();
+
+        if ($count >= self::REQUIRED_PHOTO_COUNT && $hasSelfie) {
+            session()->forget('photos_gate_redirect');
+            // Covers both a fresh registration (already 'pending', harmless
+            // no-op) and a reopened resubmission ('resubmit' -> 'pending' so
+            // it lands back in the admin queue instead of staying invisible).
+            $user->photo_verification_status = 'pending';
+            $user->save();
+            Auth::logout();
+            Log::info('User (' . $user->dataid . ') completed registration photos — pending admin review.');
+            Session::flash('message', 'success|Thanks! Your profile and photos have been submitted for review. We will email you once your account is verified.|10000');
+            return redirect()->route('login');
+        }
+
+        return view('member.photos-required', [
+            'count' => $count,
+            'required' => self::REQUIRED_PHOTO_COUNT,
+            'hasSelfie' => $hasSelfie,
+        ]);
+    }
+
+    /**
+     * Lightweight JSON poll used by the gate page's JS after each upload —
+     * avoids changing uploadImages()'s existing response contract (other
+     * pages already depend on it returning full profile HTML).
+     */
+    public function photosRequiredStatus()
+    {
+        $user = User::retrieveUserObject();
+        $count = Images::where('user_id', $user->id)->where('is_selfie', 0)->count();
+        $hasSelfie = Images::where('user_id', $user->id)->where('is_selfie', 1)->exists();
+
+        return [
+            'code' => '200',
+            'count' => $count,
+            'required' => self::REQUIRED_PHOTO_COUNT,
+            'satisfied' => $count >= self::REQUIRED_PHOTO_COUNT && $hasSelfie,
+            'has_selfie' => $hasSelfie,
+        ];
     }
 
     public function uploadImages(Request $request)
@@ -216,6 +278,85 @@ class ProfileController extends Controller
         } else return [
             'code' => '200'
         ];
+    }
+
+    /**
+     * Live-captured selfie (brief §5 "Selfie/liveness check ... where
+     * technically feasible"). Kept separate from uploadImages() above: only
+     * one selfie is kept at a time (a resubmission replaces it), it's
+     * flagged is_selfie=1 so the admin verification queue can show it next
+     * to the two regular uploads, and it resets a previously-rejected
+     * profile back to "pending" for re-review.
+     */
+    public function uploadSelfie(Request $request)
+    {
+        $user = User::retrieveUserObject();
+        $id = $user->id;
+        $dataid = $user->dataid;
+        $selfie = $request->file('selfie');
+
+        if (empty($selfie)) {
+            return ['code' => '400', 'message' => 'danger|No selfie captured. Please try again.'];
+        }
+
+        try {
+            if (!$selfie->isValid()) {
+                return ['code' => '400', 'message' => 'danger|Selfie capture failed. Please try again.'];
+            }
+
+            $imageSizeInMb = floatval(number_format($selfie->getSize() / (1024 * 1024), 2));
+            if ($imageSizeInMb > 2) {
+                return ['code' => '400', 'message' => 'danger|Selfie capture is too large. Please try again.'];
+            }
+
+            // Only one live selfie kept per account — replace on resubmission.
+            $existing = Images::where('user_id', $id)->where('is_selfie', 1)->get();
+            foreach ($existing as $old) {
+                $publicPath = public_path(Profile::MEMBER_IMAGES_PATH);
+                $this->deleteUploadDerivatives($publicPath, $old->name, $old->salt);
+                $old->delete();
+            }
+
+            $extension = $selfie->getClientOriginalExtension() ?: 'jpg';
+            $name = time() . '_selfie_' . $id . '.' . $extension;
+            $rootImgPath = Profile::MEMBER_IMAGES_PATH;
+            $path = $rootImgPath . '/' . $name;
+            $publicPath = public_path($rootImgPath);
+            $selfie->move($publicPath, $name);
+
+            $salt = random_int(111, 99999);
+            $manager = $this->createImageManager();
+            if ($manager) {
+                $this->generateBlurAndThumbnails($manager, $publicPath, $name, $salt);
+            } else {
+                $this->copyDerivativesWithoutProcessing($publicPath, $name, $salt);
+            }
+
+            $image = new Images();
+            $image->dataid = strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, 9));
+            $image->name = $name;
+            $image->user_id = $id;
+            $image->img_url = $path;
+            $image->salt = $salt;
+            $image->visibility = 'Private';
+            $image->displaypic = 0;
+            $image->is_selfie = 1;
+            $image->save();
+
+            // A resubmitted selfie after a rejection puts the account back in the review queue.
+            if ($user->photo_verification_status === 'rejected') {
+                $user->photo_verification_status = 'pending';
+                $user->photo_rejection_reason = null;
+                $user->save();
+            }
+
+            Log::info("User (" . $dataid . ") captured a verification selfie.");
+
+            return ['code' => '200', 'message' => 'success|Selfie captured.'];
+        } catch (\Exception $e) {
+            Log::error("User (" . $dataid . ") selfie capture failed: " . $e->getMessage());
+            return ['code' => '500', 'message' => 'danger|Could not save selfie. Please try again.'];
+        }
     }
 
     public function renderImagesModal()

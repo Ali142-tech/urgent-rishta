@@ -47,16 +47,22 @@ class RegisterController extends Controller
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
         $googleOAuth = Session::get('google_oauth');
 
-        $mode = $request->query('mode', 'start'); // start | community | contact | otp | build | build2 | build3 | build4 | verify_mobile | profile
-        if (!in_array($mode, ['start', 'community', 'contact', 'otp', 'build', 'build2', 'build3', 'build4', 'verify_mobile', 'profile'], true)) {
-            $mode = 'start';
+        $mode = $request->query('mode', 'experience'); // experience | start | community | contact | otp | build | build2 | build3 | preferences | build4 | verify_mobile | profile
+        if (!in_array($mode, ['experience', 'start', 'community', 'contact', 'otp', 'build', 'build2', 'build3', 'preferences', 'build4', 'verify_mobile', 'profile'], true)) {
+            $mode = 'experience';
         }
 
-        // Fresh "Register" click (/register with no mode) → start from step 1, drop stale session
+        // Fresh "Register" click (/register with no mode) → start from step 0, drop stale session
         if (!$request->has('mode')) {
             $this->forgetRegisterSession();
             $googleOAuth = null;
-            $mode = 'start';
+            $mode = 'experience';
+        }
+
+        // Website Upgrade Brief §6 routing rule — must choose Online vs Personalized
+        // before continuing into the name/DOB step.
+        if ($mode === 'start' && !Session::has('register_service_type')) {
+            return redirect()->route('register', ['mode' => 'experience']);
         }
 
         // Prefill names from Google on first step
@@ -89,11 +95,11 @@ class RegisterController extends Controller
         // Old second-OTP screen removed — one email OTP after contact only
         if ($mode === 'verify_mobile') {
             return redirect()->route('register', [
-                'mode' => Session::has('register_education') ? 'build4' : (Session::get('register_verified') ? 'build' : 'contact'),
+                'mode' => Session::get('register_preferences_saved') ? 'build4' : (Session::has('register_education') ? 'preferences' : (Session::get('register_verified') ? 'build' : 'contact')),
             ]);
         }
 
-        if (in_array($mode, ['build', 'build2', 'build3', 'build4', 'profile'], true) && !Session::get('register_verified')) {
+        if (in_array($mode, ['build', 'build2', 'build3', 'preferences', 'build4', 'profile'], true) && !Session::get('register_verified')) {
             return redirect()->route('register');
         }
 
@@ -105,12 +111,16 @@ class RegisterController extends Controller
             return redirect()->route('register', ['mode' => 'build2']);
         }
 
-        if ($mode === 'build4' && !Session::has('register_education')) {
+        if ($mode === 'preferences' && !Session::has('register_education')) {
             return redirect()->route('register', ['mode' => 'build3']);
         }
 
+        if ($mode === 'build4' && !Session::get('register_preferences_saved')) {
+            return redirect()->route('register', ['mode' => Session::has('register_education') ? 'preferences' : 'build3']);
+        }
+
         if ($mode === 'profile') {
-            return redirect()->route('register', ['mode' => Session::has('register_education') ? 'build4' : 'build']);
+            return redirect()->route('register', ['mode' => Session::get('register_preferences_saved') ? 'build4' : 'build']);
         }
 
         // States for build step (from country chosen earlier)
@@ -158,7 +168,32 @@ class RegisterController extends Controller
             'registerCountryCode' => Session::get('register_country_code', '92'),
             'registerEmailMasked' => Session::get('register_email_masked'),
             'otpResendSeconds' => (int) config('otp.resend_cooldown_seconds', 60),
+            'registerServiceType' => Session::get('register_service_type'),
+            'registerRAge' => Session::get('register_r_age'),
+            'registerRHeight' => Session::get('register_r_height'),
+            'registerRMaritalStatus' => Session::get('register_r_marital_status'),
+            'registerRReligion' => Session::get('register_r_religion'),
+            'registerRGenReq' => Session::get('register_r_gen_req'),
         ]);
+    }
+
+    /**
+     * Step 0 (Website Upgrade Brief §6 routing rule): "I want to search
+     * profiles myself" → online, or "I want your team to find matches for
+     * me" → personalized. Stored on the account so it can route the user to
+     * the right dashboard/queue later; does not gate anything by itself yet.
+     */
+    public function saveExperience(Request $request)
+    {
+        $request->validate([
+            'service_type' => 'required|in:online,personalized',
+        ], [
+            'service_type.required' => 'Please choose how you would like to find your match.',
+        ]);
+
+        Session::put('register_service_type', $request->service_type);
+
+        return redirect()->route('register', ['mode' => 'start']);
     }
 
     /**
@@ -568,6 +603,37 @@ class RegisterController extends Controller
         Session::put('register_education', $request->education);
         Session::put('register_profession', trim($request->profession));
 
+        return redirect()->route('register', ['mode' => 'preferences']);
+    }
+
+    /**
+     * Step (Website Upgrade Brief §5 "Step 3 - Partner Preferences"). Maps
+     * onto the r* columns already used by the profile-edit "Partner
+     * Expectation" section (ProfileController@updateProfile) — this just
+     * captures a starter set of them at signup instead of leaving the
+     * section fully blank until the member edits their profile later.
+     */
+    public function savePreferences(Request $request)
+    {
+        if (!Session::get('register_verified') || !Session::has('register_education')) {
+            return redirect()->route('register', ['mode' => 'build3']);
+        }
+
+        $request->validate([
+            'r_age' => 'nullable|string|max:30',
+            'r_height' => 'nullable|string|max:30',
+            'r_marital_status' => 'nullable|string|max:50',
+            'r_religion' => 'nullable|string|max:50',
+            'r_gen_req' => 'nullable|string|max:255',
+        ]);
+
+        Session::put('register_r_age', trim((string) $request->r_age));
+        Session::put('register_r_height', trim((string) $request->r_height));
+        Session::put('register_r_marital_status', $request->r_marital_status);
+        Session::put('register_r_religion', $request->r_religion);
+        Session::put('register_r_gen_req', trim((string) $request->r_gen_req));
+        Session::put('register_preferences_saved', true);
+
         return redirect()->route('register', ['mode' => 'build4']);
     }
 
@@ -576,8 +642,8 @@ class RegisterController extends Controller
      */
     public function saveBuild4(Request $request)
     {
-        if (!Session::get('register_verified') || !Session::has('register_education')) {
-            return redirect()->route('register', ['mode' => 'build3']);
+        if (!Session::get('register_verified') || !Session::get('register_preferences_saved')) {
+            return redirect()->route('register', ['mode' => Session::has('register_education') ? 'preferences' : 'build3']);
         }
 
         $request->validate([
@@ -650,6 +716,7 @@ class RegisterController extends Controller
             'month' => Session::get('register_month'),
             'year' => Session::get('register_year'),
             'gender' => Session::get('register_gender', 'male'),
+            'service_type' => Session::get('register_service_type'),
             'email' => $email,
             'mobile' => $mobile,
             'country' => Session::get('register_country'),
@@ -665,6 +732,13 @@ class RegisterController extends Controller
             'on_behalf' => Session::get('register_on_behalf', 'Self'),
             'mother_tongue' => Session::get('register_mother_tongue', ''),
             'password' => Session::get('register_password'),
+            // Partner Preferences (brief §5 step 3) — same r* columns the
+            // profile-edit "Partner Expectation" section already uses.
+            'r_age' => Session::get('register_r_age', ''),
+            'r_height' => Session::get('register_r_height', ''),
+            'r_marital_status' => Session::get('register_r_marital_status', ''),
+            'r_religion' => Session::get('register_r_religion', ''),
+            'r_gen_req' => Session::get('register_r_gen_req', ''),
         ];
 
         try {
@@ -676,7 +750,12 @@ class RegisterController extends Controller
             Session::flash('message', 'success|Profile created successfully. Welcome!');
             Log::info('New user registered (Name: ' . $user->first_name . ' ' . $user->last_name . ', Email: ' . $user->email . ')');
 
-            return redirect($this->redirectPath());
+            // Website Upgrade Brief §5 "Mandatory photo policy" — send new
+            // accounts to the required-photos gate before their normal
+            // post-registration destination (ProfileController@mustUploadPhotos
+            // skips straight through once 2 photos exist).
+            Session::put('photos_gate_redirect', $this->redirectPath());
+            return redirect()->route('member.photos.required');
         } catch (\Exception $e) {
             Log::error('Registration complete failed: ' . $e->getMessage());
 
@@ -695,12 +774,12 @@ class RegisterController extends Controller
     /** Legacy routes — second OTP removed; keep redirects so old bookmarks don't break. */
     public function verifyMobile()
     {
-        return redirect()->route('register', ['mode' => Session::has('register_education') ? 'build4' : 'build']);
+        return redirect()->route('register', ['mode' => Session::get('register_preferences_saved') ? 'build4' : (Session::has('register_education') ? 'preferences' : 'build')]);
     }
 
     public function sendMobileOtp()
     {
-        return redirect()->route('register', ['mode' => Session::has('register_education') ? 'build4' : 'build']);
+        return redirect()->route('register', ['mode' => Session::get('register_preferences_saved') ? 'build4' : (Session::has('register_education') ? 'preferences' : 'build')]);
     }
 
     protected function validator(array $data)
@@ -715,6 +794,7 @@ class RegisterController extends Controller
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'gender' => $data['gender'],
+            'service_type' => $data['service_type'] ?? null,
             'email' => $data['email'],
             'contact_mobile_number' => $this->getNormalizedPhoneNumber($data['mobile']),
             'height' => $data['height'],
@@ -744,8 +824,17 @@ class RegisterController extends Controller
         // Verified via register OTP or Google
         if (!empty($payload['google_id']) || Session::get('register_verified')) {
             $user->email_verified_at = now();
-            $user->save();
         }
+
+        // Partner Preferences (r* columns) aren't mass-assignable — set them
+        // directly, same as ProfileController@updateProfile's "partner_expectation"
+        // section does when a member edits these later.
+        $user->rage = $data['r_age'] ?? '';
+        $user->rheight = $data['r_height'] ?? '';
+        $user->rmarital_status = $data['r_marital_status'] ?? '';
+        $user->rreligion = $data['r_religion'] ?? '';
+        $user->rgen_req = $data['r_gen_req'] ?? '';
+        $user->save();
 
         // Session cleared in completeRegistration() after successful login
 
@@ -831,6 +920,7 @@ class RegisterController extends Controller
     {
         Session::forget([
             'google_oauth',
+            'register_service_type',
             'register_verified',
             'register_email',
             'register_mobile',
@@ -854,6 +944,12 @@ class RegisterController extends Controller
             'register_gender',
             'register_education',
             'register_profession',
+            'register_r_age',
+            'register_r_height',
+            'register_r_marital_status',
+            'register_r_religion',
+            'register_r_gen_req',
+            'register_preferences_saved',
             'register_on_behalf',
             'register_mother_tongue',
             'register_password',

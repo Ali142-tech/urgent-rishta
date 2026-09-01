@@ -15,7 +15,7 @@
         justify-content: center;
         padding: 48px 16px 64px;
         margin-top: 8px;
-        background: linear-gradient(180deg, #fff5f8 0%, #ffffff 45%);
+        background: linear-gradient(180deg, #FBF7EF 0%, #ffffff 45%);
         box-sizing: border-box;
     }
     .shaadi-login-card {
@@ -27,7 +27,7 @@
         padding: 36px 28px 28px;
         position: relative;
         z-index: 2;
-        border: 1px solid rgba(233, 30, 99, 0.08);
+        border: 1px solid rgba(201, 151, 77, 0.08);
     }
     .shaadi-login-card .login-flash {
         width: 100%;
@@ -114,15 +114,15 @@
         box-shadow: none;
     }
     .shaadi-login-card .form-control:focus {
-        border-color: #E91E63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.12);
+        border-color: #123A2E;
+        box-shadow: 0 0 0 3px rgba(201, 151, 77, 0.12);
     }
     .shaadi-btn-primary {
         width: 100%;
         height: 48px;
         border: 0;
         border-radius: 999px;
-        background: #E91E63;
+        background: #123A2E;
         color: #fff !important;
         font-weight: 600;
         font-size: 16px;
@@ -131,13 +131,13 @@
     }
     .shaadi-btn-primary:hover,
     .shaadi-btn-primary:focus {
-        background: #c2185b;
+        background: #0F2E24;
         color: #fff !important;
         outline: none;
     }
     .shaadi-btn-primary:disabled,
     .shaadi-btn-primary[disabled] {
-        background: #f3d0dd !important;
+        background: #cfd6d2 !important;
         color: #fff !important;
         cursor: not-allowed;
         opacity: 1;
@@ -150,7 +150,7 @@
         font-size: 14px;
         text-decoration: none;
     }
-    .shaadi-link:hover { color: #E91E63; text-decoration: none; }
+    .shaadi-link:hover { color: #123A2E; text-decoration: none; }
     .shaadi-or {
         display: flex;
         align-items: center;
@@ -183,8 +183,8 @@
         text-decoration: none !important;
     }
     .shaadi-btn-outline:hover {
-        border-color: #E91E63;
-        color: #E91E63;
+        border-color: #123A2E;
+        color: #123A2E;
         text-decoration: none !important;
     }
     .shaadi-btn-outline.disabled {
@@ -204,7 +204,7 @@
         cursor: pointer;
         padding: 4px;
     }
-    .login-toggle-password:hover { color: #E91E63; }
+    .login-toggle-password:hover { color: #123A2E; }
     .otp-hint {
         text-align: center;
         font-size: 13px;
@@ -219,7 +219,7 @@
         font-size: 13px;
         text-decoration: none;
     }
-    .back-link:hover { color: #E91E63; text-decoration: none; }
+    .back-link:hover { color: #123A2E; text-decoration: none; }
     .shaadi-login-card .meta-row {
         display: flex;
         justify-content: space-between;
@@ -228,7 +228,7 @@
         font-size: 12px;
     }
     .shaadi-login-card .meta-row a { color: #888; }
-    .shaadi-login-card .meta-row a:hover { color: #E91E63; }
+    .shaadi-login-card .meta-row a:hover { color: #123A2E; }
     .shaadi-login-card .footer-note {
         text-align: center;
         margin-top: 18px;
@@ -237,7 +237,7 @@
         color: #999;
     }
     .shaadi-login-card .footer-note a {
-        color: #E91E63;
+        color: #123A2E;
         font-weight: 600;
     }
 

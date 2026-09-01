@@ -45,6 +45,12 @@
                             Appointments
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a data-url="{{url('admin/photo-verification')}}" class="nav-link admin-link p_nav">
+                            <i class="fa fa-id-badge"></i>
+                            Photo Verification
+                        </a>
+                    </li>
 
                 </ul>
             </div>

@@ -26,12 +26,15 @@ Route::get('login/google', [App\Http\Controllers\Auth\GoogleAuthController::clas
 Route::get('login/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('login.google.callback');
 
 // Multi-step register (name+DOB → mobile/email OTP → profile)
+// Website Upgrade Brief §6 routing rule: capture Online vs Personalized intent first.
+Route::post('register/experience', [App\Http\Controllers\Auth\RegisterController::class, 'saveExperience'])->name('register.experience');
 Route::post('register/basics', [App\Http\Controllers\Auth\RegisterController::class, 'saveBasics'])->name('register.basics');
 Route::post('register/community', [App\Http\Controllers\Auth\RegisterController::class, 'saveCommunity'])->name('register.community');
 Route::post('register/contact', [App\Http\Controllers\Auth\RegisterController::class, 'saveContact'])->name('register.contact');
 Route::post('register/build', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild'])->name('register.build');
 Route::post('register/build2', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild2'])->name('register.build2');
 Route::post('register/build3', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild3'])->name('register.build3');
+Route::post('register/preferences', [App\Http\Controllers\Auth\RegisterController::class, 'savePreferences'])->name('register.preferences');
 Route::post('register/build4', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild4'])->name('register.build4');
 Route::post('register/mobile/otp', [App\Http\Controllers\Auth\RegisterController::class, 'sendMobileOtp'])->name('register.mobile.otp');
 Route::post('register/mobile/verify', [App\Http\Controllers\Auth\RegisterController::class, 'verifyMobile'])->name('register.mobile.verify');
@@ -59,6 +62,11 @@ Route::get('admin/package-subscribers', [App\Http\Controllers\AdminController::c
 Route::post('admin/package-subscribers/refresh', [App\Http\Controllers\AdminController::class, 'refreshPackageSubscribers']);
 Route::get('admin/appointments', [App\Http\Controllers\AdminController::class, 'appointments']);
 Route::post('admin/appointments/refresh', [App\Http\Controllers\AdminController::class, 'refreshAppointments']);
+// Photo & Identity Verification queue (Website Upgrade Brief §9)
+Route::get('admin/photo-verification', [App\Http\Controllers\AdminController::class, 'photoVerificationQueue']);
+Route::post('admin/photo-verification/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approvePhotoVerification']);
+Route::post('admin/photo-verification/{dataid}/reject', [App\Http\Controllers\AdminController::class, 'rejectPhotoVerification']);
+Route::post('admin/photo-verification/{dataid}/reopen', [App\Http\Controllers\AdminController::class, 'reopenPhotoVerification']);
 // admin profile routes
 Route::delete('admin/profile/{id}',[App\Http\Controllers\AdminController::class, 'deleteProfile']); // delete profile in admin dashboard
 Route::get('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
@@ -93,6 +101,10 @@ Route::get('member/profile/notifications/refresh', [App\Http\Controllers\Profile
 Route::post('member/profile/account/terminate', [App\Http\Controllers\ProfileController::class, 'accountTerminate']);
 Route::get('member/profile/password/update', [App\Http\Controllers\ProfileController::class, 'passwordUpdate']);
 Route::post('member/profile/password/update', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('change.password');
+// Mandatory photo gate shown right after registration (brief §5)
+Route::get('member/photos/required', [App\Http\Controllers\ProfileController::class, 'mustUploadPhotos'])->name('member.photos.required');
+Route::get('member/photos/required/status', [App\Http\Controllers\ProfileController::class, 'photosRequiredStatus'])->name('member.photos.required.status');
+Route::post('member/photos/selfie', [App\Http\Controllers\ProfileController::class, 'uploadSelfie'])->name('member.photos.selfie');
 // profile images
 Route::get('member/profile/images/modal',[App\Http\Controllers\ProfileController::class, 'renderImagesModal']);
 Route::post('member/profile/images/update/{action}/{id}',[App\Http\Controllers\ProfileController::class, 'updateImage']);

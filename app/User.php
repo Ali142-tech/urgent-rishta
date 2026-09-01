@@ -34,6 +34,7 @@ class User extends Authenticatable implements MustVerifyEmail {
         'first_name',
         'last_name',
         'gender',
+        'service_type',
         'email',
         'google_id',
         'contact_mobile_number',
@@ -316,5 +317,46 @@ class User extends Authenticatable implements MustVerifyEmail {
 
     public function getWhatsappLink() {
         return 'https://wa.me/' . $this->getNormalizedPhoneNumber();
+    }
+
+    /**
+     * Website Upgrade Brief §5/§9 — photo verification. Split into the two
+     * regular uploads vs. the live-captured selfie (Images::is_selfie) so
+     * the admin verification queue can show them separately.
+     */
+    public function images() {
+        return $this->hasMany(Images::class, 'user_id');
+    }
+
+    public function regularImages() {
+        return $this->images()->where('is_selfie', 0);
+    }
+
+    public function selfieImage() {
+        return $this->hasOne(Images::class, 'user_id')->where('is_selfie', 1)->latestOfMany();
+    }
+
+    /**
+     * Single source of truth for "can this account actually log in yet?" —
+     * used by every login path (password, OTP, Google — none of which share
+     * a common base method, so this stays here instead of being duplicated
+     * per controller). Null means fine, proceed; otherwise a "type|text"
+     * flash string ready for Session::flash('message', ...).
+     *
+     * Note 'resubmit' (set by AdminController@reopenPhotoVerification) is
+     * intentionally NOT blocked here — that status means "let this
+     * previously-rejected account log in one time specifically to redo the
+     * photo gate", handled in LoginController@finishLogin /
+     * GoogleAuthController@callback.
+     */
+    public function photoVerificationBlockMessage(): ?string {
+        if ($this->photo_verification_status === 'rejected') {
+            $reason = $this->photo_rejection_reason;
+            return 'danger|Your account was not approved' . (!empty($reason) ? ': ' . $reason : '') . '. Please contact support.';
+        }
+        if ($this->photo_verification_status === 'pending') {
+            return 'warning|Your account is pending admin approval. We will notify you by email once your photos are verified.';
+        }
+        return null;
     }
 }

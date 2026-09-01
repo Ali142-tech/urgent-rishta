@@ -27,6 +27,55 @@ class LoginController extends Controller
     }
 
     /**
+     * Brute-force protection (brief §11 "Abuse controls": rate-limit login).
+     * AuthenticatesUsers pulls in Laravel's ThrottlesLogins trait, but this
+     * controller overrides login()/loginWithPassword()/loginWithEmail() with
+     * custom logic that never called into it — so throttling was defined but
+     * dormant. maxAttempts()/decayMinutes()/throttleKey() below activate it;
+     * a "hasTooManyLoginAttempts()" check is added to each password-based
+     * login method further down.
+     */
+    protected function maxAttempts()
+    {
+        return 5;
+    }
+
+    protected function decayMinutes()
+    {
+        return 1;
+    }
+
+    /**
+     * Key the throttle by whichever identifier the request actually used
+     * (email, mobile, or the legacy combined "login" field) plus IP, so
+     * different accounts on the same network don't share one bucket.
+     */
+    protected function throttleKey(Request $request)
+    {
+        $identifier = $request->input('email') ?: $request->input('mobile') ?: $request->input('login') ?: 'unknown';
+        return Str::transliterate(Str::lower($identifier) . '|' . $request->ip());
+    }
+
+    /**
+     * Shared lockout check for the password-based login methods. Returns a
+     * redirect response if the caller should stop, or null to proceed.
+     */
+    private function checkLoginThrottle(Request $request, string $mode, array $rememberInput = [])
+    {
+        if (!$this->hasTooManyLoginAttempts($request)) {
+            return null;
+        }
+
+        $this->fireLockoutEvent($request);
+        $seconds = $this->limiter()->availableIn($this->throttleKey($request));
+        $wait = max(1, (int) ceil($seconds / 60));
+        Log::info('Login throttled for ' . $this->throttleKey($request) . ' (' . $mode . ')');
+        Session::flash('message', 'danger|Too many login attempts. Please try again in ' . $wait . ' minute' . ($wait > 1 ? 's' : '') . '.');
+
+        return redirect()->route('login', ['mode' => $mode])->withInput($rememberInput);
+    }
+
+    /**
      * Shaadi-style login hub (phone-first).
      */
     public function showLoginForm(Request $request)
@@ -197,14 +246,20 @@ class LoginController extends Controller
         $local = preg_replace('/\D+/', '', $request->mobile);
         $full = $this->normalizePhoneNumber($countryCode . $local);
 
+        if ($throttled = $this->checkLoginThrottle($request, 'password', $request->only('country_code', 'mobile', 'remember'))) {
+            return $throttled;
+        }
+
         $credentials = $this->buildCredentials($full, $request->password);
         $remember = $request->boolean('remember') || $request->input('remember') === 'checked';
 
         if (!$credentials || !Auth::attempt($credentials, $remember)) {
+            $this->incrementLoginAttempts($request);
             Session::flash('message', 'danger|Invalid mobile or password. Please try again.');
             return redirect()->route('login', ['mode' => 'password'])->withInput($request->only('country_code', 'mobile', 'remember'));
         }
 
+        $this->clearLoginAttempts($request);
         $user = User::retrieveUserObject(null, true);
         return $this->finishLogin($user, 'password-mobile:' . $full);
     }
@@ -219,6 +274,10 @@ class LoginController extends Controller
             'password' => 'required|string',
         ]);
 
+        if ($throttled = $this->checkLoginThrottle($request, 'email', $request->only('email', 'remember'))) {
+            return $throttled;
+        }
+
         $remember = $request->boolean('remember') || $request->input('remember') === 'checked';
         $credentials = [
             'email' => trim($request->email),
@@ -226,10 +285,12 @@ class LoginController extends Controller
         ];
 
         if (!Auth::attempt($credentials, $remember)) {
+            $this->incrementLoginAttempts($request);
             Session::flash('message', 'danger|Invalid email or password. Please try again.');
             return redirect()->route('login', ['mode' => 'email'])->withInput($request->only('email', 'remember'));
         }
 
+        $this->clearLoginAttempts($request);
         $user = User::retrieveUserObject(null, true);
         return $this->finishLogin($user, 'password-email:' . $request->email);
     }
@@ -249,13 +310,19 @@ class LoginController extends Controller
 
         // Backward compat: old "login" field
         if ($request->filled('login')) {
+            if ($throttled = $this->checkLoginThrottle($request, 'email')) {
+                return $throttled;
+            }
+
             $login = trim($request->input('login'));
             $remember = $request->boolean('remember') || $request->input('remember') === 'checked';
             $credentials = $this->buildCredentials($login, $request->password);
             if (!$credentials || !Auth::attempt($credentials, $remember)) {
+                $this->incrementLoginAttempts($request);
                 Session::flash('message', 'danger|Invalid email/mobile or password. Please try again.');
                 return redirect()->route('login', ['mode' => 'email'])->withInput();
             }
+            $this->clearLoginAttempts($request);
             $user = User::retrieveUserObject(null, true);
             return $this->finishLogin($user, 'legacy:' . $login);
         }
@@ -281,6 +348,24 @@ class LoginController extends Controller
                 Session::flash('message', 'danger|Your email is not verified. Please contact support at 0307-0227000.');
             }
             return redirect()->route('login');
+        }
+
+        // Website Upgrade Brief §5/§9 — a new account isn't let into the site
+        // until its photos are admin-verified; a rejected account is locked
+        // out of login entirely (no self-service resubmit via login).
+        if ($blockMessage = $loggedInUser->photoVerificationBlockMessage()) {
+            Auth::logout();
+            Log::info('Login blocked for ' . $loggedInUser->dataid . ' — photo_verification_status=' . $loggedInUser->photo_verification_status);
+            Session::flash('message', $blockMessage);
+            return redirect()->route('login');
+        }
+
+        // Admin reopened a previously-rejected account for one resubmission
+        // attempt (old photos already wiped) — send straight to the gate
+        // instead of the normal post-login destination.
+        if ($loggedInUser->photo_verification_status === 'resubmit') {
+            Session::flash('message', 'warning|Please re-upload your photos and selfie for review.');
+            return redirect()->route('member.photos.required');
         }
 
         Log::info('User (' . $loggedInUser->dataid . ') logged in via ' . $via);

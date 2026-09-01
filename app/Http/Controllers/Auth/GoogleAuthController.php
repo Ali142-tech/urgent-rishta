@@ -56,6 +56,21 @@ class GoogleAuthController extends Controller
             Auth::login($user, true);
             $user->profile(true);
 
+            // Website Upgrade Brief §5/§9 — same photo-verification gate as
+            // LoginController@finishLogin(); Google sign-in has its own login
+            // logic here and doesn't go through that method.
+            if ($blockMessage = $user->photoVerificationBlockMessage()) {
+                Auth::logout();
+                Log::info('Google login blocked for ' . $user->dataid . ' — photo_verification_status=' . $user->photo_verification_status);
+                Session::flash('message', $blockMessage);
+                return redirect()->route('login');
+            }
+
+            if ($user->photo_verification_status === 'resubmit') {
+                Session::flash('message', 'warning|Please re-upload your photos and selfie for review.');
+                return redirect()->route('member.photos.required');
+            }
+
             Log::info('User (' . $user->dataid . ') logged in via Google');
 
             if (empty($user->package)) {

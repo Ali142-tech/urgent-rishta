@@ -9,7 +9,7 @@
         align-items: flex-start;
         justify-content: center;
         padding: 48px 16px 64px;
-        background: linear-gradient(180deg, #fff5f8 0%, #ffffff 45%);
+        background: linear-gradient(180deg, #FBF7EF 0%, #ffffff 45%);
         box-sizing: border-box;
     }
     .shaadi-reg-card {
@@ -19,13 +19,13 @@
         border-radius: 16px;
         box-shadow: 0 12px 40px rgba(0,0,0,.10);
         padding: 36px 28px 28px;
-        border: 1px solid rgba(233, 30, 99, 0.08);
+        border: 1px solid rgba(201, 151, 77, 0.08);
     }
     .shaadi-reg-card .brand-mark {
-        width: 56px; height: 56px; border-radius: 14px; background: #E91E63; color: #fff;
+        width: 56px; height: 56px; border-radius: 14px; background: #123A2E; color: #fff;
         display: flex; align-items: center; justify-content: center;
         font-size: 28px; font-weight: 700; margin: 0 auto 18px;
-        box-shadow: 0 6px 16px rgba(233, 30, 99, 0.35);
+        box-shadow: 0 6px 16px rgba(18, 58, 46, 0.35);
     }
     .shaadi-reg-card h2 { text-align: center; font-size: 26px; font-weight: 700; color: #222; margin: 0 0 6px; }
     .shaadi-reg-card .subtitle { text-align: center; color: #777; font-size: 14px; margin-bottom: 24px; }
@@ -33,19 +33,19 @@
         height: 46px; border-radius: 10px; border: 1px solid #ddd; font-size: 15px; width: 100%; box-shadow: none;
     }
     .shaadi-reg-card .form-control:focus {
-        border-color: #E91E63; box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.12);
+        border-color: #123A2E; box-shadow: 0 0 0 3px rgba(201, 151, 77, 0.12);
     }
     .shaadi-reg-card .form-control-sm { height: 38px; font-size: 14px; }
     .shaadi-reg-card .iti { width: 100%; margin-bottom: 14px; display: block; }
     .shaadi-reg-card .iti__country-list { z-index: 20; max-height: 220px; width: 320px; }
     .shaadi-btn-primary {
-        width: 100%; height: 48px; border: 0; border-radius: 999px; background: #E91E63;
+        width: 100%; height: 48px; border: 0; border-radius: 999px; background: #123A2E;
         color: #fff !important; font-weight: 600; font-size: 16px; margin-top: 6px;
     }
-    .shaadi-btn-primary:hover { background: #c2185b; color: #fff !important; }
-    .shaadi-btn-primary:disabled { background: #f3d0dd !important; cursor: not-allowed; }
+    .shaadi-btn-primary:hover { background: #0F2E24; color: #fff !important; }
+    .shaadi-btn-primary:disabled { background: #cfd6d2 !important; cursor: not-allowed; }
     .shaadi-link { display: block; text-align: center; margin-top: 16px; color: #888; font-size: 14px; }
-    .shaadi-link:hover { color: #E91E63; text-decoration: none; }
+    .shaadi-link:hover { color: #123A2E; text-decoration: none; }
     .shaadi-or { display: flex; align-items: center; gap: 12px; margin: 22px 0 16px; color: #999; font-size: 13px; }
     .shaadi-or:before, .shaadi-or:after { content: ""; flex: 1; height: 1px; background: #e6e6e6; }
     .shaadi-btn-outline {
@@ -53,7 +53,7 @@
         color: #333; font-weight: 600; font-size: 15px; margin-bottom: 10px;
         display: flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none !important;
     }
-    .shaadi-btn-outline:hover { border-color: #E91E63; color: #E91E63; text-decoration: none !important; }
+    .shaadi-btn-outline:hover { border-color: #123A2E; color: #123A2E; text-decoration: none !important; }
     .login-flash {
         width: 100%; box-sizing: border-box; border-radius: 10px; padding: 10px 12px;
         margin: 0 0 16px; font-size: 13px; line-height: 1.45; text-align: left; word-wrap: break-word;
@@ -62,9 +62,9 @@
     .login-flash.success { background: #e8f8ef; color: #146c43; border: 1px solid #b7ebc6; }
     .login-flash.warning { background: #fff8e6; color: #9a6700; border: 1px solid #ffe08a; }
     .back-link { display: inline-block; margin-bottom: 12px; color: #888; font-size: 13px; text-decoration: none; }
-    .back-link:hover { color: #E91E63; text-decoration: none; }
+    .back-link:hover { color: #123A2E; text-decoration: none; }
     .step-pill {
-        display: inline-block; background: #fce4ec; color: #E91E63; border-radius: 999px;
+        display: inline-block; background: #EFE7D6; color: #123A2E; border-radius: 999px;
         padding: 4px 12px; font-size: 12px; font-weight: 600; margin-bottom: 12px;
     }
     .profile-locked {
@@ -83,14 +83,14 @@
         transition: border-color .15s ease;
     }
     .reg-field-outline:focus-within {
-        border-color: #E91E63;
-        box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.12);
+        border-color: #123A2E;
+        box-shadow: 0 0 0 3px rgba(201, 151, 77, 0.12);
     }
     .reg-field-outline .float-label {
         position: absolute; top: -8px; left: 10px; padding: 0 6px;
         background: #fff; font-size: 11px; color: #888; line-height: 1;
     }
-    .reg-field-outline:focus-within .float-label { color: #E91E63; }
+    .reg-field-outline:focus-within .float-label { color: #123A2E; }
     .reg-field-outline select {
         width: 100%; border: 0; outline: none; background: transparent;
         font-size: 15px; color: #222; height: 28px; padding: 0;
@@ -123,10 +123,10 @@
     .reg-progress span {
         flex: 1; height: 4px; border-radius: 999px; background: #e8e8e8;
     }
-    .reg-progress span.on { background: #E91E63; }
+    .reg-progress span.on { background: #123A2E; }
     .reg-build-icon {
         width: 48px; height: 48px; border-radius: 50%; margin: 0 auto 14px;
-        background: #fce4ec; color: #E91E63; display: flex; align-items: center; justify-content: center;
+        background: #EFE7D6; color: #123A2E; display: flex; align-items: center; justify-content: center;
         font-size: 20px;
     }
     .reg-build-title {
@@ -142,21 +142,36 @@
         width: 42px; height: 48px; border: 0; border-bottom: 2px solid #ddd;
         text-align: center; font-size: 22px; font-weight: 600; outline: none; background: transparent;
     }
-    .otp-boxes input:focus { border-bottom-color: #E91E63; }
+    .otp-boxes input:focus { border-bottom-color: #123A2E; }
     .verify-mobile-sub {
         text-align: center; color: #666; font-size: 14px; line-height: 1.5; margin: 0 0 8px;
     }
     .verify-mobile-sub a { color: #1976d2; font-weight: 600; }
     .resend-row { text-align: center; color: #999; font-size: 13px; margin-top: 14px; }
     .resend-row button {
-        background: none; border: 0; color: #E91E63; font-weight: 600; padding: 0; cursor: pointer;
+        background: none; border: 0; color: #123A2E; font-weight: 600; padding: 0; cursor: pointer;
     }
     .resend-row button:disabled { color: #aaa; cursor: default; }
+    .experience-choices { display: flex; flex-direction: column; gap: 14px; margin-bottom: 6px; }
+    .experience-card {
+        display: flex; align-items: flex-start; gap: 14px; text-align: left;
+        width: 100%; background: #fff; border: 1.5px solid #e6e6e6; border-radius: 14px;
+        padding: 18px 16px; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .experience-card:hover, .experience-card:focus {
+        border-color: #123A2E; box-shadow: 0 6px 18px rgba(201, 151, 77, 0.12); outline: none;
+    }
+    .experience-card__icon {
+        flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: #EFE7D6;
+        color: #123A2E; display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .experience-card__title { display: block; font-size: 15.5px; font-weight: 700; color: #222; margin-bottom: 3px; }
+    .experience-card__desc { display: block; font-size: 13px; color: #777; line-height: 1.4; }
 </style>
 
 <section class="shaadi-reg-page">
 <div class="shaadi-reg-wrap">
-    <div class="shaadi-reg-card {{ in_array($mode, ['community', 'contact', 'build', 'build2', 'build3', 'build4'], true) ? 'hide-mark' : '' }}">
+    <div class="shaadi-reg-card {{ in_array($mode, ['start', 'community', 'contact', 'build', 'build2', 'build3', 'preferences', 'build4'], true) ? 'hide-mark' : '' }}">
         <div class="brand-mark top-mark">U</div>
 
         @php
@@ -177,8 +192,37 @@
             </div>
         @endif
 
+        {{-- STEP 0: Online vs Personalized (Website Upgrade Brief §6 routing rule) --}}
+        @if($mode === 'experience')
+            <h2>How would you like to find your match?</h2>
+            <p class="subtitle">This helps us set up the right experience for you</p>
+
+            <form method="post" action="{{ route('register.experience') }}" id="reg_experience_form">
+                @csrf
+                <div class="experience-choices">
+                    <button type="submit" name="service_type" value="online" class="experience-card">
+                        <span class="experience-card__icon"><i class="fa fa-search" aria-hidden="true"></i></span>
+                        <span>
+                            <span class="experience-card__title">Online Matchmaking</span>
+                            <span class="experience-card__desc">I want to search and browse profiles myself.</span>
+                        </span>
+                    </button>
+                    <button type="submit" name="service_type" value="personalized" class="experience-card">
+                        <span class="experience-card__icon"><i class="fa fa-user-circle" aria-hidden="true"></i></span>
+                        <span>
+                            <span class="experience-card__title">Personalized Matchmaking</span>
+                            <span class="experience-card__desc">I want your team to find matches for me.</span>
+                        </span>
+                    </button>
+                </div>
+            </form>
+
+            <a class="shaadi-link" href="{{ route('login') }}">Already have an account? Log in</a>
+        @endif
+
         {{-- STEP 1: name + DOB (Shaadi-style) --}}
         @if($mode === 'start')
+            <a class="back-link" href="{{ route('register', ['mode' => 'experience']) }}"><i class="fa fa-arrow-left"></i></a>
             <h2>Create account</h2>
             <p class="subtitle">Let's start with your name and date of birth</p>
 
@@ -281,7 +325,7 @@
         @if($mode === 'contact')
             <a class="back-link" href="{{ route('register', ['mode' => 'community']) }}"><i class="fa fa-arrow-left"></i></a>
             <div class="text-center" style="margin:8px 0 16px;">
-                <div class="brand-mark" style="width:64px;height:64px;border-radius:50%;font-size:26px;box-shadow:0 0 0 8px rgba(233,30,99,.12);">
+                <div class="brand-mark" style="width:64px;height:64px;border-radius:50%;font-size:26px;box-shadow:0 0 0 8px rgba(201,151,77,.12);">
                     <i class="fa fa-shield"></i>
                 </div>
             </div>
@@ -315,9 +359,9 @@
             </form>
             <p style="text-align:center;font-size:12px;color:#888;margin-top:18px;line-height:1.5;">
                 By creating account, you agree to our
-                <a href="{{ url('privacy') }}" target="_blank" style="color:#E91E63;">Privacy Policy</a>
+                <a href="{{ url('privacy') }}" target="_blank" style="color:#123A2E;">Privacy Policy</a>
                 and
-                <a href="{{ url('tandc') }}" target="_blank" style="color:#E91E63;">T&amp;C</a>.
+                <a href="{{ url('tandc') }}" target="_blank" style="color:#123A2E;">T&amp;C</a>.
             </p>
         @endif
 
@@ -357,6 +401,7 @@
         @if($mode === 'build')
             <div class="reg-progress">
                 <span class="on"></span>
+                <span></span>
                 <span></span>
                 <span></span>
                 <span></span>
@@ -403,6 +448,7 @@
             <div class="reg-progress">
                 <span class="on"></span>
                 <span class="on"></span>
+                <span></span>
                 <span></span>
                 <span></span>
             </div>
@@ -468,6 +514,7 @@
                 <span class="on"></span>
                 <span class="on"></span>
                 <span></span>
+                <span></span>
             </div>
             <div class="reg-build-icon"><i class="fa fa-graduation-cap"></i></div>
             <p class="subtitle" style="margin-bottom:8px;">Great! Few more details</p>
@@ -499,10 +546,85 @@
             <p class="reg-required-note">* Required fields</p>
         @endif
 
-        {{-- Build step 4: remaining old-form fields --}}
-        @if($mode === 'build4')
+        {{-- Partner Preferences (Website Upgrade Brief §5 "Step 3 - Partner Preferences") --}}
+        @if($mode === 'preferences')
             <a class="back-link" href="{{ route('register', ['mode' => 'build3']) }}"><i class="fa fa-arrow-left"></i></a>
             <div class="reg-progress">
+                <span class="on"></span>
+                <span class="on"></span>
+                <span class="on"></span>
+                <span class="on"></span>
+                <span></span>
+            </div>
+            <div class="reg-build-icon"><i class="fa fa-heart"></i></div>
+            <p class="subtitle" style="margin-bottom:8px;">Optional — you can refine this anytime from your profile</p>
+            <h2 class="reg-build-title" style="margin-bottom:24px;">Who are you looking for?</h2>
+
+            <form method="post" action="{{ route('register.preferences') }}" id="reg_preferences_form">
+                @csrf
+                <div class="reg-field">
+                    <div class="reg-field-outline">
+                        <span class="float-label">Preferred marital status</span>
+                        <select name="r_marital_status" id="reg_pref_marital_status">
+                            <option value="" {{ old('r_marital_status', $registerRMaritalStatus) ? '' : 'selected' }}>Any</option>
+                            @foreach($maritalstatuses as $maritalstatus)
+                                <option value="{{ $maritalstatus->dataid }}" @if(old('r_marital_status', $registerRMaritalStatus)==$maritalstatus->dataid) selected @endif>{{ $maritalstatus->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="reg-field">
+                    <div class="reg-field-outline">
+                        <span class="float-label">Preferred religion</span>
+                        <select name="r_religion" id="reg_pref_religion">
+                            <option value="" {{ old('r_religion', $registerRReligion) ? '' : 'selected' }}>Any</option>
+                            @foreach($religions as $religion)
+                                <option value="{{ $religion->dataid }}" @if(old('r_religion', $registerRReligion)==$religion->dataid) selected @endif>{{ $religion->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="row" style="margin-left:-8px;margin-right:-8px;">
+                    <div class="col-xs-6" style="padding:0 8px;width:50%;float:left;box-sizing:border-box;">
+                        <div class="reg-field">
+                            <span class="reg-label">Age range</span>
+                            <div class="reg-field-outline">
+                                <span class="float-label">e.g. 25-32</span>
+                                <input type="text" name="r_age" value="{{ old('r_age', $registerRAge) }}" placeholder="25-32"
+                                       style="width:100%;border:0;outline:none;background:transparent;font-size:15px;height:28px;padding:0;">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-6" style="padding:0 8px;width:50%;float:left;box-sizing:border-box;">
+                        <div class="reg-field">
+                            <span class="reg-label">Height</span>
+                            <div class="reg-field-outline">
+                                <span class="float-label">e.g. 5'4"+</span>
+                                <input type="text" name="r_height" value="{{ old('r_height', $registerRHeight) }}" placeholder="5'4&quot;+"
+                                       style="width:100%;border:0;outline:none;background:transparent;font-size:15px;height:28px;padding:0;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="clear:both;"></div>
+                <div class="reg-field">
+                    <span class="reg-label">Anything else?</span>
+                    <div class="reg-field-outline">
+                        <span class="float-label">Optional</span>
+                        <input type="text" name="r_gen_req" value="{{ old('r_gen_req', $registerRGenReq) }}" placeholder="e.g. settled abroad, non-smoker"
+                               style="width:100%;border:0;outline:none;background:transparent;font-size:15px;height:28px;padding:0;">
+                    </div>
+                </div>
+                <button type="submit" class="shaadi-btn-primary" id="reg_continue_preferences">Continue</button>
+            </form>
+            <p class="reg-required-note">All fields optional</p>
+        @endif
+
+        {{-- Build step 4: remaining old-form fields --}}
+        @if($mode === 'build4')
+            <a class="back-link" href="{{ route('register', ['mode' => 'preferences']) }}"><i class="fa fa-arrow-left"></i></a>
+            <div class="reg-progress">
+                <span class="on"></span>
                 <span class="on"></span>
                 <span class="on"></span>
                 <span class="on"></span>
