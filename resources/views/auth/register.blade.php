@@ -152,21 +152,6 @@
         background: none; border: 0; color: #123A2E; font-weight: 600; padding: 0; cursor: pointer;
     }
     .resend-row button:disabled { color: #aaa; cursor: default; }
-    .experience-choices { display: flex; flex-direction: column; gap: 14px; margin-bottom: 6px; }
-    .experience-card {
-        display: flex; align-items: flex-start; gap: 14px; text-align: left;
-        width: 100%; background: #fff; border: 1.5px solid #e6e6e6; border-radius: 14px;
-        padding: 18px 16px; cursor: pointer; transition: border-color .15s ease, box-shadow .15s ease;
-    }
-    .experience-card:hover, .experience-card:focus {
-        border-color: #123A2E; box-shadow: 0 6px 18px rgba(201, 151, 77, 0.12); outline: none;
-    }
-    .experience-card__icon {
-        flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; background: #EFE7D6;
-        color: #123A2E; display: flex; align-items: center; justify-content: center; font-size: 18px;
-    }
-    .experience-card__title { display: block; font-size: 15.5px; font-weight: 700; color: #222; margin-bottom: 3px; }
-    .experience-card__desc { display: block; font-size: 13px; color: #777; line-height: 1.4; }
 </style>
 
 <section class="shaadi-reg-page">
@@ -192,37 +177,8 @@
             </div>
         @endif
 
-        {{-- STEP 0: Online vs Personalized (Website Upgrade Brief §6 routing rule) --}}
-        @if($mode === 'experience')
-            <h2>How would you like to find your match?</h2>
-            <p class="subtitle">This helps us set up the right experience for you</p>
-
-            <form method="post" action="{{ route('register.experience') }}" id="reg_experience_form">
-                @csrf
-                <div class="experience-choices">
-                    <button type="submit" name="service_type" value="online" class="experience-card">
-                        <span class="experience-card__icon"><i class="fa fa-search" aria-hidden="true"></i></span>
-                        <span>
-                            <span class="experience-card__title">Online Matchmaking</span>
-                            <span class="experience-card__desc">I want to search and browse profiles myself.</span>
-                        </span>
-                    </button>
-                    <button type="submit" name="service_type" value="personalized" class="experience-card">
-                        <span class="experience-card__icon"><i class="fa fa-user-circle" aria-hidden="true"></i></span>
-                        <span>
-                            <span class="experience-card__title">Personalized Matchmaking</span>
-                            <span class="experience-card__desc">I want your team to find matches for me.</span>
-                        </span>
-                    </button>
-                </div>
-            </form>
-
-            <a class="shaadi-link" href="{{ route('login') }}">Already have an account? Log in</a>
-        @endif
-
         {{-- STEP 1: name + DOB (Shaadi-style) --}}
         @if($mode === 'start')
-            <a class="back-link" href="{{ route('register', ['mode' => 'experience']) }}"><i class="fa fa-arrow-left"></i></a>
             <h2>Create account</h2>
             <p class="subtitle">Let's start with your name and date of birth</p>
 

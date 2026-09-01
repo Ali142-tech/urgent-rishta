@@ -47,22 +47,16 @@ class RegisterController extends Controller
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
         $googleOAuth = Session::get('google_oauth');
 
-        $mode = $request->query('mode', 'experience'); // experience | start | community | contact | otp | build | build2 | build3 | preferences | build4 | verify_mobile | profile
-        if (!in_array($mode, ['experience', 'start', 'community', 'contact', 'otp', 'build', 'build2', 'build3', 'preferences', 'build4', 'verify_mobile', 'profile'], true)) {
-            $mode = 'experience';
+        $mode = $request->query('mode', 'start'); // start | community | contact | otp | build | build2 | build3 | preferences | build4 | verify_mobile | profile
+        if (!in_array($mode, ['start', 'community', 'contact', 'otp', 'build', 'build2', 'build3', 'preferences', 'build4', 'verify_mobile', 'profile'], true)) {
+            $mode = 'start';
         }
 
-        // Fresh "Register" click (/register with no mode) → start from step 0, drop stale session
+        // Fresh "Register" click (/register with no mode) → start from step 1, drop stale session
         if (!$request->has('mode')) {
             $this->forgetRegisterSession();
             $googleOAuth = null;
-            $mode = 'experience';
-        }
-
-        // Website Upgrade Brief §6 routing rule — must choose Online vs Personalized
-        // before continuing into the name/DOB step.
-        if ($mode === 'start' && !Session::has('register_service_type')) {
-            return redirect()->route('register', ['mode' => 'experience']);
+            $mode = 'start';
         }
 
         // Prefill names from Google on first step
@@ -168,32 +162,12 @@ class RegisterController extends Controller
             'registerCountryCode' => Session::get('register_country_code', '92'),
             'registerEmailMasked' => Session::get('register_email_masked'),
             'otpResendSeconds' => (int) config('otp.resend_cooldown_seconds', 60),
-            'registerServiceType' => Session::get('register_service_type'),
             'registerRAge' => Session::get('register_r_age'),
             'registerRHeight' => Session::get('register_r_height'),
             'registerRMaritalStatus' => Session::get('register_r_marital_status'),
             'registerRReligion' => Session::get('register_r_religion'),
             'registerRGenReq' => Session::get('register_r_gen_req'),
         ]);
-    }
-
-    /**
-     * Step 0 (Website Upgrade Brief §6 routing rule): "I want to search
-     * profiles myself" → online, or "I want your team to find matches for
-     * me" → personalized. Stored on the account so it can route the user to
-     * the right dashboard/queue later; does not gate anything by itself yet.
-     */
-    public function saveExperience(Request $request)
-    {
-        $request->validate([
-            'service_type' => 'required|in:online,personalized',
-        ], [
-            'service_type.required' => 'Please choose how you would like to find your match.',
-        ]);
-
-        Session::put('register_service_type', $request->service_type);
-
-        return redirect()->route('register', ['mode' => 'start']);
     }
 
     /**
@@ -716,7 +690,6 @@ class RegisterController extends Controller
             'month' => Session::get('register_month'),
             'year' => Session::get('register_year'),
             'gender' => Session::get('register_gender', 'male'),
-            'service_type' => Session::get('register_service_type'),
             'email' => $email,
             'mobile' => $mobile,
             'country' => Session::get('register_country'),
@@ -794,7 +767,6 @@ class RegisterController extends Controller
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'gender' => $data['gender'],
-            'service_type' => $data['service_type'] ?? null,
             'email' => $data['email'],
             'contact_mobile_number' => $this->getNormalizedPhoneNumber($data['mobile']),
             'height' => $data['height'],
@@ -920,7 +892,6 @@ class RegisterController extends Controller
     {
         Session::forget([
             'google_oauth',
-            'register_service_type',
             'register_verified',
             'register_email',
             'register_mobile',

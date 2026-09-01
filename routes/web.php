@@ -26,8 +26,6 @@ Route::get('login/google', [App\Http\Controllers\Auth\GoogleAuthController::clas
 Route::get('login/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('login.google.callback');
 
 // Multi-step register (name+DOB → mobile/email OTP → profile)
-// Website Upgrade Brief §6 routing rule: capture Online vs Personalized intent first.
-Route::post('register/experience', [App\Http\Controllers\Auth\RegisterController::class, 'saveExperience'])->name('register.experience');
 Route::post('register/basics', [App\Http\Controllers\Auth\RegisterController::class, 'saveBasics'])->name('register.basics');
 Route::post('register/community', [App\Http\Controllers\Auth\RegisterController::class, 'saveCommunity'])->name('register.community');
 Route::post('register/contact', [App\Http\Controllers\Auth\RegisterController::class, 'saveContact'])->name('register.contact');
