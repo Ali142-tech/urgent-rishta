@@ -1,4 +1,8 @@
-@extends('layouts.master')
+{{-- Guests can view a member's profile too (public browsing), so this can't
+     assume the authenticated dashboard shell — only logged-in members get it,
+     guests still get the marketing site layout. --}}
+@extends(auth()->check() ? 'layouts.dashboard' : 'layouts.master')
+@section('dashboard-title', ($profile->first_name ?? 'Member') . "'s Profile")
 @section('main-content')
 <?php use App\User; ?>
 <section class="slice sct-color-2">
