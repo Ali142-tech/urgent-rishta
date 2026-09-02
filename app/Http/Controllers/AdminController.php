@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Artisan;
 use Intervention\Image\Facades\Image;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminController extends Controller
 {
@@ -373,14 +374,14 @@ class AdminController extends Controller
 
     function packages()
     {
+        $view = view('admin.dashboard.packages')->with(['packages' => MasterData::where('type', 'PACKAGE')->get()]);
+
         if (request()->ajax()) {
             return [
                 'code' => '200',
-                'html' => view('admin.dashboard.packages')->with(['packages' => MasterData::where('type', 'PACKAGE')->get()])->renderSections()['admin-content']
+                'html' => $view->renderSections()['admin-content']
             ]; // only return whats in the main-content section
-        } else return [
-            'code' => '200'
-        ];
+        } else return $view;
     }
 
     /**
@@ -664,6 +665,35 @@ class AdminController extends Controller
         } else return [
             'code' => '200'
         ];
+    }
+
+    /**
+     * "Download User Data (PDF)" action on the admin/profiles member card.
+     * Was a dead <a> with no href/onclick before — never implemented.
+     */
+    function downloadProfilePdf($dataid)
+    {
+        $member = Profile::where('dataid', $dataid)->first();
+        if (empty($member)) {
+            abort(404, 'Member not found.');
+        }
+
+        $imagePath = public_path($member->getProfileImage());
+        $photo = is_file($imagePath) ? $imagePath : null;
+
+        $pdf = Pdf::loadView('admin.dashboard.profile-pdf', compact('member', 'photo'));
+        return $pdf->download($member->dataid . '-profile.pdf');
+    }
+
+    /**
+     * Full admin page (with the sidebar/shell) for changing a member's
+     * package — replaces the old renderUpdatePackageModal() popup.
+     */
+    function changePackagePage($dataid)
+    {
+        $member = User::retrieveUserObject($dataid);
+        $packages = MasterData::where('type', 'PACKAGE')->get();
+        return view('admin.dashboard.profile-package', compact('member', 'packages'));
     }
 
     function fixDataId($table)
@@ -1038,19 +1068,29 @@ class AdminController extends Controller
 
     public function showListingModal($type, $dataid)
     {
+        $member = User::retrieveUserObject($dataid);
+        $members = null;
+        if ($type != "interests") {
+            $members = $member->getTypeFilteredList($type);
+        } else {
+            $members = $member->getInterestLists();
+        }
+
+        // Full admin page (with the sidebar/shell) — this is the normal path
+        // now that admin/profiles links here directly instead of opening a modal.
+        if ($type == 'interests') {
+            return view('admin.dashboard.profile-interests', compact('member', 'members'));
+        }
+
         if (request()->ajax()) {
-            $user = User::retrieveUserObject($dataid);
-            $members = null;
-            if ($type != "interests") {
-                $members = $user->getTypeFilteredList($type);
-            } else {
-                $members = $user->getInterestLists();
-            }
-            $body = view('member.listing', compact('type', 'members'))->renderSections()['main-content'];
-            $buttons = "";
+            // member.listing is just the page shell (@yield('filtered-data')) —
+            // the actual cards live in member.filtereddata, which @extends it
+            // and fills that yield. Rendering member.listing directly here
+            // left the modal body blank.
+            $body = view('member.filtereddata', compact('type', 'members'))->renderSections()['main-content'];
             return [
                 'code' => '200',
-                'html' => $this->renderModal("", $body, $buttons)
+                'html' => $this->renderModal("", $body, "")
             ];
         } else return [
             'code' => '200'

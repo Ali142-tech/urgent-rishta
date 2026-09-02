@@ -73,6 +73,8 @@ Route::get('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminControll
 Route::post('admin/profile/updatepackage/{id}',[App\Http\Controllers\AdminController::class, 'updateProfilePackage']); // update package for profile in admin dashboard
 Route::get('admin/profile/listing/{type}/{id}', [App\Http\Controllers\AdminController::class, 'showListingModal']);
 Route::get('admin/profile/package/modal/{id}', [App\Http\Controllers\AdminController::class, 'renderUpdatePackageModal']);
+Route::get('admin/profile/package/{id}', [App\Http\Controllers\AdminController::class, 'changePackagePage']);
+Route::get('admin/profile/pdf/{id}', [App\Http\Controllers\AdminController::class, 'downloadProfilePdf']);
 // admin package routes
 Route::post('admin/packages/',[App\Http\Controllers\AdminController::class, 'addPackage']); // add a new package in admin dashboard
 Route::post('admin/packages/{id}',[App\Http\Controllers\AdminController::class, 'updatePackage']); // update package details in admin dashboard

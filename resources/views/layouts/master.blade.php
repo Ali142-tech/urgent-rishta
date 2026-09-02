@@ -497,11 +497,20 @@ a.appointment-btn::before{
                                                     </div>
                                                 </div>
                                             </li>
-                                            <li class="dropdown dropdown--style-2 dropdown--animated">
-                                                <a class="dropdown-toggle has-badge c-base-1" href="{{url('member/profile')}}">
+                                            <li class="dropdown dropdown--style-2 dropdown--animated ur-account-dropdown">
+                                                <a class="dropdown-toggle has-badge c-base-1" href="{{url('member/profile')}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
                                                     <div id="top_nav_img" class="top_nav_img" style="background-image: url( '{{ User::retrieveUserObject()->getProfileImage(true) }}')"></div>
-                                                    <span class="dropdown-text strong-500 d-lg-inline-block d-xl-inline-block" style="margin-top: 5px">{{User::retrieveUserObject()->first_name}} {{User::retrieveUserObject()->last_name}}</span>
                                                 </a>
+                                                {{-- Clicking the avatar opens this instead of navigating straight to
+                                                     member/profile — for an admin that's a choice between two
+                                                     dashboards, so the old separate "Dashboard" pill button next to
+                                                     the avatar was folded into this menu instead of sitting beside it. --}}
+                                                <div class="dropdown-menu dropdown-menu-right ur-account-menu">
+                                                    <a class="dropdown-item" href="{{ url('member/profile') }}"><i class="fa fa-user mr-2"></i> Member Dashboard</a>
+                                                    @if(User::retrieveUserObject()->admin==1)
+                                                    <a class="dropdown-item" href="{{ url('admin/profiles') }}"><i class="fa fa-cogs mr-2"></i> Admin Dashboard</a>
+                                                    @endif
+                                                </div>
                                             </li>
                                             @endauth
                                             @guest
@@ -511,14 +520,9 @@ a.appointment-btn::before{
                                             @endguest
                                             @auth
                                             {{-- Interests/Log Out buttons removed here — the avatar above already
-                                                 links to the member dashboard, which has its own sidebar with
-                                                 both. Kept the admin shortcut and the hidden logout-form, since
-                                                 the mobile menu's Log Out link still submits this same form. --}}
-                                            @if(User::retrieveUserObject()->admin==1)
-                                            <li>
-                                                <a href="{{url('admin/profiles')}}" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-cogs"></i> Dashboard</a>
-                                            </li>
-                                            @endif
+                                                 opens a dashboard-picker dropdown, and each dashboard has its own
+                                                 sidebar with both. Kept the hidden logout-form since the mobile
+                                                 menu's Log Out link still submits this same form. --}}
                                             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                                 @csrf
                                             </form>

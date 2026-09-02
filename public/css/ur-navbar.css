@@ -86,6 +86,16 @@
     color: var(--ur-nav-bg-2);
 }
 
+/* Avatar account menu (Member Dashboard / Admin Dashboard) — just the
+   default dropdown look, with breathing room between the two items. */
+#myHeader .ur-account-menu {
+    left: auto !important;
+    right: 0 !important;
+}
+#myHeader .ur-account-menu .dropdown-item + .dropdown-item {
+    margin-top: 6px;
+}
+
 #myHeader .appointment-btn {
     align-items: center;
     text-decoration: none !important;
