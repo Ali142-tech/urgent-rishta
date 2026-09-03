@@ -110,7 +110,7 @@
             @csrf
             <label class="pg-dropzone" for="pg_images" id="pg_dropzone">
                 <i class="fa fa-cloud-upload" aria-hidden="true"></i>
-                <span>Click to choose photos, or drag them here (JPG/PNG, max 2 MB each)</span>
+                <span>Click to choose photos, or drag them here (JPG/PNG, max 5 MB each)</span>
             </label>
             <input type="file" id="pg_images" name="images[]" accept="image/png,image/x-png,image/gif,image/jpeg" multiple style="display:none;">
         </form>

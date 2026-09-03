@@ -62,6 +62,7 @@ Route::get('admin/appointments', [App\Http\Controllers\AdminController::class, '
 Route::post('admin/appointments/refresh', [App\Http\Controllers\AdminController::class, 'refreshAppointments']);
 // Photo & Identity Verification queue (Website Upgrade Brief §9)
 Route::get('admin/photo-verification', [App\Http\Controllers\AdminController::class, 'photoVerificationQueue']);
+Route::get('admin/photo-verification/logs', [App\Http\Controllers\AdminController::class, 'photoVerificationLogs']);
 Route::post('admin/photo-verification/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approvePhotoVerification']);
 Route::post('admin/photo-verification/{dataid}/reject', [App\Http\Controllers\AdminController::class, 'rejectPhotoVerification']);
 Route::post('admin/photo-verification/{dataid}/reopen', [App\Http\Controllers\AdminController::class, 'reopenPhotoVerification']);

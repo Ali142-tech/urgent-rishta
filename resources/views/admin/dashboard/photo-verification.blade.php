@@ -2,7 +2,9 @@
 @section('admin-content')
 <div class="ur-admin-header">
     <h2>Photo &amp; Identity Verification</h2>
-    <p>Members with {{ $required }}+ uploaded photos, awaiting review before they show as "Verified".</p>
+    <p>Members with {{ $required }}+ uploaded photos, awaiting review before they show as "Verified".
+        <a href="{{ url('admin/photo-verification/logs') }}" class="ur-admin-header__muted"><i class="fa fa-history"></i> View decision history</a>
+    </p>
 </div>
 
 <div class="ur-admin-panel">

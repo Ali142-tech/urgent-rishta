@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Artisan;
 use App\Mail\ProfileVerified;
 use App\Mail\ProfileRejected;
+use App\PhotoVerificationLog;
 use Intervention\Image\Facades\Image;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -122,6 +123,39 @@ class AdminController extends Controller
         } else return $view;
     }
 
+    /**
+     * Audit trail for approve/reject/reopen decisions — the `users` table
+     * only ever holds the *current* verification state, so this is the only
+     * place "who decided what, and when" for a given member can be looked up.
+     */
+    function photoVerificationLogs(Request $request)
+    {
+        $pageSize = 25;
+        $search = trim((string) $request->query('dataid'));
+
+        $logs = PhotoVerificationLog::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('user_dataid', 'like', '%' . $search . '%')
+                      ->orWhere('admin_dataid', 'like', '%' . $search . '%');
+                });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->paginate($pageSize);
+
+        $view = view('admin.dashboard.photo-verification-logs', [
+            'logs' => $logs,
+            'search' => $search,
+        ]);
+
+        if ($request->ajax()) {
+            return [
+                'code' => '200',
+                'html' => $view->renderSections()['admin-content']
+            ];
+        } else return $view;
+    }
+
     function approvePhotoVerification($dataid)
     {
         $admin = User::retrieveUserObject();
@@ -139,6 +173,7 @@ class AdminController extends Controller
         User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
 
         Log::info('Admin (' . $admin->dataid . ') verified photos for ' . $user->dataid);
+        PhotoVerificationLog::record($user, $admin, 'approved');
 
         try {
             Mail::to($user)->send(new ProfileVerified($user));
@@ -174,6 +209,7 @@ class AdminController extends Controller
         User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
 
         Log::info('Admin (' . $admin->dataid . ') rejected photos for ' . $user->dataid . ': ' . $reason);
+        PhotoVerificationLog::record($user, $admin, 'rejected', $reason);
 
         try {
             Mail::to($user)->send(new ProfileRejected($user, $reason));
@@ -214,6 +250,7 @@ class AdminController extends Controller
         User::retrieveUserObject($user->dataid, true);
 
         Log::info('Admin (' . $admin->dataid . ') reopened photo verification for ' . $user->dataid . ' (old photos cleared)');
+        PhotoVerificationLog::record($user, $admin, 'reopened');
 
         return [
             'code' => '200',

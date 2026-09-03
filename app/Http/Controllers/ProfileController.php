@@ -196,7 +196,7 @@ class ProfileController extends Controller
                         $imageExtension = $image->getClientOriginalExtension();
                         $imageSize = $image->getSize();
                         $imageSizeInMb = floatval(number_format($imageSize / (1024 * 1024), 2));
-                        if ($imageSizeInMb > 2) { // only allow images of 2 MB or less
+                        if ($imageSizeInMb > 5) { // only allow images of 5 MB or less
                             $largeFiles .= ", " . $imageName . " (" . $imageSizeInMb . " MB)";
                             $countLargeFiles += 1;
                             Log::info("Skipping large image " . $imageName . " (" . $imageSizeInMb . " MB)");
@@ -254,7 +254,7 @@ class ProfileController extends Controller
                 $message = ($totalUploaded > 0 ?
                     'success|You have successfully uploaded ' . $totalUploaded . ' image(s).' :
                     'warning|Images(s) could not be uploaded.') .
-                    ($countLargeFiles > 0 ? ' Following files were discarded due to size restriction of 2 MB - ' . substr($largeFiles, 2) : '') .
+                    ($countLargeFiles > 0 ? ' Following files were discarded due to size restriction of 5 MB - ' . substr($largeFiles, 2) : '') .
                     ($countInvalidFiles > 0 ? ' Following files were discarded as they were not fully uploaded - ' . substr($invalidFiles, 2) : '') .
                     ($countProcessingFailed > 0 ? ' ' . $countProcessingFailed . ' file(s) failed during processing—check laravel.log.' : '') .
                     ($totalUploaded > 0 ? ' Do not forget to update the visibility in the gallery.|5000' : '|5000');
@@ -305,7 +305,7 @@ class ProfileController extends Controller
             }
 
             $imageSizeInMb = floatval(number_format($selfie->getSize() / (1024 * 1024), 2));
-            if ($imageSizeInMb > 2) {
+            if ($imageSizeInMb > 5) {
                 return ['code' => '400', 'message' => 'danger|Selfie capture is too large. Please try again.'];
             }
 
