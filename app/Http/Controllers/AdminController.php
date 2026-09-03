@@ -15,8 +15,11 @@ use Illuminate\Mail\Message;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Artisan;
+use App\Mail\ProfileVerified;
+use App\Mail\ProfileRejected;
 use Intervention\Image\Facades\Image;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -137,6 +140,12 @@ class AdminController extends Controller
 
         Log::info('Admin (' . $admin->dataid . ') verified photos for ' . $user->dataid);
 
+        try {
+            Mail::to($user)->send(new ProfileVerified($user));
+        } catch (\Exception $e) {
+            Log::error('Failed to send profile-verified email to ' . $user->dataid . ': ' . $e->getMessage());
+        }
+
         return [
             'code' => '200',
             'message' => 'success|Photos verified for ' . $user->first_name . ' ' . $user->last_name . '.'
@@ -165,6 +174,12 @@ class AdminController extends Controller
         User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
 
         Log::info('Admin (' . $admin->dataid . ') rejected photos for ' . $user->dataid . ': ' . $reason);
+
+        try {
+            Mail::to($user)->send(new ProfileRejected($user, $reason));
+        } catch (\Exception $e) {
+            Log::error('Failed to send profile-rejected email to ' . $user->dataid . ': ' . $e->getMessage());
+        }
 
         return [
             'code' => '200',
