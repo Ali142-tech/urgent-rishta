@@ -380,7 +380,7 @@ class LoginController extends Controller
             return redirect()->route('searchresults', $pendingSearch);
         }
 
-        return redirect('home');
+        return redirect('member/profile');
     }
 
     private function findUserByMobile(string $normalized): ?User

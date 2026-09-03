@@ -2,13 +2,283 @@
 @section('main-content')
 <?php use App\User; ?>
 <style>
-    @media (max-width: 576px) {
-        .listing-image {
-            height: 330px !important;
+    /* ===== Brand tokens (matches ur-dashboard / ur-profile / ur-navbar) ===== */
+    .ur-search-page {
+        --ur-green: #123A2E;
+        --ur-green-dark: #0F2E24;
+        --ur-gold: #C9974D;
+        --ur-red: #B5674A;
+        --ur-bg: #F6F4EF;
+        --ur-border: #E7E2D6;
+        --ur-text: #1C2321;
+        --ur-text-muted: #6B7570;
+    }
+
+    /* ---- Bring the sidebar / buttons / form controls / pagination onto the same palette ---- */
+    .ur-search-page .card {
+        border: none !important;
+        border-radius: 16px !important;
+        box-shadow: 0 10px 30px rgba(15, 46, 36, .06);
+        overflow: hidden;
+    }
+
+    .ur-search-page .card-title {
+        background: #fff;
+        border-bottom: 1px solid var(--ur-border) !important;
+    }
+
+    .ur-search-page .card-title h3 {
+        color: var(--ur-green);
+    }
+
+    .ur-search-page .form-control:focus {
+        border-color: var(--ur-gold) !important;
+        box-shadow: none;
+    }
+
+    .ur-search-page .radio-primary input[type="radio"] + label::after,
+    .ur-search-page .radio-primary input[type="radio"]:checked + label::before,
+    .ur-search-page .radio-primary input[type="radio"]:checked + label::after {
+        background-color: var(--ur-green) !important;
+        border-color: var(--ur-green) !important;
+    }
+
+    .ur-search-page .btn-base-1 {
+        background-color: var(--ur-green) !important;
+        border-color: var(--ur-green) !important;
+        color: #fff !important;
+    }
+
+    .ur-search-page .btn-base-1:active,
+    .ur-search-page .btn-base-1.active,
+    .ur-search-page .btn-base-1:focus,
+    .ur-search-page .btn-base-1:hover {
+        background-color: var(--ur-green-dark) !important;
+        border-color: var(--ur-green-dark) !important;
+        color: #fff !important;
+    }
+
+    .ur-search-page .pagination > .active .page-link,
+    .ur-search-page .pagination > .active .page-link:focus,
+    .ur-search-page .pagination > .active .page-link:hover,
+    .ur-search-page .pagination > .active > span {
+        background-color: var(--ur-green) !important;
+        border-color: var(--ur-green) !important;
+        color: #fff !important;
+    }
+
+    .ur-search-page .pagination .page-item .page-link:focus,
+    .ur-search-page .pagination .page-item .page-link:hover {
+        background-color: var(--ur-bg) !important;
+        border-color: var(--ur-border) !important;
+        color: var(--ur-green) !important;
+    }
+
+    /* ===== Search results member cards ===== */
+    .member-results {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 22px;
+    }
+
+    @media (max-width: 767px) {
+        .member-results {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+    }
+
+    .member-card {
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+        border: 1px solid var(--ur-border, #E7E2D6);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 6px 18px rgba(15, 46, 36, .06);
+        transition: box-shadow .25s ease, transform .25s ease;
+    }
+
+    .member-card:hover {
+        box-shadow: 0 14px 30px rgba(15, 46, 36, .12);
+        transform: translateY(-3px);
+    }
+
+    .member-card__photo {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4 / 5;
+        background: var(--ur-bg, #F6F4EF);
+        overflow: hidden;
+    }
+
+    .member-card__photo a {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+
+    .member-card__photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+        display: block;
+    }
+
+    .member-card__ribbon {
+        position: absolute;
+        top: 12px;
+        left: -34px;
+        transform: rotate(-45deg);
+        width: 130px;
+        padding: 3px 0;
+        text-align: center;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        color: #fff;
+        z-index: 2;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .member-card__ribbon--new {
+        background: var(--ur-gold, #C9974D);
+        color: var(--ur-green-dark, #0F2E24);
+    }
+
+    .member-card__ribbon--updated {
+        background: var(--ur-green, #123A2E);
+    }
+
+    .member-card__id-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 2;
+        background: rgba(15, 46, 36, 0.6);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .3px;
+        padding: 4px 9px;
+        border-radius: 20px;
+        pointer-events: none;
+    }
+
+    .member-card__body {
+        padding: 16px 16px 4px;
+        flex: 1;
+    }
+
+    .member-card__name {
+        margin: 0 0 10px;
+        font-size: 1.05rem;
+        font-weight: 600;
+    }
+
+    .member-card__name a {
+        color: var(--ur-text, #1C2321);
+        cursor: pointer;
+    }
+
+    .member-card__name a:hover {
+        color: var(--ur-green, #123A2E);
+    }
+
+    .member-card__quick {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        list-style: none;
+        padding: 0;
+        margin: 0 0 12px;
+        font-size: .8rem;
+        color: var(--ur-text-muted, #6B7570);
+    }
+
+    .member-card__quick li i {
+        color: var(--ur-gold, #C9974D);
+        margin-right: 5px;
+    }
+
+    .member-card__details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0 14px;
+        list-style: none;
+        padding: 10px 0 4px;
+        margin: 0;
+        border-top: 1px dashed var(--ur-border, #E7E2D6);
+    }
+
+    .member-card__details li {
+        display: flex;
+        flex-direction: column;
+        padding: 6px 0;
+        border-bottom: 1px dashed var(--ur-border, #E7E2D6);
+        font-size: .78rem;
+        overflow: hidden;
+    }
+
+    .member-card__details li span {
+        color: var(--ur-text-muted, #6B7570);
+        text-transform: uppercase;
+        font-size: .68rem;
+        letter-spacing: .3px;
+    }
+
+    .member-card__details li b {
+        color: var(--ur-text, #1C2321);
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .member-card__footer {
+        display: flex;
+        border-top: 1px solid var(--ur-border, #E7E2D6);
+        margin-top: 12px;
+    }
+
+    .member-card__footer a {
+        flex: 1;
+        text-align: center;
+        padding: 12px 6px;
+        font-size: .78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        cursor: pointer;
+        color: var(--ur-text, #1C2321);
+        transition: background-color .2s ease, color .2s ease;
+    }
+
+    .member-card__footer a:first-child {
+        border-right: 1px solid var(--ur-border, #E7E2D6);
+    }
+
+    .member-card__footer a:hover {
+        background: var(--ur-bg, #F6F4EF);
+    }
+
+    .member-card__footer a.is-interest {
+        color: var(--ur-green, #123A2E);
+    }
+
+    .member-card__footer a.is-interest:hover {
+        background: #EAF1EE;
+    }
+
+    @media (max-width: 991px) and (min-width: 768px) {
+        .member-card__details {
+            grid-template-columns: 1fr;
         }
     }
 </style>
-<section class="page-title page-title--style-1">
+<section class="page-title page-title--style-1 ur-search-page">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-12 text-center">
@@ -17,7 +287,7 @@
         </div>
     </div>
 </section>
-<section class="slice sct-color-1">
+<section class="slice sct-color-1 ur-search-page">
     <div class="container">
         <div class="row">
             <div class="col-lg-4 size-sm">

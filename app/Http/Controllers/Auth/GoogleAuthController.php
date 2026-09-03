@@ -77,7 +77,7 @@ class GoogleAuthController extends Controller
                 return redirect('packages');
             }
 
-            return redirect('home');
+            return redirect('member/profile');
         }
 
         // New Google user → complete registration (matrimony profile fields still required)
