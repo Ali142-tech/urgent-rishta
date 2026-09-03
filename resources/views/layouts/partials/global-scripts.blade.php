@@ -183,6 +183,7 @@
                 '_token': "{{ csrf_token() }}"
             },
             cache: false,
+            timeout: 20000,
             success: function(result) {
                 elem.html(oldHtml);
                 elem.prop('disabled', false);
@@ -197,6 +198,13 @@
                         $(elem.children("span")[0]), null, "Interest Expressed", true, true,  "return withdrawInterest($(this), 's');");
                     showAlert(message[0], message[1], 7000);
                 } else showAlert('danger', message, 5000);
+            },
+            error: function() {
+                // Request itself failed/hung (network blip, timeout, session
+                // expired, etc.) — never leave the button stuck on "Processing..".
+                elem.html(oldHtml);
+                elem.prop('disabled', false);
+                showAlert('danger', 'Could not reach the server. Please check your connection and try again.', 6000);
             }
         });
     }
@@ -215,6 +223,7 @@
                 '_token': "{{ csrf_token() }}"
             },
             cache: false,
+            timeout: 20000,
             success: function(result) {
                 elem.html(oldHtml);
                 elem.prop('disabled', false);
@@ -230,6 +239,11 @@
                     $("#status_"+splitId[1]).html("GRANTED");
                     showAlert(message[0], message[1], 7000);
                 } else showAlert('danger', message, 5000);
+            },
+            error: function() {
+                elem.html(oldHtml);
+                elem.prop('disabled', false);
+                showAlert('danger', 'Could not reach the server. Please check your connection and try again.', 6000);
             }
         });
     }
@@ -248,6 +262,7 @@
                 '_token': "{{ csrf_token() }}"
             },
             cache: false,
+            timeout: 20000,
             success: function(result) {
                 elem.html(oldHtml);
                 elem.prop('disabled', false);
@@ -263,6 +278,11 @@
                     $("#status_"+splitId[1]).html("DECLINED");
                     showAlert(message[0], message[1], 7000);
                 } else showAlert('danger', message, 5000);
+            },
+            error: function() {
+                elem.html(oldHtml);
+                elem.prop('disabled', false);
+                showAlert('danger', 'Could not reach the server. Please check your connection and try again.', 6000);
             }
         });
     }
@@ -282,6 +302,7 @@
                     '_token': "{{ csrf_token() }}"
                 },
                 cache: false,
+                timeout: 20000,
                 success: function(result) {
                     elem.html(oldHtml);
                     elem.prop('disabled', false);
@@ -303,6 +324,11 @@
                         }
                         showAlert(message[0], message[1], 7000);
                     } else showAlert('danger', message, 5000);
+                },
+                error: function() {
+                    elem.html(oldHtml);
+                    elem.prop('disabled', false);
+                    showAlert('danger', 'Could not reach the server. Please check your connection and try again.', 6000);
                 }
             });
         });

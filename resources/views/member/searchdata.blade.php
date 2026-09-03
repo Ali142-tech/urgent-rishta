@@ -13,20 +13,24 @@
             <li class="paginate_button page-item {{ $i == $currentPage ? 'active':'' }}"><a {{ $currentPage==$i?"disabled":"" }} onclick="javascript:refreshProfiles(true, {{ $i }});" class="page-link">{{ $i }}</a></li>
             @endfor
 
+            @if($currentPage+4<$numPages)
+            <li class="paginate_button page-item disabled ur-ellipsis"><span class="page-link">&hellip;</span></li>
+            @endif
+
             @if($currentPage<$numPages)
-            <li class="paginate_button page-item next"><a onclick="javascript:refreshProfiles(true, {{ $currentPage + 1 }});" class="page-link">Next</a></li>
+            <li class="paginate_button page-item next"><a onclick="javascript:refreshProfiles(true, {{ $currentPage + 1 }});" class="page-link">Next <i class="fa fa-angle-right"></i></a></li>
             @endif
         </ul>
     </div>
 </div>
-<div class="block-footer b-xs-top" style="margin: 20px 0;">@if(!empty($pageSize)) Showing
-    {{ isset($resultCount) && $resultCount==0 ? 0 : ($currentPage-1)*$pageSize+1 }}
-    to {{ isset($resultCount) ?
+<div class="ur-results-banner">@if(!empty($pageSize)) <i class="fa fa-clock-o"></i> <span class="ur-results-banner__text">Showing
+    <b>{{ isset($resultCount) && $resultCount==0 ? 0 : ($currentPage-1)*$pageSize+1 }}</b>
+    to <b>{{ isset($resultCount) ?
         ($resultCount-(($currentPage-1)*$pageSize)>$pageSize ? ($currentPage*$pageSize) : $resultCount)
         :
-        ($total-($currentPage*$pageSize)>$pageSize ? ($currentPage*$pageSize) : $total) }}
-    <span>@if (isset($resultCount)) from {{ $resultCount }} filtered members @endif</span>
-    out of {{ $total }} total members @endif</div>
+        ($total-($currentPage*$pageSize)>$pageSize ? ($currentPage*$pageSize) : $total) }}</b>
+    @if (isset($resultCount)) from <b>{{ $resultCount }}</b> filtered members @endif
+    out of <b>{{ $total }}</b> total members</span> @endif</div>
 @if(!empty($members) && sizeof($members)>0)
 <div class="member-results">
 @foreach ($members as $member)
@@ -62,16 +66,12 @@
             <ul class="member-card__details">
                 <li><span>Religion</span><b>{{$member->lbl_religion}}</b></li>
                 <li><span>Caste / Sect</span><b>{{$member->lbl_caste}} / {{$member->sect}}</b></li>
-                <li><span>Mother Tongue</span><b>{{$member->lbl_mother_tongue}}</b></li>
                 <li><span>Marital Status</span><b>{{$member->lbl_marital_status}}</b></li>
-                <li><span>Education</span><b>{{$member->lbl_education}}</b></li>
-                <li><span>Profession</span><b>{{$member->profession}}</b></li>
-                <li><span>Location</span><b>{{$member->lbl_con_of_residence}}</b></li>
             </ul>
         </div>
         <div class="member-card__footer">
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-                <i class="fa fa-id-card"></i> Full Profile
+                <i class="fa fa-eye"></i> View Full Profile
             </a>
             @guest
                 <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return register_request();">
@@ -118,8 +118,12 @@
             <li class="paginate_button page-item {{ $i == $currentPage ? 'active':'' }}"><a {{ $currentPage==$i?"disabled":"" }} onclick="javascript:refreshProfiles(true, {{ $i }});" class="page-link">{{ $i }}</a></li>
             @endfor
 
+            @if($currentPage+4<$numPages)
+            <li class="paginate_button page-item disabled ur-ellipsis"><span class="page-link">&hellip;</span></li>
+            @endif
+
             @if($currentPage<$numPages)
-            <li class="paginate_button page-item next"><a onclick="javascript:refreshProfiles(true, {{ $currentPage + 1 }});" class="page-link">Next</a></li>
+            <li class="paginate_button page-item next"><a onclick="javascript:refreshProfiles(true, {{ $currentPage + 1 }});" class="page-link">Next <i class="fa fa-angle-right"></i></a></li>
             @endif
         </ul>
     </div>
