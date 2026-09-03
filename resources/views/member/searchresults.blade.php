@@ -114,15 +114,35 @@
 
     .member-card__photo a {
         display: block;
+        position: relative;
         width: 100%;
         height: 100%;
     }
 
+    /* Member photos are only ever generated up to ~210px on their longest
+       side, so forcing them to `cover` a much larger box upscales and
+       crops them hard (blurry, oddly zoomed faces). We show the photo
+       untouched (`contain`, never cropped/upscaled beyond native size)
+       and fill the rest of the box with a softly blurred copy of the
+       same photo instead of dead space, so every card still reads as a
+       uniform, deliberate frame regardless of the source image's size
+       or orientation. */
+    .member-card__photo-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        filter: blur(20px) saturate(1.1) brightness(.92);
+        transform: scale(1.15);
+    }
+
     .member-card__photo img {
+        position: relative;
+        z-index: 1;
         width: 100%;
         height: 100%;
-        object-fit: cover;
-        object-position: top center;
+        object-fit: contain;
+        object-position: center;
         display: block;
     }
 

@@ -33,6 +33,7 @@
     <div class="member-card" id="block_{{$member->dataid}}">
         <div class="member-card__photo">
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                <span class="member-card__photo-bg" style="background-image:url('{{ $member->getProfileImage() }}')"></span>
                 <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='/images/{{ strtolower($member->gender ? $member->gender : 'male') }}_large.jpg';" />
             </a>
             @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
