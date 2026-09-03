@@ -216,4 +216,3 @@ Route::get('clear-all', function () {
         ]);
     }
 });
-

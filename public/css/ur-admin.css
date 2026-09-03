@@ -422,14 +422,16 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
 .ur-admin-pv-card__reason:focus { border-color: var(--ur-dash-gold); outline: none; box-shadow: 0 0 0 3px rgba(201,151,77,.15); }
 .ur-admin-pv-card__actions { margin-top: 12px; display: flex; gap: 8px; }
 .ur-admin-pv-card__photos { flex: 2 1 360px; display: flex; gap: 14px; flex-wrap: wrap; }
-.ur-admin-pv-photo { text-align: center; }
+.ur-admin-pv-photo { text-align: center; cursor: zoom-in; }
 .ur-admin-pv-photo img {
     width: 120px;
     height: 120px;
     object-fit: cover;
     border-radius: 10px;
     border: 1px solid var(--ur-dash-border);
+    transition: opacity .15s ease, transform .15s ease;
 }
+.ur-admin-pv-photo:hover img { opacity: .88; transform: scale(1.03); }
 .ur-admin-pv-photo img.is-selfie { border: 2px solid var(--ur-dash-gold); }
 .ur-admin-pv-photo__label { font-size: 11px; color: var(--ur-dash-text-muted); margin-top: 4px; }
 .ur-admin-pv-photo__label--selfie { color: var(--ur-dash-gold); font-weight: 600; }
