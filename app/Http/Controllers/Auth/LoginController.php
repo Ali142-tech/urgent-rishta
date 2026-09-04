@@ -339,13 +339,13 @@ class LoginController extends Controller
                 $loggedInUser->sendEmailVerificationNotification();
                 Session::flash(
                     'message',
-                    'danger|Your email is not verified yet. We sent a new verification link (check spam/junk). Need help? Contact UrgentRishta Team at 0307-0227000.|15000'
+                    'danger|Your email is not verified yet. We sent a new verification link (check spam/junk). Need help? Contact UrgentRishta Team at 0304-0227000.|15000'
                 );
                 Log::info('User email not verified for ' . $loggedInUser->email);
                 Auth::logout();
             } catch (\Exception $e) {
                 Auth::logout();
-                Session::flash('message', 'danger|Your email is not verified. Please contact support at 0307-0227000.');
+                Session::flash('message', 'danger|Your email is not verified. Please contact support at 0304-0227000.');
             }
             return redirect()->route('login');
         }

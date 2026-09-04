@@ -51,7 +51,7 @@
         <tr>
             <td style="padding:30px 30px 26px; border-top:1px solid #EFEAE0;">
                 <p style="margin:0; font-size:11.5px; line-height:1.6; color:#9AA5A0; text-align:center;">
-                    You can also call us directly at 0307-0227000.
+                    You can also call us directly at 0304-0227000.
                 </p>
             </td>
         </tr>

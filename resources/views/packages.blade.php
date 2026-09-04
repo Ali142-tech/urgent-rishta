@@ -682,7 +682,7 @@
                 swal({
                     icon: "info",
                     title: "Select a Package",
-                    text: "Review packages available and contact Usman at 0304-0227000 for package activation.",
+                    text: "Review packages available and contact UrgentRishta Team at 0304-0227000 for package activation.",
                     buttons: {
                         cancel: "OK",
                         whatsapp: {

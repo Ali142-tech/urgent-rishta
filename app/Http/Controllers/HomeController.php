@@ -109,7 +109,7 @@ class HomeController extends Controller {
         $loggedInUser = User::retrieveUserObject(null, true);
        
         if (!empty($loggedInUser) && !$loggedInUser->isActive()) {
-            Session::flash('message', 'danger|Profile not active. Search disabled. Please contact UrgentRishta Team at 0307-0227000 for profile activation.<br><a href="https://wa.me/923070227000" target="_blank" rel="noopener" class="ur-toast__wa-btn"><i class="fa fa-whatsapp"></i> Chat on WhatsApp</a>|20000');
+            Session::flash('message', 'danger|Profile not active. Search disabled. Please contact UrgentRishta Team at 0304-0227000 for profile activation.<br><a href="https://wa.me/923040227000" target="_blank" rel="noopener" class="ur-toast__wa-btn"><i class="fa fa-whatsapp"></i> Chat on WhatsApp</a>|20000');
             Log::info("Search disabled. User profile not activated for " . $loggedInUser->email);
             return redirect('home');
         }
