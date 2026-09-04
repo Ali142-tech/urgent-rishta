@@ -25,7 +25,7 @@
 <!-- Global style (main) -->
 <link id="stylesheet" type="text/css" href="/css/global-style-pink.css?3" rel="stylesheet" media="screen" />
 <!-- Custom style - Remove if not necessary -->
-<link type="text/css" href="/css/custom-style.css?2" rel="stylesheet" />
+<link type="text/css" href="/css/custom-style.css?v={{ filemtime(public_path('css/custom-style.css')) }}" rel="stylesheet" />
 <link type="text/css" href="/css/new-theme.css?2" rel="stylesheet" />
 <link type="text/css" href="/css/new-animate.min.css?2" rel="stylesheet" />
 <link type="text/css" href="/css/ur-navbar.css?16" rel="stylesheet" />

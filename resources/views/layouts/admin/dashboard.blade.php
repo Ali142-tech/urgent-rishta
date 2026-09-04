@@ -4,7 +4,7 @@
 <head>
     @include('layouts.partials.head-assets')
     <link rel="stylesheet" href="/css/ur-dashboard.css?2">
-    <link rel="stylesheet" href="/css/ur-admin.css?1">
+    <link rel="stylesheet" href="/css/ur-admin.css?v={{ filemtime(public_path('css/ur-admin.css')) }}">
     {{-- member.interestdata (the "View Interests" listing modal opened from admin/profiles)
          @push('styles')'s its own /css/ur-interests.css — but the admin modal only ever
          reuses that view's rendered main-content SECTION (see

@@ -1,7 +1,7 @@
 @extends('layouts.dashboard')
 @section('dashboard-title', 'My Profile')
 @push('styles')
-<link rel="stylesheet" href="/css/ur-profile.css?1">
+<link rel="stylesheet" href="/css/ur-profile.css?v={{ filemtime(public_path('css/ur-profile.css')) }}">
 @endpush
 @section('main-content')
 <section class="slice sct-color-2 ur-profile-page">

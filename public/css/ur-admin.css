@@ -249,6 +249,47 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
 }
 .ur-admin-pagination li.disabled a { opacity: .45; cursor: not-allowed; }
 
+/* Laravel's default paginator (->links(), used on Photo Verification,
+   Photo Verification Logs and Appointments) renders Bootstrap's own
+   .pagination/.page-item/.page-link markup, which global-style-pink.css
+   styles in that theme's pink/magenta accent (#E91E63 on the active page)
+   — clashing with the admin dashboard's green/gold palette. Reskin it to
+   match .ur-admin-pagination above wherever it appears inside an admin
+   panel. */
+.ur-admin-panel .pagination { margin: 0; gap: 6px; flex-wrap: wrap; }
+.ur-admin-panel .pagination .page-link,
+.ur-admin-panel .pagination .page-item > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    margin: 0;
+    padding: 0 10px;
+    border-radius: 8px !important;
+    border: 1px solid var(--ur-dash-border);
+    color: var(--ur-dash-text);
+    font-family: inherit;
+    font-size: 12.5px;
+    background: #fff;
+}
+.ur-admin-panel .pagination .page-item .page-link:hover,
+.ur-admin-panel .pagination .page-item .page-link:focus {
+    border-color: var(--ur-dash-gold);
+    color: var(--ur-dash-green);
+    background: #fff;
+}
+.ur-admin-panel .pagination .page-item.active .page-link {
+    background: var(--ur-dash-green);
+    border-color: var(--ur-dash-green);
+    color: #fff;
+}
+.ur-admin-panel .pagination .page-item.disabled .page-link {
+    opacity: .45;
+    background: #fff;
+    color: var(--ur-dash-text);
+}
+
 /* ---------------------------------------------------------- */
 /* Empty state                                                   */
 /* ---------------------------------------------------------- */
@@ -548,4 +589,21 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
     .ur-admin-profile-card__media .ur-admin-thumb { width: 100%; max-width: 220px; height: auto; aspect-ratio: 1 / 1; margin: 0 auto; }
     .ur-admin-card__actions a,
     .ur-admin-card__actions button { flex: 1 1 auto; justify-content: center; }
+
+    /* Two 120x120 photo tiles + their gap (254px) don't fit a narrow phone's
+       ~236px card content width, so they were stacking one per row —
+       correct, but makes the review card unnecessarily tall. Shrink the
+       tiles so 2 sit side by side instead. */
+    .ur-admin-pv-card__photos { gap: 10px; }
+    .ur-admin-pv-photo,
+    .ur-admin-pv-photo--empty {
+        flex: 0 0 calc(50% - 5px);
+        width: auto;
+    }
+    .ur-admin-pv-photo--empty { height: auto; aspect-ratio: 1 / 1; }
+    .ur-admin-pv-photo img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
 }
