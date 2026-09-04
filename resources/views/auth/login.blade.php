@@ -277,27 +277,33 @@
             </div>
         @endif
 
-        @if($mode === 'phone')
+        @if($mode === 'phone' || $mode === 'password')
             <h2>Welcome back</h2>
-            <p class="subtitle">Enter your details to continue</p>
+            <p class="subtitle">Use your mobile number and password</p>
 
-            <form method="post" action="{{ route('login.otp.send') }}" id="otp_send_form">
+            <form method="post" action="{{ route('login.password') }}" id="password_login_form">
                 @csrf
-                <input type="hidden" name="country_code" id="otp_country_code" value="{{ $countryCode ?: '92' }}">
-                <input type="hidden" name="mobile" id="otp_mobile_hidden" value="{{ old('mobile', $mobileLocal) }}">
+                <input type="hidden" name="country_code" id="pwd_country_code" value="{{ $countryCode ?: '92' }}">
+                <input type="hidden" name="mobile" id="pwd_mobile_hidden" value="{{ old('mobile', $mobileLocal) }}">
                 <input
                     type="tel"
-                    id="mobile_input"
+                    id="password_mobile_input"
                     class="form-control"
                     placeholder="Mobile no."
                     value="{{ old('mobile', $mobileLocal) }}"
                     required
                     autocomplete="tel"
                 >
-                <button type="submit" class="shaadi-btn-primary" id="get_otp_btn" disabled>Get OTP</button>
+                <div class="login-password-wrap">
+                    <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
+                    <button type="button" class="login-toggle-password" data-target="password"><i class="fa fa-eye"></i></button>
+                </div>
+                <div class="meta-row">
+                    <label class="mb-0"><input type="checkbox" name="remember" value="checked"> Remember Me</label>
+                    <a href="{{ route('password.request') }}">Forgot password?</a>
+                </div>
+                <button type="submit" class="shaadi-btn-primary">Login</button>
             </form>
-
-            <a class="shaadi-link" href="{{ route('login', ['mode' => 'password']) }}">Login with Password</a>
 
             <div class="shaadi-or">Or</div>
 
@@ -313,63 +319,6 @@
             <p class="footer-note">
                 New here? <a href="{{ url('register') }}">Create an account</a>
             </p>
-        @endif
-
-        @if($mode === 'otp')
-            <a class="back-link" href="{{ route('login') }}"><i class="fa fa-arrow-left"></i> Back</a>
-            <h2>Enter OTP</h2>
-            <p class="otp-hint">
-                We sent a 6-digit code to your email<br>
-                <strong>{{ $otpEmailMasked }}</strong><br>
-                <span style="color:#999;">(SMS OTP will replace this when provider is ready)</span>
-            </p>
-
-            <form method="post" action="{{ route('login.otp.verify') }}">
-                @csrf
-                <div class="form-group">
-                    <input type="text" name="otp" class="form-control text-center" placeholder="Enter OTP" maxlength="6" inputmode="numeric" pattern="[0-9]*" required autofocus style="letter-spacing:6px;font-size:20px;">
-                </div>
-                <button type="submit" class="shaadi-btn-primary">Verify &amp; Login</button>
-            </form>
-
-            <form method="post" action="{{ route('login.otp.send') }}" class="mt-2">
-                @csrf
-                <input type="hidden" name="country_code" value="{{ $countryCode }}">
-                <input type="hidden" name="mobile" value="{{ $mobileLocal }}">
-                <button type="submit" class="shaadi-link" style="background:none;border:0;width:100%;">Resend OTP</button>
-            </form>
-            <a class="shaadi-link" href="{{ route('login', ['mode' => 'password']) }}">Login with Password instead</a>
-        @endif
-
-        @if($mode === 'password')
-            <a class="back-link" href="{{ route('login') }}"><i class="fa fa-arrow-left"></i> Back</a>
-            <h2>Login with Password</h2>
-            <p class="subtitle">Use your mobile number and password</p>
-
-            <form method="post" action="{{ route('login.password') }}" id="password_login_form">
-                @csrf
-                <input type="hidden" name="country_code" id="pwd_country_code" value="92">
-                <input type="hidden" name="mobile" id="pwd_mobile_hidden" value="{{ old('mobile') }}">
-                <input
-                    type="tel"
-                    id="password_mobile_input"
-                    class="form-control"
-                    placeholder="Mobile no."
-                    value="{{ old('mobile') }}"
-                    required
-                    autocomplete="tel"
-                >
-                <div class="login-password-wrap">
-                    <input type="password" name="password" id="password" class="form-control" placeholder="Password" required>
-                    <button type="button" class="login-toggle-password" data-target="password"><i class="fa fa-eye"></i></button>
-                </div>
-                <div class="meta-row">
-                    <label class="mb-0"><input type="checkbox" name="remember" value="checked"> Remember Me</label>
-                    <a href="{{ route('password.request') }}">Forgot password?</a>
-                </div>
-                <button type="submit" class="shaadi-btn-primary">Login</button>
-            </form>
-            <a class="shaadi-link" href="{{ route('login', ['mode' => 'email']) }}">Continue with Email</a>
         @endif
 
         @if($mode === 'email')
@@ -392,7 +341,7 @@
                 </div>
                 <button type="submit" class="shaadi-btn-primary">Login</button>
             </form>
-            <a class="shaadi-link" href="{{ route('login') }}">Login with Mobile OTP</a>
+            <a class="shaadi-link" href="{{ route('login') }}">Login with Mobile Number</a>
         @endif
     </div>
 </div>
@@ -444,7 +393,6 @@
     }
 
     function boot() {
-        initIti('mobile_input', 'otp_send_form', 'otp_country_code', 'otp_mobile_hidden', 'get_otp_btn');
         initIti('password_mobile_input', 'password_login_form', 'pwd_country_code', 'pwd_mobile_hidden', null);
 
         document.querySelectorAll('.login-toggle-password').forEach(function (el) {

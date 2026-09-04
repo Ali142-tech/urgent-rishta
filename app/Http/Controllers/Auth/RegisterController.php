@@ -326,38 +326,15 @@ class RegisterController extends Controller
             return redirect()->route('register', ['mode' => 'build']);
         }
 
-        // New/changed email — require OTP
-        Session::forget('register_verified');
-
-        // Local development: SMTP isn't configured/working here, so skip the email
-        // OTP step entirely instead of failing to send. Never bypasses in production
-        // or staging — only when APP_ENV is local or development.
-        if (app()->environment('local', 'development')) {
-            Session::put('register_verified', true);
-            Session::flash('message', 'success|Local environment — email OTP skipped.');
-            Log::info('Register OTP skipped (APP_ENV=local) for ' . $email);
-            if (Session::has('register_education')) {
-                return redirect()->route('register', ['mode' => 'build4']);
-            }
-            return redirect()->route('register', ['mode' => 'build']);
+        // Website decision: registration no longer requires email/mobile OTP
+        // verification — just collect the contact details and continue.
+        // (The OTP send/verify machinery below is left in place, unreachable,
+        // rather than deleted, in case this needs to come back later.)
+        Session::put('register_verified', true);
+        if (Session::has('register_education')) {
+            return redirect()->route('register', ['mode' => 'build4']);
         }
-
-        // Send email OTP immediately, then show verify screen
-        $identifier = 'reg:' . $email;
-        $plainCode = (string) random_int(100000, 999999);
-        try {
-            Mail::to($email)->send(new RegisterOtpMail($plainCode, $email));
-            LoginOtp::issue($identifier, $plainCode, 'email', $email);
-            Session::put('register_otp_email', $email);
-            Session::put('register_email_masked', $this->maskEmail($email));
-            Session::flash('message', 'success|OTP sent to ' . $this->maskEmail($email) . '. Check inbox/spam.');
-            Log::info('Register OTP emailed to ' . $email);
-        } catch (\Exception $e) {
-            Log::error('Register OTP send failed: ' . $e->getMessage());
-            Session::flash('message', 'danger|Could not send OTP right now. Please try again from the next screen.');
-        }
-
-        return redirect()->route('register', ['mode' => 'otp']);
+        return redirect()->route('register', ['mode' => 'build']);
     }
 
     public function sendOtp(Request $request)
@@ -621,12 +598,14 @@ class RegisterController extends Controller
         }
 
         $request->validate([
-            'sect' => 'required|string|max:100',
+            // Sect intentionally not required here for now — deferred to a
+            // dedicated form later. Still accepted/stored if present so that
+            // form isn't a breaking change if it's added back to the page.
+            'sect' => 'nullable|string|max:100',
             'on_behalf' => 'required|string|max:50',
             'mother_tongue' => 'required|string|max:50',
             'password' => 'required|string|min:8|confirmed',
         ], [
-            'sect.required' => 'Please enter your sect.',
             'on_behalf.required' => 'Please select on whose behalf you are registering.',
             'mother_tongue.required' => 'Please select mother tongue.',
             'password.required' => 'Please enter a password.',
@@ -634,7 +613,7 @@ class RegisterController extends Controller
             'password.min' => 'Password must be at least 8 characters.',
         ]);
 
-        Session::put('register_sect', trim($request->sect));
+        Session::put('register_sect', trim((string) $request->sect));
         Session::put('register_on_behalf', $request->on_behalf);
         Session::put('register_mother_tongue', $request->mother_tongue);
         Session::put('register_password', $request->password);

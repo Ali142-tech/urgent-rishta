@@ -592,14 +592,9 @@
 
             <form method="post" action="{{ route('register.build4') }}" id="reg_build4_form">
                 @csrf
-                <div class="reg-field">
-                    <span class="reg-label">Sect</span>
-                    <div class="reg-field-outline">
-                        <span class="float-label">Your Sect *</span>
-                        <input type="text" name="sect" id="reg_build_sect" value="{{ old('sect', $registerSect ?? '') }}" required
-                               style="width:100%;border:0;outline:none;background:transparent;font-size:15px;height:28px;padding:0;">
-                    </div>
-                </div>
+                {{-- Sect intentionally removed from registration for now (deferred to
+                     a dedicated form later — see RegisterController@saveBuild4, which
+                     already treats it as optional and defaults it to '' either way). --}}
                 <div class="reg-field">
                     <span class="reg-label">On Behalf</span>
                     <div class="reg-field-outline">
@@ -797,24 +792,22 @@
         sync();
     })();
 
-    // Build step 4: sect, on behalf, mother tongue, password
+    // Build step 4: on behalf, mother tongue, password (sect removed for now)
     (function () {
         var btn = document.getElementById('reg_continue_build4');
         if (!btn) return;
-        var sect = document.getElementById('reg_build_sect');
         var onBehalf = document.getElementById('reg_build_on_behalf');
         var tongue = document.getElementById('reg_build_mother_tongue');
         var pass = document.getElementById('reg_build_password');
         var pass2 = document.getElementById('reg_build_password_confirmation');
         function sync() {
-            var ok = sect && String(sect.value || '').trim().length > 0
-                && onBehalf && onBehalf.value
+            var ok = onBehalf && onBehalf.value
                 && tongue && tongue.value
                 && pass && String(pass.value || '').length >= 8
                 && pass2 && pass2.value === pass.value;
             btn.disabled = !ok;
         }
-        [sect, onBehalf, tongue, pass, pass2].forEach(function (el) {
+        [onBehalf, tongue, pass, pass2].forEach(function (el) {
             if (!el) return;
             el.addEventListener('input', sync);
             el.addEventListener('change', sync);
