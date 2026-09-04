@@ -133,9 +133,15 @@
     <table class="ur-pdf-grid">
         <tr>
             <td><div class="label">Father</div><div class="value">{{ $member->father ?: 'N/A' }}</div></td>
-            <td><div class="label">Father's Profession</div><div class="value">{{ $member->father_profession ?: 'N/A' }}</div></td>
+            <td><div class="label">Father's Occupation</div><div class="value">{{ $member->father_profession ?: 'N/A' }}</div></td>
             <td><div class="label">Mother</div><div class="value">{{ $member->mother ?: 'N/A' }}</div></td>
-            <td><div class="label">Siblings</div><div class="value">{{ $member->siblings ?: 'N/A' }}</div></td>
+            <td><div class="label">Mother's Occupation</div><div class="value">{{ $member->mother_profession ?: 'N/A' }}</div></td>
+        </tr>
+        <tr>
+            <td><div class="label">Brothers</div><div class="value">{{ $member->brothers_count ?? 'N/A' }}</div></td>
+            <td><div class="label">Sisters</div><div class="value">{{ $member->sisters_count ?? 'N/A' }}</div></td>
+            <td><div class="label">Married Siblings</div><div class="value">{{ $member->siblings ?: 'N/A' }}</div></td>
+            <td><div class="label">Family Values</div><div class="value">{{ $member->family_values ?: 'N/A' }}</div></td>
         </tr>
         <tr>
             <td colspan="4"><div class="label">Family Residence</div><div class="value">{{ $member->family_residence ?: 'N/A' }}</div></td>
@@ -144,12 +150,12 @@
 </div>
 @endif
 
-@if($member->rage || $member->lbl_rreligion || $member->lbl_rcaste || $member->lbl_rmarital_status)
+@if($member->rage_min || $member->lbl_rreligion || $member->lbl_rcaste || $member->lbl_rmarital_status)
 <div class="ur-pdf-section">
     <div class="ur-pdf-section-title">Partner Preferences</div>
     <table class="ur-pdf-grid">
         <tr>
-            <td><div class="label">Age Range</div><div class="value">{{ $member->rage ?: 'N/A' }}</div></td>
+            <td><div class="label">Age Range</div><div class="value">{{ $member->rage_min ? $member->rage_min . ($member->rage_max ? ' - '.$member->rage_max : '+') : 'N/A' }}</div></td>
             <td><div class="label">Height Range</div><div class="value">{{ $member->rheight ?: 'N/A' }}</div></td>
             <td><div class="label">Marital Status</div><div class="value">{{ $member->lbl_rmarital_status ?: 'N/A' }}</div></td>
             <td><div class="label">With Children</div><div class="value">{{ $member->rwith_children ?: 'N/A' }}</div></td>

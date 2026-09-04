@@ -727,15 +727,15 @@
                     </div>
                 @endif
 
-                @if(!empty($profile->father) || !empty($profile->mother) || !empty($profile->brother) || !empty($profile->sister) || !empty($profile->father_profession))
+                @if(!empty($profile->father) || !empty($profile->mother) || !empty($profile->brothers_count) || !empty($profile->sisters_count) || !empty($profile->father_profession))
                     <div class="ur-mp-detail-card">
                         <h3 class="ur-mp-detail-card__title"><i class="fa fa-users"></i> Family Background</h3>
                         <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
                             @if(!empty($profile->father))<div><span>Father</span><b>{{ $profile->father }}</b></div>@endif
                             @if(!empty($profile->father_profession))<div><span>Father's Occupation</span><b>{{ $profile->father_profession }}</b></div>@endif
                             @if(!empty($profile->mother))<div><span>Mother</span><b>{{ $profile->mother }}</b></div>@endif
-                            @if(!empty($profile->brother))<div><span>Brother(s)</span><b>{{ $profile->brother }}</b></div>@endif
-                            @if(!empty($profile->sister))<div><span>Sister(s)</span><b>{{ $profile->sister }}</b></div>@endif
+                            @if(!empty($profile->brothers_count))<div><span>Brother(s)</span><b>{{ $profile->brothers_count }}</b></div>@endif
+                            @if(!empty($profile->sisters_count))<div><span>Sister(s)</span><b>{{ $profile->sisters_count }}</b></div>@endif
                         </div>
                         <div class="ur-mp-note"><i class="fa fa-lock"></i> We respect your privacy. Detailed family information will be shared after mutual interest.</div>
                     </div>
@@ -744,7 +744,7 @@
                 <div class="ur-mp-detail-card" id="ur_mp_partner_pref">
                     <h3 class="ur-mp-detail-card__title"><i class="fa fa-users"></i> Partner Preference</h3>
                     <div class="ur-mp-detail-grid">
-                        @if(!empty($profile->rage))<div><span>Preferred Age</span><b>{{ $profile->rage }}</b></div>@endif
+                        @if(!empty($profile->rage_min) || !empty($profile->rage_max))<div><span>Preferred Age</span><b>{{ $profile->rage_min }}{{ !empty($profile->rage_max) ? ' - '.$profile->rage_max : ($profile->rage_min ? '+' : '') }}</b></div>@endif
                         @if(!empty($profile->rheight))<div><span>Preferred Height</span><b>{{ $profile->rheight }}</b></div>@endif
                         @if(!empty($profile->lbl_rmarital_status))<div><span>Marital Status</span><b>{{ $profile->lbl_rmarital_status }}</b></div>@endif
                         @if(!empty($profile->lbl_reducation))<div><span>Education</span><b>{{ $profile->lbl_reducation }}</b></div>@endif

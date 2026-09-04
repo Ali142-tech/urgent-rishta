@@ -60,6 +60,20 @@
                                 </div> -->
                             </div>
                             <div class="card-body pt-2" style="padding: 1rem 0.5rem;">
+                                @if(!empty($completeness))
+                                <div class="ur-profile-completeness">
+                                    <div class="ur-profile-completeness__label">
+                                        <span>Profile Completeness</span>
+                                        <span class="ur-profile-completeness__pct">{{ $completeness['percent'] }}%</span>
+                                    </div>
+                                    <div class="ur-profile-completeness__track">
+                                        <div class="ur-profile-completeness__fill" style="width: {{ $completeness['percent'] }}%;"></div>
+                                    </div>
+                                    @if($completeness['percent'] < 100)
+                                    <div class="ur-profile-completeness__hint">{{ $completeness['filled'] }} of {{ $completeness['total'] }} sections complete &mdash; fill in the rest to help us find better matches for you.</div>
+                                    @endif
+                                </div>
+                                @endif
                                 <!-- Contact information -->
                                 <div id="section_introduction">
                                     <div class="mb-2 pl-3">
@@ -1565,10 +1579,14 @@
                                                                 <td>{{ $profile->mother }}</td>
                                                             </tr>
                                                             <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Brother</b></td>
-                                                                <td>{{ $profile->brother }}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Sister</b></td>
-                                                                <td>{{ $profile->sister }}</td>
+                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Number Of Brothers</b></td>
+                                                                <td>{{ $profile->brothers_count }}</td>
+                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Number Of Sisters</b></td>
+                                                                <td>{{ $profile->sisters_count }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Married Siblings</b></td>
+                                                                <td colspan="3">{{ $profile->siblings }}</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -1614,16 +1632,26 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group has-feedback">
-                                                            <label for="brother" class="text-uppercase c-gray-light">Brother</label>
-                                                            <input type="text" class="form-control no-resize" name="brother" value="{{$profile->brother}}" required="required">
+                                                            <label for="brothers_count" class="text-uppercase c-gray-light">Number Of Brothers</label>
+                                                            <input type="number" min="0" max="20" class="form-control no-resize" name="brothers_count" value="{{$profile->brothers_count}}">
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
                                                         </div>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="form-group has-feedback">
-                                                            <label for="sister" class="text-uppercase c-gray-light">Sister</label>
-                                                            <input type="text" class="form-control no-resize" name="sister" value="{{$profile->sister}}" required="required">
+                                                            <label for="sisters_count" class="text-uppercase c-gray-light">Number Of Sisters</label>
+                                                            <input type="number" min="0" max="20" class="form-control no-resize" name="sisters_count" value="{{$profile->sisters_count}}">
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="siblings" class="text-uppercase c-gray-light">Married Siblings</label>
+                                                            <input type="text" class="form-control no-resize" name="siblings" value="{{$profile->siblings}}" placeholder="e.g. 1 brother married">
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
                                                         </div>
@@ -1666,8 +1694,14 @@
                                                             <tr>
                                                                 <td height="30" style="padding-left: 5px;" class="font-dark"><b>Father's Occupation</b></td>
                                                                 <td>{{$profile->father_profession}}</td>
+                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Mother's Occupation</b></td>
+                                                                <td>{{$profile->mother_profession}}</td>
+                                                            </tr>
+                                                            <tr>
                                                                 <td height="30" style="padding-left: 5px;" class="font-dark"><b>Special Circumstances</b></td>
                                                                 <td>{{$profile->special_circumstances}}</td>
+                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Family Values</b></td>
+                                                                <td>{{$profile->family_values}}</td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -1726,404 +1760,39 @@
                                                     </div>
                                                     <div class="col-md-6">
                                                         <div class="form-group has-feedback">
+                                                            <label for="mother_profession" class="text-uppercase c-gray-light">Mother's Occupation</label>
+                                                            <input type="text" class="form-control no-resize" name="mother_profession" value="{{$profile->mother_profession}}">
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
                                                             <label for="special_circumstances" class="text-uppercase c-gray-light">Special Circumstances</label>
                                                             <input type="text" class="form-control no-resize" name="special_circumstances" value="{{$profile->special_circumstances}}" required="required">
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
                                                         </div>
                                                     </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="family_values" class="text-uppercase c-gray-light">Family Values</label>
+                                                            <select name="family_values" class="form-control form-control-sm selectpicker" data-placeholder="Choose a family values option" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                <option value="Traditional" {{$profile->family_values=="Traditional"?"selected":""}}>Traditional</option>
+                                                                <option value="Moderate" {{$profile->family_values=="Moderate"?"selected":""}}>Moderate</option>
+                                                                <option value="Liberal" {{$profile->family_values=="Liberal"?"selected":""}}>Liberal</option>
+                                                            </select>
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </form>
                                         </div>
                                     </div>
-                                </div>
-                                <div id="section_partner_expectation">
-                                    <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
-                                        <div id="info_partner_expectation">
-                                            <div class="card-inner-title-wrapper pt-0">
-                                                <h3 class="text-uppercase card-inner-title pull-left">
-                                                    Partner Expectation </h3>
-                                                <div class="pull-right">
-                                                    <!-- <button type="button" id="unhide_partner_expectation" style="display: none" class="btn btn-base-1 btn-sm btn-icon-only btn-shadow mb-1" onclick="unhide_section('partner_expectation')">
-                                                        <i class="fa fa-unlock"></i>
-                                                        Show
-                                                    </button>
-                                                    <button type="button" id="hide_partner_expectation" class="btn btn-dark btn-sm btn-icon-only btn-shadow mb-1" onclick="hide_section('partner_expectation')">
-                                                        <i class="fa fa-lock"></i>
-                                                        Hide
-                                                    </button> -->
-                                                    <button type="button" class="btn btn-base-1 btn-sm btn-icon-only btn-shadow mb-1" onclick="edit_section('partner_expectation')">
-                                                        <i class="fa fa-edit"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>General Requirement</b></td>
-                                                                <td colspan="3">{{$profile->rgen_req}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Age</b></td>
-                                                                <td>{{$profile->rage}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Height</b></td>
-                                                                <td>{{$profile->rheight}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Marital Status</b></td>
-                                                                <td>{{$profile->lbl_rmarital_status}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>With Children Acceptables</b></td>
-                                                                <td>{{$profile->rwith_children}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Country Of Residence</b></td>
-                                                                <td>{{$profile->lbl_rcon_of_residence}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>City</b></td>
-                                                                <td>{{$profile->lbl_rcity}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Religion</b></td>
-                                                                <td>{{$profile->lbl_rreligion}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Caste / Sect</b></td>
-                                                                <td>{{$profile->lbl_rcaste}} / {{$profile->rsect}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Education</b></td>
-                                                                <td>{{$profile->lbl_reducation}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Profession</b></td>
-                                                                <td>{{$profile->rprofession}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Mother Tongue</b></td>
-                                                                <td colspan="3">{{$profile->lbl_rmother_tongue}}</td>
-                                                                <!-- <td height="30" style="padding-left: 5px;" class="font-dark"><b>Any Disability</b></td>
-                                                                <td></td> -->
-                                                            </tr>
-                                                            <tr>
-                                                                <!-- <td height="30" style="padding-left: 5px;" class="font-dark"><b>Family Value</b></td>
-                                                                <td></td> -->
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Prefered Country</b></td>
-                                                                <td colspan="3">{{$profile->lbl_rcon_pref}}</td>
-                                                            </tr>
-                                                            <!-- <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Prefered State</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Prefered Status</b></td>
-                                                                <td></td>
-                                                            </tr> -->
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div id="edit_partner_expectation" style="display: none;">
-                                            <div class="card-inner-title-wrapper pt-0">
-                                                <h3 class="text-uppercase card-inner-title pull-left">
-                                                    Partner Expectation </h3>
-                                                <div class="pull-right">
-                                                    <button type="button" class="btn btn-success btn-sm btn-icon-only btn-shadow" onclick="save_section($(this), 'partner_expectation')">
-                                                        <i class="fa fa-check"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-danger btn-sm btn-icon-only btn-shadow" onclick="load_section('partner_expectation')">
-                                                        <i class="fa fa-close"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div class='clearfix'></div>
-                                            <form id="form_partner_expectation" class="form-default" role="form">
-                                                @csrf
-                                                <div class="row">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rgen_req" class="text-uppercase c-gray-light">General Requirement</label>
-                                                            <input type="text" class="form-control no-resize" name="rgen_req" value="{{$profile->rgen_req}}" required="required">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rage" class="text-uppercase c-gray-light">Age</label>
-                                                            <input type="text" class="form-control no-resize" name="rage" value="{{$profile->rage}}" required="required">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rheight" class="text-uppercase c-gray-light">Height</label>
-                                                            <input type="text" class="form-control no-resize" name="rheight" value="{{$profile->rheight}}" required="required">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rmarital_status" class="text-uppercase c-gray-light">Marital Status</label>
-                                                            <select name="rmarital_status" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose a marital status" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($maritalstatuses as $maritalstatus)
-                                                                <option value="{{$maritalstatus->dataid}}" {{$profile->rmarital_status==$maritalstatus->dataid?"selected":""}}>{{$maritalstatus->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rwith_children" class="text-uppercase c-gray-light">With Children Acceptables</label>
-                                                            <select name="rwith_children" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose a with children acceptable option" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                <option {{$profile->rwith_children=="Yes"?"selected":""}}>Yes</option>
-                                                                <option {{$profile->rwith_children=="No"?"selected":""}}>No</option>
-                                                                <option {{$profile->rwith_children=="Does not matter"?"selected":""}}>Does not matter</option>
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rcon_of_residence" class="text-uppercase c-gray-light">Country Of Residence</label>
-                                                            <select name="rcon_of_residence" onchange="javascript:loadSelect('{{url('cities')}}', this.value+'/1', $('#rcity'), '{{$profile->rcity}}');" class="form-control form-control-sm selectpicker" data-placeholder="Choose a country" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($countries as $country)
-                                                                <option value="{{$country->dataid}}" {{$profile->rcon_of_residence==$country->dataid?"selected":""}}>{{$country->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rcity" class="text-uppercase c-gray-light">City</label>
-                                                            <select id="rcity" name="rcity" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose a city" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose a country first</option>
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rreligion" class="text-uppercase c-gray-light">Religion</label>
-                                                            <select name="rreligion" onChange="(this.value,this)" class="form-control form-control-sm selectpicker prefered_religion_edit" data-placeholder="Choose a religion" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($religions as $religion)
-                                                                <option value="{{$religion->dataid}}" {{$profile->rreligion==$religion->dataid?"selected":""}}>{{$religion->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rcaste" class="text-uppercase c-gray-light">Caste</label>
-                                                            <select class="form-control form-control-sm selectpicker prefered_caste_edit" name="rcaste" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($caste as $cst)
-                                                                <option value="{{$cst->dataid}}" {{$profile->rcaste==$cst->dataid?"selected":""}}>{{$cst->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rsect" class="text-uppercase c-gray-light">Sect</label>
-                                                            <input type="text" class="form-control no-resize" name="rsect" value="{{$profile->rsect}}" required="required">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="reducation" class="text-uppercase c-gray-light">Education</label>
-                                                            <select name="reducation" onChange="(this.value,this)" class="form-control form-control-sm selectpicker prefered_education_edit" data-placeholder="Choose an education" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($education as $degree)
-                                                                <option value="{{$degree->dataid}}" {{$profile->reducation==$degree->dataid?"selected":""}}>{{$degree->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rprofession" class="text-uppercase c-gray-light">Profession</label>
-                                                            <input type="text" class="form-control no-resize" name="rprofession" value="{{$profile->rprofession}}" required="required">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div class="row">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rmother_tongue" class="text-uppercase c-gray-light">Mother Tongue</label>
-                                                            <select name="rmother_tongue" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose a mother tongue" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($mothertongues as $mothertongue)
-                                                                <option value="{{$mothertongue->dataid}}" {{$profile->rmother_tongue==$mothertongue->dataid?"selected":""}}>{{$mothertongue->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <!-- <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="partner_any_disability" class="text-uppercase c-gray-light">Any Disability</label>
-                                                            <input type="text" class="form-control no-resize" name="partner_any_disability" value="">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div> -->
-                                                </div>
-                                                <div class="row">
-                                                    <!-- <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="partner_family_value" class="text-uppercase c-gray-light">Family Value</label>
-                                                            <input type="text" class="form-control no-resize" name="partner_family_value" value="">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div> -->
-                                                    <div class="col-md-12">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="rcon_pref" class="text-uppercase c-gray-light">Prefered Country</label>
-                                                            <select name="rcon_pref" onChange="(this.value,this)" class="form-control form-control-sm selectpicker prefered_country_edit" data-placeholder="Choose a country" tabindex="2" data-hide-disabled="true" required="required">
-                                                                <option value="">Choose one</option>
-                                                                @foreach($countries as $country)
-                                                                <option value="{{$country->dataid}}" {{$profile->rcon_pref==$country->dataid?"selected":""}}>{{$country->name}}</option>
-                                                                @endforeach
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <!-- <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="prefered_state" class="text-uppercase c-gray-light">Prefered State</label>
-                                                            <select class="form-control form-control-sm selectpicker permanent_state_edit" name="prefered_state">
-                                                                <option value="">Choose A Country First</option>
-                                                            </select>
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="form-group has-feedback">
-                                                            <label for="prefered_status" class="text-uppercase c-gray-light">Prefered Status</label>
-                                                            <input type="text" class="form-control no-resize" name="prefered_status" value="">
-                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
-                                                            <div class="help-block with-errors"></div>
-                                                        </div>
-                                                    </div>
-                                                </div> -->
-
-                                            </form>
-                                        </div>
-                                    </div>
-                                    <script>
-                                        $(".prefered_country_edit").change(function() {
-                                            var country_id = $(".prefered_country_edit").val();
-                                            if (country_id == "") {
-                                                $(".prefered_state_edit").html("<option value=''>Choose A Country First</option>");
-                                            } else {
-                                                $.ajax({
-                                                    url: "/home/get_dropdown_by_id/state/country_id/" + country_id,
-                                                    // form action url
-                                                    type: 'POST',
-                                                    // form submit method get/post
-                                                    dataType: 'html',
-                                                    // request type html/json/xml
-                                                    cache: false,
-                                                    contentType: false,
-                                                    processData: false,
-                                                    success: function(data) {
-                                                        $(".prefered_state_edit").html(data);
-                                                    },
-                                                    error: function(e) {
-                                                        console.log(e)
-                                                    }
-                                                });
-                                            }
-                                        });
-                                        $(".prefered_religion_edit").change(function() {
-                                            var religion_id = $(".prefered_religion_edit").val();
-                                            if (religion_id == "") {
-                                                $(".prefered_caste_edit").html("<option value=''>Choose A Religion First</option>");
-                                                $(".prefered_sub_caste_edit").html("<option value=''>Choose A Caste First</option>");
-                                            } else {
-                                                $.ajax({
-                                                    url: "/home/get_dropdown_by_id_caste/caste/religion_id/" + religion_id,
-                                                    // form action url
-                                                    type: 'POST',
-                                                    // form submit method get/post
-                                                    dataType: 'html',
-                                                    // request type html/json/xml
-                                                    cache: false,
-                                                    contentType: false,
-                                                    processData: false,
-                                                    success: function(data) {
-                                                        $(".prefered_caste_edit").html(data);
-                                                        $(".prefered_sub_caste_edit").html("<option value=''>Choose A Caste First</option>");
-                                                    },
-                                                    error: function(e) {
-                                                        console.log(e)
-                                                    }
-                                                });
-                                            }
-                                        });
-                                        $(".prefered_caste_edit").change(function() {
-                                            var caste_id = $(".prefered_caste_edit").val();
-                                            if (caste_id == "") {
-                                                $(".prefered_sub_caste_edit").html("<option value=''>Choose A Caste First</option>");
-                                            } else {
-                                                $.ajax({
-                                                    url: "/home/get_dropdown_by_id_caste/sub_caste/caste_id/" + caste_id,
-                                                    // form action url
-                                                    type: 'POST',
-                                                    // form submit method get/post
-                                                    dataType: 'html',
-                                                    // request type html/json/xml
-                                                    cache: false,
-                                                    contentType: false,
-                                                    processData: false,
-                                                    success: function(data) {
-                                                        $(".prefered_sub_caste_edit").html(data);
-                                                    },
-                                                    error: function(e) {
-                                                        console.log(e)
-                                                    }
-                                                });
-                                            }
-                                        });
-                                    </script>
                                 </div>
                             </div>
                         </div>

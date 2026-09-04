@@ -1123,85 +1123,12 @@
 
 
 <div class="ur-page">
-    <!-- TRUST STRIP (Website Upgrade Brief §3, position 2 — moved up from
-         further down the page so it lands right after the hero, per the
-         brief's recommended section order) -->
-    <section class="ur-sec ur-sec--cream" style="padding-top:0;">
-        <div class="ur-wrap">
-            <div class="ur-enquiry-bar">
-                <div class="ur-enquiry-bar__contact">
-                    <div class="ur-enquiry-bar__item">
-                        <div class="ur-enquiry-bar__label">Enquiry</div>
-                        <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
-                    </div>
-                    <div class="ur-enquiry-bar__item">
-                        <div class="ur-enquiry-bar__label">Get Support</div>
-                        <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
-                    </div>
-                </div>
-                <div class="ur-enquiry-bar__stats">
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="15000">15,000</span>+</div>
-                        <div class="ur-enquiry-bar__sub">Verified Profiles</div>
-                    </div>
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">5,000</span>+</div>
-                        <div class="ur-enquiry-bar__sub">Successful Matches</div>
-                    </div>
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="16">16</span>+ Years</div>
-                        <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
-                    </div>
-                    <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num">Worldwide</div>
-                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Global Community</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- TWO WAYS TO FIND YOUR MATCH -->
-    <section class="ur-sec ur-sec--soft">
-        <div class="ur-wrap">
-            <div class="ur-center">
-            
-                <h2 class="ur-h2">Choose the Service That Suits You</h2>
-            </div>
-            <div class="ur-choice__grid">
-                <div class="ur-choice__card">
-                    <div class="ur-choice__icon"><i class="fa fa-desktop" aria-hidden="true"></i></div>
-                    <h3 class="ur-choice__title">Online Matchmaking</h3>
-                    <p class="ur-choice__desc">For members who prefer to explore suitable profiles through our online platform.</p>
-                    <ul class="ur-choice__list">
-                        <li><i class="fa fa-check" aria-hidden="true"></i> Access to suitable profiles</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> Search based on preferences</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> Interest requests</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> Privacy controls</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> Matchmaking support</li>
-                    </ul>
-                    <a href="/register" class="ur-btn ur-btn--outline">Explore Online Plans</a>
-                </div>
-                <div class="ur-choice__card ur-choice__card--dark">
-                    <div class="ur-choice__icon"><i class="fa fa-user-circle" aria-hidden="true"></i></div>
-                    <h3 class="ur-choice__title">Personalized Confidential Matchmaking</h3>
-                    <p class="ur-choice__desc">For individuals and families who prefer their search to be personally managed by our matchmaking team.</p>
-                    <ul class="ur-choice__list">
-                        <li><i class="fa fa-check" aria-hidden="true"></i> We understand your requirements</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> We review suitable prospects</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> We coordinate introductions privately</li>
-                    </ul>
-                    <a href="{{ url('packages') }}" class="ur-btn ur-btn--light">Explore Personalized Services</a>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- ONLINE MATCHMAKING SEARCH (Website Upgrade Brief §2/§3: no large
          search form directly under the hero — "the first impression becomes
          a database search website instead of a private matchmaking
-         service." Moved here, under Online Matchmaking, instead. -->
-    <section class="ur-sec ur-sec--soft" id="online-search">
+         service." ...though per later feedback, moved back to right after
+         the hero anyway — swapped with the Trust Strip below. -->
+    <section class="ur-sec ur-sec--soft" id="online-search" style="padding-top:0;">
         <div class="ur-wrap">
             <div class="ur-center">
                 <div class="ur-eyebrow">Online Matchmaking</div>
@@ -1282,6 +1209,42 @@
         </div>
     </section>
 
+    <!-- TWO WAYS TO FIND YOUR MATCH -->
+    <section class="ur-sec ur-sec--soft">
+        <div class="ur-wrap">
+            <div class="ur-center">
+
+                <h2 class="ur-h2">Choose the Service That Suits You</h2>
+            </div>
+            <div class="ur-choice__grid">
+                <div class="ur-choice__card">
+                    <div class="ur-choice__icon"><i class="fa fa-desktop" aria-hidden="true"></i></div>
+                    <h3 class="ur-choice__title">Online Matchmaking</h3>
+                    <p class="ur-choice__desc">For members who prefer to explore suitable profiles through our online platform.</p>
+                    <ul class="ur-choice__list">
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Access to suitable profiles</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Search based on preferences</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Interest requests</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Privacy controls</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> Matchmaking support</li>
+                    </ul>
+                    <a href="/register" class="ur-btn ur-btn--outline">Explore Online Plans</a>
+                </div>
+                <div class="ur-choice__card ur-choice__card--dark">
+                    <div class="ur-choice__icon"><i class="fa fa-user-circle" aria-hidden="true"></i></div>
+                    <h3 class="ur-choice__title">Personalized Confidential Matchmaking</h3>
+                    <p class="ur-choice__desc">For individuals and families who prefer their search to be personally managed by our matchmaking team.</p>
+                    <ul class="ur-choice__list">
+                        <li><i class="fa fa-check" aria-hidden="true"></i> We understand your requirements</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> We review suitable prospects</li>
+                        <li><i class="fa fa-check" aria-hidden="true"></i> We coordinate introductions privately</li>
+                    </ul>
+                    <a href="{{ url('packages') }}" class="ur-btn ur-btn--light">Explore Personalized Services</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- WELCOME / PROMISE -->
     <section class="ur-sec ur-sec--cream">
         <div class="ur-wrap">
@@ -1325,6 +1288,45 @@ experienced human matchmaking to create a private, structured and respectful exp
 
             <div class="ur-promise2__cta">
                 <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--solid">Speak to a Matchmaker</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- TRUST STRIP (Website Upgrade Brief §3, position 2 — moved up from
+         further down the page so it lands right after the hero, per the
+         brief's recommended section order). Swapped down here per later
+         feedback, trading places with the search section above. -->
+    <section class="ur-sec ur-sec--cream">
+        <div class="ur-wrap">
+            <div class="ur-enquiry-bar">
+                <div class="ur-enquiry-bar__contact">
+                    <div class="ur-enquiry-bar__item">
+                        <div class="ur-enquiry-bar__label">Enquiry</div>
+                        <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
+                    </div>
+                    <div class="ur-enquiry-bar__item">
+                        <div class="ur-enquiry-bar__label">Get Support</div>
+                        <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
+                    </div>
+                </div>
+                <div class="ur-enquiry-bar__stats">
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="15000">15,000</span>+</div>
+                        <div class="ur-enquiry-bar__sub">Verified Profiles</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">5,000</span>+</div>
+                        <div class="ur-enquiry-bar__sub">Successful Matches</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="16">16</span>+ Years</div>
+                        <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
+                    </div>
+                    <div class="ur-enquiry-bar__stat">
+                        <div class="ur-enquiry-bar__num">Worldwide</div>
+                        <div class="ur-enquiry-bar__sub">Pakistani &amp; Global Community</div>
+                    </div>
+                </div>
             </div>
         </div>
     </section>

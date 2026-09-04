@@ -111,6 +111,10 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $user;
     }
 
+    public function partnerPreference() {
+        return $this->hasOne(PartnerPreference::class);
+    }
+
     public function profile($refresh = null) {
         if ($this->profileObj == null || $refresh) {
             $this->profileObj = Profile::profiles("`u`.`dataid`='".$this->dataid."'")->first();

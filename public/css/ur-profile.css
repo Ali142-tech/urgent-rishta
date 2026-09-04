@@ -142,6 +142,40 @@
 }
 .ur-profile-page .card-body { padding: 18px 20px 22px !important; }
 
+/* ---------------------------------------------------------- */
+/* Profile Completeness meter                                   */
+/* ---------------------------------------------------------- */
+.ur-profile-completeness { margin-bottom: 20px; }
+.ur-profile-completeness__label {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    font-size: 11.5px;
+    letter-spacing: .5px;
+    font-weight: 700;
+    color: #123A2E;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.ur-profile-completeness__pct { font-size: 13px; color: #C9974D; }
+.ur-profile-completeness__track {
+    height: 8px;
+    border-radius: 5px;
+    background: #EFEAE0;
+    overflow: hidden;
+}
+.ur-profile-completeness__fill {
+    height: 100%;
+    border-radius: 5px;
+    background: linear-gradient(90deg, #C9974D 0%, #123A2E 100%);
+    transition: width .3s ease;
+}
+.ur-profile-completeness__hint {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #6B7570;
+}
+
 .ur-profile-page #section_introduction > .mb-2 {
     font-size: 12.5px;
     color: #6B7570;

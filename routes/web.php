@@ -101,6 +101,8 @@ Route::get('member/profile',[App\Http\Controllers\ProfileController::class, 'pro
 // any single path segment (dataids never contain '/'), so a static route sharing
 // its depth has to come first or it never gets a chance to match.
 Route::get('member/profile/pictures', [App\Http\Controllers\ProfileController::class, 'picturesPage'])->name('member.pictures');
+Route::get('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'preferencesPage'])->name('member.preferences');
+Route::post('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'updatePreferences'])->name('member.preferences.update');
 Route::get('member/profile/{id?}',[App\Http\Controllers\ProfileController::class, 'profile']);
 Route::get('member/profile/notifications/refresh', [App\Http\Controllers\ProfileController::class, 'notifications']);
 Route::post('member/profile/account/terminate', [App\Http\Controllers\ProfileController::class, 'accountTerminate']);

@@ -253,26 +253,49 @@ class APIController extends Controller {
                 $user->mother = $data->mother;
                 $user->brother = $data->brother;
                 $user->sister = $data->sister;
+                $user->brothers_count = property_exists($data, "brothers_count") ? $data->brothers_count : null;
+                $user->sisters_count = property_exists($data, "sisters_count") ? $data->sisters_count : null;
+                $user->siblings = property_exists($data, "siblings") ? $data->siblings : null;
             } else if ($section=="additional_personal_details") {
                 $user->district = $data->district;
                 $user->family_residence = $data->family_residence;
                 $user->father_profession = $data->father_profession;
+                $user->mother_profession = property_exists($data, "mother_profession") ? $data->mother_profession : null;
                 $user->special_circumstances = $data->special_circumstances;
+                $user->family_values = property_exists($data, "family_values") ? $data->family_values : null;
             } else if ($section=="partner_expectation") {
-                $user->rgen_req = $data->rgen_req;
-                $user->rage = $data->rage;
-                $user->rheight = $data->rheight;
-                $user->rmarital_status = $data->rmarital_status;
-                $user->rwith_children = $data->rwith_children;
-                $user->rcon_of_residence = $data->rcon_of_residence;
-                $user->rcity = $data->rcity;
-                $user->rreligion = $data->rreligion;
-                $user->rcaste = $data->rcaste;
-                $user->rsect = $data->rsect;
-                $user->reducation = $data->reducation;
-                $user->rprofession = $data->rprofession;
-                $user->rmother_tongue = $data->rmother_tongue;
-                $user->rcon_pref = $data->rcon_pref;
+                // Partner Preferences moved off `users` into its own table (see
+                // create_partner_preferences_table migration) — kept the same
+                // request field names here so this API contract doesn't change
+                // for whatever mobile client is calling it, only where the data
+                // is stored. `rage` is still a single free-text field on that
+                // contract ("25-32"); best-effort split, same as registration.
+                $ageMin = null;
+                $ageMax = null;
+                if (!empty($data->rage) && preg_match('/(\d{1,2})\D*(\d{1,2})?/', $data->rage, $ageMatch)) {
+                    $ageMin = $ageMatch[1];
+                    $ageMax = $ageMatch[2] ?? null;
+                }
+                \App\PartnerPreference::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'age_min' => $ageMin,
+                        'age_max' => $ageMax,
+                        'height' => $data->rheight ?? null,
+                        'marital_status' => $data->rmarital_status ?? null,
+                        'with_children' => $data->rwith_children ?? null,
+                        'country_id' => $data->rcon_of_residence ?? null,
+                        'city_id' => $data->rcity ?? null,
+                        'religion_id' => $data->rreligion ?? null,
+                        'caste_id' => $data->rcaste ?? null,
+                        'sect' => $data->rsect ?? null,
+                        'education_id' => $data->reducation ?? null,
+                        'profession' => $data->rprofession ?? null,
+                        'mother_tongue_id' => $data->rmother_tongue ?? null,
+                        'preferred_country_id' => $data->rcon_pref ?? null,
+                        'general_requirement' => $data->rgen_req ?? null,
+                    ]
+                );
             }
             $user->save();
             Log::info("User (".$dataid.") profile updated. Section: ".$section);
@@ -480,6 +503,13 @@ class APIController extends Controller {
         foreach($members as $member) {
             unset($member->password);
             unset($member->remember_token);
+            // Contact details are admin-only — other members should never see
+            // another member's email or phone number straight off a search result.
+            if (!$user->isAdmin()) {
+                unset($member->email);
+                unset($member->contact_mobile_number);
+                unset($member->mobile_country);
+            }
         }
 
         return response()->json([

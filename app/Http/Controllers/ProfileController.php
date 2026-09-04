@@ -54,8 +54,68 @@ class ProfileController extends Controller
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
+        // Only the own-profile "My Profile" page shows the completeness meter —
+        // it's about nudging the logged-in member to finish their own profile,
+        // not something shown while browsing someone else's.
+        $completeness = $dataid ? null : $profile->profileCompleteness();
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste'));
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness'));
+    }
+
+    public function preferencesPage()
+    {
+        $user = User::retrieveUserObject();
+        $preference = $user->partnerPreference()->first();
+
+        $religions = MasterData::where('type', 'RELIGION')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
+        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
+        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        // Religion->caste cascading isn't actually wired to a live route anywhere
+        // in this app today (the JS for it on the My Profile page calls an
+        // endpoint that was never routed) — same as ProfileController::profile(),
+        // show the full flat caste list rather than pretend to filter it.
+        $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
+
+        return view('member.preferences', compact(
+            'preference', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste'
+        ));
+    }
+
+    public function updatePreferences(Request $request)
+    {
+        $user = User::retrieveUserObject();
+
+        \App\PartnerPreference::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'age_min' => $request->age_min !== '' ? $request->age_min : null,
+                'age_max' => $request->age_max !== '' ? $request->age_max : null,
+                'height' => $request->height,
+                'weight' => $request->weight,
+                'marital_status' => $request->marital_status,
+                'with_children' => $request->with_children,
+                'country_id' => $request->country_id,
+                'state_id' => $request->state_id,
+                'city_id' => $request->city_id,
+                'religion_id' => $request->religion_id,
+                'caste_id' => $request->caste_id,
+                'sect' => $request->sect,
+                'education_id' => $request->education_id,
+                'profession' => $request->profession,
+                'mother_tongue_id' => $request->mother_tongue_id,
+                'languages' => is_array($request->preferred_languages) ? implode(',', $request->preferred_languages) : $request->preferred_languages,
+                'preferred_country_id' => $request->preferred_country_id,
+                'general_requirement' => $request->general_requirement,
+            ]
+        );
+
+        Log::info("User (" . $user->dataid . ") updated their partner preferences.");
+        User::retrieveUserObject($user->dataid, true);
+
+        Session::flash('message', 'success|Your partner preferences have been saved.');
+        return redirect()->route('member.preferences');
     }
 
     public function notifications()
@@ -480,29 +540,23 @@ class ProfileController extends Controller
             } else if ($section == "family_info") {
                 $user->father = $request->father;
                 $user->mother = $request->mother;
-                $user->brother = $request->brother;
-                $user->sister = $request->sister;
+                // brother/sister (free-text) are frozen legacy fields, superseded by
+                // brothers_count/sisters_count below — no longer written on save, same
+                // as the users.r* columns frozen by the partner_preferences migration.
+                $user->brothers_count = $request->brothers_count !== '' ? $request->brothers_count : null;
+                $user->sisters_count = $request->sisters_count !== '' ? $request->sisters_count : null;
+                $user->siblings = $request->siblings;
             } else if ($section == "additional_personal_details") {
                 $user->district = $request->district;
                 $user->family_residence = $request->family_residence;
                 $user->father_profession = $request->father_profession;
+                $user->mother_profession = $request->mother_profession;
                 $user->special_circumstances = $request->special_circumstances;
-            } else if ($section == "partner_expectation") {
-                $user->rgen_req = $request->rgen_req;
-                $user->rage = $request->rage;
-                $user->rheight = $request->rheight;
-                $user->rmarital_status = $request->rmarital_status;
-                $user->rwith_children = $request->rwith_children;
-                $user->rcon_of_residence = $request->rcon_of_residence;
-                $user->rcity = $request->rcity;
-                $user->rreligion = $request->rreligion;
-                $user->rcaste = $request->rcaste;
-                $user->rsect = $request->rsect;
-                $user->reducation = $request->reducation;
-                $user->rprofession = $request->rprofession;
-                $user->rmother_tongue = $request->rmother_tongue;
-                $user->rcon_pref = $request->rcon_pref;
+                $user->family_values = $request->family_values;
             }
+            // Partner Preferences no longer lives on this page/section switch —
+            // it's its own dashboard page now, saved by updatePreferences() below,
+            // writing to the partner_preferences table instead of users.r*.
             $user->save();
             Log::info("User (" . $dataid . ") updated " . $section . " section.");
 

@@ -119,6 +119,45 @@ class Profile extends Model {
         } else return 0;
     }
 
+    /**
+     * "Profile Completeness" meter shown at the top of the My Profile page.
+     * One point per editable section on that page (matching the section
+     * names ProfileController::updateProfile() switches on) plus Photo and
+     * Partner Preferences — a section counts as filled if any one of its
+     * fields is set, same "any field present" convention already used to
+     * decide whether to show a section on the public profile view
+     * (resources/views/member/profile.blade.php). Legacy/frozen fields
+     * (users.r*, brother/sister) are intentionally left out.
+     */
+    public function profileCompleteness(): array {
+        $sections = [
+            'Photo' => $this->getImageCount() > 0 || !empty($this->displaypic),
+            'Introduction' => !empty($this->intro),
+            'Basic Info' => !empty($this->first_name) && !empty($this->last_name) && !empty($this->gender) && !empty($this->birthday),
+            'Education & Career' => !empty($this->education) || !empty($this->profession) || !empty($this->salary),
+            'Physical Attributes' => !empty($this->height) || !empty($this->weight),
+            'Language' => !empty($this->mother_tongue) || !empty($this->language),
+            'Residency Information' => !empty($this->con_of_birth) || !empty($this->con_of_residence) || !empty($this->con_of_citizenship) || !empty($this->con_grew_up) || !empty($this->immigration_status),
+            'Spiritual & Social Background' => !empty($this->religion) || !empty($this->caste) || !empty($this->sect),
+            'Permanent Address' => !empty($this->state) || !empty($this->city) || !empty($this->society),
+            'Family Info' => !empty($this->father) || !empty($this->mother) || !empty($this->brothers_count) || !empty($this->sisters_count) || !empty($this->siblings),
+            'Additional Personal Details' => !empty($this->district) || !empty($this->family_residence) || !empty($this->father_profession) || !empty($this->mother_profession) || !empty($this->special_circumstances) || !empty($this->family_values),
+            'Partner Preferences' => !empty($this->rage_min) || !empty($this->rgen_req) || !empty($this->rheight) || !empty($this->rmarital_status)
+                || !empty($this->rcon_of_residence) || !empty($this->rcity) || !empty($this->rreligion) || !empty($this->rcaste)
+                || !empty($this->reducation) || !empty($this->rprofession) || !empty($this->rmother_tongue) || !empty($this->rlanguages) || !empty($this->rcon_pref),
+        ];
+
+        $filled = count(array_filter($sections));
+        $total = count($sections);
+
+        return [
+            'percent' => $total > 0 ? (int) round($filled / $total * 100) : 0,
+            'filled' => $filled,
+            'total' => $total,
+            'sections' => $sections,
+        ];
+    }
+
     public function getFilteredCount($type) {
         return 0;
     }
@@ -303,6 +342,22 @@ class Profile extends Model {
                 `mc`.`name` AS `lbl_city`,
                 `mcst`.`name` AS `lbl_caste`,
                 `me`.`name` AS `lbl_education`,
+                `pp`.`age_min` AS `rage_min`,
+                `pp`.`age_max` AS `rage_max`,
+                `pp`.`height` AS `rheight`,
+                `pp`.`weight` AS `rweight`,
+                `pp`.`marital_status` AS `rmarital_status`,
+                `pp`.`with_children` AS `rwith_children`,
+                `pp`.`country_id` AS `rcon_of_residence`,
+                `pp`.`city_id` AS `rcity`,
+                `pp`.`religion_id` AS `rreligion`,
+                `pp`.`caste_id` AS `rcaste`,
+                `pp`.`sect` AS `rsect`,
+                `pp`.`education_id` AS `reducation`,
+                `pp`.`profession` AS `rprofession`,
+                `pp`.`mother_tongue_id` AS `rmother_tongue`,
+                `pp`.`languages` AS `rlanguages`,
+                `pp`.`preferred_country_id` AS `rcon_pref`,
                 `rmms`.`name` AS `lbl_rmarital_status`,
                 `rmcor`.`name` AS `lbl_rcon_of_residence`,
                 `rmc`.`name` AS `lbl_rcity`,
@@ -311,6 +366,7 @@ class Profile extends Model {
                 `rme`.`name` AS `lbl_reducation`,
                 `rmmt`.`name` AS `lbl_rmother_tongue`,
                 `rmcp`.`name` AS `lbl_rcon_pref`,
+                `rms`.`name` AS `lbl_rstate`,
                 `dp`.`img_url` AS `displaypic` ,
                 group_concat(`i`.`img_url` separator ',') AS `images`
                 from (" . $subQuery . ") as `limited_users`
@@ -329,14 +385,16 @@ class Profile extends Model {
                 left join `masterdata` `mc` on((`u`.`city` = `mc`.`dataid`) and (`mc`.`type` = 'CITY'))
                 left join `masterdata` `mcst` on((`u`.`caste` = `mcst`.`dataid`) and (`mcst`.`type` = 'CASTE'))
                 left join `masterdata` `me` on((`u`.`education` = `me`.`dataid`) and (`me`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmms` on((`u`.`rmarital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
-                left join `masterdata` `rmcor` on((`u`.`rcon_of_residence` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
-                left join `masterdata` `rmc` on((`u`.`rcity` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
-                left join `masterdata` `rmr` on((`u`.`rreligion` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
-                left join `masterdata` `rmcst` on((`u`.`rcaste` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
-                left join `masterdata` `rme` on((`u`.`reducation` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmmt` on((`u`.`rmother_tongue` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
-                left join `masterdata` `rmcp` on((`u`.`rcon_pref` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
+                left join `partner_preferences` `pp` on(`pp`.`user_id` = `u`.`id`)
+                left join `masterdata` `rmms` on((`pp`.`marital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
+                left join `masterdata` `rmcor` on((`pp`.`country_id` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
+                left join `masterdata` `rmc` on((`pp`.`city_id` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
+                left join `masterdata` `rmr` on((`pp`.`religion_id` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
+                left join `masterdata` `rmcst` on((`pp`.`caste_id` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
+                left join `masterdata` `rme` on((`pp`.`education_id` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
+                left join `masterdata` `rmmt` on((`pp`.`mother_tongue_id` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
+                left join `masterdata` `rmcp` on((`pp`.`preferred_country_id` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
+                left join `masterdata` `rms` on((`pp`.`state_id` = `rms`.`dataid`) and (`rms`.`type` = 'STATE'))
                 left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1')
                 left join `images` `i` on(`u`.`id` = `i`.`user_id`)
                 group by `u`.`id`
@@ -359,6 +417,22 @@ class Profile extends Model {
                 `mc`.`name` AS `lbl_city`,
                 `mcst`.`name` AS `lbl_caste`,
                 `me`.`name` AS `lbl_education`,
+                `pp`.`age_min` AS `rage_min`,
+                `pp`.`age_max` AS `rage_max`,
+                `pp`.`height` AS `rheight`,
+                `pp`.`weight` AS `rweight`,
+                `pp`.`marital_status` AS `rmarital_status`,
+                `pp`.`with_children` AS `rwith_children`,
+                `pp`.`country_id` AS `rcon_of_residence`,
+                `pp`.`city_id` AS `rcity`,
+                `pp`.`religion_id` AS `rreligion`,
+                `pp`.`caste_id` AS `rcaste`,
+                `pp`.`sect` AS `rsect`,
+                `pp`.`education_id` AS `reducation`,
+                `pp`.`profession` AS `rprofession`,
+                `pp`.`mother_tongue_id` AS `rmother_tongue`,
+                `pp`.`languages` AS `rlanguages`,
+                `pp`.`preferred_country_id` AS `rcon_pref`,
                 `rmms`.`name` AS `lbl_rmarital_status`,
                 `rmcor`.`name` AS `lbl_rcon_of_residence`,
                 `rmc`.`name` AS `lbl_rcity`,
@@ -367,6 +441,7 @@ class Profile extends Model {
                 `rme`.`name` AS `lbl_reducation`,
                 `rmmt`.`name` AS `lbl_rmother_tongue`,
                 `rmcp`.`name` AS `lbl_rcon_pref`,
+                `rms`.`name` AS `lbl_rstate`,
                 `dp`.`img_url` AS `displaypic` ,
                 group_concat(`i`.`img_url` separator ',') AS `images`
                 from `users` `u`
@@ -384,14 +459,16 @@ class Profile extends Model {
                 left join `masterdata` `mc` on((`u`.`city` = `mc`.`dataid`) and (`mc`.`type` = 'CITY'))
                 left join `masterdata` `mcst` on((`u`.`caste` = `mcst`.`dataid`) and (`mcst`.`type` = 'CASTE'))
                 left join `masterdata` `me` on((`u`.`education` = `me`.`dataid`) and (`me`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmms` on((`u`.`rmarital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
-                left join `masterdata` `rmcor` on((`u`.`rcon_of_residence` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
-                left join `masterdata` `rmc` on((`u`.`rcity` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
-                left join `masterdata` `rmr` on((`u`.`rreligion` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
-                left join `masterdata` `rmcst` on((`u`.`rcaste` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
-                left join `masterdata` `rme` on((`u`.`reducation` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmmt` on((`u`.`rmother_tongue` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
-                left join `masterdata` `rmcp` on((`u`.`rcon_pref` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
+                left join `partner_preferences` `pp` on(`pp`.`user_id` = `u`.`id`)
+                left join `masterdata` `rmms` on((`pp`.`marital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
+                left join `masterdata` `rmcor` on((`pp`.`country_id` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
+                left join `masterdata` `rmc` on((`pp`.`city_id` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
+                left join `masterdata` `rmr` on((`pp`.`religion_id` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
+                left join `masterdata` `rmcst` on((`pp`.`caste_id` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
+                left join `masterdata` `rme` on((`pp`.`education_id` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
+                left join `masterdata` `rmmt` on((`pp`.`mother_tongue_id` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
+                left join `masterdata` `rmcp` on((`pp`.`preferred_country_id` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
+                left join `masterdata` `rms` on((`pp`.`state_id` = `rms`.`dataid`) and (`rms`.`type` = 'STATE'))
                 left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1')
                 left join `images` `i` on(`u`.`id` = `i`.`user_id`)"
                 .(empty($where)?"":" where (".$where.") ")

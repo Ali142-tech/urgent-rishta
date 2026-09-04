@@ -777,15 +777,29 @@ class RegisterController extends Controller
             $user->email_verified_at = now();
         }
 
-        // Partner Preferences (r* columns) aren't mass-assignable — set them
-        // directly, same as ProfileController@updateProfile's "partner_expectation"
-        // section does when a member edits these later.
-        $user->rage = $data['r_age'] ?? '';
-        $user->rheight = $data['r_height'] ?? '';
-        $user->rmarital_status = $data['r_marital_status'] ?? '';
-        $user->rreligion = $data['r_religion'] ?? '';
-        $user->rgen_req = $data['r_gen_req'] ?? '';
         $user->save();
+
+        // Partner Preferences captured during signup (the fuller set is filled in
+        // later on the dedicated "Partner Preferences" dashboard page — see
+        // ProfileController::updatePreferences()). `r_age` is free text at this
+        // stage (placeholder "25-32"), best-effort split into age_min/age_max.
+        $ageMin = null;
+        $ageMax = null;
+        if (!empty($data['r_age']) && preg_match('/(\d{1,2})\D*(\d{1,2})?/', $data['r_age'], $ageMatch)) {
+            $ageMin = $ageMatch[1];
+            $ageMax = $ageMatch[2] ?? null;
+        }
+        \App\PartnerPreference::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'age_min' => $ageMin,
+                'age_max' => $ageMax,
+                'height' => $data['r_height'] ?? null,
+                'marital_status' => $data['r_marital_status'] ?? null,
+                'religion_id' => $data['r_religion'] ?? null,
+                'general_requirement' => $data['r_gen_req'] ?? null,
+            ]
+        );
 
         // Session cleared in completeRegistration() after successful login
 

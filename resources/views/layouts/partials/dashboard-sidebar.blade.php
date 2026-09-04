@@ -24,6 +24,11 @@
                 <i class="fa fa-heart"></i> My Interests
             </a>
         </li>
+        <li>
+            <a href="{{ url('member/profile/preferences') }}" class="{{ request()->is('member/profile/preferences') ? 'is-active' : '' }}">
+                <i class="fa fa-search"></i> Partner Preferences
+            </a>
+        </li>
 
         <div class="ur-dash-nav__divider"></div>
 
