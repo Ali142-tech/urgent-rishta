@@ -77,7 +77,7 @@ class APIController extends Controller {
                 return response()->json([
                     'status' => 'error',
                     'error-type' => 'danger',
-                    'error' => 'Email has not been verified. Please check your email (junk/spam also) for a verification link. If you did not receive the email, contact Nimrah at 0307-0227000 for a new email.',
+                    'error' => 'Email has not been verified. Please check your email (junk/spam also) for a verification link. If you did not receive the email, contact UrgentRishta Team at 0307-0227000 for a new email.',
                     'next-screen' => 'login'
                 ]);
 

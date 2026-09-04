@@ -339,7 +339,7 @@ class LoginController extends Controller
                 $loggedInUser->sendEmailVerificationNotification();
                 Session::flash(
                     'message',
-                    'danger|Your email is not verified yet. We sent a new verification link (check spam/junk). Need help? Contact Nimrah at 0307-0227000.|15000'
+                    'danger|Your email is not verified yet. We sent a new verification link (check spam/junk). Need help? Contact UrgentRishta Team at 0307-0227000.|15000'
                 );
                 Log::info('User email not verified for ' . $loggedInUser->email);
                 Auth::logout();

@@ -107,6 +107,14 @@
     outline: none;
 }
 .ur-admin-filters .form-check-inline { margin-right: 16px; font-size: 13px; color: var(--ur-dash-text); }
+
+/* Select2 (initialized on .selectpicker in global-scripts.blade.php) isn't
+   given a width option, so it falls back to sizing itself off the source
+   <select>'s own computed width instead of the .form-group that's meant to
+   contain it — it can end up wider than the filter bar and overflow the
+   panel, especially in a narrow flex column on mobile. Force it to fill
+   its wrapper like every other filter control here. */
+.ur-admin-filters .select2-container { width: 100% !important; }
 .ur-admin-filters .form-check-inline .form-check-input { margin-right: 6px; }
 
 /* Generic admin button (used for Apply / Add new / actions) */
@@ -516,4 +524,28 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
     .ur-admin-profile-card__badges { align-items: flex-start; flex-direction: row; }
     .ur-admin-profile-card__head { flex-direction: column; }
     .ur-admin-pv-card__photos { justify-content: flex-start; }
+
+    /* The mini-table crams 4 columns of member data (label+value x2) into
+       one row — fine on desktop, but on a narrow phone the cells get
+       crushed/illegible. Stack each label/value pair onto its own line. */
+    .ur-admin-mini-table,
+    .ur-admin-mini-table tbody,
+    .ur-admin-mini-table tr,
+    .ur-admin-mini-table td {
+        display: block;
+        width: 100%;
+    }
+    .ur-admin-mini-table td { border-bottom: 0; padding: 3px 10px; text-align: center; }
+    .ur-admin-mini-table tr:not(:last-child) {
+        border-bottom: 1px solid var(--ur-dash-border);
+        padding-bottom: 4px;
+        margin-bottom: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .ur-admin-profile-card__media { flex: 0 0 100%; }
+    .ur-admin-profile-card__media .ur-admin-thumb { width: 100%; max-width: 220px; height: auto; aspect-ratio: 1 / 1; margin: 0 auto; }
+    .ur-admin-card__actions a,
+    .ur-admin-card__actions button { flex: 1 1 auto; justify-content: center; }
 }

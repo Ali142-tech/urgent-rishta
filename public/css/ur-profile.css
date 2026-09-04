@@ -221,6 +221,29 @@
 .ur-profile-page .table.table-profile tbody tr { border-bottom: 1px solid #EFEAE0; }
 .ur-profile-page .table.table-profile tbody tr:last-child { border-bottom: none; }
 
+/* Each row packs 2 label/value pairs (4 cells) into a table with
+   table-responsive applied straight to the <table> — on a narrow phone
+   the nowrap labels force the table wider than its box, so it turns into
+   a tiny horizontally-scrolling strip with everything crushed together.
+   Stack every cell onto its own line instead. */
+@media (max-width: 575.98px) {
+    .ur-profile-page .table.table-profile,
+    .ur-profile-page .table.table-profile tbody,
+    .ur-profile-page .table.table-profile tr,
+    .ur-profile-page .table.table-profile td {
+        display: block;
+        width: 100% !important;
+        overflow-x: visible;
+    }
+    .ur-profile-page .table.table-profile td.font-dark {
+        white-space: normal;
+        padding-bottom: 2px !important;
+    }
+    .ur-profile-page .table.table-profile td:not(.font-dark) {
+        padding-top: 0 !important;
+    }
+}
+
 /* Inline edit forms */
 .ur-profile-page .form-control {
     border: 1px solid #E7E2D6 !important;

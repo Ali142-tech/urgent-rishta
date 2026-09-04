@@ -101,6 +101,20 @@
     @media (max-width: 500px) {
         .ur-toast-stack { top: 70px; right: 10px; left: 10px; max-width: none; }
     }
+    .ur-toast__wa-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        padding: 7px 14px;
+        background: #25D366;
+        color: #fff !important;
+        border-radius: 20px;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-decoration: none !important;
+    }
+    .ur-toast__wa-btn:hover { background: #1ebe57; }
 
     @media screen and (max-width: 500px) {
     ul.navbar-nav {

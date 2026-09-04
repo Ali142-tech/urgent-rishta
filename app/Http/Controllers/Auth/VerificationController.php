@@ -64,7 +64,7 @@ class VerificationController extends Controller
             Log::info("User is already verified");
         } else if ($user->markEmailAsVerified()) {
             event(new Verified($user));
-            Session::flash('message','success|Thank you for verifying your email address. Please contact Nimrah at 0307-0227000 for profile activation.');
+            Session::flash('message','success|Thank you for verifying your email address. Please contact UrgentRishta Team at 0307-0227000 for profile activation.');
             Log::info("User has been verified");
             User::retrieveUserObject($user->dataid, true);
         }
