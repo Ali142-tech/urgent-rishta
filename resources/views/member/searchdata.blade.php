@@ -38,7 +38,7 @@
         <div class="member-card__photo">
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
                 <span class="member-card__photo-bg" style="background-image:url('{{ $member->getProfileImage() }}')"></span>
-                <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='/images/{{ strtolower($member->gender ? $member->gender : 'male') }}_large.jpg';" />
+                <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
             </a>
             @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
                 <span class="member-card__ribbon member-card__ribbon--new">New</span>

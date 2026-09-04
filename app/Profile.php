@@ -78,7 +78,19 @@ class Profile extends Model {
                 $this->images=explode(',', $this->images);
             if (!empty($this->images[0]))
                 return self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->images[0])[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->images[0])[2]);
-        } else return '/images/'.strtolower($this->gender?$this->gender:'male').'_large.jpg';
+        } else return self::defaultImage($this->gender);
+    }
+
+    /**
+     * Default fallback avatar for a gender when no profile photo exists.
+     * Appends the file's mtime as a version query so browsers/CDNs pick up
+     * a new default image immediately instead of serving a stale cached copy
+     * of the same filename.
+     */
+    public static function defaultImage($gender) {
+        $file = strtolower($gender ? $gender : 'male').'_large.jpg';
+        $full = public_path('images/'.$file);
+        return '/images/'.$file.(file_exists($full) ? '?v='.filemtime($full) : '');
     }
 
     public function getLightGalleryImages() {
