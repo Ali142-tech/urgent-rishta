@@ -370,10 +370,6 @@ class LoginController extends Controller
 
         Log::info('User (' . $loggedInUser->dataid . ') logged in via ' . $via);
 
-        if (empty($loggedInUser->package)) {
-            return redirect('packages');
-        }
-
         // Resume a search that was interrupted by the login gate (see Authenticate::redirectTo())
         // instead of dropping the user's filters and sending them to the homepage.
         if ($pendingSearch = session()->pull('pending_search')) {

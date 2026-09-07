@@ -1,5 +1,5 @@
 @extends('layouts.dashboard')
-@section('dashboard-title', $type=="interests" ? 'My Interests' : (strtoupper(substr($type, 0, 1)).substr($type, 1).(substr($type, strlen($type)-1)=="e"?"d":"ed"))." Members")
+@section('dashboard-title', $type=="interests" ? 'My Interests' : ($type=="photoaccess" ? 'My Photo Access Requests' : (strtoupper(substr($type, 0, 1)).substr($type, 1).(substr($type, strlen($type)-1)=="e"?"d":"ed"))." Members"))
 @section('main-content')
 <?php use App\User; ?>
 <style>
@@ -16,6 +16,8 @@
                 <h2 class="heading heading-3 strong-400 mb-0">
                 @if ($type=="interests")
                     Interests
+                @elseif ($type=="photoaccess")
+                    Photo Access Requests
                 @else
                     {{ (strtoupper(substr($type, 0, 1)).substr($type, 1).(substr($type, strlen($type)-1)=="e"?"d":"ed"))." Members" }}
                 @endif
@@ -30,6 +32,8 @@
                 <div class="block-wrapper" id="result">
                     @if($type=="interests")
                         @yield('interest-data')
+                    @elseif($type=="photoaccess")
+                        @yield('photoaccess-data')
                     @else
                         @yield('filtered-data')
                     @endif

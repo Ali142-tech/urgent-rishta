@@ -55,6 +55,15 @@
     border-radius: 20px;
     z-index: 1;
 }
+/* Hidden (visibility='Private') images: badge sits top-right so it can't
+   collide with the "Display Pic" badge (top-left) on the rare image that's
+   both, and the thumbnail itself is dimmed so it reads as hidden at a glance. */
+.ur-pictures-page__badge--hidden {
+    left: auto;
+    right: 10px;
+    background: #B5674A;
+}
+.ur-pictures-page__card--hidden img { opacity: .45; }
 .ur-pictures-page__overlay {
     position: absolute;
     inset: 0;

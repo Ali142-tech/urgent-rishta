@@ -424,6 +424,102 @@ class AdminController extends Controller
         ];
     }
 
+    /**
+     * "Photo Access Requests" — same shape as interests()/refreshInterests()
+     * above, backed by photo_access_requests instead of `interest`. `uid`/
+     * `pid` here are the JOINED users' `dataid` (not the raw numeric FK
+     * columns on photo_access_requests) — admin.dashboard.photoaccessdata
+     * uses them directly as profile URLs/IDs, same convention as sid/rid
+     * on the interests query above.
+     */
+    function photoAccessRequests()
+    {
+        $pageSize = 10;
+        $query = DB::table('photo_access_requests', 'p')->select(
+            DB::raw('us.dataid as uid, CONCAT(us.first_name, " ",us.last_name)
+            as user, ur.dataid as pid, CONCAT(ur.first_name, " ",ur.last_name) as profile,
+            us.email as user_email,
+            ur.email as profile_email,
+            (select group_concat(img_url separator ",") from images where user_id=p.uid) as user_images,
+            (select group_concat(img_url separator ",") from images where user_id=p.pid) as profile_images,
+            p.allowed as allowed, p.created_at as created_at, p.updated_at as updated_at')
+        )
+            ->leftJoin('users as us', 'p.uid', '=', 'us.id')
+            ->leftJoin('users as ur', 'p.pid', '=', 'ur.id');
+        $total = $query->count();
+        $view = view('admin.dashboard.photoaccessdata')->with([
+            'currentPage' => 1,
+            'pageSize' => $pageSize,
+            'total' => $total,
+            'numPages' => ceil($total / $pageSize),
+            'requests' => $query->orderBy('p.updated_at', 'DESC')->limit(10)->get()
+        ]);
+
+        if (request()->ajax()) {
+            return [
+                'code' => '200',
+                'html' => $view->renderSections()['admin-content']
+            ]; // only return whats in the main-content section
+        } else return $view;
+    }
+
+    function refreshPhotoAccessRequests(Request $request)
+    {
+        if ($request->ajax()) {
+            $searchTerm = $request->term;
+            $pageSize = $request->pagesize;
+            $pageRequested = $request->pagerequested;
+            $query = DB::table('photo_access_requests', 'p')
+                ->select(DB::raw('us.dataid as uid, CONCAT(us.first_name, " ", us.last_name) as user, ur.dataid as pid,
+            CONCAT(ur.first_name, " ", ur.last_name) as profile,
+            us.email as user_email, ur.email as profile_email,
+            (select group_concat(img_url separator ",") from images where user_id=p.uid) as user_images,
+            (select group_concat(img_url separator ",") from images where user_id=p.pid) as profile_images,
+            p.allowed as allowed, p.created_at as created_at, p.updated_at as updated_at'))
+                ->leftJoin('users as us', 'p.uid', '=', 'us.id')
+                ->leftJoin('users as ur', 'p.pid', '=', 'ur.id');
+            $resultCount = null;
+            $requests = null;
+
+            $total = $query->count();
+
+            $status = $request->status;
+            if ($status != null) {
+                $query->where('p.allowed', '=', $status);
+            }
+            if (!empty($searchTerm)) {
+                $searchTerm = strtolower($searchTerm);
+                $query = $query->where(function ($query) use ($searchTerm) {
+                    $query->orWhereRaw('lower(us.dataid) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.dataid) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(us.first_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(us.last_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.first_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.last_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(us.email) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.email) LIKE "%' . $searchTerm . '%"');
+                });
+            }
+
+            $resultCount = $query->count();
+            $requests = $query->orderBy('p.updated_at', 'DESC')->offset($pageSize * ($pageRequested - 1))->limit($pageSize)->get();
+
+            return [
+                'code' => '200',
+                'html' => view('admin.dashboard.photoaccessdata')->with([
+                    'currentPage' => $pageRequested,
+                    'pageSize' => $pageSize,
+                    'total' => $total,
+                    'numPages' => ceil($resultCount / $pageSize),
+                    'resultCount' => !empty($request->term) ? $resultCount : null,
+                    'requests' => $requests
+                ])->renderSections()['photoaccess-data']
+            ]; // only return whats in the main-content section
+        } else return [
+            'code' => '200'
+        ];
+    }
+
     function packages()
     {
         $view = view('admin.dashboard.packages')->with(['packages' => MasterData::where('type', 'PACKAGE')->get()]);

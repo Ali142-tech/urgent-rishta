@@ -7,6 +7,7 @@ use App\Mail\InterestAccepted as InterestAcceptedMail;
 use App\Mail\InterestDeclined as InterestDeclinedMail;
 use App\User;
 use App\Interest;
+use App\PhotoAccessRequest;
 use App\MasterData;
 use App\Images;
 use App\Filtered;
@@ -15,6 +16,9 @@ use App\Profile;
 use App\Notifications\InterestAccepted;
 use App\Notifications\InterestDeclined;
 use App\Notifications\InterestSent;
+use App\Notifications\PhotoAccessRequested;
+use App\Notifications\PhotoAccessGranted;
+use App\Notifications\PhotoAccessDeclined;
 use App\Notifications\UserFollowed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -44,8 +48,11 @@ class ProfileController extends Controller
     public function profile(Request $request, $dataid = null)
     {
         $profile = null;
+        $hiddenPhotos = null;
         if ($dataid) {
-            $profile = User::retrieveUserObject($dataid)->profile();
+            $ownerUser = User::retrieveUserObject($dataid);
+            $profile = $ownerUser->profile();
+            $hiddenPhotos = $this->hiddenPhotosFor($ownerUser, $profile);
         } else $profile = User::retrieveUserObject()->profile();
 
         $religions = MasterData::where('type', 'RELIGION')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
@@ -59,7 +66,44 @@ class ProfileController extends Controller
         // not something shown while browsing someone else's.
         $completeness = $dataid ? null : $profile->profileCompleteness();
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness'));
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos'));
+    }
+
+    /**
+     * Private (hidden) photos belonging to $ownerUser, gated by who's
+     * looking. $profile is $ownerUser->profile() — already Public-only
+     * (see Profile::profiles()'s `visibility='Public'` join) — so a viewer
+     * who's allowed to see the Private ones (admin, or a member with a
+     * granted photo_access_requests row — see User::canViewHiddenPhotosOf())
+     * gets them merged straight into $profile->images/getLightGalleryImages(),
+     * same as any other photo. Everyone else just gets a count + their own
+     * request status, so member.profile.blade.php can show a locked
+     * placeholder instead of the photos themselves. Returns null when the
+     * owner has no hidden photos at all — nothing to show either way.
+     */
+    private function hiddenPhotosFor(User $ownerUser, Profile $profile): ?array
+    {
+        $hiddenImages = Images::where('user_id', $ownerUser->id)
+            ->where('visibility', 'Private')
+            ->where('is_selfie', 0)
+            ->get();
+        if ($hiddenImages->isEmpty()) {
+            return null;
+        }
+
+        $viewer = User::retrieveUserObject();
+        $canView = $viewer && $viewer->canViewHiddenPhotosOf($ownerUser);
+
+        if ($canView) {
+            $existing = is_array($profile->images) ? $profile->images : (!empty($profile->images) ? explode(',', $profile->images) : []);
+            $profile->images = array_values(array_unique(array_merge($existing, $hiddenImages->pluck('img_url')->all())));
+        }
+
+        return [
+            'count' => $hiddenImages->count(),
+            'canView' => $canView,
+            'status' => $viewer ? $viewer->getPhotoAccess($ownerUser->dataid) : null,
+        ];
     }
 
     public function preferencesPage()
@@ -473,6 +517,22 @@ class ProfileController extends Controller
 
                     Log::info("User (" . $loggedInUserDataId . ") updated display pic to image (" . $dataid . ").");
                     $message = 'success|You have successfully updated display pic to image (' . $dataid . ').';
+                } else if ($action == 'v') {
+                    // Toggle Public/Private. Private already means "not shown to anyone" —
+                    // the `profile` VIEW's display pic / gallery joins (and everything built
+                    // on it: search results, other members' view of this profile, light
+                    // gallery) only ever pick up visibility='Public' images, so this alone
+                    // is enough to hide it everywhere outside this member's own Manage
+                    // Pictures page. Hiding the current display pic isn't blocked — it just
+                    // falls back to the next Public image (or the default avatar) via
+                    // Profile::getProfileImage(), same as if no display pic were set.
+                    $image->visibility = $image->visibility === 'Private' ? 'Public' : 'Private';
+                    $image->save();
+
+                    Log::info("User (" . $loggedInUserDataId . ") set image (" . $dataid . ") visibility to " . $image->visibility . ".");
+                    $message = $image->visibility === 'Private'
+                        ? 'success|This image is now hidden — it will not be shown to anyone.'
+                        : 'success|This image is visible to other members again.';
                 }
                 User::retrieveUserObject($loggedInUserDataId, true);
             } catch (\Exception $e) {
@@ -841,6 +901,180 @@ class ProfileController extends Controller
     }
 
     /**
+     * "Request to view hidden photos" — same request/grant/decline/withdraw
+     * shape as updateInterest() above, backed by photo_access_requests
+     * instead of `interest`. $dataid is always "the other member" in the
+     * pair; for withdraw, $who tells us which side of the pair we are
+     * ('s' = I'm the requester withdrawing my own sent request, else I'm
+     * the owner revoking a grant/decline I'd made).
+     */
+    public function updatePhotoAccess($action, $dataid, $who = null)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        switch ($action) {
+            case "request":
+                return $this->requestPhotoAccess($dataid);
+            case "grant":
+                return $this->grantPhotoAccess($dataid);
+            case "decline":
+                return $this->declinePhotoAccess($dataid);
+            case "withdraw":
+                return $this->withdrawPhotoAccess($dataid, $who);
+            default:
+                Log::info("User (" . $loggedInUser->dataid . ") requested " . $action . " photo access action on (" . $dataid . ")");
+                return [
+                    'code' => '404',
+                    'message' => 'Action not permitted!!!'
+                ];
+        }
+    }
+
+    public function requestPhotoAccess($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            $message = null;
+            $existing = PhotoAccessRequest::where('pid', $id)->where('uid', $loggedInUser->id)->first();
+            if (empty($existing)) {
+                $request = new PhotoAccessRequest;
+                $request->pid = $id;
+                $request->uid = $loggedInUser->id;
+                $request->allowed = 0;
+                $request->save();
+
+                $member->notify(new PhotoAccessRequested($loggedInUser, $member));
+
+                Log::info("User (" . $loggedInUser->dataid . ") requested photo access from user (" . $id . ")");
+                $message = "success|You've requested to view this member's hidden photos. We'll let you know if they approve it.";
+
+                User::retrieveUserObject($dataid, true);
+                User::retrieveUserObject($loggedInUser->dataid, true);
+            } else {
+                Log::info("User (" . $loggedInUser->dataid . ") already requested photo access from " . $dataid);
+                $message = 'warning|You have already requested to view this member\'s hidden photos.';
+            }
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not request photo access from " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    public function grantPhotoAccess($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            $obj = PhotoAccessRequest::where('uid', $id)->where('pid', $loggedInUser->id)->first();
+            if (empty($obj)) {
+                Log::info("User (" . $loggedInUser->dataid . ") could not grant photo access to " . $dataid . " — no request found");
+                return ['code' => '404', 'message' => 'No photo access request was found for this member.'];
+            }
+            $obj->allowed = 1;
+            $obj->save();
+
+            $member->notify(new PhotoAccessGranted($member, $loggedInUser));
+
+            Log::info("User (" . $loggedInUser->dataid . ") granted photo access to (" . $dataid . ")");
+            $message = 'success|You have granted this member access to your hidden photos.';
+
+            User::retrieveUserObject($dataid, true);
+            User::retrieveUserObject($loggedInUser->dataid, true);
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not grant photo access to " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    public function declinePhotoAccess($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            $obj = PhotoAccessRequest::where('uid', $id)->where('pid', $loggedInUser->id)->first();
+            if (empty($obj)) {
+                Log::info("User (" . $loggedInUser->dataid . ") could not decline photo access for " . $dataid . " — no request found");
+                return ['code' => '404', 'message' => 'No photo access request was found for this member.'];
+            }
+            $obj->allowed = -1;
+            $obj->save();
+
+            $member->notify(new PhotoAccessDeclined($member, $loggedInUser));
+
+            Log::info("User (" . $loggedInUser->dataid . ") declined photo access for (" . $dataid . ")");
+            $message = 'success|You have declined this member\'s photo access request.';
+
+            User::retrieveUserObject($dataid, true);
+            User::retrieveUserObject($loggedInUser->dataid, true);
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not decline photo access for " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    public function withdrawPhotoAccess($dataid, $who)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            if ($who == 's') {
+                $obj = PhotoAccessRequest::where('pid', $id)->where('uid', $loggedInUser->id)->first();
+                $label = "Requester";
+            } else {
+                $obj = PhotoAccessRequest::where('uid', $id)->where('pid', $loggedInUser->id)->first();
+                $label = "Owner";
+            }
+            if ($obj) $obj->delete();
+
+            Log::info($label . " (" . $loggedInUser->dataid . ") withdrew photo access with (" . $dataid . ")");
+            $message = 'success|Photo access request withdrawn.';
+
+            User::retrieveUserObject($dataid, true);
+            User::retrieveUserObject($loggedInUser->dataid, true);
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not withdraw photo access with " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    /**
      * Intervention Image driver: prefer Imagick when available, else GD.
      */
     private function createImageManager(): ?ImageManager
@@ -970,6 +1204,9 @@ class ProfileController extends Controller
         if ($type == "interests") {
             $members = $user->getInterestLists();
             return view('member.interestdata', compact('type', 'members'));
+        } else if ($type == "photoaccess") {
+            $members = $user->getPhotoAccessLists();
+            return view('member.photoaccessdata', compact('type', 'members'));
         } else {
             $members = $user->getTypeFilteredList($type);
             return view('member.filtereddata', compact('type', 'members'));

@@ -17,14 +17,20 @@
 
     <div class="ur-pictures-page__grid">
         @forelse($images as $image)
-        <div class="ur-pictures-page__card" id="image_{{ $image->dataid }}">
+        <div class="ur-pictures-page__card{{ $image->visibility == 'Private' ? ' ur-pictures-page__card--hidden' : '' }}" id="image_{{ $image->dataid }}">
             @if($image->displaypic == 1)
             <span class="ur-pictures-page__badge">Display Pic</span>
+            @endif
+            @if($image->visibility == 'Private')
+            <span class="ur-pictures-page__badge ur-pictures-page__badge--hidden">Hidden</span>
             @endif
             <img src="{{ Profile::MEMBER_IMAGES_PATH }}/thumbnail_{{ $image->name }}" alt="">
             <div class="ur-pictures-page__overlay">
                 <button type="button" class="ur-pictures-page__action" id="displaypic_{{ $image->dataid }}" title="Set as Display Picture" onclick="javascript:updateImage($(this), 'dp', '{{ $image->dataid }}');">
                     <i class="fa fa-{{ $image->displaypic == 1 ? 'user' : 'user-o' }}"></i>
+                </button>
+                <button type="button" class="ur-pictures-page__action" id="visibility_{{ $image->dataid }}" title="{{ $image->visibility == 'Private' ? 'Make Visible to Others' : 'Hide From Everyone' }}" onclick="javascript:updateImage($(this), 'v', '{{ $image->dataid }}');">
+                    <i class="fa fa-{{ $image->visibility == 'Private' ? 'eye-slash' : 'eye' }}"></i>
                 </button>
                 <button type="button" class="ur-pictures-page__action ur-pictures-page__action--delete" title="Delete" onclick="javascript:deleteImage($(this), '{{ $image->dataid }}');">
                     <i class="fa fa-trash"></i>

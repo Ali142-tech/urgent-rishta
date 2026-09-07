@@ -48,12 +48,19 @@ Route::get('cities/{id}/{iscountry}', [App\Http\Controllers\HomeController::clas
 // automatically via redirect after they log in — see Authenticate::redirectTo() and
 // LoginController::finishLogin(), which resume the search instead of losing the filters.
 Route::match(['get', 'post'], 'member/searchresults/{refresh?}', [App\Http\Controllers\HomeController::class, 'search'])->name('searchresults');
+// Dedicated destination for the "View Recommended Matches"/"View All" links on
+// the Search Profiles page — same profiles as that page's preview grid
+// (see User::getRecommendedMatches()), just paginated instead of capped at 3.
+// Not in HomeController's guest-accessible $except list, so 'auth'+'verified' apply.
+Route::get('member/recommended-matches', [App\Http\Controllers\HomeController::class, 'recommendedMatches'])->name('member.recommended-matches');
 
 // Admin page routes
 Route::get('admin/profiles', [App\Http\Controllers\AdminController::class, 'profiles']); // route to index which will list profiles
 Route::post('admin/profiles/refresh', [App\Http\Controllers\AdminController::class, 'refreshProfiles']); // list all profiles in admin dashboard
 Route::get('admin/interests', [App\Http\Controllers\AdminController::class, 'interests']);
 Route::post('admin/interests/refresh', [App\Http\Controllers\AdminController::class, 'refreshInterests']); // list all interests in admin dashboard
+Route::get('admin/photoaccess', [App\Http\Controllers\AdminController::class, 'photoAccessRequests']);
+Route::post('admin/photoaccess/refresh', [App\Http\Controllers\AdminController::class, 'refreshPhotoAccessRequests']); // list all photo access requests in admin dashboard
 Route::get('admin/packages', [App\Http\Controllers\AdminController::class, 'packages']);
 Route::get('admin/packages/modal/{id?}', [App\Http\Controllers\AdminController::class, 'renderPackagesModal']);
 Route::get('admin/package-subscribers', [App\Http\Controllers\AdminController::class, 'packageSubscribers']);
@@ -122,6 +129,9 @@ Route::post('member/profile/filtered/{action}/{type}/{id}', [App\Http\Controller
 // interest route
 Route::post('member/profile/interest/{action}/{id}', [App\Http\Controllers\ProfileController::class, 'updateInterest']);
 Route::post('member/profile/interest/{action}/{id}/{who}', [App\Http\Controllers\ProfileController::class, 'updateInterest']);
+// photo access request route (request/grant/decline a hidden photo, or withdraw one you sent/granted)
+Route::post('member/profile/photoaccess/{action}/{id}', [App\Http\Controllers\ProfileController::class, 'updatePhotoAccess']);
+Route::post('member/profile/photoaccess/{action}/{id}/{who}', [App\Http\Controllers\ProfileController::class, 'updatePhotoAccess']);
 // profile listing view
 Route::get('member/profile/listing/{type}', [App\Http\Controllers\ProfileController::class, 'showListing']);
 // profile links

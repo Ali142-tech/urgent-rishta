@@ -26,6 +26,11 @@
             </a>
         </li>
         <li>
+            <a href="{{ url('admin/photoaccess') }}" class="{{ request()->is('admin/photoaccess') ? 'is-active' : '' }}">
+                <i class="fa fa-lock"></i> Photo Access Requests
+            </a>
+        </li>
+        <li>
             <a href="{{ url('admin/packages') }}" class="{{ request()->is('admin/packages') ? 'is-active' : '' }}">
                 <i class="fa fa-list-ul"></i> Packages
             </a>

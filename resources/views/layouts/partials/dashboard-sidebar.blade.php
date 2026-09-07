@@ -20,13 +20,28 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('searchresults') }}" class="{{ request()->is('member/searchresults*') ? 'is-active' : '' }}">
+                <i class="fa fa-search"></i> Search Profiles
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('member.recommended-matches') }}" class="{{ request()->is('member/recommended-matches') ? 'is-active' : '' }}">
+                <i class="fa fa-users"></i> Recommended Matches
+            </a>
+        </li>
+        <li>
             <a href="{{ url('member/profile/listing/interests') }}" class="{{ request()->is('member/profile/listing/interests') ? 'is-active' : '' }}">
                 <i class="fa fa-heart"></i> My Interests
             </a>
         </li>
         <li>
+            <a href="{{ url('member/profile/listing/photoaccess') }}" class="{{ request()->is('member/profile/listing/photoaccess') ? 'is-active' : '' }}">
+                <i class="fa fa-lock"></i> Photo Access Requests
+            </a>
+        </li>
+        <li>
             <a href="{{ url('member/profile/preferences') }}" class="{{ request()->is('member/profile/preferences') ? 'is-active' : '' }}">
-                <i class="fa fa-search"></i> Partner Preferences
+                <i class="fa fa-sliders"></i> Partner Preferences
             </a>
         </li>
 

@@ -141,6 +141,61 @@
         border-color: var(--ur-gold);
     }
 
+    /* ---- Hidden-photos notice (member/profile.blade.php only — the
+       viewer isn't the owner, isn't admin, and hasn't been granted access
+       to this member's Private photos; see ProfileController::profile()) ---- */
+    .ur-mp-locked-photos {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 10px;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: var(--ur-bg);
+        border: 1px dashed var(--ur-border);
+        font-size: 12.5px;
+        color: var(--ur-text-muted);
+    }
+
+    .ur-mp-locked-photos__icon {
+        color: var(--ur-red);
+        font-size: 15px;
+    }
+
+    .ur-mp-locked-photos__text {
+        flex: 1;
+    }
+
+    .ur-mp-locked-photos__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--ur-green);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 14px;
+        border-radius: 999px;
+        border: 0;
+        cursor: pointer;
+        white-space: nowrap;
+        text-decoration: none;
+    }
+
+    .ur-mp-locked-photos__btn:hover {
+        background: var(--ur-green-dark);
+        color: #fff;
+    }
+
+    .ur-mp-locked-photos__status {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .ur-mp-locked-photos__status--declined {
+        color: var(--ur-red);
+    }
+
     .ur-mp-thumb--more {
         display: flex;
         align-items: center;
@@ -592,6 +647,29 @@
                         </div>
                     @endif
                 </div>
+
+                @if(!empty($hiddenPhotos) && $hiddenPhotos['count'] > 0 && !$hiddenPhotos['canView'])
+                <div class="ur-mp-locked-photos">
+                    <span class="ur-mp-locked-photos__icon"><i class="fa fa-lock"></i></span>
+                    <span class="ur-mp-locked-photos__text">{{ $hiddenPhotos['count'] }} {{ $hiddenPhotos['count'] == 1 ? 'photo is' : 'photos are' }} hidden by this member.</span>
+                    @guest
+                        <a class="ur-mp-locked-photos__btn" href="javascript:void(0);" onclick="return register_request();">
+                            <i class="fa fa-lock"></i> Request to View
+                        </a>
+                    @endguest
+                    @auth
+                        @if($hiddenPhotos['status'] === null)
+                        <a class="ur-mp-locked-photos__btn" id="photoaccess_{{ $profile->dataid }}" href="javascript:void(0);" title="Request Photo Access" onclick="return requestPhotoAccess($(this));">
+                            <i class="fa fa-lock"></i> Request to View
+                        </a>
+                        @elseif($hiddenPhotos['status'] === 0)
+                        <span class="ur-mp-locked-photos__status">Request sent — waiting for approval</span>
+                        @elseif($hiddenPhotos['status'] === -1)
+                        <span class="ur-mp-locked-photos__status ur-mp-locked-photos__status--declined">Access request declined</span>
+                        @endif
+                    @endauth
+                </div>
+                @endif
 
                 <div class="ur-mp-headline">
                     <h2>

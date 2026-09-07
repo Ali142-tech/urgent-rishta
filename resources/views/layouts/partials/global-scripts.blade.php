@@ -334,6 +334,64 @@
         });
     }
 
+    // "Request to view hidden photos" — the locked-photo placeholder on
+    // another member's profile (member/profile.blade.php) and the
+    // Grant/Decline/Withdraw buttons on member/photoaccessdata.blade.php
+    // (My Photo Access Requests) and admin's photoaccess dashboard all funnel
+    // through here. Unlike interest's inline DOM patching above, this just
+    // reloads on success (same as deleteImage/updateImage) — simpler and
+    // always correct given how differently the calling markup varies.
+    function requestPhotoAccess(elem) {
+        var splitId = elem.attr("id").split("_");
+        updatePhotoAccessAction(elem, 'request', splitId[1]);
+    }
+
+    function grantPhotoAccess(elem) {
+        var splitId = elem.attr("id").split("_");
+        updatePhotoAccessAction(elem, 'grant', splitId[1]);
+    }
+
+    function declinePhotoAccess(elem) {
+        var splitId = elem.attr("id").split("_");
+        updatePhotoAccessAction(elem, 'decline', splitId[1]);
+    }
+
+    function withdrawPhotoAccess(elem, who) {
+        swalConfirm("Withdraw Photo Access?", "Are you sure you want to withdraw this photo access request?", () => {
+            var splitId = elem.attr("id").split("_");
+            updatePhotoAccessAction(elem, 'withdraw', splitId[1], who);
+        });
+    }
+
+    function updatePhotoAccessAction(elem, action, dataid, who) {
+        var oldHtml = elem.html();
+        elem.html("<i class='fa fa-refresh fa-spin'></i>");
+        elem.prop('disabled', true);
+        $.ajax({
+            type: "post",
+            url: "{{ url('member/profile/photoaccess') }}" + "/" + action + "/" + dataid + (who ? "/" + who : ""),
+            data: { '_token': "{{ csrf_token() }}" },
+            cache: false,
+            timeout: 20000,
+            success: function(result) {
+                var message = result.message.split("|");
+                if (result.code == "200") {
+                    showAlert(message[0], message[1], 7000);
+                    setTimeout(function() { location.reload(); }, 700);
+                } else {
+                    elem.html(oldHtml);
+                    elem.prop('disabled', false);
+                    showAlert('danger', message, 5000);
+                }
+            },
+            error: function() {
+                elem.html(oldHtml);
+                elem.prop('disabled', false);
+                showAlert('danger', 'Could not reach the server. Please check your connection and try again.', 6000);
+            }
+        });
+    }
+
     function updateFiltered(elem, action) {
         var oldHtml = elem.html();
         elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");

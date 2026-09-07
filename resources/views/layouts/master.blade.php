@@ -402,12 +402,6 @@ a.appointment-btn::before{
                                                 <a class="nav-link " href="{{ url('/') }}#how-it-works" aria-haspopup="true" aria-expanded="false">
                                                     How It Works</a>
                                             </li>
-                                            @auth
-                                            <li class="custom-nav">
-                                                <a class="nav-link " href="{{url('member/profile')}}" aria-haspopup="true" aria-expanded="false">
-                                                    Profile</a>
-                                            </li>
-                                            @endauth
                                             <li class="custom-nav dropdown ur-plans-dropdown">
                                                 <a class="nav-link dropdown-toggle" href="{{url('packages')}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                     Premium Plans</a>

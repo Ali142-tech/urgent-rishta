@@ -232,6 +232,85 @@ class User extends Authenticatable implements MustVerifyEmail {
     }
 
     /**
+     * WHERE clause shared by getRecommendedMatches()/getRecommendedMatchesCount()
+     * — same active/package visibility rules as the real search
+     * (HomeController::search()), restricted to the opposite gender. Null
+     * when the viewer can't search yet (inactive profile / no package) or
+     * has no gender set — callers treat that as "no recommendations".
+     */
+    private function recommendedMatchesWhere(): ?string
+    {
+        if (!$this->isActive() || !$this->canSearchSoulMates()) {
+            return null;
+        }
+
+        $ownGender = strtolower($this->gender ?? '');
+        $oppositeGender = $ownGender === 'male' ? 'female' : ($ownGender === 'female' ? 'male' : null);
+        if (empty($oppositeGender)) {
+            return null;
+        }
+
+        $where = "`u`.`gender`='" . $oppositeGender . "' and `u`.`active`=1";
+        $visiblePackageDataids = $this->getVisiblePackageDataidsForSearch();
+        if (empty($visiblePackageDataids)) {
+            $where .= " and 1=0";
+        } elseif (!$this->isAdmin()) {
+            $quoted = array_map(function ($d) {
+                return "'" . addslashes($d) . "'";
+            }, $visiblePackageDataids);
+            $where .= " and `u`.`package` IN (" . implode(',', $quoted) . ")";
+        }
+
+        return $where;
+    }
+
+    /**
+     * Up to $limit "recommended" profiles for this member, starting at
+     * $offset (for the dedicated "Recommended Matches" page's
+     * pagination). Prioritized (via ORDER BY, not WHERE) same-city first,
+     * then same-country (any city), then everyone else by recency — a
+     * same-city match implies same-country too, so this cascades rather
+     * than requiring both. Nothing is ever excluded by city/country, so
+     * the result still fills up to $limit even when the viewer has no
+     * exact geographic match. This is NOT a real recommendation engine
+     * (no preference/compatibility scoring) — just a small, safe default
+     * result set.
+     */
+    public function getRecommendedMatches($limit = 3, $offset = 0)
+    {
+        $where = $this->recommendedMatchesWhere();
+        if ($where === null) {
+            return collect();
+        }
+
+        $orderParts = [];
+        if (!empty($this->city)) {
+            $orderParts[] = "(`u`.`city`='" . addslashes($this->city) . "') DESC";
+        }
+        if (!empty($this->con_of_residence)) {
+            $orderParts[] = "(`u`.`con_of_residence`='" . addslashes($this->con_of_residence) . "') DESC";
+        }
+        $orderParts[] = "`u`.`updated_at` DESC";
+        $orderBy = implode(', ', $orderParts);
+
+        return Profile::profiles($where, "", $orderBy, $limit, $offset);
+    }
+
+    /**
+     * Total count of profiles getRecommendedMatches() draws from — used
+     * by the dedicated "Recommended Matches" page to paginate.
+     */
+    public function getRecommendedMatchesCount(): int
+    {
+        $where = $this->recommendedMatchesWhere();
+        if ($where === null) {
+            return 0;
+        }
+
+        return (int) Profile::profiles($where, "", null, null, null, true);
+    }
+
+    /**
      * Activate an ONLINE package (sets online_package columns only; does not change admin package).
      * If the user already has an active (non-expired) online subscription, does nothing:
      * they must wait until expiry before subscribing again.
@@ -287,6 +366,31 @@ class User extends Authenticatable implements MustVerifyEmail {
 
     public function getInterest($dataid) {
         return $this->profile()->getInterest($dataid);
+    }
+
+    public function getPhotoAccessLists() {
+        return $this->profile()->getPhotoAccessLists();
+    }
+
+    public function updatePhotoAccessLists() {
+        return $this->profile()->updatePhotoAccessLists();
+    }
+
+    public function getPhotoAccess($dataid) {
+        return $this->profile()->getPhotoAccess($dataid);
+    }
+
+    /**
+     * Can this member see $owner's hidden (Private) photos right now?
+     * Admins always can (Website Upgrade Brief-style moderation access —
+     * "hidden" only ever meant hidden from other members); the owner
+     * always can on their own profile (not that this page renders for
+     * them); everyone else needs a granted photo_access_requests row.
+     */
+    public function canViewHiddenPhotosOf(User $owner): bool {
+        if ($this->id === $owner->id) return true;
+        if ($this->isAdmin()) return true;
+        return $this->getPhotoAccess($owner->dataid) === 1;
     }
 
     public function getTotalCount() {

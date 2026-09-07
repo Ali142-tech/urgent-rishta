@@ -73,10 +73,6 @@ class GoogleAuthController extends Controller
 
             Log::info('User (' . $user->dataid . ') logged in via Google');
 
-            if (empty($user->package)) {
-                return redirect('packages');
-            }
-
             return redirect('member/profile');
         }
 

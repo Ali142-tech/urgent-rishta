@@ -20,6 +20,7 @@ class Profile extends Model {
     protected $table="profile";
 
     protected $interestLists = null;
+    protected $photoAccessLists = null;
     protected $followerCount = null;
     protected $userObj = null;
 
@@ -71,14 +72,24 @@ class Profile extends Model {
     }
 
     public function getProfileImage($tiny = null) {
-        if (!empty($this->displaypic))
-            return self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->displaypic)[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->displaypic)[2]);
-        else if (!empty($this->images)) {
+        $path = null;
+        if (!empty($this->displaypic)) {
+            $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->displaypic)[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->displaypic)[2]);
+        } else if (!empty($this->images)) {
             if (!is_array($this->images))
                 $this->images=explode(',', $this->images);
             if (!empty($this->images[0]))
-                return self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->images[0])[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->images[0])[2]);
-        } else return self::defaultImage($this->gender);
+                $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->images[0])[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->images[0])[2]);
+        }
+
+        // Fall back to the gender default avatar both when there's no photo
+        // on record, and when the DB points at a file that isn't actually on
+        // disk (e.g. a live DB dump imported locally without also copying
+        // public/users) — otherwise the background-image div just renders
+        // blank with no visible fallback.
+        if ($path && file_exists(public_path($path)))
+            return $path;
+        return self::defaultImage($this->gender);
     }
 
     /**
@@ -246,11 +257,106 @@ class Profile extends Model {
         }
     }
 
+    /**
+     * "Request to view hidden photos" — same sent/received shape as
+     * getInterestLists()/updateInterestLists() above, backed by
+     * photo_access_requests (uid=requester, pid=owner, allowed=0/1/-1)
+     * instead of `interest`. Powers member.photoaccessdata (My Photo
+     * Access Requests) and admin.dashboard.photoaccess*.
+     */
+    public function getPhotoAccessLists($refresh = null) {
+        if ($refresh || $this->photoAccessLists == null)
+            $this->updatePhotoAccessLists();
+        return $this->photoAccessLists;
+    }
+
+    public function updatePhotoAccessLists() {
+        try {
+            $sentList = array();
+            $result = DB::table("photo_access_requests as p")
+                ->select("u.dataid", "u.first_name", "u.last_name", "u.email", "u.gender", "u.birthday", "u.height",
+                    "mr.name as lbl_religion", "mc.name as lbl_caste", "mmt.name as lbl_mother_tongue", "mms.name as lbl_marital_status", "mcor.name as lbl_con_of_residence",
+                    "p.allowed")
+                ->leftJoin("users as u", "u.id", "=", "p.pid")
+                ->leftJoin("masterdata as mr", function($join) {
+                    $join->on("u.religion", "=", "mr.dataid");
+                    $join->where("mr.type","=","RELIGION");
+                })
+                ->leftJoin("masterdata as mc", function($join) {
+                    $join->on("u.caste", "=", "mc.dataid");
+                    $join->where("mc.type","=","CASTE");
+                })
+                ->leftJoin("masterdata as mmt", function($join) {
+                    $join->on("u.mother_tongue", "=", "mmt.dataid");
+                    $join->where("mmt.type","=","MOTHER_TONGUE");
+                })
+                ->leftJoin("masterdata as mms", function($join) {
+                    $join->on("u.marital_status", "=", "mms.dataid");
+                    $join->where("mms.type","=","MARITAL_STATUS");
+                })
+                ->leftJoin("masterdata as mcor", function($join) {
+                    $join->on("u.con_of_residence", "=", "mcor.dataid");
+                    $join->where("mcor.type","=","COUNTRY");
+                })
+                ->where("p.uid", $this->id)
+                ->orderBy("p.updated_at", "DESC")->get();
+            foreach($result as $row) {
+                $sentList[$row->dataid] = $row;
+            }
+
+            $receivedList = array();
+            $result = DB::table("photo_access_requests as p")
+                ->select("u.dataid", "u.first_name", "u.last_name", "u.email", "u.gender", "u.birthday", "u.height",
+                    "mr.name as lbl_religion", "mc.name as lbl_caste", "mmt.name as lbl_mother_tongue", "mms.name as lbl_marital_status", "mcor.name as lbl_con_of_residence",
+                    "p.allowed")
+                ->leftJoin("users as u", "u.id", "=", "p.uid")
+                ->leftJoin("masterdata as mr", function($join) {
+                    $join->on("u.religion", "=", "mr.dataid");
+                    $join->where("mr.type","=","RELIGION");
+                })
+                ->leftJoin("masterdata as mc", function($join) {
+                    $join->on("u.caste", "=", "mc.dataid");
+                    $join->where("mc.type","=","CASTE");
+                })
+                ->leftJoin("masterdata as mmt", function($join) {
+                    $join->on("u.mother_tongue", "=", "mmt.dataid");
+                    $join->where("mmt.type","=","MOTHER_TONGUE");
+                })
+                ->leftJoin("masterdata as mms", function($join) {
+                    $join->on("u.marital_status", "=", "mms.dataid");
+                    $join->where("mms.type","=","MARITAL_STATUS");
+                })
+                ->leftJoin("masterdata as mcor", function($join) {
+                    $join->on("u.con_of_residence", "=", "mcor.dataid");
+                    $join->where("mcor.type","=","COUNTRY");
+                })
+                ->where("p.pid", $this->id)
+                ->orderBy("p.updated_at", "DESC")->get();
+            foreach($result as $row) {
+                $receivedList[$row->dataid] = $row;
+            }
+
+            $this->photoAccessLists = [
+                'sent' => $sentList,
+                'received' => $receivedList
+            ];
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Error encountered while updating photo access list for ".$this->dataid." - ".$e->getMessage());
+            return false;
+        }
+    }
+
     public function inList($dataid, $listname) {
         if ($listname && $dataid) {
             $list = null;
             if ($listname=="interest") {
                 $list = $this->getInterestLists();
+                if ($list != null && array_key_exists('sent', $list))
+                    $list = $list['sent'];
+                else return false;
+            } else if ($listname=="photoaccess") {
+                $list = $this->getPhotoAccessLists();
                 if ($list != null && array_key_exists('sent', $list))
                     $list = $list['sent'];
                 else return false;
@@ -272,6 +378,20 @@ class Profile extends Model {
             return $this->getInterestLists()["sent"][$dataid]->interest_back;
         }
         return -1;
+    }
+
+    /**
+     * This member's own request to view $dataid's hidden photos — null if
+     * never requested, else 0 (requested/pending), 1 (granted) or -1
+     * (declined). Used both for the "My Photo Access Requests" page and to
+     * gate a hidden photo on someone else's profile (see
+     * ProfileController::profile()).
+     */
+    public function getPhotoAccess($dataid) {
+        if ($this->inList($dataid, "photoaccess")) {
+            return (int) $this->getPhotoAccessLists()["sent"][$dataid]->allowed;
+        }
+        return null;
     }
 
     public static function getTotalCount() {
@@ -395,8 +515,8 @@ class Profile extends Model {
                 left join `masterdata` `rmmt` on((`pp`.`mother_tongue_id` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
                 left join `masterdata` `rmcp` on((`pp`.`preferred_country_id` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
                 left join `masterdata` `rms` on((`pp`.`state_id` = `rms`.`dataid`) and (`rms`.`type` = 'STATE'))
-                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1')
-                left join `images` `i` on(`u`.`id` = `i`.`user_id`)
+                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1' and `dp`.`visibility` = 'Public')
+                left join `images` `i` on(`u`.`id` = `i`.`user_id` and `i`.`visibility` = 'Public')
                 group by `u`.`id`
                 " . (empty($having) ? "" : " having " . $having) . "
                 order by " . $orderByClause . "
@@ -469,8 +589,8 @@ class Profile extends Model {
                 left join `masterdata` `rmmt` on((`pp`.`mother_tongue_id` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
                 left join `masterdata` `rmcp` on((`pp`.`preferred_country_id` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
                 left join `masterdata` `rms` on((`pp`.`state_id` = `rms`.`dataid`) and (`rms`.`type` = 'STATE'))
-                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1')
-                left join `images` `i` on(`u`.`id` = `i`.`user_id`)"
+                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1' and `dp`.`visibility` = 'Public')
+                left join `images` `i` on(`u`.`id` = `i`.`user_id` and `i`.`visibility` = 'Public')"
                 .(empty($where)?"":" where (".$where.") ")
                 ." group by `u`.`id`"
                 .(empty($having)?"":" having ".$having)
