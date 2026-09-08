@@ -4,48 +4,624 @@
 <link rel="stylesheet" href="/css/ur-profile.css?v={{ filemtime(public_path('css/ur-profile.css')) }}">
 @endpush
 @section('main-content')
+@php
+    // Same "Match %"-style scorer used on member/profile.blade.php's
+    // Compatibility tab (viewing OTHER members) — not a separate algorithm.
+    $isVerified = $profile->photo_verification_status === 'verified';
+    $age = $profile->birthday ? date_diff(date_create($profile->birthday), date_create('now'))->y : null;
+@endphp
+<style>
+    .ur-profile-page {
+        --ur-green: #123A2E;
+        --ur-green-dark: #0F2E24;
+        --ur-gold: #C9974D;
+        --ur-red: #B5674A;
+        --ur-bg: #F6F4EF;
+        --ur-border: #E7E2D6;
+        --ur-text: #1C2321;
+        --ur-text-muted: #6B7570;
+    }
+
+    /* Bootstrap's plain .container caps out around ~1140px and centers
+       itself — fine on the old 2-column layout, but with the sidebar
+       column added the page now reads as squeezed into the middle with
+       huge dead space left/right, since the dashboard shell already gives
+       this page much more width to work with. Same fix already applied on
+       the Search Profiles page. Capped (not 100%) so the 3 columns don't
+       stretch absurdly wide on ultra-wide monitors. */
+    .ur-profile-page .container {
+        max-width: 1760px;
+    }
+
+    /* ---- Tabs (grouping the existing sections below without moving them
+       in the DOM — see data-mp-group on each) ---- */
+    .ur-mp-tabs {
+        border-bottom: 1px solid var(--ur-border);
+        margin: 4px 0 20px;
+        padding-left: 12px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .ur-mp-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* !important here because the site also loads global-style-pink.css,
+       whose default link color otherwise bleeds through onto these plain
+       <a> tabs instead of the site's actual green/gold brand colors. */
+    .ur-mp-tabs .nav-link {
+        white-space: nowrap;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--ur-text-muted) !important;
+        font-size: 13.5px;
+        font-weight: 700;
+        padding: 10px 16px;
+        border-radius: 0;
+        cursor: pointer;
+    }
+
+    .ur-mp-tabs .nav-link.active {
+        color: var(--ur-green) !important;
+        border-bottom-color: var(--ur-gold);
+    }
+
+    .ur-mp-tabs .nav-link:hover {
+        color: var(--ur-green) !important;
+    }
+
+    /* ---- Ring (same technique as member/profile.blade.php's Compatibility
+       tab, kept under this page's own class names) ---- */
+    .ur-mp-ring {
+        flex: 0 0 auto;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: conic-gradient(var(--ur-gold) calc(var(--pct) * 1%), var(--ur-border) 0);
+    }
+
+    .ur-mp-ring__hole {
+        border-radius: 50%;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        color: var(--ur-green);
+    }
+
+    .ur-mp-ring--lg {
+        width: 96px;
+        height: 96px;
+    }
+
+    .ur-mp-ring--lg .ur-mp-ring__hole {
+        width: 76px;
+        height: 76px;
+        font-size: 19px;
+    }
+
+    .ur-mp-compat-full {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 18px;
+        padding-bottom: 18px;
+        border-bottom: 1px dashed var(--ur-border);
+    }
+
+    .ur-mp-compat-full__text b {
+        display: block;
+        font-size: 16px;
+        color: var(--ur-text);
+    }
+
+    .ur-mp-compat-full__text span {
+        display: block;
+        font-size: 13px;
+        color: var(--ur-text-muted);
+        margin-top: 3px;
+    }
+
+    .ur-mp-checklist {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .ur-mp-checklist li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 0;
+        font-size: 13px;
+        color: #b9b2a2;
+    }
+
+    .ur-mp-checklist li.is-done {
+        color: var(--ur-text);
+    }
+
+    .ur-mp-checklist li i {
+        font-size: 15px;
+    }
+
+    .ur-mp-checklist li.is-done i {
+        color: var(--ur-green);
+    }
+
+    /* ---- Reused "detail card" wrapper for the new Looking For /
+       Compatibility cards, matching member/profile.blade.php ---- */
+    .ur-mp-detail-card {
+        background: #fff;
+        border: 1px solid var(--ur-border);
+        border-radius: 14px;
+        padding: 20px 22px 22px;
+        margin-bottom: 20px;
+    }
+
+    .ur-mp-detail-card__title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ur-text);
+        margin: 0 0 16px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+    }
+
+    .ur-mp-detail-card__title i {
+        color: var(--ur-gold);
+        font-size: 16px;
+    }
+
+    .ur-mp-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 6px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--ur-green);
+        text-decoration: none;
+    }
+
+    /* Compact label/value grid replacing the old wide <table> display for
+       each section's read-only view (the #info_X divs) — same pattern as
+       member/profile.blade.php. The #edit_X forms next to each are
+       untouched. */
+    /* auto-fit + minmax (not a fixed repeat(3,1fr)) so the number of
+       columns adapts to whatever width this card actually has — it's now
+       often one of 2-3 side-by-side cards (see .ur-mp-tab-grid), not
+       always full-width, so a hard-coded 3 columns was forcing values
+       like "Gender" to overflow past the card edge instead of wrapping. */
+    .ur-mp-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+        gap: 14px 18px;
+    }
+
+    .ur-mp-detail-grid.ur-mp-detail-grid--2 {
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    .ur-mp-detail-grid > div {
+        /* Grid items default to min-width:auto, which stops them shrinking
+           below their content's intrinsic width — the actual cause of the
+           overflow. This lets long values wrap/truncate inside their own
+           column instead of pushing the card wider than its container. */
+        min-width: 0;
+    }
+
+    .ur-mp-detail-grid div span {
+        display: block;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: .3px;
+        color: var(--ur-text-muted);
+        margin-bottom: 4px;
+    }
+
+    .ur-mp-detail-grid div b {
+        font-size: 13.5px;
+        color: var(--ur-text);
+        font-weight: 600;
+        overflow-wrap: break-word;
+    }
+
+    .ur-mp-detail-empty {
+        color: #b9b2a2 !important;
+        font-style: italic;
+        font-weight: 500 !important;
+    }
+
+    /* Lays related sections (About: Basic Info/Education/Physical Attrs;
+       More Details: Residency/Spiritual/Permanent Address) side by side as
+       compact cards, matching the mockup, instead of stacking each one
+       full-width. Each .feature card inside keeps toggling independently
+       via data-mp-group — this is just a wrapper around already-adjacent
+       elements. */
+    .ur-mp-tab-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 0 16px;
+        align-items: start;
+    }
+
+    .ur-mp-tab-grid .feature.feature--boxed-border {
+        margin-bottom: 16px !important;
+        height: 100%;
+    }
+
+    /* The edit-mode forms (#edit_X, revealed by the pencil icon) still use
+       the old Bootstrap .row/.col-md-6 two-column layout that was built
+       for a full-width table row. Bootstrap's col-*-N sizes as a
+       percentage of its OWN container, not the viewport — so col-md-6
+       here computes to 50% of one of these narrow ~240-350px tab-grid
+       cards, squashing every field into ~100px. That's what made editing
+       look broken/cramped. Stack every field full-width inside these
+       narrower cards instead. */
+    .ur-mp-tab-grid .ur-mp-tabgroup {
+        min-width: 0;
+    }
+    .ur-mp-tab-grid form.form-default .row > [class*="col-"] {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    .ur-mp-tab-grid form.form-default .form-group {
+        margin-bottom: 12px;
+    }
+    /* Date-of-birth's day/month/year selects are the one spot that's
+       meant to stay 3-across on one line — give them an even split
+       instead of each shrinking to its own text width. */
+    .ur-mp-tab-grid form.form-default select[style*="width: auto"] {
+        width: 32% !important;
+    }
+    .ur-mp-tab-grid form.form-default select[style*="width: auto"] + select[style*="width: auto"] {
+        margin-left: 2%;
+    }
+
+    @media (max-width: 767.98px) {
+        .ur-mp-tab-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .ur-mp-detail-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .ur-mp-detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* ---- Own-profile photo/headline (left column) — matches
+       member/profile.blade.php's gallery/headline treatment: rectangular
+       photo, plain background, dark text, no colored card wrapper. Only
+       the photo box itself (#show_img) is unique to this page since it's
+       also the upload target; everything else reuses the same classes. ---- */
+    /* Header row: photo (fixed width) + name/details, side by side — matches
+       the mockup's actual structure (one row spanning the full main-content
+       width, tabs below it), not a persistent side column running the full
+       page height. */
+    .ur-mp-header {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        background: #fff;
+        border: 1px solid var(--ur-border);
+        border-radius: 14px;
+        padding: 22px;
+        margin-bottom: 20px;
+    }
+
+    .ur-mp-header__photo {
+        flex: 0 0 200px;
+        position: relative;
+        aspect-ratio: 4 / 5;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #e9e6de;
+        box-shadow: 0 6px 18px rgba(15, 46, 36, .1);
+    }
+
+    .ur-mp-header__info {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding-top: 4px;
+    }
+
+    .ur-mp-header__badges {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .ur-mp-id-chip {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .3px;
+        color: var(--ur-text-muted);
+    }
+
+    .ur-mp-badge-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 11.5px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 999px;
+    }
+
+    .ur-mp-badge-inline--verified {
+        background: #E7F5EC;
+        color: #1E7A46;
+    }
+
+    .ur-mp-match-score {
+        margin-left: auto;
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--ur-gold);
+    }
+
+    .ur-mp-header__name {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--ur-text);
+        margin: 0 0 10px;
+    }
+
+    .ur-mp-facts-stacked {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .ur-mp-facts-stacked li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--ur-text-muted);
+        padding: 4px 0;
+    }
+
+    .ur-mp-facts-stacked i {
+        color: var(--ur-gold);
+        width: 14px;
+        text-align: center;
+    }
+
+    @media (max-width: 575.98px) {
+        .ur-mp-header {
+            flex-direction: column;
+        }
+
+        .ur-mp-header__photo {
+            flex-basis: auto;
+            width: 100%;
+            max-width: 220px;
+            margin: 0 auto;
+        }
+    }
+
+
+    .ur-mp-own-photo {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+    }
+
+    .ur-mp-photo-edit {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        z-index: 2;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background: var(--ur-gold);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, .18);
+    }
+
+    .ur-mp-photo-edit:hover {
+        background: #B07C3D;
+    }
+
+
+    /* ---- Right sidebar (Matchmaker/Profile Status/Privacy/Report) —
+       matches member/profile.blade.php's sidebar; no relationship-manager
+       assignment or report/block feature exists yet, so those two cards
+       are static, same as there. ---- */
+    .ur-mp-side-card {
+        background: #fff;
+        border: 1px solid var(--ur-border);
+        border-radius: 14px;
+        padding: 18px 18px 20px;
+        margin-bottom: 16px;
+    }
+
+    .ur-mp-side-card h4 {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        color: var(--ur-text);
+        margin: 0 0 12px;
+    }
+
+    .ur-mp-side-card p {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ur-text-muted);
+        margin: 0 0 10px;
+    }
+
+    .ur-mp-matchmaker {
+        background: var(--ur-green);
+        color: #fff;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 16px;
+    }
+
+    .ur-mp-matchmaker h4 {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .4px;
+        color: rgba(255, 255, 255, .8);
+        margin: 0 0 14px;
+    }
+
+    .ur-mp-matchmaker__who {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .ur-mp-matchmaker__avatar {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: var(--ur-gold);
+        color: var(--ur-green-dark);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 16px;
+        flex: 0 0 auto;
+    }
+
+    .ur-mp-matchmaker__who b {
+        display: block;
+        font-size: 14px;
+    }
+
+    .ur-mp-matchmaker__who span {
+        display: block;
+        font-size: 12px;
+        color: rgba(255, 255, 255, .65);
+        margin-top: 1px;
+    }
+
+    .ur-mp-matchmaker p {
+        font-style: italic;
+        font-size: 13px;
+        color: rgba(255, 255, 255, .85);
+        margin: 14px 0;
+        line-height: 1.5;
+    }
+
+    .ur-mp-matchmaker button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 42px;
+        width: 100%;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 700;
+        border: 1px solid #fff;
+        background: #fff;
+        color: var(--ur-green);
+        cursor: pointer;
+    }
+
+    .ur-mp-matchmaker button:hover {
+        background: var(--ur-bg);
+    }
+
+    .ur-mp-report-card {
+        border-color: var(--ur-red);
+    }
+
+    .ur-mp-report-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 40px;
+        width: 100%;
+        border-radius: 999px;
+        font-size: 12.5px;
+        font-weight: 700;
+        border: 1px solid var(--ur-red);
+        background: #fff;
+        color: var(--ur-red);
+        cursor: pointer;
+    }
+
+    .ur-mp-report-btn:hover {
+        background: var(--ur-red);
+        color: #fff;
+    }
+</style>
 <section class="slice sct-color-2 ur-profile-page">
     <div class="profile">
         <div class="container">
             <div class="row cols-md-space cols-sm-space cols-xs-space">
-                <div class="col-lg-4">
-                    <div class="ur-profile-hero">
-                        <div class="ur-profile-hero__avatar-wrap">
-                            <div class="profile_img ur-profile-hero__avatar" id="show_img" style="background-image: url('{{ $profile->getProfileImage() }}')"></div>
-                            <label id="btn_image_edit" class="ur-profile-hero__avatar-edit" for="images"><i class="fa fa-edit"></i></label>
+                <div class="col-lg-9">
+                    {{-- Matches the mockup's actual structure: photo + name/details
+                         form ONE header row spanning the main content width (not a
+                         separate persistent side column) — the tabs below span that
+                         same width, with the sidebar running alongside both. The
+                         upload mechanism itself (#show_img, #btn_image_edit,
+                         #images_form, #images, uploadImages()) is unchanged, just
+                         placed differently. --}}
+                    <div class="ur-mp-header">
+                        <div class="ur-mp-header__photo">
+                            <div class="ur-mp-own-photo" id="show_img" style="background-image: url('{{ $profile->getProfileImage() }}')"></div>
+                            <label id="btn_image_edit" class="ur-mp-photo-edit" for="images"><i class="fa fa-edit"></i></label>
                             <form id="images_form" enctype="multipart/form-data">
                                 @csrf
                                 <input type="file" accept="image/png,image/x-png,image/gif,image/jpeg" style="display: none;" id="images" name="images[]" multiple onchange="javascript:uploadImages($('#btn_image_edit'));" />
                             </form>
                         </div>
 
-                        <h2 class="ur-profile-hero__name">{{$profile->first_name}} {{$profile->last_name}}</h2>
-                        <h3 class="ur-profile-hero__occupation">{{ $profile->profession }}</h3>
-
-                        <div class="ur-profile-hero__stats ur-profile-hero__stats--single">
-                            <div class="ur-profile-hero__stat">
-                                <span class="ur-profile-hero__stat-count">0</span>
-                                <span class="ur-profile-hero__stat-label">Followers</span>
+                        <div class="ur-mp-header__info">
+                            <div class="ur-mp-header__badges">
+                                <span class="ur-mp-id-chip">{{ $profile->dataid }}</span>
+                                @if($isVerified)
+                                    <span class="ur-mp-badge-inline ur-mp-badge-inline--verified"><i class="fa fa-check-circle"></i> Verified Profile</span>
+                                @endif
+                                @if(!empty($completeness))
+                                    <span class="ur-mp-match-score">{{ $completeness['percent'] }}% Complete</span>
+                                @endif
                             </div>
-                        </div>
 
-                        <div class="ur-profile-hero__divider"></div>
-                        <div class="ur-profile-hero__section-label">Package Information</div>
+                            <h2 class="ur-mp-header__name">{{$profile->first_name}} {{$profile->last_name}}{{ $age ? ', '.$age : '' }}</h2>
 
-                        <div class="ur-profile-hero__stats">
-                            <div class="ur-profile-hero__stat">
-                                <span class="ur-profile-hero__stat-count">{{$profile->lbl_package}}</span>
-                                <span class="ur-profile-hero__stat-label">Current Package</span>
-                            </div>
-                            <div class="ur-profile-hero__stat" id="images_stats">
-                                <span class="ur-profile-hero__stat-count">{{ $profile->getImageCount() }}</span>
-                                <span class="ur-profile-hero__stat-label">Photo in Gallery</span>
-                            </div>
+                            <ul class="ur-mp-facts-stacked">
+                                @if(!empty($profile->lbl_con_of_residence))<li><i class="fa fa-map-marker"></i> {{ $profile->lbl_city ? $profile->lbl_city.', ' : '' }}{{ $profile->lbl_con_of_residence }}</li>@endif
+                                @if(!empty($profile->profession))<li><i class="fa fa-briefcase"></i> {{ $profile->profession }}</li>@endif
+                                @if(!empty($profile->lbl_education))<li><i class="fa fa-graduation-cap"></i> {{ $profile->lbl_education }}</li>@endif
+                                @if(!empty($profile->lbl_marital_status))<li><i class="fa fa-heart-o"></i> {{ $profile->lbl_marital_status }}</li>@endif
+                            </ul>
                         </div>
                     </div>
-                </div>
 
-                <div class="col-lg-8">
                     <div class="widget">
                         <div class="card z-depth-2-top" id="profile_load">
                             <div class="card-title">
@@ -74,8 +650,113 @@
                                     @endif
                                 </div>
                                 @endif
+
+                                <ul class="nav ur-mp-tabs" id="mp_own_tabs" role="tablist">
+                                    <li class="nav-item"><a class="nav-link active" href="javascript:void(0);" onclick="mpOwnShowGroup('about', this);">About</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('lifestyle', this);">Lifestyle</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('family', this);">Family</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('looking_for', this);">Looking For</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('profile_scorer', this);">Profile Scorer</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('more', this);">More Details</a></li>
+                                </ul>
+
+                                {{-- No in-page Partner Preferences EDITOR exists — that's still a
+                                     separate page (member/profile/preferences) — but if the member
+                                     already saved preferences there, show what was actually saved
+                                     here instead of just repeating the same "go set this up" teaser
+                                     every time regardless of whether they'd already done it. --}}
+                                <div class="ur-mp-tabgroup" data-mp-group="looking_for" style="display:none;">
+                                    <div class="ur-mp-detail-card">
+                                        <div class="card-inner-title-wrapper pt-0">
+                                            <h3 class="ur-mp-detail-card__title mb-0"><i class="fa fa-search"></i> Partner Preferences</h3>
+                                            <a class="ur-mp-link" href="{{ url('member/profile/preferences') }}">{{ $hasPreferenceData ? 'Edit Preferences' : 'Manage Partner Preferences' }} <i class="fa fa-angle-right"></i></a>
+                                        </div>
+
+                                        @if($hasPreferenceData)
+                                        <div class="ur-mp-detail-grid">
+                                            @if(!empty($preference->age_min) || !empty($preference->age_max))
+                                            <div><span>Age Range</span><b>{{ $preference->age_min ?: 'Any' }} - {{ $preference->age_max ?: 'Any' }}</b></div>
+                                            @endif
+                                            @if(!empty($preference->height))
+                                            <div><span>Height</span><b>{{ $preference->height }}</b></div>
+                                            @endif
+                                            @if(!empty($preference->weight))
+                                            <div><span>Weight</span><b>{{ $preference->weight }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['marital_status']))
+                                            <div><span>Marital Status</span><b>{{ $preferenceLabels['marital_status'] }}</b></div>
+                                            @endif
+                                            @if(!empty($preference->with_children))
+                                            <div><span>With Children</span><b>{{ $preference->with_children }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['country']) || !empty($preferenceLabels['state']) || !empty($preferenceLabels['city']))
+                                            <div><span>Location</span><b>{{ collect([$preferenceLabels['city'] ?? null, $preferenceLabels['state'] ?? null, $preferenceLabels['country'] ?? null])->filter()->implode(', ') }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['religion']))
+                                            <div><span>Religion</span><b>{{ $preferenceLabels['religion'] }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['caste']) || !empty($preference->sect))
+                                            <div><span>Caste / Sect</span><b>{{ $preferenceLabels['caste'] ?? '—' }}{{ !empty($preference->sect) ? ' / '.$preference->sect : '' }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['mother_tongue']))
+                                            <div><span>Mother Tongue</span><b>{{ $preferenceLabels['mother_tongue'] }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['languages']))
+                                            <div><span>Languages Spoken</span><b>{{ $preferenceLabels['languages'] }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['education']))
+                                            <div><span>Minimum Education</span><b>{{ $preferenceLabels['education'] }}</b></div>
+                                            @endif
+                                            @if(!empty($preference->profession))
+                                            <div><span>Profession</span><b>{{ $preference->profession }}</b></div>
+                                            @endif
+                                            @if(!empty($preferenceLabels['preferred_country']))
+                                            <div><span>Preferred Country</span><b>{{ $preferenceLabels['preferred_country'] }}</b></div>
+                                            @endif
+                                        </div>
+                                        @if(!empty($preference->general_requirement))
+                                        <div style="margin-top:14px;">
+                                            <span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--ur-text-muted);margin-bottom:4px;">Other Requirements</span>
+                                            <p style="font-size:13.5px;color:var(--ur-text);margin:0;">{{ $preference->general_requirement }}</p>
+                                        </div>
+                                        @endif
+                                        @else
+                                        <p style="font-size:13.5px;color:var(--ur-text-muted);line-height:1.6;">Tell us what you're looking for in a partner — age range, location, education, religion and more — so we can find better matches for you.</p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Reuses the same Profile Completeness scorer as the widget
+                                     above. On your OWN profile this is just about how filled-out
+                                     YOUR profile is — there's no second person to be "compatible"
+                                     with here, unlike member/profile.blade.php's Compatibility tab
+                                     (viewing another member), so this tab is labelled "Profile
+                                     Scorer" instead of "Compatibility". Same underlying data either
+                                     way — not a separate algorithm. --}}
+                                @if(!empty($completeness))
+                                <div class="ur-mp-tabgroup" data-mp-group="profile_scorer" style="display:none;">
+                                    <div class="ur-mp-detail-card">
+                                        <h3 class="ur-mp-detail-card__title"><i class="fa fa-pie-chart"></i> Profile Scorer</h3>
+                                        <div class="ur-mp-compat-full">
+                                            <div class="ur-mp-ring ur-mp-ring--lg" style="--pct: {{ $completeness['percent'] }};">
+                                                <div class="ur-mp-ring__hole">{{ $completeness['percent'] }}%</div>
+                                            </div>
+                                            <div class="ur-mp-compat-full__text">
+                                                <b>{{ $completeness['percent'] }}% Profile Match Score</b>
+                                                <span>Based on {{ $completeness['filled'] }} of {{ $completeness['total'] }} profile sections you've completed. Other members see this same score on your profile.</span>
+                                            </div>
+                                        </div>
+                                        <ul class="ur-mp-checklist">
+                                            @foreach($completeness['sections'] as $label => $done)
+                                                <li class="{{ $done ? 'is-done' : '' }}"><i class="fa {{ $done ? 'fa-check-circle' : 'fa-circle-o' }}"></i> {{ $label }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                                @endif
+
                                 <!-- Contact information -->
-                                <div id="section_introduction">
+                                <div id="section_introduction" class="ur-mp-tabgroup" data-mp-group="about">
                                     <div class="mb-2 pl-3">
                                         <b>Member ID - </b>
                                         <b class="c-base-1">{{$profile->dataid}}</b>
@@ -91,15 +772,11 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-slick">
-                                                        <tbody>
-                                                            <tr><td class="">{{ $profile->intro }}</td></tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
+                                            @if(!empty($profile->intro))
+                                                <p style="font-size:13.5px;color:var(--ur-text-muted);line-height:1.6;margin:0;">{{ $profile->intro }}</p>
+                                            @else
+                                                <p style="font-size:13px;color:#b9b2a2;font-style:italic;margin:0;">You haven't added an introduction yet — click the edit icon above to add one.</p>
+                                            @endif
                                         </div>
 
                                         <div id="edit_introduction" style="display: none">
@@ -132,7 +809,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_basic_info">
+                                {{-- Basic Info / Education & Career / Physical Attributes sit
+                                     side by side in a grid (matching the mockup's compact card
+                                     row) instead of stacked full-width — Introduction stays full
+                                     width above since it's a free-text blurb, not a label/value
+                                     card. Each still toggles independently via data-mp-group;
+                                     wrapping them here doesn't change that. --}}
+                                <div class="ur-mp-tab-grid">
+                                <div id="section_basic_info" class="ur-mp-tabgroup" data-mp-group="about">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_basic_info">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -144,47 +828,18 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>First Name</b></td>
-                                                                <td>{{$profile->first_name}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Last Name</b></td>
-                                                                <td>{{$profile->last_name}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Gender</b></td>
-                                                                <td>{{$profile->gender}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Email</b></td>
-                                                                <td>{{$profile->email}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Date Of Birth</b></td>
-                                                                <td colspan="3">{{$profile->birthday}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Age</b></td>
-                                                                <td>{{date_diff(date_create($profile->birthday), date_create('now'))->y}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Marital Status</b></td>
-                                                                <td>{{$profile->lbl_marital_status}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Number Of Children</b></td>
-                                                                <td>{{$profile->children}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Area</b></td>
-                                                                <td>{{$profile->area}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>On Behalf</b></td>
-                                                                <td>{{$profile->profile_for}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Mobile</b></td>
-                                                                <td>{{$profile->contact_mobile_number}}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid">
+                                                <div><span>First Name</span><b>{{$profile->first_name}}</b></div>
+                                                <div><span>Last Name</span><b>{{$profile->last_name}}</b></div>
+                                                <div><span>Gender</span><b>{{ucfirst($profile->gender ?: '')}}</b></div>
+                                                <div><span>Email</span><b>{{$profile->email}}</b></div>
+                                                <div><span>Date Of Birth</span><b>{{$profile->birthday}}</b></div>
+                                                <div><span>Age</span><b>{{ $profile->birthday ? date_diff(date_create($profile->birthday), date_create('now'))->y : '—' }} Years</b></div>
+                                                <div><span>Marital Status</span><b>{{$profile->lbl_marital_status ?: '—'}}</b></div>
+                                                <div><span>Number Of Children</span><b>{{$profile->children ?: '0'}}</b></div>
+                                                <div><span>Area</span><b>{{$profile->area ?: '—'}}</b></div>
+                                                <div><span>On Behalf</span><b>{{$profile->profile_for ?: '—'}}</b></div>
+                                                <div><span>Mobile</span><b>{{$profile->contact_mobile_number ?: '—'}}</b></div>
                                             </div>
                                         </div>
 
@@ -355,7 +1010,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_education_and_career">
+                                <div id="section_education_and_career" class="ur-mp-tabgroup" data-mp-group="about">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_education_and_career">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -375,25 +1030,12 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Highest Education</b></td>
-                                                                <td>{{$profile->lbl_education}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Occupation</b></td>
-                                                                <td>{{$profile->profession}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Annual Income</b></td>
-                                                                <td colspan="3">{{$profile->salary}}</td>
-                                                                <td></td>
-                                                                <td></td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                                <div><span>Highest Education</span><b>{{$profile->lbl_education ?: '—'}}</b></div>
+                                                <div><span>Occupation</span><b>{{$profile->profession ?: '—'}}</b></div>
+                                                <div><span>Designation</span><b>{{$profile->designation ?: '—'}}</b></div>
+                                                <div><span>Company</span><b>{{$profile->companyname ?: '—'}}</b></div>
+                                                <div><span>Annual Income</span><b>{{$profile->salary ?: '—'}}</b></div>
                                             </div>
                                         </div>
 
@@ -440,6 +1082,24 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group has-feedback">
+                                                            <label for="designation" class="text-uppercase c-gray-light">Designation</label>
+                                                            <input type="text" class="form-control no-resize" name="designation" value="{{$profile->designation}}" placeholder="e.g. Senior Software Engineer">
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="companyname" class="text-uppercase c-gray-light">Company</label>
+                                                            <input type="text" class="form-control no-resize" name="companyname" value="{{$profile->companyname}}">
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
                                                             <label for="salary" class="text-uppercase c-gray-light">Annual Income</label>
                                                             <input type="text" class="form-control no-resize" name="salary" value="{{$profile->salary}}" required="required">
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
@@ -451,7 +1111,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_physical_attributes">
+                                <div id="section_physical_attributes" class="ur-mp-tabgroup" data-mp-group="about">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_physical_attributes">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -471,43 +1131,9 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Height</b></td>
-                                                                <td>{{$profile->height}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Weight</b></td>
-                                                                <td>{{$profile->weight}}</td>
-                                                            </tr>
-                                                            <!-- <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Eye Color</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Hair Color</b></td>
-                                                                <td></td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Complexion</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Blood Group</b></td>
-                                                                <td></td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Body Type</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Body Art</b></td>
-                                                                <td></td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Any Disability</b></td>
-                                                                <td></td>
-                                                                <td></td>
-                                                                <td></td>
-                                                            </tr> -->
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid">
+                                                <div><span>Height</span><b>{{$profile->height ?: '—'}}</b></div>
+                                                <div><span>Weight</span><b>{{$profile->weight ?: '—'}}</b></div>
                                             </div>
                                         </div>
 
@@ -614,7 +1240,29 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_language">
+
+                                {{-- Read-only summary card — the same fields are
+                                     actually editable via Residency Information /
+                                     Permanent Address further down in More Details;
+                                     this just surfaces them here too so About
+                                     matches member/profile.blade.php's layout,
+                                     without duplicating the edit forms themselves. --}}
+                                <div class="ur-mp-tabgroup" data-mp-group="about">
+                                    <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
+                                        <div class="card-inner-title-wrapper pt-0">
+                                            <h3 class="text-uppercase card-inner-title pull-left">Location</h3>
+                                        </div>
+                                        <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                            <div><span>City</span><b>{{ $profile->lbl_city ?: '—' }}</b></div>
+                                            <div><span>Country</span><b>{{ $profile->lbl_con_of_residence ?: '—' }}</b></div>
+                                            <div><span>Nationality</span><b>{{ $profile->lbl_con_of_citizenship ?: '—' }}</b></div>
+                                            <div><span>Residency Status</span><b>{{ $profile->immigration_status ?: '—' }}</b></div>
+                                            <div><span>Living In</span><b>{{ collect([$profile->lbl_city ?? null, $profile->lbl_con_of_residence ?? null])->filter()->implode(', ') ?: '—' }}</b></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                                <div id="section_language" class="ur-mp-tabgroup" data-mp-group="lifestyle" style="display:none;">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_language">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -634,25 +1282,9 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Mother Tongue</b></td>
-                                                                <td>{{$profile->lbl_mother_tongue}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Language</b></td>
-                                                                <td>{{$profile->lbl_language}}</td>
-                                                            </tr>
-                                                            <!-- <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Speak</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Read</b></td>
-                                                                <td></td>
-                                                            </tr> -->
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                                <div><span>Mother Tongue</span><b>{{$profile->lbl_mother_tongue ?: '—'}}</b></div>
+                                                <div><span>Language</span><b>{{$profile->lbl_language ?: '—'}}</b></div>
                                             </div>
                                         </div>
 
@@ -729,6 +1361,131 @@
                                                         </div>
                                                     </div>
                                                 </div> -->
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="section_lifestyle_details" class="ur-mp-tabgroup" data-mp-group="lifestyle" style="display:none;">
+                                    <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
+                                        <div id="info_lifestyle_details">
+                                            <div class="card-inner-title-wrapper pt-0">
+                                                <h3 class="text-uppercase card-inner-title pull-left">
+                                                    Lifestyle </h3>
+                                                <div class="pull-right">
+                                                    <button type="button" class="btn btn-base-1 btn-sm btn-icon-only btn-shadow mb-1" onclick="edit_section('lifestyle_details')">
+                                                        <i class="fa fa-edit"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                                <div><span>Prayer</span><b>{{$profile->prayer ?: '—'}}</b></div>
+                                                <div><span>Smoking</span><b>{{$profile->smoking ?: '—'}}</b></div>
+                                                <div><span>Diet</span><b>{{$profile->diet ?: '—'}}</b></div>
+                                                <div><span>Exercise</span><b>{{$profile->exercise ?: '—'}}</b></div>
+                                                <div><span>Hobbies</span><b>{{$profile->hobbies ?: '—'}}</b></div>
+                                                <div><span>Living Arrangement</span><b>{{$profile->living_arrangement ?: '—'}}</b></div>
+                                            </div>
+                                        </div>
+
+                                        <div id="edit_lifestyle_details" style="display: none">
+                                            <div class="card-inner-title-wrapper pt-0">
+                                                <h3 class="text-uppercase card-inner-title pull-left">
+                                                    Lifestyle </h3>
+                                                <div class="pull-right">
+                                                    <button type="button" class="btn btn-success btn-sm btn-icon-only btn-shadow" onclick="save_section($(this), 'lifestyle_details')">
+                                                        <i class="fa fa-check"></i>
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger btn-sm btn-icon-only btn-shadow" onclick="load_section('lifestyle_details')">
+                                                        <i class="fa fa-close"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div class='clearfix'></div>
+                                            <form id="form_lifestyle_details" class="form-default" role="form">
+                                                @csrf
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="prayer" class="text-uppercase c-gray-light">Prayer</label>
+                                                            <select name="prayer" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose an option" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                <option {{$profile->prayer=="Always"?"selected":""}}>Always</option>
+                                                                <option {{$profile->prayer=="Sometimes"?"selected":""}}>Sometimes</option>
+                                                                <option {{$profile->prayer=="Rarely"?"selected":""}}>Rarely</option>
+                                                                <option {{$profile->prayer=="Never"?"selected":""}}>Never</option>
+                                                            </select>
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="smoking" class="text-uppercase c-gray-light">Smoking</label>
+                                                            <select name="smoking" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose an option" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                <option {{$profile->smoking=="Yes"?"selected":""}}>Yes</option>
+                                                                <option {{$profile->smoking=="No"?"selected":""}}>No</option>
+                                                                <option {{$profile->smoking=="Occasionally"?"selected":""}}>Occasionally</option>
+                                                            </select>
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="diet" class="text-uppercase c-gray-light">Diet</label>
+                                                            <select name="diet" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose an option" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                <option {{$profile->diet=="Vegetarian"?"selected":""}}>Vegetarian</option>
+                                                                <option {{$profile->diet=="Non-Vegetarian"?"selected":""}}>Non-Vegetarian</option>
+                                                                <option {{$profile->diet=="Eggetarian"?"selected":""}}>Eggetarian</option>
+                                                                <option {{$profile->diet=="Vegan"?"selected":""}}>Vegan</option>
+                                                            </select>
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="exercise" class="text-uppercase c-gray-light">Exercise</label>
+                                                            <select name="exercise" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose an option" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                <option {{$profile->exercise=="Regularly"?"selected":""}}>Regularly</option>
+                                                                <option {{$profile->exercise=="Occasionally"?"selected":""}}>Occasionally</option>
+                                                                <option {{$profile->exercise=="Never"?"selected":""}}>Never</option>
+                                                            </select>
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="hobbies" class="text-uppercase c-gray-light">Hobbies</label>
+                                                            <input type="text" class="form-control no-resize" name="hobbies" value="{{$profile->hobbies}}" placeholder="e.g. Travel, Reading, Football">
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group has-feedback">
+                                                            <label for="living_arrangement" class="text-uppercase c-gray-light">Living Arrangement</label>
+                                                            <select name="living_arrangement" onChange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose an option" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                <option {{$profile->living_arrangement=="With Family"?"selected":""}}>With Family</option>
+                                                                <option {{$profile->living_arrangement=="Alone"?"selected":""}}>Alone</option>
+                                                                <option {{$profile->living_arrangement=="With Roommates"?"selected":""}}>With Roommates</option>
+                                                                <option {{$profile->living_arrangement=="Other"?"selected":""}}>Other</option>
+                                                            </select>
+                                                            <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
+                                                            <div class="help-block with-errors"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </form>
                                         </div>
                                     </div>
@@ -1001,7 +1758,8 @@
                                         </div>
                                     </div>
                                 </div> -->
-                                <div id="section_residency_information">
+                                <div class="ur-mp-tab-grid">
+                                <div id="section_residency_information" class="ur-mp-tabgroup" data-mp-group="more" style="display:none;">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_residency_information">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -1013,29 +1771,12 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Birth Country</b></td>
-                                                                <td>{{ $profile->lbl_con_of_birth}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Residency Country</b></td>
-                                                                <td>{{ $profile->lbl_con_of_residence}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Citizenship Country</b></td>
-                                                                <td>{{ $profile->lbl_con_of_citizenship}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Grow Up Country</b></td>
-                                                                <td>{{ $profile->lbl_con_grew_up}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Immigration Status</b></td>
-                                                                <td colspan="3">{{ $profile->immigration_status}}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid">
+                                                <div><span>Birth Country</span><b>{{ $profile->lbl_con_of_birth ?: '—' }}</b></div>
+                                                <div><span>Residency Country</span><b>{{ $profile->lbl_con_of_residence ?: '—' }}</b></div>
+                                                <div><span>Citizenship Country</span><b>{{ $profile->lbl_con_of_citizenship ?: '—' }}</b></div>
+                                                <div><span>Grow Up Country</span><b>{{ $profile->lbl_con_grew_up ?: '—' }}</b></div>
+                                                <div><span>Immigration Status</span><b>{{ $profile->immigration_status ?: '—' }}</b></div>
                                             </div>
                                         </div>
 
@@ -1126,7 +1867,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_spiritual_and_social_background">
+                                <div id="section_spiritual_and_social_background" class="ur-mp-tabgroup" data-mp-group="more" style="display:none;">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_spiritual_and_social_background">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -1146,44 +1887,9 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Religion</b></td>
-                                                                <td>{{$profile->lbl_religion}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Caste / Sect</b></td>
-                                                                <td>{{$profile->lbl_caste}} / {{$profile->sect}}</td>
-                                                            </tr>
-
-                                                            <!-- <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Sub-Caste</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Ethnicity</b></td>
-                                                                <td></td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Personal Value</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Family Value</b></td>
-                                                                <td></td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Community Value</b></td>
-                                                                <td></td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Family Status</b></td>
-                                                                <td></td>
-                                                            </tr> -->
-                                                            <!-- <tr>
-                                                                <td class="td-label">Manglik</td>
-                                                                <td></td>
-                                                                <td></td>
-                                                                <td></td>
-                                                            </tr> -->
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                                <div><span>Religion</span><b>{{$profile->lbl_religion ?: '—'}}</b></div>
+                                                <div><span>Caste / Sect</span><b>{{$profile->lbl_caste ?: '—'}} / {{$profile->sect ?: '—'}}</b></div>
                                             </div>
                                         </div>
 
@@ -1439,7 +2145,7 @@
                                         </div>
                                     </div>
                                 </div> -->
-                                <div id="section_permanent_address">
+                                <div id="section_permanent_address" class="ur-mp-tabgroup" data-mp-group="more" style="display:none;">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_permanent_address">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -1459,25 +2165,11 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Country</b></td>
-                                                                <td>{{ $profile->lbl_con_of_residence }}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>State</b></td>
-                                                                <td>{{ $profile->lbl_state }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>City</b></td>
-                                                                <td>{{ $profile->lbl_city }}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Society</b></td>
-                                                                <td>{{ $profile->society }}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid">
+                                                <div><span>Country</span><b>{{ $profile->lbl_con_of_residence ?: '—' }}</b></div>
+                                                <div><span>State</span><b>{{ $profile->lbl_state ?: '—' }}</b></div>
+                                                <div><span>City</span><b>{{ $profile->lbl_city ?: '—' }}</b></div>
+                                                <div><span>Society</span><b>{{ $profile->society ?: '—' }}</b></div>
                                             </div>
                                         </div>
 
@@ -1548,7 +2240,8 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_family_info">
+                                </div>
+                                <div id="section_family_info" class="ur-mp-tabgroup" data-mp-group="family" style="display:none;">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_family_info">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -1568,29 +2261,12 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Father</b></td>
-                                                                <td>{{ $profile->father }}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Mother</b></td>
-                                                                <td>{{ $profile->mother }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Number Of Brothers</b></td>
-                                                                <td>{{ $profile->brothers_count }}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Number Of Sisters</b></td>
-                                                                <td>{{ $profile->sisters_count }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Married Siblings</b></td>
-                                                                <td colspan="3">{{ $profile->siblings }}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid">
+                                                <div><span>Father</span><b>{{ $profile->father ?: '—' }}</b></div>
+                                                <div><span>Mother</span><b>{{ $profile->mother ?: '—' }}</b></div>
+                                                <div><span>Number Of Brothers</span><b>{{ $profile->brothers_count ?: '0' }}</b></div>
+                                                <div><span>Number Of Sisters</span><b>{{ $profile->sisters_count ?: '0' }}</b></div>
+                                                <div><span>Married Siblings</span><b>{{ $profile->siblings ?: '—' }}</b></div>
                                             </div>
                                         </div>
 
@@ -1661,7 +2337,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="section_additional_personal_details">
+                                <div id="section_additional_personal_details" class="ur-mp-tabgroup" data-mp-group="more" style="display:none;">
                                     <div class="feature feature--boxed-border feature--bg-1 pt-3 pb-0 pl-3 pr-3 mb-3 border_top2x">
                                         <div id="info_additional_personal_details">
                                             <div class="card-inner-title-wrapper pt-0">
@@ -1681,31 +2357,13 @@
                                                     </button>
                                                 </div>
                                             </div>
-                                            <div class="table-full-width">
-                                                <div class="table-full-width">
-                                                    <table class="table table-profile table-responsive table-striped table-bordered table-slick">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Home District</b></td>
-                                                                <td>{{$profile->district}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Family Residence</b></td>
-                                                                <td>{{$profile->family_residence}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Father's Occupation</b></td>
-                                                                <td>{{$profile->father_profession}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Mother's Occupation</b></td>
-                                                                <td>{{$profile->mother_profession}}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Special Circumstances</b></td>
-                                                                <td>{{$profile->special_circumstances}}</td>
-                                                                <td height="30" style="padding-left: 5px;" class="font-dark"><b>Family Values</b></td>
-                                                                <td>{{$profile->family_values}}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                                <div><span>Home District</span><b>{{$profile->district ?: '—'}}</b></div>
+                                                <div><span>Family Residence</span><b>{{$profile->family_residence ?: '—'}}</b></div>
+                                                <div><span>Father's Occupation</span><b>{{$profile->father_profession ?: '—'}}</b></div>
+                                                <div><span>Mother's Occupation</span><b>{{$profile->mother_profession ?: '—'}}</b></div>
+                                                <div><span>Special Circumstances</span><b>{{$profile->special_circumstances ?: '—'}}</b></div>
+                                                <div><span>Family Values</span><b>{{$profile->family_values ?: '—'}}</b></div>
                                             </div>
                                         </div>
 
@@ -1798,11 +2456,68 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-lg-3">
+                    {{-- No relationship-manager assignment feature exists yet
+                         — static content, same treatment as member/profile
+                         .blade.php's Matchmaker card. --}}
+                    <div class="ur-mp-matchmaker">
+                        <h4>Your Matchmaker</h4>
+                        <div class="ur-mp-matchmaker__who">
+                            <div class="ur-mp-matchmaker__avatar">SF</div>
+                            <div>
+                                <b>Sana Farooq</b>
+                                <span>Relationship Manager</span>
+                            </div>
+                        </div>
+                        <p>&ldquo;Need help completing your profile?&rdquo;</p>
+                        <button type="button" onclick="chatComingSoon();">Ask My Matchmaker</button>
+                    </div>
+
+                    <div class="ur-mp-side-card">
+                        <h4>Package Information</h4>
+                        <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                            <div><span>Current Package</span><b>{{$profile->lbl_package ?: '—'}}</b></div>
+                            <div id="images_stats" style="cursor:pointer;"><span>Photos</span><b>{{ $profile->getImageCount() }}</b></div>
+                        </div>
+                    </div>
+
+                    <div class="ur-mp-side-card">
+                        <h4>Profile Status</h4>
+                        <ul class="ur-mp-checklist">
+                            <li class="{{ $isVerified ? 'is-done' : '' }}"><i class="fa {{ $isVerified ? 'fa-check-circle' : 'fa-circle-o' }}"></i> Identity Reviewed</li>
+                            <li class="{{ $isVerified ? 'is-done' : '' }}"><i class="fa {{ $isVerified ? 'fa-check-circle' : 'fa-circle-o' }}"></i> Details Reviewed</li>
+                            <li class="{{ $profile->isActive() ? 'is-done' : '' }}"><i class="fa {{ $profile->isActive() ? 'fa-check-circle' : 'fa-circle-o' }}"></i> Available for Introduction</li>
+                        </ul>
+                    </div>
+
+                    <div class="ur-mp-side-card">
+                        <h4>Why Matches Are Private?</h4>
+                        <p>We respect your privacy. Your personal information is only shared with other members after mutual interest and approval.</p>
+                        <a class="ur-mp-link" href="{{ url('privacy') }}">Learn more about our privacy <i class="fa fa-angle-right"></i></a>
+                    </div>
+
+                    {{-- No report/block feature exists yet — static, same
+                         treatment as member/profile.blade.php. --}}
+                    <div class="ur-mp-side-card ur-mp-report-card">
+                        <h4>Need Help?</h4>
+                        <p>Something wrong with your account, or need support?</p>
+                        <button type="button" class="ur-mp-report-btn" onclick="chatComingSoon();"><i class="fa fa-life-ring"></i> Contact Support</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 <script type="text/javascript">
+    function chatComingSoon() {
+        swal({
+            'title': 'Coming Soon',
+            'text': 'Live chat with a relationship manager isn\'t available yet. Please reach out via our Contact page in the meantime and we\'ll get back to you personally.',
+            'icon': 'info',
+        });
+    }
+
     $(document).ready(function() {
         $("#show_img").on('click', function() {
             showLightGallery($(this));
@@ -1843,6 +2558,9 @@
                     if (result.html) {
                         $("#top_nav_img").css("background-image", "url('" + result.nav_img + "')");;
                         $("#main-content").html(result.html);
+                        // Same reasoning as save_section() above — the
+                        // freshly-injected HTML defaults back to "About".
+                        mpOwnShowGroup(mpActiveGroup);
                     }
                     if (message) showAlert(message[0], message[1], message[2]);
                 } else {
@@ -1854,6 +2572,32 @@
 
     //var isloggedin = "116";
     // Script for Editing Profile with Ajax
+    // Groups the existing sections above into tabs (About/Lifestyle/Family/
+    // Looking For/Profile Scorer/More Details) without moving any of them in
+    // the DOM — each section just carries a data-mp-group attribute (see the
+    // blade markup) that this shows/hides. Tracks the active group in
+    // mpActiveGroup so save_section() below can restore it after replacing
+    // #main-content wholesale (which would otherwise silently reset the view
+    // back to the "About" tab's baked-in default every time something is
+    // saved).
+    var mpActiveGroup = 'about';
+    function mpOwnShowGroup(group, linkElem) {
+        mpActiveGroup = group;
+        document.querySelectorAll('.ur-mp-tabgroup').forEach(function(el) {
+            el.style.display = (el.getAttribute('data-mp-group') === group) ? '' : 'none';
+        });
+        var tabsNav = document.getElementById('mp_own_tabs');
+        if (tabsNav) {
+            tabsNav.querySelectorAll('.nav-link').forEach(function(a) {
+                a.classList.remove('active');
+            });
+        }
+        if (!linkElem && tabsNav) {
+            linkElem = tabsNav.querySelector('a[onclick*="\'' + group + '\'"]');
+        }
+        if (linkElem) linkElem.classList.add('active');
+    }
+
     function edit_section(section) {
         $('#info_' + section).hide();
         $('#edit_' + section).show();
@@ -1882,10 +2626,15 @@
                 elem.html(oldHtml);
                 var message = result.message.split("|");
                 if (result.code == '200') {
-                    if (result.html)
+                    if (result.html) {
                         $("#main-content").html(result.html);
-                        if (message)
-                            showAlert(message[0], message[1], 3000);
+                        // The freshly-injected HTML defaults back to the
+                        // "About" tab (that's its baked-in default display
+                        // state) — restore whichever tab was actually open.
+                        mpOwnShowGroup(mpActiveGroup);
+                    }
+                    if (message)
+                        showAlert(message[0], message[1], 3000);
                 } else {
                     if (message)
                         showAlert('danger', message, 5000);

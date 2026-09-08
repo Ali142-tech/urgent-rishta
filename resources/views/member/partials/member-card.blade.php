@@ -40,8 +40,16 @@
         <ul class="member-card__quick">
             <li><i class="fa fa-birthday-cake"></i>{{date_diff(date_create($member->birthday), date_create('now'))->y}} yrs</li>
             <li><i class="fa fa-arrows-v"></i>{{$member->height}}</li>
-            <li><i class="fa fa-map-marker"></i>{{$member->lbl_city}}</li>
+            <li>
+                <i class="fa fa-map-marker"></i>{{$member->lbl_city}}
+                @if(!empty($member->con_of_residence_code))
+                    <img class="member-card__flag" src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code) }}" alt="" title="{{$member->lbl_con_of_residence}}" loading="lazy" onerror="this.style.display='none';">
+                @endif
+            </li>
         </ul>
+        @if(!empty($member->profession))
+            <div class="member-card__designation"><i class="fa fa-briefcase"></i> {{$member->profession}}</div>
+        @endif
         <ul class="member-card__details">
             <li><span>Religion</span><b>{{$member->lbl_religion}}</b></li>
             <li><span>Caste / Sect</span><b>{{$member->lbl_caste}} / {{$member->sect}}</b></li>

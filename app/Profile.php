@@ -4,7 +4,9 @@ namespace App;
 
 use App\User;
 use App\Images;
+use App\PartnerPreference;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -104,6 +106,32 @@ class Profile extends Model {
         return '/images/'.$file.(file_exists($full) ? '?v='.filemtime($full) : '');
     }
 
+    /**
+     * URL of a small flag image for a 2-letter ISO 3166-1 country code
+     * (masterdata.abbreviation for COUNTRY rows), e.g. "PK" -> a Pakistan
+     * flag PNG. We first tried rendering the Unicode flag emoji directly
+     * (regional indicator symbols, no assets needed) but Windows Chrome/
+     * Edge has no flag glyphs in its emoji font and falls back to showing
+     * the raw two letters ("AE", "PK"...) instead of a flag — so an actual
+     * image is the only way to get a flag everywhere. Uses flagcdn.com
+     * (the same free public CDN pattern this app already uses for other
+     * external assets); returns null for anything that isn't exactly 2
+     * letters.
+     *
+     * flagcdn.com only serves a fixed set of width buckets (w20/w40/w80/
+     * w160/...), not arbitrary pixel widths — requesting anything else
+     * (e.g. "w24") 404s. $width here is one of those bucket numbers, not
+     * a literal pixel size; we request w40 and let CSS scale it down for
+     * a crisper (retina-friendly) result at the small display size.
+     */
+    public static function countryFlagUrl($code, $width = 40) {
+        $code = strtolower((string) $code);
+        if (!preg_match('/^[a-z]{2}$/', $code)) {
+            return null;
+        }
+        return "https://flagcdn.com/w{$width}/{$code}.png";
+    }
+
     public function getLightGalleryImages() {
         $lightgallery = array();
         if (!empty($this->images)) {
@@ -166,6 +194,98 @@ class Profile extends Model {
             'filled' => $filled,
             'total' => $total,
             'sections' => $sections,
+        ];
+    }
+
+    /**
+     * Real, per-viewer Compatibility Score — how well THIS profile matches
+     * the VIEWER's own saved Partner Preferences (not how filled-out this
+     * profile is; that's profileCompleteness() above). Only checks
+     * criteria the viewer actually set a preference for — an unset
+     * preference (e.g. no religion preference chosen) isn't counted for or
+     * against the match, since there's nothing to compare.
+     *
+     * $preferenceLabels is the same resolved-label array
+     * ProfileController::profile() builds for the "Looking For" tab
+     * (['city' => ..., 'country' => ..., ...]) — reused here purely for
+     * display text like "UK location matched", not for the matching logic
+     * itself (which compares raw masterdata ids).
+     *
+     * Deliberately does NOT attempt Height/Weight/Sect (free-text fields on
+     * both sides — format varies too much to compare reliably) or "Family
+     * background" / "Lifestyle" as blanket checks (Partner Preferences
+     * doesn't store a desired family type or lifestyle — nothing real to
+     * compare against, so no fabricated check for those).
+     *
+     * Returns null if the viewer has no usable preference data at all —
+     * the caller shows a "set your preferences" prompt in that case
+     * instead of a meaningless 0%/100%.
+     */
+    public function compatibilityWith(?PartnerPreference $preference, array $preferenceLabels = []): ?array {
+        if (empty($preference)) {
+            return null;
+        }
+
+        $checks = [];
+
+        if (!empty($preference->age_min) || !empty($preference->age_max)) {
+            $age = !empty($this->birthday) ? Carbon::parse($this->birthday)->age : null;
+            $matched = $age !== null
+                && (empty($preference->age_min) || $age >= $preference->age_min)
+                && (empty($preference->age_max) || $age <= $preference->age_max);
+            $checks[] = ['label' => 'Preferred age range matched', 'matched' => (bool) $matched];
+        }
+
+        // City is the most specific ask; country and "preferred country (if
+        // different from residence)" are both acceptable alternatives to it.
+        if (!empty($preference->city_id) || !empty($preference->country_id) || !empty($preference->preferred_country_id)) {
+            $matched = (!empty($preference->city_id) && $this->city == $preference->city_id)
+                || (!empty($preference->country_id) && $this->con_of_residence == $preference->country_id)
+                || (!empty($preference->preferred_country_id) && $this->con_of_residence == $preference->preferred_country_id);
+            $locationLabel = $preferenceLabels['city'] ?? $preferenceLabels['country'] ?? $preferenceLabels['preferred_country'] ?? null;
+            $checks[] = ['label' => $locationLabel ? "{$locationLabel} location matched" : 'Location preference matched', 'matched' => (bool) $matched];
+        }
+
+        if (!empty($preference->religion_id)) {
+            $checks[] = ['label' => 'Religion preference matched', 'matched' => $this->religion == $preference->religion_id];
+        }
+
+        if (!empty($preference->caste_id)) {
+            $checks[] = ['label' => 'Caste preference matched', 'matched' => $this->caste == $preference->caste_id];
+        }
+
+        if (!empty($preference->marital_status)) {
+            $checks[] = ['label' => 'Marital status matched', 'matched' => $this->marital_status == $preference->marital_status];
+        }
+
+        if (!empty($preference->education_id)) {
+            $checks[] = ['label' => 'Education preference matched', 'matched' => $this->education == $preference->education_id];
+        }
+
+        if (!empty($preference->mother_tongue_id)) {
+            $checks[] = ['label' => 'Mother tongue matched', 'matched' => $this->mother_tongue == $preference->mother_tongue_id];
+        }
+
+        // "Does not matter" means the viewer explicitly has no preference
+        // here — same as leaving it unset, so no check either way.
+        if (!empty($preference->with_children) && $preference->with_children !== 'Does not matter') {
+            $hasChildren = !empty($this->children) && $this->children > 0;
+            $matched = $preference->with_children === 'Yes' ? $hasChildren : !$hasChildren;
+            $checks[] = ['label' => 'Children preference matched', 'matched' => $matched];
+        }
+
+        if (empty($checks)) {
+            return null; // a preference row exists but nothing on it is usable for matching
+        }
+
+        $matchedCount = count(array_filter($checks, fn ($c) => $c['matched']));
+        $total = count($checks);
+
+        return [
+            'percent' => (int) round($matchedCount / $total * 100),
+            'matched' => $matchedCount,
+            'total' => $total,
+            'checks' => $checks,
         ];
     }
 
@@ -455,6 +575,7 @@ class Profile extends Model {
                 `mmt`.`name` AS `lbl_mother_tongue`,
                 `ml`.`name` AS `lbl_language`,
                 `mcor`.`name` AS `lbl_con_of_residence`,
+                `mcor`.`abbreviation` AS `con_of_residence_code`,
                 `mcob`.`name` AS `lbl_con_of_birth`,
                 `mcoc`.`name` AS `lbl_con_of_citizenship`,
                 `mcgu`.`name` AS `lbl_con_grew_up`,
@@ -530,6 +651,7 @@ class Profile extends Model {
                 `mmt`.`name` AS `lbl_mother_tongue`,
                 `ml`.`name` AS `lbl_language`,
                 `mcor`.`name` AS `lbl_con_of_residence`,
+                `mcor`.`abbreviation` AS `con_of_residence_code`,
                 `mcob`.`name` AS `lbl_con_of_birth`,
                 `mcoc`.`name` AS `lbl_con_of_citizenship`,
                 `mcgu`.`name` AS `lbl_con_grew_up`,

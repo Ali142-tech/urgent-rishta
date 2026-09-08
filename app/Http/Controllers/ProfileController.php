@@ -66,7 +66,55 @@ class ProfileController extends Controller
         // not something shown while browsing someone else's.
         $completeness = $dataid ? null : $profile->profileCompleteness();
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos'));
+        // Partner Preferences belong to whoever is LOGGED IN, not whoever's
+        // profile we're viewing — needed both for the "Looking For" tab on
+        // your own profile (a "go manage your preferences" teaser used to
+        // show here with no way to tell whether anything had actually been
+        // saved — see ProfileController::preferencesPage()/updatePreferences()
+        // for the separate page where these are edited) AND for computing
+        // Compatibility below when viewing someone ELSE's profile — that's
+        // always "how well does THIS profile match MY OWN preferences",
+        // never the other way around. Resolve the masterdata IDs to display
+        // labels here, the same way the rest of this method already does
+        // for $profile.
+        $loggedInUser = User::retrieveUserObject();
+        $preference = $loggedInUser ? $loggedInUser->partnerPreference()->first() : null;
+        $preferenceLabels = [];
+        $hasPreferenceData = false;
+        if ($preference) {
+            // A row can exist (created by updateOrCreate the first time the
+            // preferences form is ever submitted) with every field still
+            // blank — e.g. the member opened the page and saved without
+            // filling anything in. Only treat it as "has preferences" if
+            // something was actually entered, so the tab doesn't render an
+            // empty-looking grid with nothing in it.
+            $hasPreferenceData = collect($preference->getAttributes())
+                ->except(['id', 'user_id', 'created_at', 'updated_at'])
+                ->filter(fn ($value) => $value !== null && $value !== '')
+                ->isNotEmpty();
+
+            $preferenceLabels = [
+                'marital_status' => optional($maritalstatuses->firstWhere('dataid', $preference->marital_status))->name,
+                'country' => optional($countries->firstWhere('dataid', $preference->country_id))->name,
+                'state' => $preference->state_id ? optional(MasterData::where('type', 'STATE')->where('dataid', $preference->state_id)->first())->name : null,
+                'city' => $preference->city_id ? optional(MasterData::where('type', 'CITY')->where('dataid', $preference->city_id)->first())->name : null,
+                'religion' => optional($religions->firstWhere('dataid', $preference->religion_id))->name,
+                'caste' => optional($caste->firstWhere('dataid', $preference->caste_id))->name,
+                'mother_tongue' => optional($mothertongues->firstWhere('dataid', $preference->mother_tongue_id))->name,
+                'education' => optional($education->firstWhere('dataid', $preference->education_id))->name,
+                'preferred_country' => optional($countries->firstWhere('dataid', $preference->preferred_country_id))->name,
+                'languages' => !empty($preference->languages) ? $mothertongues->whereIn('dataid', explode(',', $preference->languages))->pluck('name')->implode(', ') : null,
+            ];
+        }
+
+        // Compatibility Score — only meaningful when viewing someone ELSE's
+        // profile (needs two people: my preferences + their actual profile).
+        // On your own profile this stays null and that tab shows the
+        // Profile Scorer (profileCompleteness()) instead — see
+        // member/user.blade.php's "Profile Scorer" tab.
+        $compatibility = $dataid ? $profile->compatibilityWith($hasPreferenceData ? $preference : null, $preferenceLabels) : null;
+
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility'));
     }
 
     /**
@@ -575,6 +623,8 @@ class ProfileController extends Controller
             } else if ($section == "education_and_career") {
                 $user->education = $request->education;
                 $user->profession = $request->profession;
+                $user->designation = $request->designation;
+                $user->companyname = $request->companyname;
                 $user->salary = $request->salary;
             } else if ($section == "physical_attributes") {
                 $user->height = $request->height;
@@ -582,6 +632,13 @@ class ProfileController extends Controller
             } else if ($section == "language") {
                 $user->mother_tongue = $request->mother_tongue;
                 $user->language = $request->language;
+            } else if ($section == "lifestyle_details") {
+                $user->prayer = $request->prayer;
+                $user->smoking = $request->smoking;
+                $user->diet = $request->diet;
+                $user->exercise = $request->exercise;
+                $user->hobbies = $request->hobbies;
+                $user->living_arrangement = $request->living_arrangement;
             } else if ($section == "residency_information") {
                 $user->con_of_birth = $request->con_of_birth;
                 $user->con_of_residence = $request->con_of_residence;

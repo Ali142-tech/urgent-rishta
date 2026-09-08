@@ -86,14 +86,48 @@
     color: var(--ur-nav-bg-2);
 }
 
-/* Avatar account menu (Member Dashboard / Admin Dashboard) — just the
-   default dropdown look, with breathing room between the two items. */
+/* Avatar account menu (Member Dashboard / Admin Dashboard). Needs its own
+   colors here (not just the default Bootstrap look) because global-style-
+   pink.css sets a blanket ".dropdown-menu .dropdown-item > i { color:
+   #E91E63 !important }" — that's what was painting this menu's icons hot
+   pink instead of the site's green/gold theme. */
 #myHeader .ur-account-menu {
     left: auto !important;
     right: 0 !important;
+    padding: 8px;
+    border: 1px solid rgba(201,151,77,.25);
+    border-radius: 12px;
+    box-shadow: 0 20px 44px rgba(15,46,36,.22);
+}
+#myHeader .ur-account-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: 'Montserrat', 'DM Sans', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    color: var(--ur-nav-bg-2) !important;
+    text-decoration: none !important;
+    transition: background .18s ease, color .18s ease;
 }
 #myHeader .ur-account-menu .dropdown-item + .dropdown-item {
-    margin-top: 6px;
+    margin-top: 4px;
+}
+#myHeader .ur-account-menu .dropdown-item i {
+    color: var(--ur-nav-cream) !important;
+    font-size: 14px !important;
+    margin-right: 0 !important;
+}
+#myHeader .ur-account-menu .dropdown-item:hover,
+#myHeader .ur-account-menu .dropdown-item:focus {
+    background: var(--ur-nav-bg-2);
+    color: #ffffff !important;
+}
+#myHeader .ur-account-menu .dropdown-item:hover i,
+#myHeader .ur-account-menu .dropdown-item:focus i {
+    color: var(--ur-nav-cream) !important;
 }
 
 #myHeader .appointment-btn {

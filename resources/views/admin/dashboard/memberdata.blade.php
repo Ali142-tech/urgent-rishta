@@ -70,7 +70,7 @@
                     </tr>
                     <tr>
                         <td colspan="4" class="ur-admin-mini-table__status">
-                            <a id="active_label_{{$member->dataid}}" class="ur-admin-badge {{ $member->active==0 ? 'ur-admin-badge--warning' : 'ur-admin-badge--success' }}" onclick="return toggleActive('{{$member->dataid}}');">{{ $member->getActiveLabel() }}</a>
+                            <span id="active_label_{{$member->dataid}}" class="ur-admin-badge {{ $member->active==0 ? 'ur-admin-badge--warning' : 'ur-admin-badge--success' }}">{{ $member->getActiveLabel() }}</span>
                         </td>
                     </tr>
                     <tr>
@@ -117,11 +117,6 @@
                 <a id="interest_a_'{{$member->dataid}}'" href="{{ url('admin/profile/listing/interests/'.$member->dataid) }}">
                     <span id="interest_'{{$member->dataid}}'"><i class="fa fa-heart"></i> View Interests</span>
                 </a>
-                <a onclick="return toggleActive($(this), '{{$member->dataid}}');">
-                    <span id="active_{{$member->dataid}}" class="{{$member->active==0 ? '':'is-active'}}">
-                        <i class="fa fa-toggle-{{$member->active==0 ? 'off':'on'}}"></i> Make {{$member->active==0 ? 'Active':'Inactive'}}
-                    </span>
-                </a>
                 <a href="{{ url('admin/profile/package/'.$member->dataid) }}">
                     <span id="package_'{{$member->dataid}}'"><i class="fa fa-archive"></i> Change Package</span>
                 </a>
@@ -134,7 +129,6 @@
                 <a class="is-danger" onclick="return deleteProfile($(this), '{{$member->dataid}}');">
                     <span id="delete_'{{$member->dataid}}'"><i class="fa fa-trash"></i> Delete Profile</span>
                 </a>
-                <a href="{{ url('admin/profile/pdf/'.$member->dataid) }}"><i class="fa fa-download"></i> Download User Data (PDF)</a>
             </div>
         </div>
     </div>

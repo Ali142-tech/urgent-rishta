@@ -180,6 +180,32 @@
     margin-right: 5px;
 }
 
+.member-card__flag {
+    width: 16px;
+    height: 12px;
+    margin-left: 4px;
+    vertical-align: middle;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.08);
+}
+
+.member-card__designation {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .8rem;
+    color: var(--ur-text-muted, #6B7570);
+    margin: -6px 0 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.member-card__designation i {
+    color: var(--ur-gold, #C9974D);
+}
+
 .member-card__details {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

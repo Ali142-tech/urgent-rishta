@@ -777,6 +777,17 @@ class RegisterController extends Controller
             $user->email_verified_at = now();
         }
 
+        // users.active defaults to 0 at the DB level, which meant every new
+        // signup needed an admin to manually flip "Make Active" in the
+        // dashboard before the account could search. New accounts are now
+        // active immediately — the mandatory photo-upload gate (redirect to
+        // member.photos.required just below) and admin photo verification
+        // already gate real access, so this manual step was redundant
+        // friction rather than a real safeguard. Set directly on the model
+        // (not via the $payload mass-assignment above) since 'active' is
+        // intentionally not in User::$fillable.
+        $user->active = 1;
+
         $user->save();
 
         // Partner Preferences captured during signup (the fuller set is filled in
