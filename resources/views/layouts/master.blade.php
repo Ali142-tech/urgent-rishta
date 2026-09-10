@@ -407,6 +407,12 @@ a.appointment-btn::before{
                                                     Premium Plans</a>
                                                 <ul class="dropdown-menu">
                                                     <li>
+                                                        <a class="dropdown-item" href="{{url('packages')}}?type=signature">
+                                                            <i class="fa fa-star" aria-hidden="true"></i>
+                                                            <span>Signature Plan</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
                                                         <a class="dropdown-item" href="{{url('packages')}}?type=personalized">
                                                             <i class="fa fa-user-circle" aria-hidden="true"></i>
                                                             <span>Personalized Plan</span>
@@ -416,12 +422,6 @@ a.appointment-btn::before{
                                                         <a class="dropdown-item" href="{{url('packages')}}?type=online">
                                                             <i class="fa fa-desktop" aria-hidden="true"></i>
                                                             <span>Online Plan</span>
-                                                        </a>
-                                                    </li>
-                                                    <li>
-                                                        <a class="dropdown-item" href="{{url('packages')}}?type=signature">
-                                                            <i class="fa fa-star" aria-hidden="true"></i>
-                                                            <span>Signature Plan</span>
                                                         </a>
                                                     </li>
                                                 </ul>

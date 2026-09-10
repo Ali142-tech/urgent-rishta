@@ -79,6 +79,20 @@
         if (resetCurrentPage)
             $('#pagerequested').val(newPage?newPage:1);
         renderPage("{{url('admin/profiles/refresh')}}", "post", $("#controls-form").serialize(), $("#member-data"));
+
+        // Keep the address bar's ?page= in sync with what's actually being
+        // shown. Without this, pagination clicks swap the list via AJAX but
+        // leave the URL pointing at whatever page was loaded initially, so a
+        // refresh/bookmark (and the "Change Package" link's return-page,
+        // which reads this same URL) would disagree with what's on screen.
+        var page = parseInt($('#pagerequested').val(), 10) || 1;
+        var url = new URL(window.location.href);
+        if (page > 1) {
+            url.searchParams.set('page', page);
+        } else {
+            url.searchParams.delete('page');
+        }
+        window.history.replaceState(null, '', url);
     }
 
     function toggleActive(elem, id) {

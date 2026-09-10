@@ -73,12 +73,21 @@ class AdminController extends Controller
     {
         $pageSize = 10;
         $total = Profile::getTotalCount();
+        $numPages = (int) ceil($total / $pageSize);
+
+        // Honor ?page=N (e.g. returning here from the Change Package screen
+        // after "Back to Profiles" or a save) so the admin lands back on the
+        // page they were on instead of always seeing page 1.
+        $currentPage = (int) request()->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+        if ($numPages > 0 && $currentPage > $numPages) $currentPage = $numPages;
+
         $view = view('admin.dashboard.memberdata')->with([
-            'currentPage' => 1,
+            'currentPage' => $currentPage,
             'pageSize' => $pageSize,
             'total' => $total,
-            'numPages' => ceil($total / $pageSize),
-            'members' => Profile::profiles(null, null, "`u`.`updated_at` DESC", "10"),
+            'numPages' => $numPages,
+            'members' => Profile::profiles(null, null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1)),
             'packages' => MasterData::where('type', '=', 'PACKAGE')->get()
         ]);
 
@@ -841,7 +850,12 @@ class AdminController extends Controller
     {
         $member = User::retrieveUserObject($dataid);
         $packages = MasterData::where('type', 'PACKAGE')->get();
-        return view('admin.dashboard.profile-package', compact('member', 'packages'));
+        // Which page of the member list the admin came from (see
+        // memberdata.blade.php's "Change Package" links) — carried through
+        // so "Back to Profiles" and the post-save redirect land back on
+        // that same page instead of always resetting to page 1.
+        $returnPage = (int) request()->query('page', 1);
+        return view('admin.dashboard.profile-package', compact('member', 'packages', 'returnPage'));
     }
 
     function fixDataId($table)

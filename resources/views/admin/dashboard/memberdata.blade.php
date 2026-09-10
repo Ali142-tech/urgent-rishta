@@ -43,7 +43,7 @@
                     <div class="ur-admin-profile-card__sub"><b>Mobile:</b> {{$member->contact_mobile_number}} | <a href="{{ $member->user()->getWhatsappLink() }}" target="_blank">Send WhatsApp</a></div>
                 </div>
                 <div class="ur-admin-profile-card__badges">
-                    <a id="package_{{$member->dataid}}" href="{{ url('admin/profile/package/'.$member->dataid) }}" class="ur-admin-profile-card__package">
+                    <a id="package_{{$member->dataid}}" href="{{ url('admin/profile/package/'.$member->dataid) }}?page={{ $currentPage }}" class="ur-admin-profile-card__package">
                         @if (!empty($member->package))
                         @if($member->package==99)
                         <span class="ur-admin-badge ur-admin-badge--neutral">All Profiles</span>
@@ -117,7 +117,7 @@
                 <a id="interest_a_'{{$member->dataid}}'" href="{{ url('admin/profile/listing/interests/'.$member->dataid) }}">
                     <span id="interest_'{{$member->dataid}}'"><i class="fa fa-heart"></i> View Interests</span>
                 </a>
-                <a href="{{ url('admin/profile/package/'.$member->dataid) }}">
+                <a href="{{ url('admin/profile/package/'.$member->dataid) }}?page={{ $currentPage }}">
                     <span id="package_'{{$member->dataid}}'"><i class="fa fa-archive"></i> Change Package</span>
                 </a>
                 <a onclick="return resendVerificationEmail($(this), '{{$member->dataid}}');">

@@ -7,7 +7,7 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap');
 
-    body.page-packages #main-content { background: #FBF7EF; }
+    body.page-packages #main-content { background: #FBF7EF; overflow-x: hidden; }
 
     .pk-page {
         /* Deliberately NO max-width/centering here — that was capping each
@@ -186,10 +186,24 @@
     .pk-services-split--online-only .pk-service-col .pk-intro,
     .pk-services-split--personalized-only .pk-service-col .pk-intro,
     .pk-services-split--signature-only .pk-service-col .pk-intro {
-        grid-template-columns: 1fr 1fr;
         max-width: 1600px;
         margin-left: auto;
         margin-right: auto;
+    }
+    /* The 2-column split itself is desktop-only — 3 classes of specificity
+       here would otherwise beat the plain ".pk-intro { grid-template-columns:
+       1fr }" mobile rule further down (higher specificity wins regardless of
+       which media query either rule sits in), forcing two columns onto a
+       narrow phone screen and crushing every line of text down to one word
+       per line. Gating it behind min-width keeps this rule from ever
+       existing on a narrow screen in the first place, so there's nothing
+       for the mobile rule to lose against. */
+    @media (min-width: 901px) {
+        .pk-services-split--online-only .pk-service-col .pk-intro,
+        .pk-services-split--personalized-only .pk-service-col .pk-intro,
+        .pk-services-split--signature-only .pk-service-col .pk-intro {
+            grid-template-columns: 1fr 1fr;
+        }
     }
     .pk-services-split--online-only .pk-pkg-grid,
     .pk-services-split--personalized-only .pk-pkg-grid,
@@ -608,6 +622,12 @@
     @media (max-width: 900px) {
         .pk-wrap, .pk-intro, .pk-pkg-section, .pk-consult, .pk-compare { padding-left: 24px; padding-right: 24px; }
         .pk-intro, .pk-consult, .pk-compare-grid { grid-template-columns: 1fr; }
+        /* minmax(280px, 1fr) guarantees each card is AT LEAST 280px — with
+           2+ cards that floor (280px × N + gaps) can exceed a narrow phone's
+           actual width, forcing the whole page wider than the screen and
+           pushing everything (even the hero above it) off into horizontal
+           scroll. Stack to one column below this breakpoint instead. */
+        .pk-pkg-grid { grid-template-columns: 1fr !important; }
         .pk-hero { padding: 48px 20px 36px; }
         .pk-final-cta { padding: 48px 24px; }
         .pk-services-split { grid-template-columns: 1fr; }

@@ -2,7 +2,7 @@
 @section('dashboard-title', 'Admin Dashboard')
 @section('admin-content')
 <div class="ur-admin-header">
-    <p class="ur-admin-back"><a href="{{ url('admin/profiles') }}"><i class="fa fa-arrow-left"></i> Back to Profiles</a></p>
+    <p class="ur-admin-back"><a href="{{ url('admin/profiles') }}?page={{ $returnPage ?? 1 }}"><i class="fa fa-arrow-left"></i> Back to Profiles</a></p>
     <h2>Change Package &mdash; {{ $member->first_name }} {{ $member->last_name }} <span class="ur-admin-header__muted">({{ $member->dataid }})</span></h2>
 </div>
 
@@ -41,7 +41,7 @@
                 if (result.code == '200') {
                     showAlert('success', message, 2000);
                     setTimeout(function() {
-                        window.location = "{{ url('admin/profiles') }}";
+                        window.location = "{{ url('admin/profiles') }}?page={{ $returnPage ?? 1 }}";
                     }, 1200);
                 } else {
                     showAlert('danger', message, 5000);
