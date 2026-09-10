@@ -10,6 +10,15 @@
     body.page-packages #main-content { background: #FBF7EF; }
 
     .pk-page {
+        /* Deliberately NO max-width/centering here — that was capping each
+           SECTION'S BACKGROUND too (hero green, sand-tinted intro, etc.),
+           not just its content, which is what created a two-tone "boxed"
+           look with visible cream gutters on a wide monitor once the
+           browser was wider than the cap. Full-bleed backgrounds is the
+           right fix — the actual content grids that shouldn't stretch too
+           wide (package cards, the consult/payment row, etc.) get their own
+           max-width + margin:auto individually below instead, so the
+           colors still reach the true edges of the screen. */
         --pk-green: #123A2E;
         --pk-green-deep: #0F2E24;
         --pk-gold: #C9974D;
@@ -30,12 +39,23 @@
     .pk-page * { box-sizing: border-box; }
     .pk-page a { text-decoration: none; }
     .pk-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         font-size: 11.5px;
         font-weight: 700;
         letter-spacing: .12em;
         color: var(--pk-terracotta);
         text-transform: uppercase;
         margin-bottom: 10px;
+    }
+    .pk-eyebrow::before {
+        content: "";
+        width: 22px;
+        height: 2px;
+        background: var(--pk-gold);
+        border-radius: 2px;
+        display: inline-block;
     }
     .pk-h2 {
         font-family: 'Playfair Display', Georgia, serif;
@@ -56,7 +76,21 @@
         background: linear-gradient(135deg, var(--pk-green) 0%, #1F5C46 55%, var(--pk-green) 100%);
         padding: 64px 20px 46px;
         text-align: center;
+        position: relative;
+        overflow: hidden;
     }
+    .pk-hero::before {
+        content: "";
+        position: absolute;
+        top: -180px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 720px;
+        height: 480px;
+        background: radial-gradient(closest-side, rgba(201,151,77,0.22), transparent 70%);
+        pointer-events: none;
+    }
+    .pk-hero > * { position: relative; z-index: 1; }
     .pk-hero-badge {
         display: inline-block;
         background: rgba(255,255,255,0.1);
@@ -113,50 +147,58 @@
     .pk-service-col--online {
         border-right: 1px solid var(--pk-line);
     }
-    /* Filtered view (?type=online or ?type=personalized from the nav dropdown —
-       Website Upgrade Brief-style "show only this service" request): hide the
-       other column and let the remaining one take the full width instead of
-       squeezing into a half-width grid track. */
+    /* Filtered view (?type=online, ?type=personalized or ?type=signature from
+       the nav dropdown — Website Upgrade Brief-style "show only this service"
+       request): hide the other column and let the remaining one take the full
+       width instead of squeezing into a half-width grid track. Signature
+       (Royal/Imperial, its own nav tab — see $signaturePackages in
+       HomeController::packagesView()) reuses the exact same "premium" column
+       markup as Personalized, just with different content swapped in below,
+       so it shares all of this sizing instead of needing its own copy. */
     .pk-services-split--online-only .pk-service-col--premium,
-    .pk-services-split--personalized-only .pk-service-col--online {
+    .pk-services-split--personalized-only .pk-service-col--online,
+    .pk-services-split--signature-only .pk-service-col--online {
         display: none;
     }
     .pk-services-split--online-only,
-    .pk-services-split--personalized-only {
+    .pk-services-split--personalized-only,
+    .pk-services-split--signature-only {
         grid-template-columns: 1fr;
     }
     .pk-services-split--online-only .pk-service-col--online,
-    .pk-services-split--personalized-only .pk-service-col--premium {
+    .pk-services-split--personalized-only .pk-service-col--premium,
+    .pk-services-split--signature-only .pk-service-col--premium {
         border-right: none;
     }
-    .pk-services-split--online-only .pk-intro,
-    .pk-services-split--personalized-only .pk-intro {
-        grid-template-columns: 1fr 1fr;
-        max-width: 1000px;
-        margin: 0 auto;
-    }
-    .pk-services-split--online-only .pk-pkg-grid,
-    .pk-services-split--personalized-only .pk-pkg-grid {
-        max-width: 1000px;
-        margin: 0 auto;
-        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-    }
-    .pk-service-col-label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 22px 20px;
-        font-weight: 800;
-        font-size: 13.5px;
-        letter-spacing: .04em;
-        text-align: center;
-        color: var(--pk-green);
+    /* Sand tint for Personalized/Signature — lives on the full-width column
+       itself now (was inline on .pk-intro/.pk-pkg-section directly), so the
+       color reaches the true edges of the screen while just the grid of
+       content inside it is centered to a sane width (see above/below). */
+    .pk-services-split--personalized-only .pk-service-col--premium,
+    .pk-services-split--signature-only .pk-service-col--premium {
         background: var(--pk-sand);
     }
-    .pk-service-col--premium .pk-service-col-label {
-        background: var(--pk-green);
-        color: var(--pk-cream-text);
+    /* This is the "content" cap that replaces capping the whole .pk-page —
+       the section itself (.pk-service-col--premium, see background rule
+       below) still spans the true full width of the screen; only the grid
+       of actual columns/cards is centered within a sane reading width, so
+       a big monitor doesn't stretch 2 cards edge-to-edge either. */
+    .pk-services-split--online-only .pk-service-col .pk-intro,
+    .pk-services-split--personalized-only .pk-service-col .pk-intro,
+    .pk-services-split--signature-only .pk-service-col .pk-intro {
+        grid-template-columns: 1fr 1fr;
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .pk-services-split--online-only .pk-pkg-grid,
+    .pk-services-split--personalized-only .pk-pkg-grid,
+    .pk-services-split--signature-only .pk-pkg-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 28px;
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
     }
     .pk-service-col .pk-intro {
         grid-template-columns: 1fr;
@@ -194,23 +236,53 @@
     }
     .pk-check-cards .pk-cc > i, .pk-check-cards .pk-cc > .em { color: var(--pk-gold); flex-shrink: 0; }
     .pk-check-cards .pk-cc div.txt { font-size: 13.5px; line-height: 1.6; color: var(--pk-ink-2); }
-    .pk-icon-lines { display: flex; flex-direction: column; gap: 12px; }
-    .pk-icon-lines > div { display: flex; gap: 12px; }
-    .pk-icon-lines > div > .em { color: var(--pk-gold); flex-shrink: 0; }
+    .pk-icon-lines { display: flex; flex-direction: column; gap: 18px; }
+    .pk-icon-lines > div {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .pk-icon-lines > div > .em {
+        flex-shrink: 0;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        border: 1px solid rgba(201,151,77,0.35);
+        background: var(--pk-cream);
+        color: var(--pk-gold);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
     .pk-icon-lines > div > .txt { font-size: 13.5px; line-height: 1.6; color: var(--pk-ink-2); }
     .pk-side-title { font-weight: 700; font-size: 14.5px; margin-bottom: 14px; }
 
     .pk-dark-box {
-        background: var(--pk-green);
+        background: linear-gradient(155deg, var(--pk-green) 0%, #0F2E24 100%);
         border-radius: 16px;
         padding: 30px;
         color: #fff;
+        box-shadow: 0 18px 40px rgba(18,58,46,0.22);
+        position: relative;
+        overflow: hidden;
+    }
+    .pk-dark-box::before {
+        content: "\201C";
+        position: absolute;
+        top: -18px;
+        right: 14px;
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 130px;
+        color: rgba(255,255,255,0.05);
+        line-height: 1;
+        pointer-events: none;
     }
     .pk-dark-box .pk-db-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; }
     .pk-dark-box p { font-size: 13.5px; line-height: 1.75; color: var(--pk-cream-text-2); margin: 0 0 14px; }
     .pk-dark-box p:last-child { margin-bottom: 0; }
     .pk-dark-box strong { color: var(--pk-gold); }
-    .pk-dark-box .pk-quote { font-style: italic; }
+    .pk-dark-box .pk-quote { font-style: italic; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); }
 
     /* ============ Package grids ============ */
     .pk-pkg-section { padding: 36px 56px 70px; }
@@ -223,24 +295,47 @@
         background: #fff;
         border: 1px solid var(--pk-line);
         border-radius: 18px;
-        padding: 28px 24px;
-        text-align: center;
+        padding: 36px 32px 32px;
+        text-align: left;
         position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 8px 24px rgba(18,58,46,0.05);
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .pk-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--pk-gold-light), var(--pk-gold));
+        opacity: 0;
+        transition: opacity .25s ease;
+    }
+    .pk-card:hover::before { opacity: 1; }
+    .pk-card:hover {
+        transform: translateY(-6px) scale(1.015);
+        box-shadow: 0 20px 40px rgba(18,58,46,0.15);
     }
     .pk-card.pk-card--dark {
         background: var(--pk-green);
         border: none;
         box-shadow: 0 16px 36px rgba(18,58,46,0.25);
     }
+    .pk-card.pk-card--dark::before { background: linear-gradient(90deg, var(--pk-gold), var(--pk-gold-light)); }
+    .pk-card.pk-card--dark:hover {
+        box-shadow: 0 26px 50px rgba(18,58,46,0.38);
+    }
     .pk-card-ribbon {
         position: absolute;
-        top: -11px;
-        left: 50%;
-        transform: translateX(-50%);
+        top: 24px;
+        right: 24px;
         background: var(--pk-gold);
         color: var(--pk-green);
         font-size: 11px;
         font-weight: 800;
+        letter-spacing: .04em;
         padding: 5px 14px;
         border-radius: 99px;
         white-space: nowrap;
@@ -267,36 +362,42 @@
     .pk-card-divider { height: 1px; background: var(--pk-line); margin-bottom: 20px; }
     .pk-card--dark .pk-card-divider { background: rgba(255,255,255,0.14); }
     .pk-card-badge {
-        width: 72px;
-        height: 72px;
-        margin: 0 auto 18px;
-        border-radius: 50%;
+        width: 56px;
+        height: 56px;
+        margin: 0 0 22px;
+        border-radius: 14px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 26px;
+        font-size: 22px;
         background: var(--pk-cream);
         color: var(--pk-gold);
         border: 1px solid var(--pk-line);
+        transition: transform .25s ease;
+    }
+    .pk-card:hover .pk-card-badge {
+        transform: scale(1.06);
     }
     .pk-card--dark .pk-card-badge { background: rgba(255,255,255,0.12); color: var(--pk-gold-light); border-color: transparent; }
     .pk-card-name {
         font-family: 'Playfair Display', Georgia, serif;
-        font-size: 19px;
+        font-size: 22px;
         font-weight: 600;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         color: var(--pk-ink);
     }
     .pk-card--dark .pk-card-name { color: #fff; }
-    .pk-card-tag { font-size: 12.5px; line-height: 1.6; color: var(--pk-text); margin-bottom: 18px; }
+    .pk-card-tag { font-size: 13.5px; line-height: 1.6; color: var(--pk-text); margin-bottom: 26px; }
     .pk-card--dark .pk-card-tag { color: var(--pk-cream-text-2); }
     .pk-btn-outline, .pk-btn-solid, .pk-btn-solid-gold {
         display: block;
         width: 100%;
+        margin-top: auto;
         border-radius: 10px;
         font-weight: 700;
         font-size: 13px;
         padding: 11px;
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
         text-align: center;
         cursor: pointer;
         font-family: 'Manrope', system-ui, sans-serif;
@@ -307,9 +408,13 @@
         background: transparent;
         margin-bottom: 10px;
     }
+    .pk-btn-outline:hover { background: var(--pk-green); color: #fff; transform: translateY(-2px); }
     .pk-card--dark .pk-btn-outline { border-color: var(--pk-cream-text); color: var(--pk-cream-text); }
+    .pk-card--dark .pk-btn-outline:hover { background: var(--pk-cream-text); color: var(--pk-green); }
     .pk-btn-solid { background: var(--pk-green); color: var(--pk-cream-text); border: none; }
+    .pk-btn-solid:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(18,58,46,0.3); }
     .pk-btn-solid-gold { background: var(--pk-gold); color: var(--pk-green); border: none; }
+    .pk-btn-solid-gold:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(201,151,77,0.4); background: var(--pk-gold-light); }
     .pk-card-active-badge {
         display: inline-block;
         background: var(--pk-gold);
@@ -325,6 +430,8 @@
 
     /* ============ Consultation + payment ============ */
     .pk-consult {
+        max-width: 1600px;
+        margin: 0 auto;
         padding: 64px 56px;
         display: grid;
         grid-template-columns: 1.1fr 0.9fr;
@@ -334,7 +441,11 @@
         background: #fff;
         border-radius: 18px;
         padding: 32px;
-        box-shadow: 0 2px 14px rgba(18,58,46,0.06);
+        box-shadow: 0 10px 30px rgba(18,58,46,0.08);
+        transition: box-shadow .2s ease;
+    }
+    .pk-consult-card:hover {
+        box-shadow: 0 16px 40px rgba(18,58,46,0.13);
     }
     .pk-video-row {
         background: var(--pk-sand);
@@ -354,24 +465,69 @@
     .pk-btn-appt { background: var(--pk-green); color: var(--pk-cream-text); font-weight: 700; font-size: 13.5px; padding: 13px 24px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; }
     .pk-btn-wa { background: #25D366; color: #fff; font-weight: 700; font-size: 13.5px; padding: 13px 24px; border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; }
     .pk-payment-card {
-        background: var(--pk-green);
+        background: linear-gradient(155deg, var(--pk-green) 0%, #0F2E24 100%);
         border-radius: 18px;
         padding: 32px;
         color: #fff;
+        box-shadow: 0 16px 38px rgba(18,58,46,0.22);
     }
-    .pk-payment-card .pt { font-weight: 700; font-size: 15px; margin-bottom: 18px; }
-    .pk-payment-card .pl { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--pk-gold); text-transform: uppercase; margin-bottom: 8px; }
+    .pk-payment-card .pt { font-weight: 700; font-size: 15px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+    .pk-payment-card .pt::before {
+        content: "\f09d";
+        font-family: FontAwesome;
+        width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(201,151,77,0.18); color: var(--pk-gold);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 14px;
+    }
+    .pk-payment-card .pl { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; color: var(--pk-gold); text-transform: uppercase; margin-bottom: 8px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .pk-payment-card .pl:first-of-type { padding-top: 0; border-top: none; }
     .pk-payment-card .pd { font-size: 13px; line-height: 1.9; color: var(--pk-cream-text-2); margin-bottom: 16px; }
     .pk-payment-card .pd:last-child { margin-bottom: 0; }
 
     /* ============ Service comparison ============ */
     .pk-compare { padding: 64px 56px; }
     .pk-compare-head { text-align: center; max-width: 560px; margin: 0 auto 40px; }
-    .pk-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1080px; margin: 0 auto; }
-    .pk-compare-card { border-radius: 18px; padding: 32px; }
-    .pk-compare-card.light { background: #fff; }
-    .pk-compare-card.dark { background: var(--pk-green); color: #fff; }
-    .pk-compare-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 16px; }
+    .pk-compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1080px; margin: 0 auto; position: relative; }
+    .pk-compare-vs {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(155deg, var(--pk-gold-light), var(--pk-gold));
+        color: var(--pk-green);
+        font-family: 'Playfair Display', Georgia, serif;
+        font-weight: 700;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(18,58,46,0.25), 0 0 0 6px var(--pk-sand);
+        z-index: 2;
+    }
+    @media (max-width: 900px) {
+        .pk-compare-vs { display: none; }
+    }
+    .pk-compare-card {
+        border-radius: 18px;
+        padding: 32px;
+        position: relative;
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+    .pk-compare-card:hover { transform: translateY(-4px); }
+    .pk-compare-card.light { background: #fff; box-shadow: 0 8px 24px rgba(18,58,46,0.05); }
+    .pk-compare-card.light:hover { box-shadow: 0 16px 34px rgba(18,58,46,0.1); }
+    .pk-compare-card.dark { background: linear-gradient(155deg, var(--pk-green) 0%, #0F2E24 100%); color: #fff; box-shadow: 0 16px 36px rgba(18,58,46,0.25); }
+    .pk-compare-card.dark:hover { box-shadow: 0 22px 44px rgba(18,58,46,0.32); }
+    .pk-compare-ribbon {
+        position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+        background: var(--pk-gold); color: var(--pk-green); font-size: 11px; font-weight: 800;
+        padding: 5px 14px; border-radius: 99px; white-space: nowrap;
+    }
+    .pk-compare-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 18px; }
     .pk-compare-card.light .pk-compare-icon { background: var(--pk-cream-text); }
     .pk-compare-card.dark .pk-compare-icon { background: rgba(255,255,255,0.12); }
     .pk-compare-title { font-family: 'Playfair Display', Georgia, serif; font-size: 21px; font-weight: 600; margin-bottom: 10px; }
@@ -390,7 +546,58 @@
 
     /* ============ Why choose us + Final CTA ============ */
     .pk-why { padding: 64px 56px; text-align: center; }
+    .pk-why-head { max-width: 640px; margin: 0 auto; }
     .pk-why p { font-size: 14.5px; line-height: 1.75; color: var(--pk-text); max-width: 640px; margin: 0 auto; }
+    .pk-why-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 22px;
+        max-width: 1080px;
+        margin: 40px auto 0;
+    }
+    .pk-why-card {
+        background: #fff;
+        border: 1px solid var(--pk-line);
+        border-radius: 16px;
+        padding: 32px 20px 26px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(18,58,46,0.05);
+        transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .pk-why-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--pk-gold-light), var(--pk-gold));
+        opacity: 0;
+        transition: opacity .25s ease;
+    }
+    .pk-why-card:hover::before { opacity: 1; }
+    .pk-why-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(18,58,46,0.13);
+    }
+    .pk-why-icon {
+        width: 58px; height: 58px; margin: 0 auto 18px; border-radius: 50%;
+        background: var(--pk-cream); color: var(--pk-gold);
+        display: flex; align-items: center; justify-content: center; font-size: 22px;
+        box-shadow: 0 0 0 6px rgba(201,151,77,0.08);
+        transition: box-shadow .25s ease, transform .25s ease;
+    }
+    .pk-why-card:hover .pk-why-icon {
+        box-shadow: 0 0 0 9px rgba(201,151,77,0.14);
+        transform: scale(1.08);
+    }
+    .pk-why-card-title { font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; color: var(--pk-ink); margin-bottom: 8px; }
+    .pk-why-card p { font-size: 12.5px; line-height: 1.6; margin: 0; max-width: none; }
+    @media (max-width: 900px) {
+        .pk-why-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 560px) {
+        .pk-why-grid { grid-template-columns: 1fr; }
+    }
     .pk-final-cta { background: var(--pk-green); padding: 56px 56px; text-align: center; }
     .pk-final-cta h2 { font-family: 'Playfair Display', Georgia, serif; font-size: 30px; font-weight: 600; color: #fff; margin: 0 0 12px; }
     .pk-final-cta p { font-size: 14.5px; color: var(--pk-cream-text-2); max-width: 440px; margin: 0 auto 24px; }
@@ -455,12 +662,17 @@
 @endphp
 
 @php
-    // Nav dropdown ("Premium Plans" -> Online Plan / Personalized Plan) passes
-    // ?type=online|personalized so this page can show just that service's
-    // data instead of the default side-by-side comparison.
+    // Nav dropdown ("Premium Plans" -> Online Plan / Personalized Plan /
+    // Signature Plan) passes ?type=online|personalized|signature so this page
+    // can show just that service's data instead of the default side-by-side
+    // comparison. Signature reuses the "premium" column (see below) with
+    // $signaturePackages (Royal/Imperial) swapped in for $premiumPackages.
     $planTypeFilter = request('type');
+    $isSignature = $planTypeFilter === 'signature';
+    $signaturePackages = $signaturePackages ?? collect();
     $splitClass = $planTypeFilter === 'online' ? 'pk-services-split--online-only'
-        : ($planTypeFilter === 'personalized' ? 'pk-services-split--personalized-only' : '');
+        : ($planTypeFilter === 'personalized' ? 'pk-services-split--personalized-only'
+        : ($isSignature ? 'pk-services-split--signature-only' : ''));
 @endphp
 
 <!-- 2 & 3/5. ONLINE SERVICES (left) + PERSONALIZED SERVICE (right), side by side
@@ -468,8 +680,6 @@
 <div class="pk-services-split {{ $splitClass }}">
 
 <div class="pk-service-col pk-service-col--online">
-    <div class="pk-service-col-label">📱 Online Services</div>
-
     <!-- 3. ONLINE SERVICES INTRO -->
     <div class="pk-intro">
         <div>
@@ -534,19 +744,18 @@
 </div><!-- /.pk-service-col--online -->
 
 <div class="pk-service-col pk-service-col--premium">
-    <div class="pk-service-col-label">🤝 Personalized Service</div>
-
-    <!-- 4. PERSONALIZED SERVICE INTRO -->
-    <div class="pk-intro" style="background:#EFE7D6;">
+    <!-- 4. PERSONALIZED / SIGNATURE SERVICE INTRO -->
+    <div class="pk-intro">
+        @if($isSignature)
         <div>
-            <div class="pk-eyebrow">Expert Matchmaking</div>
-            <h2 class="pk-h2">Personalized (Confidential) Service</h2>
-            <p class="pk-lead">A premium, high-touch experience for those who value privacy, accuracy and expert guidance — with a dedicated matchmaking partner, not just a platform.</p>
+            <div class="pk-eyebrow">Executive &amp; Bespoke</div>
+            <h2 class="pk-h2"><i class="fa fa-star" aria-hidden="true" style="color:var(--pk-gold); font-size:.75em; margin-right:10px; vertical-align:2px;"></i>Signature (Executive) Service</h2>
+            <p class="pk-lead">Our most exclusive tier — highly personalized, confidential matchmaking with senior-level oversight, reserved for clients with specific requirements who expect maximum discretion.</p>
             <div class="pk-icon-lines">
-                <div><span class="em">🔒</span><div class="txt"><b>Complete confidentiality</b> — shared only after your approval</div></div>
-                <div><span class="em">🔍</span><div class="txt"><b>Profile assessment</b> — honest, transparent feedback before we proceed</div></div>
-                <div><span class="em">💍</span><div class="txt"><b>Curated matching</b> — guided from introduction to family meetings</div></div>
-                <div><span class="em">📋</span><div class="txt"><b>Tailored plans</b> — designed around your demands, lifestyle &amp; preferences</div></div>
+                <div><span class="em"><i class="fa fa-briefcase" aria-hidden="true"></i></span><div class="txt"><b>Senior-level oversight</b> — personally handled at the executive level, not a general queue</div></div>
+                <div><span class="em"><i class="fa fa-lock" aria-hidden="true"></i></span><div class="txt"><b>Maximum discretion</b> — no public advertisement, ever</div></div>
+                <div><span class="em"><i class="fa fa-crosshairs" aria-hidden="true"></i></span><div class="txt"><b>Highly specific requirements</b> — matched exactly to your family's values and vision</div></div>
+                <div><span class="em"><i class="fa fa-handshake-o" aria-hidden="true"></i></span><div class="txt"><b>Individually managed search</b> — a single dedicated point of contact throughout</div></div>
             </div>
         </div>
         <div class="pk-dark-box">
@@ -554,23 +763,46 @@
             <p>For families who prefer discretion without public advertisement, our <strong>Special Executive Plans</strong> are personally overseen by our CEO — matched to your family's values and vision.</p>
             <p class="pk-quote">&ldquo;Great matches are not based on status or education — they are built on understanding and compatibility.&rdquo;</p>
         </div>
+        @else
+        <div>
+            <div class="pk-eyebrow">Expert Matchmaking</div>
+            <h2 class="pk-h2">Personalized (Confidential) Service</h2>
+            <p class="pk-lead">A premium, high-touch experience for those who value privacy, accuracy and expert guidance — with a dedicated matchmaking partner, not just a platform.</p>
+            <div class="pk-icon-lines">
+                <div><span class="em"><i class="fa fa-lock" aria-hidden="true"></i></span><div class="txt"><b>Complete confidentiality</b> — shared only after your approval</div></div>
+                <div><span class="em"><i class="fa fa-search" aria-hidden="true"></i></span><div class="txt"><b>Profile assessment</b> — honest, transparent feedback before we proceed</div></div>
+                <div><span class="em"><i class="fa fa-heart-o" aria-hidden="true"></i></span><div class="txt"><b>Curated matching</b> — guided from introduction to family meetings</div></div>
+                <div><span class="em"><i class="fa fa-file-text-o" aria-hidden="true"></i></span><div class="txt"><b>Tailored plans</b> — designed around your demands, lifestyle &amp; preferences</div></div>
+            </div>
+        </div>
+        <div class="pk-dark-box">
+            <div class="pk-db-title">Looking For Something More?</div>
+            <p>For families who prefer discretion without public advertisement, our <strong>Signature Plan</strong> offers highly personalized, executive-level matchmaking overseen by our CEO.</p>
+            <p class="pk-quote">&ldquo;Great matches are not based on status or education — they are built on understanding and compatibility.&rdquo;</p>
+        </div>
+        @endif
     </div>
 
-    <!-- PERSONALIZED PACKAGES -->
-    <div class="pk-pkg-section" style="background:#EFE7D6;">
-        @if(!$premiumPackages->isEmpty())
+    <!-- PERSONALIZED / SIGNATURE PACKAGES -->
+    <div class="pk-pkg-section">
+        @php $displayedPackages = $isSignature ? $signaturePackages : $premiumPackages; @endphp
+        @if(!$displayedPackages->isEmpty())
         <div class="pk-pkg-grid">
-            @foreach ($premiumPackages as $package)
+            @foreach ($displayedPackages as $package)
             @if($package->dataid!="99")
             @php
-                $isExecutive = trim($package->name) === 'Royal';
+                // Whichever tier is the "premium pick" WITHIN this tab — Royal on
+                // Signature (Royal/Imperial) same as before, but now Diamond on
+                // Personalized (Platinum/Diamond), since Royal isn't on that tab
+                // any more for this to ever match against.
+                $isExecutive = trim($package->name) === ($isSignature ? 'Royal' : 'Diamond');
                 $tagline = $planTaglines[trim($package->name)] ?? 'Dedicated matchmaker & priority introductions';
-                $icon = $planIcons[trim($package->name)] ?? 'fa-crown';
+                $icon = $planIcons[trim($package->name)] ?? 'fa-star';
                 $displayName = $planFullNames[trim($package->name)] ?? $package->name;
             @endphp
             <div class="pk-card {{ $isExecutive ? 'pk-card--dark' : '' }}">
                 @if($isExecutive)
-                <div class="pk-card-ribbon">EXECUTIVE PICK</div>
+                <div class="pk-card-ribbon">FEATURED</div>
                 @endif
                 <div class="pk-card-badge"><i class="fa {{ $icon }}" aria-hidden="true"></i></div>
                 <div class="pk-card-name">{{ $displayName }}</div>
@@ -580,9 +812,12 @@
             @endif
             @endforeach
         </div>
-        <div style="text-align:center;font-size:12.5px;color:#5B6560;margin-top:16px;">Pricing for Personalized packages is shared during your consultation.</div>
+        <div style="text-align:center;font-size:12.5px;color:#5B6560;margin-top:16px;">Pricing for {{ $isSignature ? 'Signature' : 'Personalized' }} packages is shared during your consultation.</div>
+        @unless($isSignature)
+        <div style="text-align:center;font-size:12.5px;color:#B5674A;margin-top:8px;">This plan is available exclusively to local Pakistani citizens residing within Pakistan.</div>
+        @endunless
         @else
-        <p class="pk-empty">No premium packages available at the moment.</p>
+        <p class="pk-empty">No {{ $isSignature ? 'signature' : 'premium' }} packages available at the moment.</p>
         @endif
     </div>
 </div><!-- /.pk-service-col--premium -->
@@ -623,6 +858,7 @@
         <h2 class="pk-h2" style="font-size:32px;">Digital Match vs. Personal Match</h2>
     </div>
     <div class="pk-compare-grid">
+        <div class="pk-compare-vs">VS</div>
         <div class="pk-compare-card light">
             <div class="pk-compare-icon">📱</div>
             <div class="pk-compare-title">Digital Match <span>(Online)</span></div>
@@ -631,6 +867,7 @@
             <a href="https://wa.me/447424527639" target="_blank" rel="noopener" class="pk-cta-outline">I'm Interested</a>
         </div>
         <div class="pk-compare-card dark">
+            <div class="pk-compare-ribbon">RECOMMENDED</div>
             <div class="pk-compare-icon">🤝</div>
             <div class="pk-compare-title">Personal Match <span>(Offline)</span></div>
             <p>Four exclusive services: private database access, weekly curated matches, a daily broadcast list, and video consultations.</p>
@@ -647,9 +884,33 @@
 
 <!-- 8. WHY CHOOSE US -->
 <div class="pk-why">
-    <div class="pk-eyebrow">Why Choose Us</div>
-    <h2 class="pk-h2">We stay with you until you succeed</h2>
-    <p>We never disappoint our clients! Unlike other services that show only a couple of proposals and disappear, we stay in touch with our clients and work continuously to find the perfect match based on their expectations. This level of commitment and service is unmatched — you won't find it anywhere else.</p>
+    <div class="pk-why-head">
+        <div class="pk-eyebrow">Why Choose Us</div>
+        <h2 class="pk-h2">We stay with you until you succeed</h2>
+        <p>We never disappoint our clients! Unlike other services that show only a couple of proposals and disappear, we stay in touch with our clients and work continuously to find the perfect match based on their expectations. This level of commitment and service is unmatched — you won't find it anywhere else.</p>
+    </div>
+    <div class="pk-why-grid">
+        <div class="pk-why-card">
+            <div class="pk-why-icon"><i class="fa fa-shield" aria-hidden="true"></i></div>
+            <div class="pk-why-card-title">16+ Years of Trust</div>
+            <p>Over a decade and a half of experience matching families across Pakistan and abroad.</p>
+        </div>
+        <div class="pk-why-card">
+            <div class="pk-why-icon"><i class="fa fa-user-circle" aria-hidden="true"></i></div>
+            <div class="pk-why-card-title">Dedicated Matchmakers</div>
+            <p>A real person guiding your search from the first profile to the final introduction.</p>
+        </div>
+        <div class="pk-why-card">
+            <div class="pk-why-icon"><i class="fa fa-lock" aria-hidden="true"></i></div>
+            <div class="pk-why-card-title">Complete Confidentiality</div>
+            <p>Your information is shared only after your explicit approval — never before.</p>
+        </div>
+        <div class="pk-why-card">
+            <div class="pk-why-icon"><i class="fa fa-heart" aria-hidden="true"></i></div>
+            <div class="pk-why-card-title">We Stay Until You Succeed</div>
+            <p>Continuous support and follow-up until you find the right match — not just a couple of proposals.</p>
+        </div>
+    </div>
 </div>
 
 <!-- 9. FINAL CTA -->

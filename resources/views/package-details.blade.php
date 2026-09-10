@@ -332,7 +332,7 @@
 <div class="pd-page">
 
     <div class="pd-breadcrumb">
-        <a href="{{ url('packages') }}">Premium Plans</a> &nbsp;/&nbsp; <span>{{ $displayName }} Package</span>
+        <a href="{{ url('packages') }}?type=personalized">Premium Plans</a> &nbsp;/&nbsp; <span>{{ $displayName }} Package</span>
     </div>
 
     <div class="pd-summary">

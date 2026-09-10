@@ -46,13 +46,32 @@ class HomeController extends Controller {
     }
 
     public function packagesView() {
+        // The bare /packages URL (no ?type=) used to show a combined
+        // side-by-side Online + Personalized comparison — client no longer
+        // wants that page shown at all. The three filtered variants
+        // (?type=online|personalized|signature, used by the nav dropdown's
+        // submenu items) are unaffected and keep working exactly as before;
+        // this only catches someone hitting the bare URL directly (typed in,
+        // bookmarked, or an old link) and sends them to a sensible default
+        // instead of a dead end.
+        if (empty(request('type'))) {
+            return redirect('packages?type=personalized');
+        }
+
         // Standard (ONLINE) packages: stored in separate table and paid online
         $standardPackages = OnlinePackage::where('is_active', true)->get();
 
         // Premium/offline packages: existing data kept in masterdata
-        $premiumPackages = MasterData::where('type', 'PACKAGE')->get();
+        $allPremiumPackages = MasterData::where('type', 'PACKAGE')->get();
 
-        $packages = $standardPackages->concat($premiumPackages);
+        // Royal and Imperial moved out of "Personalized Plan" into their own
+        // "Signature Plan" nav tab/section per client request — everything else
+        // (Platinum, Diamond, and the "99"/All Profiles admin-only row) stays on
+        // the regular Personalized tab exactly as before.
+        $signaturePackages = $allPremiumPackages->filter(fn ($p) => in_array(trim($p->name), ['Royal', 'Imperial']))->values();
+        $premiumPackages = $allPremiumPackages->reject(fn ($p) => in_array(trim($p->name), ['Royal', 'Imperial']))->values();
+
+        $packages = $standardPackages->concat($allPremiumPackages);
 
         // Current user's active online subscription (for showing "Active" and expiry on packages page)
         $userOnlinePackageDataid = null;
@@ -71,7 +90,7 @@ class HomeController extends Controller {
         }
 
         return view('packages', compact(
-            'packages', 'standardPackages', 'premiumPackages',
+            'packages', 'standardPackages', 'premiumPackages', 'signaturePackages',
             'userOnlinePackageDataid', 'userOnlineExpiresAtFormatted', 'userHasActiveOnlinePackage'
         ));
     }

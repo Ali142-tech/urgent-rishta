@@ -1239,7 +1239,7 @@
                         <li><i class="fa fa-check" aria-hidden="true"></i> We review suitable prospects</li>
                         <li><i class="fa fa-check" aria-hidden="true"></i> We coordinate introductions privately</li>
                     </ul>
-                    <a href="{{ url('packages') }}" class="ur-btn ur-btn--light">Explore Personalized Services</a>
+                    <a href="{{ url('packages') }}?type=personalized" class="ur-btn ur-btn--light">Explore Personalized Services</a>
                 </div>
             </div>
         </div>
@@ -1418,7 +1418,7 @@ discretion and individually managed search.</p>
             </div>
 
             <div class="ur-premium__cta">
-                <a href="{{ url('packages') }}" class="ur-btn ur-btn--solid">Compare Premium Plans</a>
+                <a href="{{ url('packages') }}?type=personalized" class="ur-btn ur-btn--solid">Compare Premium Plans</a>
                 <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--outline">Book a Private Consultation</a>
             </div>
         </div>

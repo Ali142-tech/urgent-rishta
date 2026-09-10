@@ -403,7 +403,7 @@ a.appointment-btn::before{
                                                     How It Works</a>
                                             </li>
                                             <li class="custom-nav dropdown ur-plans-dropdown">
-                                                <a class="nav-link dropdown-toggle" href="{{url('packages')}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <a class="nav-link dropdown-toggle" href="{{url('packages')}}?type=personalized" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                     Premium Plans</a>
                                                 <ul class="dropdown-menu">
                                                     <li>
@@ -416,6 +416,12 @@ a.appointment-btn::before{
                                                         <a class="dropdown-item" href="{{url('packages')}}?type=online">
                                                             <i class="fa fa-desktop" aria-hidden="true"></i>
                                                             <span>Online Plan</span>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{url('packages')}}?type=signature">
+                                                            <i class="fa fa-star" aria-hidden="true"></i>
+                                                            <span>Signature Plan</span>
                                                         </a>
                                                     </li>
                                                 </ul>

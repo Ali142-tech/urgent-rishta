@@ -63,7 +63,19 @@
         border-top: 1px solid var(--pg-line); margin-top: 26px; padding-top: 24px; text-align: left;
     }
     .pg-selfie__title { font-size: 14.5px; font-weight: 700; color: var(--pg-ink); margin: 0 0 4px; }
-    .pg-selfie__desc { font-size: 12.5px; color: var(--pg-text); margin: 0 0 14px; line-height: 1.55; }
+    .pg-selfie__desc { font-size: 12.5px; color: var(--pg-text); margin: 0 0 8px; line-height: 1.55; }
+    .pg-selfie__privacy {
+        display: flex; align-items: flex-start; gap: 6px; font-size: 12px; font-weight: 600;
+        color: var(--pg-green); background: #EFE7D6; border-radius: 8px; padding: 8px 10px;
+        margin: 0 0 16px; line-height: 1.5;
+    }
+    .pg-selfie__privacy i { margin-top: 2px; }
+    .pg-selfie__tips { list-style: none; padding: 0; margin: 0 0 14px; }
+    .pg-selfie__tips li {
+        display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--pg-text);
+        line-height: 1.5; margin-bottom: 6px;
+    }
+    .pg-selfie__tips li i { color: var(--pg-gold); margin-top: 3px; flex-shrink: 0; }
     .pg-selfie__stage {
         position: relative; width: 100%; max-width: 280px; margin: 0 auto 14px; border-radius: 14px;
         overflow: hidden; background: #111; aspect-ratio: 4/3;
@@ -126,10 +138,20 @@
             </p>
             <p class="pg-selfie__desc">
                 A live selfie is required so our team can confirm you're a real person before activating
-                your account. Not stored publicly on your profile.
+                your account.
+            </p>
+            <p class="pg-selfie__privacy">
+                <i class="fa fa-lock" aria-hidden="true"></i> Your selfie is private — it's never shown on
+                your profile or visible to other members. Only you and our verification team can see it.
             </p>
 
             <div id="pg_selfie_idle" @if($hasSelfie ?? false) style="display:none;" @endif>
+                <ul class="pg-selfie__tips">
+                    <li><i class="fa fa-check" aria-hidden="true"></i> Look straight at the camera, with your head upright and centred in frame</li>
+                    <li><i class="fa fa-check" aria-hidden="true"></i> Make sure your face is clearly visible — no sunglasses, hats, masks or filters</li>
+                    <li><i class="fa fa-check" aria-hidden="true"></i> Use good, even lighting so your face isn't in shadow</li>
+                    <li><i class="fa fa-check" aria-hidden="true"></i> Only you should be in the frame</li>
+                </ul>
                 <div class="pg-selfie__stage" id="pg_selfie_stage">
                     <video id="pg_selfie_video" autoplay playsinline muted></video>
                 </div>

@@ -242,6 +242,23 @@
         font-weight: 700;
     }
 
+    /* Hidden-photo placeholder tiles in the thumbnail strip — deliberately
+       NOT the real (even blurred) photo, just a lock glyph on a dark tile,
+       since the whole point is that this viewer isn't allowed to see it. */
+    .ur-mp-thumb--locked {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #2A2A28;
+        color: rgba(255,255,255,.7);
+        font-size: 14px;
+    }
+
+    .ur-mp-thumb--locked[onclick]:hover {
+        color: #fff;
+        border-color: var(--ur-gold);
+    }
+
     /* ---- Headline ---- */
     .ur-mp-headline {
         margin-top: 20px;
@@ -943,7 +960,21 @@
                             <button type="button" class="ur-mp-viewall" onclick="showLightGallery($('#mp_main_photo'))"><i class="fa fa-th"></i> View All Photos ({{ $imageCount }})</button>
                         @endif
                     </div>
-                    @if(count($galleryImages) > 1)
+                    @php
+                        $hasLockedThumbs = !empty($hiddenPhotos) && $hiddenPhotos['count'] > 0 && !$hiddenPhotos['canView'];
+                        // Only wire up a click when the "Request to View" button below
+                        // actually exists in the DOM (status === null) — once a request
+                        // is pending/declined that button is replaced with plain status
+                        // text, so calling requestPhotoAccess() against a missing element
+                        // would error.
+                        $lockedThumbOnclick = null;
+                        if ($hasLockedThumbs && $hiddenPhotos['status'] === null) {
+                            $lockedThumbOnclick = auth()->check()
+                                ? "requestPhotoAccess(\$('#photoaccess_{$profile->dataid}'))"
+                                : 'return register_request();';
+                        }
+                    @endphp
+                    @if(count($galleryImages) > 1 || $hasLockedThumbs)
                         <div class="ur-mp-thumbs">
                             @foreach(array_slice($galleryImages, 0, 5) as $i => $img)
                                 @if($i == 4 && count($galleryImages) > 5)
@@ -952,11 +983,18 @@
                                     <button type="button" class="ur-mp-thumb" onclick="mpSetMainPhoto('{{ $img['src'] }}')" style="background-image:url('{{ $img['thumb'] }}')"></button>
                                 @endif
                             @endforeach
+                            @if($hasLockedThumbs)
+                                @for ($h = 0; $h < min($hiddenPhotos['count'], 3); $h++)
+                                    <button type="button" class="ur-mp-thumb ur-mp-thumb--locked" title="Hidden photo — request access to view" @if($lockedThumbOnclick) onclick="{{ $lockedThumbOnclick }}" @endif>
+                                        <i class="fa fa-lock"></i>
+                                    </button>
+                                @endfor
+                            @endif
                         </div>
                     @endif
                 </div>
 
-                @if(!empty($hiddenPhotos) && $hiddenPhotos['count'] > 0 && !$hiddenPhotos['canView'])
+                @if($hasLockedThumbs)
                 <div class="ur-mp-locked-photos">
                     <span class="ur-mp-locked-photos__icon"><i class="fa fa-lock"></i></span>
                     <span class="ur-mp-locked-photos__text">{{ $hiddenPhotos['count'] }} {{ $hiddenPhotos['count'] == 1 ? 'photo is' : 'photos are' }} hidden by this member.</span>
