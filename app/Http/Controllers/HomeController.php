@@ -46,16 +46,14 @@ class HomeController extends Controller {
     }
 
     public function packagesView() {
-        // The bare /packages URL (no ?type=) used to show a combined
-        // side-by-side Online + Personalized comparison — client no longer
-        // wants that page shown at all. The three filtered variants
-        // (?type=online|personalized|signature, used by the nav dropdown's
-        // submenu items) are unaffected and keep working exactly as before;
-        // this only catches someone hitting the bare URL directly (typed in,
-        // bookmarked, or an old link) and sends them to a sensible default
-        // instead of a dead end.
+        // The bare /packages URL (no ?type=) shows a short overview page —
+        // three plan "teaser" cards (Online / Personalized / Signature) that
+        // each link into the matching filtered view below. The three
+        // filtered variants (?type=online|personalized|signature, used by
+        // the nav dropdown's submenu items and by the teaser cards' own
+        // buttons) are unaffected and keep working exactly as before.
         if (empty(request('type'))) {
-            return redirect('packages?type=personalized');
+            return view('packages-overview');
         }
 
         // Standard (ONLINE) packages: stored in separate table and paid online

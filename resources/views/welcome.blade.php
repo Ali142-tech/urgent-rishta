@@ -1418,7 +1418,7 @@ discretion and individually managed search.</p>
             </div>
 
             <div class="ur-premium__cta">
-                <a href="{{ url('packages') }}?type=personalized" class="ur-btn ur-btn--solid">Compare Premium Plans</a>
+                <a href="{{ url('packages') }}" class="ur-btn ur-btn--solid">Compare Premium Plans</a>
                 <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--outline">Book a Private Consultation</a>
             </div>
         </div>

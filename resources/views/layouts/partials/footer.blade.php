@@ -242,7 +242,7 @@
                     <div class="ur-footer-underline" aria-hidden="true"><span></span><i class="fa fa-diamond"></i><span></span></div>
                     <ul class="ur-footer-iconlist">
                         <li><a href="{{url('/')}}" title="Home"><i class="fa fa-home" aria-hidden="true"></i><span class="text-white">Home</span></a></li>
-                        <li><a href="{{url('packages')}}?type=personalized" title="Premium Plans"><i class="fa fa-diamond" aria-hidden="true"></i><span class="text-white">Premium Plans</span></a></li>
+                        <li><a href="{{url('packages')}}" title="Premium Plans"><i class="fa fa-diamond" aria-hidden="true"></i><span class="text-white">Premium Plans</span></a></li>
                         <li><a href="{{url('team')}}" title="Our Team"><i class="fa fa-users" aria-hidden="true"></i><span class="text-white">Our Team</span></a></li>
                         <li><a href="{{url('stories')}}" title="Success Stories"><i class="fa fa-heart-o" aria-hidden="true"></i><span class="text-white">Success Stories</span></a></li>
                         <li><a href="{{url('contact-us')}}" title="Contact Us"><i class="fa fa-phone" aria-hidden="true"></i><span class="text-white">Contact Us</span></a></li>
