@@ -434,9 +434,19 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
 .ur-admin-duo-card__name:hover { color: var(--ur-dash-green); }
 .ur-admin-duo-card__id { font-size: 11.5px; color: var(--ur-dash-text-muted); display: block; margin-top: 2px; }
 .ur-admin-duo-card__email { font-size: 11.5px; color: var(--ur-dash-text-muted); display: block; margin-top: 1px; }
+.ur-admin-duo-card__mobile { font-size: 11.5px; color: var(--ur-dash-text-muted); display: block; margin-top: 1px; }
+.ur-admin-duo-card__mobile a { color: var(--ur-dash-green); font-weight: 600; }
 .ur-admin-duo-card__status {
     flex: 0 0 auto;
     margin: 0 auto;
+    text-align: center;
+}
+.ur-admin-duo-card__statusmsg {
+    font-size: 11px;
+    color: var(--ur-dash-text-muted);
+    max-width: 160px;
+    margin-top: 6px;
+    line-height: 1.4;
 }
 .ur-admin-duo-card__foot {
     display: flex;
@@ -549,6 +559,8 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
     color: var(--ur-dash-text-muted);
     line-height: 1.6;
 }
+.ur-admin-table--packages .ur-admin-package-desc strong { color: var(--ur-dash-text); }
+.ur-admin-table--packages .ur-admin-package-desc__sub { font-size: 12px; margin-top: 3px; }
 
 .ur-admin-row-actions {
     display: flex;
@@ -587,8 +599,28 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
 @media (max-width: 480px) {
     .ur-admin-profile-card__media { flex: 0 0 100%; }
     .ur-admin-profile-card__media .ur-admin-thumb { width: 100%; max-width: 220px; height: auto; aspect-ratio: 1 / 1; margin: 0 auto; }
+    /* __body's desktop min-width (240px) is wider than the ~220-236px of
+       actual content width left at this breakpoint (.ur-dash-content +
+       .ur-admin-panel + .ur-admin-card padding all stack up), forcing the
+       card to overflow horizontally on narrow phones (e.g. 320px). Since
+       __media now stacks full-width above it, __body already gets its own
+       full-width row anyway — it doesn't need a min-width here. */
+    .ur-admin-profile-card__body { min-width: 0; }
     .ur-admin-card__actions a,
-    .ur-admin-card__actions button { flex: 1 1 auto; justify-content: center; }
+    .ur-admin-card__actions button {
+        /* flex:1 1 auto (content-based basis) let long labels like "Resend
+           Verification Email" size the item to their full un-wrapped width
+           regardless of min-width:0 — flex-wrap only wraps items onto a new
+           LINE, it doesn't force an individual item narrower than its own
+           content unless something actually constrains that item's width.
+           Labels this long don't actually fit two-per-row at these widths
+           anyway (confirmed by testing at a real 320-375px viewport), so
+           just give each button its own full-width row — clean and
+           touch-friendly, and guaranteed not to overflow the card. */
+        flex: 1 1 100%;
+        justify-content: center;
+        text-align: center;
+    }
 
     /* Two 120x120 photo tiles + their gap (254px) don't fit a narrow phone's
        ~236px card content width, so they were stacking one per row —

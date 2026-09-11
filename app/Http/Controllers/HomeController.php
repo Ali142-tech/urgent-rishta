@@ -12,6 +12,7 @@ use App\MasterData;
 use App\OnlinePackage;
 use App\Profile;
 use App\User;
+use App\Interest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
 
@@ -42,7 +43,58 @@ class HomeController extends Controller {
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
-        return view('welcome', compact('maritalstatuses', 'countries', 'mothertongues', 'caste'));
+
+        // Real counts for the homepage trust strip / enquiry bar — "Verified
+        // Profiles" = admin-activated accounts, "Successful Matches" =
+        // interests both sides accepted (interest_back = 1).
+        $verifiedProfilesCount = User::where('active', 1)->count();
+        $successfulMatchesCount = Interest::where('interest_back', 1)->count();
+
+        // Guest-facing "meet our members" slider — 5 real active profiles
+        // (each with at least one uploaded photo), reserving one slot each
+        // for the US and UK specifically (per client request — the site's
+        // audience skews heavily toward those two, so they should always be
+        // represented), then filling the rest across other distinct
+        // countries from a random sample. Reuses member.partials.member-card
+        // with hideImage=true, so guests automatically get the same
+        // "register to view/interest" gating already built into that
+        // partial — the photo itself is swapped for a generic silhouette
+        // rather than the real (even blurred) photo, per client request.
+        $sampleProfiles = collect();
+        $seenCountries = [];
+        // masterdata COUNTRY dataids — confirmed via `MasterData::where('type','COUNTRY')`.
+        $usaCountryId = 233;
+        $ukCountryId = 232;
+        foreach ([$usaCountryId, $ukCountryId] as $countryId) {
+            $match = Profile::profiles("`u`.`active`=1 and `u`.`con_of_residence`=" . $countryId, "`images`<>''", "RAND()", 1)->first();
+            if ($match) {
+                $sampleProfiles->push($match);
+                $seenCountries[$countryId] = true;
+            }
+        }
+
+        $sampleProfilesPool = Profile::profiles("`u`.`active`=1", "`images`<>''", "RAND()", 30);
+        foreach ($sampleProfilesPool as $profile) {
+            if ($sampleProfiles->count() >= 5) break;
+            $countryKey = $profile->con_of_residence;
+            if (!empty($countryKey)) {
+                if (isset($seenCountries[$countryKey])) continue;
+                $seenCountries[$countryKey] = true;
+            }
+            $sampleProfiles->push($profile);
+        }
+        if ($sampleProfiles->count() < 5) {
+            // Fewer than 5 distinct countries in the random sample — top up
+            // with any remaining profiles rather than showing fewer than 5.
+            foreach ($sampleProfilesPool as $profile) {
+                if ($sampleProfiles->count() >= 5) break;
+                if ($sampleProfiles->contains('dataid', $profile->dataid)) continue;
+                $sampleProfiles->push($profile);
+            }
+        }
+        $sampleProfiles = $sampleProfiles->shuffle()->values();
+
+        return view('welcome', compact('maritalstatuses', 'countries', 'mothertongues', 'caste', 'verifiedProfilesCount', 'successfulMatchesCount', 'sampleProfiles'));
     }
 
     public function packagesView() {

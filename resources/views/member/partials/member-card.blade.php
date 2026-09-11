@@ -8,13 +8,19 @@
       - member/searchdata.blade.php (the real search results grid)
       - member/user.blade.php (the "Recommended Matches For You" grid on
         the My Profile dashboard-home section)
+      - welcome.blade.php's "Meet Our Members" guest-facing slider, passing
+        hideImage=true so even the blurred real photo never shows publicly —
+        just a generic silhouette in its place.
+
+    Optional: $hideImage (bool, default false) — when true, shows a generic
+    gender silhouette instead of the member's real (or guest-blurred) photo.
 --}}
-<?php use App\User; ?>
+<?php use App\User; $hideImage = $hideImage ?? false; ?>
 <div class="member-card" id="block_{{$member->dataid}}">
     <div class="member-card__photo">
         <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-            <span class="member-card__photo-bg" style="background-image:url('{{ $member->getProfileImage() }}')"></span>
-            <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
+            <span class="member-card__photo-bg" style="background-image:url('{{ $hideImage ? \App\Profile::defaultImage($member->gender) : $member->getProfileImage() }}')"></span>
+            <img src="{{ $hideImage ? \App\Profile::defaultImage($member->gender) : $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
         </a>
         @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
             <span class="member-card__ribbon member-card__ribbon--new">New</span>

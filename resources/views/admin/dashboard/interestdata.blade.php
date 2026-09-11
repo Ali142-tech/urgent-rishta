@@ -35,6 +35,9 @@
                 <a href="{{url('/member/profile/'.$interest->sid)}}" target="_blank" class="ur-admin-duo-card__name">{{ $interest->sender }}</a>
                 <a class="ur-admin-duo-card__id" href="{{url('/member/profile/'.$interest->sid)}}" target="_blank">{{$interest->sid}}</a>
                 <a class="ur-admin-duo-card__email" href="mailto:{{$interest->sender_email}}">{{ $interest->sender_email }}</a>
+                @if(!empty($interest->sender_mobile))
+                <div class="ur-admin-duo-card__mobile">{{ $interest->sender_mobile }} &middot; <a href="{{ \App\User::whatsappLinkForNumber($interest->sender_mobile) }}" target="_blank">Send WhatsApp</a></div>
+                @endif
             </div>
         </div>
         <div class="ur-admin-duo-card__status">
@@ -42,14 +45,20 @@
                 $interest_back = $interest->interest_back;
                 if ($interest_back==1) {
                     $label = "ACCEPTED";
+                    $badgeClass = 'ur-admin-badge--success';
+                    $statusMessage = "Interest accepted by " . $interest->receiver;
                 } else if ($interest_back==-1) {
                     $label = "DECLINED";
+                    $badgeClass = 'ur-admin-badge--danger';
+                    $statusMessage = "Not accepted from " . $interest->receiver . "'s side";
                 } else {
                     $label = "PENDING";
+                    $badgeClass = 'ur-admin-badge--warning';
+                    $statusMessage = "Not accepted from " . $interest->receiver . "'s side";
                 }
-                $badgeClass = $interest_back==1 ? 'ur-admin-badge--success' : ($interest_back==-1 ? 'ur-admin-badge--danger' : 'ur-admin-badge--warning');
             @endphp
             <span class="ur-admin-badge {{$badgeClass}}">{{$label}}</span>
+            <div class="ur-admin-duo-card__statusmsg">{{ $statusMessage }}</div>
         </div>
         <div class="ur-admin-duo-card__side" id="block_{{$interest->rid}}">
             <a href="{{url('/member/profile/'.$interest->rid)}}" target="_blank">
@@ -59,6 +68,9 @@
                 <a href="{{url('/member/profile/'.$interest->rid)}}" target="_blank" class="ur-admin-duo-card__name">{{ $interest->receiver }}</a>
                 <a class="ur-admin-duo-card__id" href="{{url('/member/profile/'.$interest->rid)}}" target="_blank">{{$interest->rid}}</a>
                 <a class="ur-admin-duo-card__email" href="mailto:{{$interest->receiver_email}}">{{ $interest->receiver_email }}</a>
+                @if(!empty($interest->receiver_mobile))
+                <div class="ur-admin-duo-card__mobile">{{ $interest->receiver_mobile }} &middot; <a href="{{ \App\User::whatsappLinkForNumber($interest->receiver_mobile) }}" target="_blank">Send WhatsApp</a></div>
+                @endif
             </div>
         </div>
     </div>

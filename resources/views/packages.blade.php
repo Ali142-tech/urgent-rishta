@@ -855,7 +855,7 @@
                 <div class="vt">Video Session Booking</div>
                 <div class="vs">View suitable profiles &amp; connect directly</div>
             </div>
-            <div class="price">Rs. 2,000</div>
+            <div class="price">{{ app(\App\Services\CurrencyService::class)->displayFlatOutsidePakistan(2000, 10, request()) }}</div>
         </div>
         <div class="pk-consult-actions">
             <a href="{{ url('appointments') }}" class="pk-btn-appt"><i class="fa fa-calendar-check-o"></i> Book Appointment</a>

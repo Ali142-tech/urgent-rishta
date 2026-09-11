@@ -401,10 +401,16 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $this->first_name . ' ' . $this->last_name;
     }
 
-    public function getNormalizedPhoneNumber() {
+    /**
+     * Static version of the normalization logic so callers that only have a
+     * raw phone number (e.g. a stdClass row from a raw DB::table() select,
+     * like the admin Interests list — not a full User model) can still get
+     * a correct WhatsApp link without an extra query per row.
+     */
+    public static function normalizePhoneNumberValue($n) {
         $pkCodes = ['300', '301', '302', '303', '304', '305', '306', '307', '308', '309', '310', '311', '312', '313', '314', '315', '316', '317', '318', '320', '321', '322', '323', '324', '330', '331', '332', '333', '334', '335', '336', '337', '340', '341', '342', '343', '344', '345', '346', '347', '348', '349', '355'];
 
-        $n = $this->contact_mobile_number;
+        $n = (string) $n;
 
         foreach ($pkCodes as $code) {
             if (Str::startsWith($n, $code)) {
@@ -423,8 +429,16 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $n;
     }
 
+    public static function whatsappLinkForNumber($n) {
+        return 'https://wa.me/' . self::normalizePhoneNumberValue($n);
+    }
+
+    public function getNormalizedPhoneNumber() {
+        return self::normalizePhoneNumberValue($this->contact_mobile_number);
+    }
+
     public function getWhatsappLink() {
-        return 'https://wa.me/' . $this->getNormalizedPhoneNumber();
+        return self::whatsappLinkForNumber($this->contact_mobile_number);
     }
 
     /**

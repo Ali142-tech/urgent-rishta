@@ -104,24 +104,40 @@ class AdminController extends Controller
     {
         $pageSize = 15;
         $required = ProfileController::REQUIRED_PHOTO_COUNT;
+        $search = trim((string) request()->query('search'));
+
+        $applySearch = function ($query) use ($search) {
+            if ($search === '') return;
+            $query->where(function ($q) use ($search) {
+                $q->where('email', 'like', '%' . $search . '%')
+                    ->orWhere('first_name', 'like', '%' . $search . '%')
+                    ->orWhere('last_name', 'like', '%' . $search . '%')
+                    ->orWhere('dataid', 'like', '%' . $search . '%');
+            });
+        };
 
         $pending = User::where('photo_verification_status', 'pending')
             ->has('regularImages', '>=', $required)
+            ->when($search !== '', fn ($q) => $applySearch($q))
             ->with(['regularImages', 'selfieImage'])
-            ->orderBy('updated_at', 'ASC') // oldest-waiting first
-            ->paginate($pageSize, ['*'], 'pending_page');
+            ->orderBy('updated_at', 'DESC') // newest submissions first
+            ->paginate($pageSize, ['*'], 'pending_page')
+            ->appends(request()->query());
 
         // Rejected accounts can no longer log in to resubmit themselves —
         // an admin has to explicitly reopen them for another attempt.
         $rejected = User::where('photo_verification_status', 'rejected')
+            ->when($search !== '', fn ($q) => $applySearch($q))
             ->with(['regularImages', 'selfieImage'])
             ->orderBy('updated_at', 'DESC')
-            ->paginate($pageSize, ['*'], 'rejected_page');
+            ->paginate($pageSize, ['*'], 'rejected_page')
+            ->appends(request()->query());
 
         $view = view('admin.dashboard.photo-verification', [
             'pending' => $pending,
             'rejected' => $rejected,
             'required' => $required,
+            'search' => $search,
         ]);
 
         if (request()->ajax()) {
@@ -351,6 +367,8 @@ class AdminController extends Controller
             as sender, ur.dataid as rid, CONCAT(ur.first_name, " ",ur.last_name) as receiver,
             us.email as sender_email,
             ur.email as receiver_email,
+            us.contact_mobile_number as sender_mobile,
+            ur.contact_mobile_number as receiver_mobile,
             (select group_concat(img_url separator ",") from images where user_id=i.sender) as sender_images,
             (select group_concat(img_url separator ",") from images where user_id=i.receiver) as receiver_images,
             i.interest_back as interest_back, i.created_at as created_at, i.updated_at as updated_at')
@@ -385,6 +403,8 @@ class AdminController extends Controller
                 ->select(DB::raw('us.dataid as sid, CONCAT(us.first_name, " ", us.last_name) as sender, ur.dataid as rid,
             CONCAT(ur.first_name, " ", ur.last_name) as receiver,
             us.email as sender_email, ur.email as receiver_email,
+            us.contact_mobile_number as sender_mobile,
+            ur.contact_mobile_number as receiver_mobile,
             (select group_concat(img_url separator ",") from images where user_id=i.sender) as sender_images,
             (select group_concat(img_url separator ",") from images where user_id=i.receiver) as receiver_images,
             i.interest_back as interest_back, i.created_at as created_at, i.updated_at as updated_at'))

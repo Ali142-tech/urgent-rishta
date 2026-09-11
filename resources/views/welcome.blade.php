@@ -1,6 +1,8 @@
 @extends('layouts.master')
 @section('main-content')
 <link rel="stylesheet" href="/css/ur-hero.css?29">
+{{-- member.partials.member-card (used by the "Meet Our Members" slider below) is styled by this --}}
+<link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
 {{-- Variation 1a — Editorial Luxe (emerald + gold). ur-1a.css is loaded after the page styles. --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -679,6 +681,78 @@
         }
     }
 
+    /* "Meet Our Members" slider — same slick-carousel chrome as .ur-quotes
+       above, adapted for a light/cream section since the card content
+       itself (member.partials.member-card) already brings its own full
+       white-card styling from ur-member-card.css. */
+    .ur-profiles-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+    }
+    .ur-profiles-head .ur-center { text-align: left; max-width: none; margin: 0; }
+    .ur-profiles-sub {
+        font-size: 15px;
+        line-height: 1.7;
+        color: var(--ur-text, #5B6560);
+        max-width: 640px;
+        margin: -12px 0 28px;
+    }
+    .ur-profiles-nav { display: flex; gap: 10px; align-items: center; }
+    .ur-profiles-nav button {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1px solid rgba(18,58,46,.2);
+        background: transparent;
+        color: var(--pink-dark);
+        font-size: 22px;
+        line-height: 1;
+        cursor: pointer;
+        transition: .2s ease;
+        padding: 0;
+    }
+    .ur-profiles-nav button:hover { background: var(--pink-dark); border-color: var(--pink-dark); color: #fff; }
+    .ur-profiles-wrap { position: relative; overflow: hidden; }
+    .ur-profiles-slick { display: block; margin: 0 -11px; }
+    .ur-profiles-slick .slick-list { overflow: hidden; padding: 4px 0 8px !important; }
+    .ur-profiles-slick .slick-slide { padding: 0 11px; height: auto; }
+    .ur-profiles-slick .slick-slide > div { height: 100%; }
+    .ur-profiles-slick .slick-track { display: flex !important; }
+    .ur-profiles-slick .member-card { height: 100%; }
+    .ur-profiles-slick .slick-arrow { display: none !important; }
+    .ur-profiles-slick .slick-dots {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        list-style: none;
+        padding: 26px 0 0;
+        margin: 0;
+    }
+    .ur-profiles-slick .slick-dots li { margin: 0; width: auto; height: auto; }
+    .ur-profiles-slick .slick-dots li button {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(18,58,46,.18);
+        font-size: 0;
+        padding: 0;
+        cursor: pointer;
+        transition: .2s ease;
+    }
+    .ur-profiles-slick .slick-dots li.slick-active button { background: var(--pink-dark); width: 24px; border-radius: 999px; }
+    .ur-profiles__cta { text-align: center; margin-top: 36px; }
+    @media (max-width: 767px) {
+        .ur-profiles-head { align-items: center; justify-content: center; text-align: center; }
+        .ur-profiles-head .ur-center { text-align: center; width: 100%; }
+        .ur-profiles-nav { width: 100%; justify-content: center; }
+    }
+
     /* Founder — prominent presentation */
     .ur-founder {
         display: grid;
@@ -1109,9 +1183,9 @@
                     <a href="{{ auth()->check() ? url('member/profile') : url('register') }}" class="ur-hero-a__btn ur-hero-a__btn--secondary">Create Your Profile</a>
                 </div>
                 <div class="ur-hero-a__trust" aria-label="Trust points">
-                    <span>15,000+ Verified Profiles</span>
+                    <span>{{ number_format($verifiedProfilesCount) }}+ Verified Profiles</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
-                    <span>5,000+ Successful Matches</span>
+                    <span>{{ number_format($successfulMatchesCount) }}+ Successful Matches</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
                     <span>16+ Years of Trust</span>
                 </div>
@@ -1299,23 +1373,13 @@ experienced human matchmaking to create a private, structured and respectful exp
     <section class="ur-sec ur-sec--cream">
         <div class="ur-wrap">
             <div class="ur-enquiry-bar">
-                <div class="ur-enquiry-bar__contact">
-                    <div class="ur-enquiry-bar__item">
-                        <div class="ur-enquiry-bar__label">Enquiry</div>
-                        <a class="ur-enquiry-bar__value" href="tel:+923040227000">+92 304 0227000</a>
-                    </div>
-                    <div class="ur-enquiry-bar__item">
-                        <div class="ur-enquiry-bar__label">Get Support</div>
-                        <a class="ur-enquiry-bar__value" href="mailto:urgentrishta.co@gmail.com" style="font-size:17px;">urgentrishta.co@gmail.com</a>
-                    </div>
-                </div>
                 <div class="ur-enquiry-bar__stats">
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="15000">15,000</span>+</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="{{ $verifiedProfilesCount }}">{{ number_format($verifiedProfilesCount) }}</span>+</div>
                         <div class="ur-enquiry-bar__sub">Verified Profiles</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">5,000</span>+</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="{{ $successfulMatchesCount }}">{{ number_format($successfulMatchesCount) }}</span>+</div>
                         <div class="ur-enquiry-bar__sub">Successful Matches</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
@@ -1330,6 +1394,37 @@ experienced human matchmaking to create a private, structured and respectful exp
             </div>
         </div>
     </section>
+
+    <!-- MEET OUR MEMBERS (guest-facing preview slider) -->
+    @if(!empty($sampleProfiles) && $sampleProfiles->count() > 0)
+    <section class="ur-sec ur-sec--cream">
+        <div class="ur-wrap">
+            <div class="ur-profiles-head">
+                <div class="ur-center">
+                    <div class="ur-eyebrow">Meet Our Members</div>
+                    <h2 class="ur-h2">Profiles From Around the World</h2>
+                </div>
+                <div class="ur-profiles-nav">
+                    <button type="button" class="ur-profiles-prev" aria-label="Previous profile">‹</button>
+                    <button type="button" class="ur-profiles-next" aria-label="Next profile">›</button>
+                </div>
+            </div>
+            <p class="ur-profiles-sub">A small sample of the families and individuals already on Urgent Rishta — register to see full profiles and start connecting.</p>
+            <div class="ur-profiles-wrap">
+                <div class="ur-profiles-slick">
+                    @foreach($sampleProfiles as $member)
+                    <div>
+                        @include('member.partials.member-card', ['member' => $member, 'hideImage' => true])
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="ur-profiles__cta">
+                <a href="{{ auth()->check() ? url('member/profile') : url('register') }}" class="ur-btn ur-btn--solid">{{ auth()->check() ? 'Search More Profiles' : 'Create Your Free Profile' }}</a>
+            </div>
+        </div>
+    </section>
+    @endif
 
     <!-- HOW IT WORKS -->
     <section class="ur-how-1a" id="how-it-works">
@@ -1910,6 +2005,44 @@ team, with senior-level involvement where applicable.</p>
             });
             $('.ur-quotes-next').on('click', function() {
                 $quotes.slick('slickNext');
+            });
+        }
+
+        if ($('.ur-profiles-slick').length && typeof $.fn.slick === 'function') {
+            var $profiles = $('.ur-profiles-slick');
+            $profiles.slick({
+                infinite: true,
+                slidesToShow: 3,
+                slidesToScroll: 1,
+                autoplay: true,
+                autoplaySpeed: 4500,
+                speed: 450,
+                arrows: false,
+                dots: true,
+                adaptiveHeight: false,
+                responsive: [
+                    {
+                        breakpoint: 992,
+                        settings: {
+                            slidesToShow: 2,
+                            slidesToScroll: 1
+                        }
+                    },
+                    {
+                        breakpoint: 640,
+                        settings: {
+                            slidesToShow: 1,
+                            slidesToScroll: 1
+                        }
+                    }
+                ]
+            });
+
+            $('.ur-profiles-prev').on('click', function() {
+                $profiles.slick('slickPrev');
+            });
+            $('.ur-profiles-next').on('click', function() {
+                $profiles.slick('slickNext');
             });
         }
     });

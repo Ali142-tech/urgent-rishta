@@ -8,10 +8,29 @@
 </div>
 
 <div class="ur-admin-panel">
+    <form method="get" action="{{ url('admin/photo-verification') }}" class="ur-admin-filters" style="margin-bottom:18px;">
+        <div class="form-group form-group--grow">
+            <label for="pv_search">Search</label>
+            <input type="search" id="pv_search" name="search" class="form-control form-control-sm" placeholder="Search by email, name or member ID..." autocomplete="off" value="{{ $search ?? '' }}" />
+        </div>
+        <div class="form-group">
+            <label>&nbsp;</label>
+            <div>
+                <button type="submit" class="ur-admin-btn ur-admin-btn--gold"><i class="fa fa-search"></i> Search</button>
+                @if(!empty($search))
+                <a href="{{ url('admin/photo-verification') }}" class="ur-admin-btn"><i class="fa fa-times"></i> Clear</a>
+                @endif
+            </div>
+        </div>
+    </form>
 
     @if($pending->isEmpty())
         <div class="ur-admin-empty">
-            <i class="fa fa-check-circle"></i> Nothing waiting for review right now.
+            @if(!empty($search))
+                <i class="fa fa-search"></i> No pending members match "{{ $search }}".
+            @else
+                <i class="fa fa-check-circle"></i> Nothing waiting for review right now.
+            @endif
         </div>
     @endif
 
@@ -78,7 +97,11 @@
 <div class="ur-admin-panel">
     @if($rejected->isEmpty())
         <div class="ur-admin-empty">
-            No rejected accounts.
+            @if(!empty($search))
+                <i class="fa fa-search"></i> No rejected accounts match "{{ $search }}".
+            @else
+                No rejected accounts.
+            @endif
         </div>
     @endif
 
