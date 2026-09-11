@@ -30,6 +30,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // AWS Rekognition — automatic (AI) photo verification: compares a
+    // member's live selfie against their uploaded profile photo, replacing
+    // manual admin review. Reuses the same AWS credentials already
+    // configured for SES. similarity_threshold is the minimum face-match
+    // confidence (0-100) required to auto-verify.
+    'rekognition' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        'similarity_threshold' => env('REKOGNITION_SIMILARITY_THRESHOLD', 80),
+    ],
+
     // Stripe (Checkout + Webhooks)
     'stripe' => [
         'key' => env('STRIPE_PUBLISHABLE_KEY'),

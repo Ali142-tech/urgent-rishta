@@ -13,6 +13,10 @@ use App\Images;
 use App\Filtered;
 use App\AllowedProfiles;
 use App\Profile;
+use App\PhotoVerificationLog;
+use App\Mail\ProfileVerified;
+use App\Mail\ProfileRejected;
+use App\Services\PhotoVerificationService;
 use App\Notifications\InterestAccepted;
 use App\Notifications\InterestDeclined;
 use App\Notifications\InterestSent;
@@ -273,10 +277,12 @@ class ProfileController extends Controller
      * uploadImages()/Images model — nothing new stored, just a dedicated
      * screen + a minimum-requirement gate around it.
      *
-     * Once satisfied, the account is logged out and sent to admin review —
-     * it does NOT proceed into the site. It can't log back in until an
-     * admin approves the photos (see User::photoVerificationBlockMessage(),
-     * enforced in LoginController@finishLogin and GoogleAuthController).
+     * Once satisfied, photo verification runs immediately and automatically
+     * via AWS Rekognition (runAutomaticPhotoVerification()) — per client
+     * request, no admin ever reviews this manually anymore. The account is
+     * then logged out either fully verified, or sent back to redo the gate
+     * (see that method's docblock for why a rejection doesn't lock the
+     * account the way a human rejection used to).
      */
     public function mustUploadPhotos()
     {
@@ -286,14 +292,31 @@ class ProfileController extends Controller
 
         if ($count >= self::REQUIRED_PHOTO_COUNT && $hasSelfie) {
             session()->forget('photos_gate_redirect');
-            // Covers both a fresh registration (already 'pending', harmless
-            // no-op) and a reopened resubmission ('resubmit' -> 'pending' so
-            // it lands back in the admin queue instead of staying invisible).
-            $user->photo_verification_status = 'pending';
-            $user->save();
+            // Guards against a rare double-submit/race firing this route
+            // twice for the same user before the first request finishes —
+            // without it, both requests would independently call (and pay
+            // for) Rekognition. If a second request loses the lock, it just
+            // re-reads whatever the first one already decided.
+            $lock = \Illuminate\Support\Facades\Cache::lock('photo_verification_' . $user->id, 30);
+            if ($lock->get()) {
+                try {
+                    $this->runAutomaticPhotoVerification($user);
+                } finally {
+                    $lock->release();
+                }
+            } else {
+                $user = User::retrieveUserObject(null, true);
+            }
             Auth::logout();
-            Log::info('User (' . $user->dataid . ') completed registration photos — pending admin review.');
-            Session::flash('message', 'success|Thanks! Your profile and photos have been submitted for review. We will email you once your account is verified.|10000');
+
+            if ($user->photo_verification_status === 'verified') {
+                Log::info('User (' . $user->dataid . ') auto-verified by AI (AWS Rekognition).');
+                Session::flash('message', 'success|Your photos have been verified automatically! You can now log in.|10000');
+            } else {
+                Log::info('User (' . $user->dataid . ') auto-verification failed — sent back to resubmit: ' . $user->photo_rejection_reason);
+                Session::flash('message', 'danger|' . $user->photo_rejection_reason . '|15000');
+            }
+
             return redirect()->route('login');
         }
 
@@ -302,6 +325,123 @@ class ProfileController extends Controller
             'required' => self::REQUIRED_PHOTO_COUNT,
             'hasSelfie' => $hasSelfie,
         ]);
+    }
+
+    /**
+     * Fully automated replacement for admin manual photo review, per client
+     * request — compares the live selfie against the user's uploaded photo
+     * via AWS Rekognition and immediately verifies or sends them back to
+     * resubmit. No admin is involved at any point, including on a failed
+     * match: rather than the old 'rejected' status (which required an admin
+     * to explicitly call AdminController::reopenPhotoVerification() before
+     * the member could even log back in), a failed AI check goes straight
+     * to 'resubmit' — the exact same self-service-retry status/flow that
+     * method already builds (wipe photos, let them straight back into the
+     * gate on next login, no human step). AdminController's manual
+     * approve/reject/reopen actions and the admin review queue are left
+     * intact as a fallback/spot-check tool, just no longer the primary gate.
+     */
+    private function runAutomaticPhotoVerification(User $user): void
+    {
+        // Can now be triggered either immediately from uploadSelfie() (the
+        // common case — selfie is the last step) or as a fallback from
+        // mustUploadPhotos() (covers uploading the selfie before the
+        // required photo count is met). Guard against ever running it twice
+        // for the same submission.
+        if ($user->photo_verification_status === 'verified') {
+            return;
+        }
+
+        $selfie = Images::where('user_id', $user->id)->where('is_selfie', 1)->first();
+        $photo = Images::where('user_id', $user->id)->where('is_selfie', 0)
+            ->orderBy('displaypic', 'desc')->first();
+
+        $result = ($selfie && $photo)
+            ? app(PhotoVerificationService::class)->compareFaces(public_path($selfie->img_url), public_path($photo->img_url))
+            : ['matched' => false, 'similarity' => null, 'error' => 'Your photos could not be found.'];
+
+        if ($result['matched']) {
+            $user->photo_verification_status = 'verified';
+            $user->photo_verified_at = now();
+            $user->photo_verified_by = null; // AI decision — no admin involved
+            $user->photo_rejection_reason = null;
+            $user->save();
+            User::retrieveUserObject($user->dataid, true);
+
+            PhotoVerificationLog::record($user, null, 'approved', 'AI face match: ' . round($result['similarity'], 1) . '% similarity');
+
+            try {
+                Mail::to($user)->send(new ProfileVerified($user));
+            } catch (\Exception $e) {
+                Log::error('Failed to send profile-verified email to ' . $user->dataid . ': ' . $e->getMessage());
+            }
+            return;
+        }
+
+        $reason = $result['error']
+            ? "We couldn't automatically verify your selfie ({$result['error']}). Please retake it with clear, even lighting, facing the camera directly."
+            : 'Your selfie doesn\'t sufficiently match your uploaded photo (similarity: ' . round($result['similarity'] ?? 0, 1) . '%). Please retake your selfie so it clearly matches your uploaded photo.';
+
+        // Wipe the photos so re-login lands on an empty gate (0 of required)
+        // rather than one that already looks "satisfied" — same convention
+        // AdminController::reopenPhotoVerification() uses.
+        Images::where('user_id', $user->id)->delete();
+        $user->photo_verification_status = 'resubmit';
+        $user->photo_rejection_reason = $reason;
+        $user->photo_verified_at = null;
+        $user->photo_verified_by = null;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true);
+
+        PhotoVerificationLog::record($user, null, 'rejected', $reason);
+
+        try {
+            Mail::to($user)->send(new ProfileRejected($user, $reason));
+        } catch (\Exception $e) {
+            Log::error('Failed to send profile-rejected email to ' . $user->dataid . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Runs the AI check (with the same double-submit lock mustUploadPhotos()
+     * uses) and packages the outcome as JSON for an AJAX caller — per client
+     * request, the result is handed straight back to the page that's still
+     * open instead of only being communicated by email. Called from
+     * uploadSelfie() the moment both requirements are met, so the member
+     * sees pass/fail within seconds, without being logged out or having to
+     * check email first.
+     */
+    private function finalizeAutomaticVerification(User $user): array
+    {
+        $lock = \Illuminate\Support\Facades\Cache::lock('photo_verification_' . $user->id, 30);
+        if ($lock->get()) {
+            try {
+                $this->runAutomaticPhotoVerification($user);
+            } finally {
+                $lock->release();
+            }
+        }
+        $user = User::retrieveUserObject($user->dataid, true);
+
+        if ($user->photo_verification_status === 'verified') {
+            return [
+                'code' => '200',
+                'message' => 'success|Selfie captured.',
+                'verification' => [
+                    'status' => 'verified',
+                    'message' => "You're verified! Redirecting you now…",
+                ],
+            ];
+        }
+
+        return [
+            'code' => '200',
+            'message' => 'success|Selfie captured.',
+            'verification' => [
+                'status' => 'failed',
+                'message' => $user->photo_rejection_reason ?: 'Verification failed. Please try uploading your photos again.',
+            ],
+        ];
     }
 
     /**
@@ -503,6 +643,16 @@ class ProfileController extends Controller
             }
 
             Log::info("User (" . $dataid . ") captured a verification selfie.");
+
+            // If the required photo count was already met before this
+            // selfie (the normal order — photos first, selfie last), both
+            // requirements are now satisfied: run AI verification right now
+            // and hand the result straight back in this same response,
+            // instead of waiting for a page reload.
+            $photoCount = Images::where('user_id', $id)->where('is_selfie', 0)->count();
+            if ($photoCount >= self::REQUIRED_PHOTO_COUNT) {
+                return $this->finalizeAutomaticVerification($user);
+            }
 
             return ['code' => '200', 'message' => 'success|Selfie captured.'];
         } catch (\Exception $e) {

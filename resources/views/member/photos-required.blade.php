@@ -386,13 +386,33 @@
                 .then(function(r) { return r.json(); })
                 .then(function(result) {
                     var parts = (result.message || '').split('|');
-                    if (typeof showAlert === 'function' && parts[1]) showAlert(parts[0], parts[1]);
                     if (result.code === '200') {
                         document.getElementById('pg_selfie_idle').style.display = 'none';
                         document.getElementById('pg_selfie_done').style.display = 'block';
                         hasSelfieCaptured = true;
                         updateContinueState();
                     }
+
+                    // Both photos + selfie were already satisfied, so the
+                    // server just ran AI verification and handed the result
+                    // straight back here — show it immediately instead of
+                    // relying on the email that's also sent in parallel.
+                    if (result.verification) {
+                        if (result.verification.status === 'verified') {
+                            if (typeof showAlert === 'function') showAlert('success', result.verification.message, 6000);
+                            setTimeout(function() {
+                                window.location.href = "{{ url('member/profile') }}";
+                            }, 2500);
+                        } else {
+                            if (typeof showAlert === 'function') showAlert('danger', result.verification.message, 12000);
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 3500);
+                        }
+                        return;
+                    }
+
+                    if (typeof showAlert === 'function' && parts[1]) showAlert(parts[0], parts[1]);
                 })
                 .catch(function() {
                     if (typeof showAlert === 'function') showAlert('danger', 'Could not save selfie. Please try again.');

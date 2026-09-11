@@ -371,6 +371,19 @@
         color: var(--pk-ink);
     }
     .pk-card--dark .pk-card-price { color: #fff; }
+    .pk-card-price-fx {
+        font-size: 12px;
+        color: var(--pk-text);
+        opacity: .8;
+        margin-bottom: 10px;
+    }
+    .pk-card-price-fx span {
+        display: block;
+        font-size: 10.5px;
+        opacity: .85;
+        margin-top: 1px;
+    }
+    .pk-card--dark .pk-card-price-fx { color: var(--pk-cream-text-2); }
     .pk-card-sub { font-size: 12.5px; color: var(--pk-text); margin-bottom: 20px; }
     .pk-card--dark .pk-card-sub { color: var(--pk-cream-text-2); }
     .pk-card-divider { height: 1px; background: var(--pk-line); margin-bottom: 20px; }
@@ -728,6 +741,9 @@
             @php
                 $meta = method_exists($package, 'meta') ? $package->meta() : [];
                 $isCurrent = $userHasActiveOnlinePackage && $userOnlinePackageDataid === $package->dataid;
+                $priceFx = (!empty($meta) && isset($meta['price']))
+                    ? app(\App\Services\CurrencyService::class)->convert((float)$meta['price'], $meta['currency'] ?? 'USD', request())
+                    : null;
             @endphp
             <div class="pk-card">
                 @if($isCurrent)
@@ -738,6 +754,9 @@
                 @endif
                 @if(!empty($meta) && isset($meta['price']))
                 <div class="pk-card-price">{{ $meta['currency'] ?? 'USD' }} {{ number_format((float)$meta['price'], 2) }}</div>
+                @if($priceFx)
+                <div class="pk-card-price-fx">≈ {{ $priceFx['currency'] }} {{ number_format($priceFx['converted'], 2) }}<span>1 {{ $meta['currency'] ?? 'USD' }} = {{ number_format($priceFx['rate'], 2) }} {{ $priceFx['currency'] }}</span></div>
+                @endif
                 <div class="pk-card-sub">{{ $package->name }}</div>
                 @else
                 <div class="pk-card-price">{{ $package->name }}</div>
@@ -855,7 +874,7 @@
                 <div class="vt">Video Session Booking</div>
                 <div class="vs">View suitable profiles &amp; connect directly</div>
             </div>
-            <div class="price">{{ app(\App\Services\CurrencyService::class)->displayFlatOutsidePakistan(2000, 10, request()) }}</div>
+            <div class="price">{{ app(\App\Services\CurrencyService::class)->displayFlatOutsidePakistan(3000, 10, request()) }}</div>
         </div>
         <div class="pk-consult-actions">
             <a href="{{ url('appointments') }}" class="pk-btn-appt"><i class="fa fa-calendar-check-o"></i> Book Appointment</a>

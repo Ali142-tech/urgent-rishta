@@ -1185,7 +1185,7 @@
                 <div class="ur-hero-a__trust" aria-label="Trust points">
                     <span>{{ number_format($verifiedProfilesCount) }}+ Verified Profiles</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
-                    <span>{{ number_format($successfulMatchesCount) }}+ Successful Matches</span>
+                    <span>5,000+ Successful Matches</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
                     <span>16+ Years of Trust</span>
                 </div>
@@ -1379,7 +1379,7 @@ experienced human matchmaking to create a private, structured and respectful exp
                         <div class="ur-enquiry-bar__sub">Verified Profiles</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="{{ $successfulMatchesCount }}">{{ number_format($successfulMatchesCount) }}</span>+</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">5,000</span>+</div>
                         <div class="ur-enquiry-bar__sub">Successful Matches</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">

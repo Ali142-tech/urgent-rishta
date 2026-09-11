@@ -90,6 +90,16 @@
     .pd-fee-row:last-child { border-bottom: none; }
     .pd-fee-row span:first-child { font-size: 13px; color: var(--pd-cream-text-2); }
     .pd-fee-row span:last-child { font-weight: 700; text-align: right; }
+    .pd-fee-fx {
+        text-align: right;
+        font-size: 11.5px;
+        color: var(--pd-cream-text-2);
+        opacity: .85;
+        margin-top: -6px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.12);
+    }
+    .pd-fee-fx-rate { display: block; font-size: 10.5px; opacity: .85; }
 
     .pd-eyebrow {
         font-size: 11.5px;
@@ -313,6 +323,9 @@
     $decoded = json_decode((string) $package->description, true);
     if (is_array($decoded)) $meta = $decoded;
     $isOnlinePackage = !empty($meta) && isset($meta['price']);
+    $priceFx = $isOnlinePackage
+        ? app(\App\Services\CurrencyService::class)->convert((float)$meta['price'], $meta['currency'] ?? 'USD', request())
+        : null;
     $planIcons = [
         'Platinum' => 'fa-shield',
         'Diamond' => 'fa-diamond',
@@ -344,6 +357,9 @@
                 @if($isOnlinePackage)
                     <div class="pd-fee-eyebrow">Online Package</div>
                     <div class="pd-fee-row"><span>Price</span><span>{{ $meta['currency'] ?? 'USD' }} {{ number_format((float)$meta['price'], 2) }}</span></div>
+                    @if($priceFx)
+                    <div class="pd-fee-fx">≈ {{ $priceFx['currency'] }} {{ number_format($priceFx['converted'], 2) }} <span class="pd-fee-fx-rate">(1 {{ $meta['currency'] ?? 'USD' }} = {{ number_format($priceFx['rate'], 2) }} {{ $priceFx['currency'] }})</span></div>
+                    @endif
                     <div class="pd-fee-row"><span>Duration</span><span>{{ $meta['duration_label'] ?? 'N/A' }}</span></div>
                     <div class="pd-fee-row"><span>Access</span><span>Until expiry</span></div>
                 @else
