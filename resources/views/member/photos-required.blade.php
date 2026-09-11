@@ -10,6 +10,7 @@
         --pg-line: #F0EADD;
         --pg-text: #5B6560;
         --pg-ink: #1C2321;
+        --pg-terracotta: #B5674A;
         font-family: 'Manrope', system-ui, sans-serif;
         background: var(--pg-cream);
         min-height: calc(100vh - 220px);
@@ -70,12 +71,45 @@
         margin: 0 0 16px; line-height: 1.5;
     }
     .pg-selfie__privacy i { margin-top: 2px; }
-    .pg-selfie__tips { list-style: none; padding: 0; margin: 0 0 14px; }
-    .pg-selfie__tips li {
-        display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; color: var(--pg-text);
-        line-height: 1.5; margin-bottom: 6px;
+    .pg-selfie-guide {
+        background: var(--pg-cream); border: 1px solid var(--pg-line); border-radius: 12px;
+        padding: 16px 16px 14px; margin: 0 0 14px;
     }
-    .pg-selfie__tips li i { color: var(--pg-gold); margin-top: 3px; flex-shrink: 0; }
+    .pg-selfie-guide__head {
+        font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+        color: var(--pg-ink); margin-bottom: 12px; text-align: center;
+    }
+    .pg-selfie-guide__examples { display: flex; gap: 22px; justify-content: center; margin-bottom: 16px; }
+    .pg-selfie-guide__example { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .pg-selfie-guide__example img {
+        width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
+        border: 2px solid #fff; box-shadow: 0 0 0 2px var(--pg-gold);
+    }
+    .pg-selfie-guide__example span { font-size: 11px; font-weight: 600; color: var(--pg-text); }
+    .pg-selfie-guide__cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pg-selfie-guide__col { background: #fff; border-radius: 10px; padding: 12px 12px 10px; border: 1px solid var(--pg-line); }
+    .pg-selfie-guide__col-title {
+        display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700;
+        margin-bottom: 8px;
+    }
+    .pg-selfie-guide__col--do .pg-selfie-guide__col-title { color: var(--pg-green); }
+    .pg-selfie-guide__col--avoid .pg-selfie-guide__col-title { color: var(--pg-terracotta); }
+    .pg-selfie-guide__col ul { list-style: none; padding: 0; margin: 0; }
+    .pg-selfie-guide__col li {
+        display: flex; align-items: flex-start; gap: 6px; font-size: 11.5px; color: var(--pg-text);
+        line-height: 1.45; margin-bottom: 6px;
+    }
+    .pg-selfie-guide__col li:last-child { margin-bottom: 0; }
+    .pg-selfie-guide__col li i {
+        width: 15px; height: 15px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+        display: inline-flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 8.5px;
+    }
+    .pg-selfie-guide__col--do li i { background: var(--pg-green); }
+    .pg-selfie-guide__col--avoid li i { background: var(--pg-terracotta); }
+    @media (max-width: 420px) {
+        .pg-selfie-guide__cols { grid-template-columns: 1fr; }
+    }
     .pg-selfie__stage {
         position: relative; width: 100%; max-width: 280px; margin: 0 auto 14px; border-radius: 14px;
         overflow: hidden; background: #111; aspect-ratio: 4/3;
@@ -146,12 +180,41 @@
             </p>
 
             <div id="pg_selfie_idle" @if($hasSelfie ?? false) style="display:none;" @endif>
-                <ul class="pg-selfie__tips">
-                    <li><i class="fa fa-check" aria-hidden="true"></i> Look straight at the camera, with your head upright and centred in frame</li>
-                    <li><i class="fa fa-check" aria-hidden="true"></i> Make sure your face is clearly visible — no sunglasses, hats, masks or filters</li>
-                    <li><i class="fa fa-check" aria-hidden="true"></i> Use good, even lighting so your face isn't in shadow</li>
-                    <li><i class="fa fa-check" aria-hidden="true"></i> Only you should be in the frame</li>
-                </ul>
+                <div class="pg-selfie-guide">
+                    <div class="pg-selfie-guide__head">Selfie Upload Guide</div>
+                    <div class="pg-selfie-guide__examples">
+                        <div class="pg-selfie-guide__example">
+                            <img src="{{ \App\Profile::defaultImage('male') }}" alt="Example framing">
+                            <span>Male</span>
+                        </div>
+                        <div class="pg-selfie-guide__example">
+                            <img src="{{ \App\Profile::defaultImage('female') }}" alt="Example framing">
+                            <span>Female</span>
+                        </div>
+                    </div>
+                    <div class="pg-selfie-guide__cols">
+                        <div class="pg-selfie-guide__col pg-selfie-guide__col--do">
+                            <div class="pg-selfie-guide__col-title"><i class="fa fa-check-circle" aria-hidden="true"></i> Do</div>
+                            <ul>
+                                <li><i class="fa fa-check" aria-hidden="true"></i> Look straight at the camera, head upright and centred</li>
+                                <li><i class="fa fa-check" aria-hidden="true"></i> Keep your full face clearly visible and in frame</li>
+                                <li><i class="fa fa-check" aria-hidden="true"></i> Use bright, even lighting</li>
+                                <li><i class="fa fa-check" aria-hidden="true"></i> Use a plain background</li>
+                                <li><i class="fa fa-check" aria-hidden="true"></i> Remove sunglasses, hats, masks or filters</li>
+                            </ul>
+                        </div>
+                        <div class="pg-selfie-guide__col pg-selfie-guide__col--avoid">
+                            <div class="pg-selfie-guide__col-title"><i class="fa fa-times-circle" aria-hidden="true"></i> Avoid</div>
+                            <ul>
+                                <li><i class="fa fa-times" aria-hidden="true"></i> Side angles or looking away from the camera</li>
+                                <li><i class="fa fa-times" aria-hidden="true"></i> Filters, beauty mode or heavy editing</li>
+                                <li><i class="fa fa-times" aria-hidden="true"></i> Blurry, dark or low-quality photos</li>
+                                <li><i class="fa fa-times" aria-hidden="true"></i> Cropped or partially visible face</li>
+                                <li><i class="fa fa-times" aria-hidden="true"></i> Group photos or anyone else in frame</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
                 <div class="pg-selfie__stage" id="pg_selfie_stage">
                     <video id="pg_selfie_video" autoplay playsinline muted></video>
                 </div>
