@@ -71,6 +71,27 @@
                     <tr>
                         <td colspan="4" class="ur-admin-mini-table__status">
                             <span id="active_label_{{$member->dataid}}" class="ur-admin-badge {{ $member->active==0 ? 'ur-admin-badge--warning' : 'ur-admin-badge--success' }}">{{ $member->getActiveLabel() }}</span>
+                            @php
+                                // Whether the member has actually finished the
+                                // AI selfie/photo verification gate — surfaced
+                                // here because "Active" alone doesn't tell an
+                                // admin that, e.g., a user is still stuck
+                                // behind the photo-upload requirement.
+                                $photoStatus = $member->photo_verification_status;
+                                $photoBadgeClass = match ($photoStatus) {
+                                    'verified' => 'ur-admin-badge--success',
+                                    'resubmit' => 'ur-admin-badge--warning',
+                                    'rejected' => 'ur-admin-badge--danger',
+                                    default => 'ur-admin-badge--info', // pending / not started
+                                };
+                                $photoLabel = match ($photoStatus) {
+                                    'verified' => 'Photo Verified',
+                                    'resubmit' => 'Photo: Resubmit Needed',
+                                    'rejected' => 'Photo Rejected',
+                                    default => 'Photo Not Verified',
+                                };
+                            @endphp
+                            <span class="ur-admin-badge {{ $photoBadgeClass }}"><i class="fa fa-camera"></i> {{ $photoLabel }}</span>
                         </td>
                     </tr>
                     <tr>

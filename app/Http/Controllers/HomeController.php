@@ -44,7 +44,7 @@ class HomeController extends Controller {
     public function __construct() {
         $this->middleware(['auth', 'verified'])->except(['index', 'contactUsEmail',
             'packagesView','storiesView', 'teamView', 'galleryView', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
-            'contactUsView', 'states', 'cities']);
+            'contactUsView', 'states', 'cities', 'castes']);
     }
 
     /**
@@ -318,7 +318,7 @@ class HomeController extends Controller {
             }
         }
 
-        $religions = MasterData::where('type', 'RELIGION')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();

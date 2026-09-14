@@ -212,6 +212,7 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
 .ur-admin-badge--danger  { background: rgba(181,103,74,.14); color: var(--ur-dash-red); }
 .ur-admin-badge--info    { background: rgba(91,101,96,.12); color: var(--ur-dash-text-muted); }
 .ur-admin-badge--neutral { background: var(--ur-dash-bg); color: var(--ur-dash-text-muted); border: 1px solid var(--ur-dash-border); }
+.ur-admin-badge + .ur-admin-badge { margin-left: 8px; }
 
 /* ---------------------------------------------------------- */
 /* Pagination                                                    */

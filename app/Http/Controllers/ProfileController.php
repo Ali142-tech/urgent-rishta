@@ -59,7 +59,7 @@ class ProfileController extends Controller
             $hiddenPhotos = $this->hiddenPhotosFor($ownerUser, $profile);
         } else $profile = User::retrieveUserObject()->profile();
 
-        $religions = MasterData::where('type', 'RELIGION')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
@@ -163,7 +163,7 @@ class ProfileController extends Controller
         $user = User::retrieveUserObject();
         $preference = $user->partnerPreference()->first();
 
-        $religions = MasterData::where('type', 'RELIGION')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();

@@ -670,6 +670,22 @@
         syncBasics();
     })();
 
+    // Step 2: Community options depend on the selected religion (same
+    // subtype-as-parent AJAX pattern as country->state->city elsewhere on
+    // the site) — the caste list rendered server-side is Muslim-only right
+    // now, so reload it whenever religion changes rather than showing
+    // Muslim community names under e.g. Hindu/Christian.
+    (function () {
+        var religionSel = document.getElementById('reg_religion');
+        if (!religionSel) return;
+        religionSel.addEventListener('change', function () {
+            loadSelect('{{ url('castes') }}', this.value, $('#reg_caste'), '');
+        });
+        @if(old('religion', $registerReligion))
+        loadSelect('{{ url('castes') }}', '{{ old('religion', $registerReligion) }}', $('#reg_caste'), '{{ old('caste', $registerCaste) }}');
+        @endif
+    })();
+
     // Step 2: enable Continue when religion + community + country selected
     (function () {
         var btn = document.getElementById('reg_continue_community');
