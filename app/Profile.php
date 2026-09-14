@@ -95,6 +95,32 @@ class Profile extends Model {
     }
 
     /**
+     * Same real photo as getProfileImage(), but always the pre-generated
+     * blurred variant (the one guests already see everywhere via
+     * showBlur()/getBlurName() — a heavy whole-image blur baked to disk at
+     * upload time, filename salted so it can't be reverse-engineered to the
+     * sharp original) — regardless of the viewer's auth state. Used by the
+     * homepage "Meet Our Members" slider so a real photo is genuinely shown
+     * (per client request), just never a sharp/identifiable one, whether the
+     * visitor is logged in or not.
+     */
+    public function getBlurredProfileImage($tiny = null) {
+        $path = null;
+        if (!empty($this->displaypic)) {
+            $path = self::MEMBER_IMAGES_PATH.'/'.$this->getBlurName(explode("/",$this->displaypic)[2]);
+        } else if (!empty($this->images)) {
+            if (!is_array($this->images))
+                $this->images=explode(',', $this->images);
+            if (!empty($this->images[0]))
+                $path = self::MEMBER_IMAGES_PATH.'/'.$this->getBlurName(explode("/",$this->images[0])[2]);
+        }
+
+        if ($path && file_exists(public_path($path)))
+            return $path;
+        return self::defaultImage($this->gender);
+    }
+
+    /**
      * Default fallback avatar for a gender when no profile photo exists.
      * Appends the file's mtime as a version query so browsers/CDNs pick up
      * a new default image immediately instead of serving a stale cached copy

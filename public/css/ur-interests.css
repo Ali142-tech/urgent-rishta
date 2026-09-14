@@ -171,4 +171,23 @@
     .ur-interest-card__head { justify-content: center; flex-direction: column; align-items: center; }
     .ur-interest-card__tags { justify-content: center; }
     .ur-interest-card__actions { justify-content: center; }
+
+    /* The two tabs used to sit at their natural (wider than 320px) width,
+       forcing the whole page to scroll horizontally on phones. Splitting
+       the row evenly and letting the label wrap keeps both tabs — and
+       every badge — fully on-screen. */
+    .ur-interests-tabs { gap: 4px; }
+    .ur-interests-tab {
+        flex: 1 1 0;
+        min-width: 0;
+        justify-content: center;
+        padding: 10px 6px;
+        font-size: 11.5px;
+        gap: 5px;
+        white-space: normal;
+        line-height: 1.25;
+        text-align: center;
+    }
+    .ur-interests-tab i { font-size: 12px; }
+    .ur-interests-tab__badge { font-size: 10px; padding: 1px 6px; }
 }

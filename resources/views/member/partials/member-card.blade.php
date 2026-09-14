@@ -9,18 +9,25 @@
       - member/user.blade.php (the "Recommended Matches For You" grid on
         the My Profile dashboard-home section)
       - welcome.blade.php's "Meet Our Members" guest-facing slider, passing
-        hideImage=true so even the blurred real photo never shows publicly —
-        just a generic silhouette in its place.
+        hideImage=true so the real photo always shows blurred regardless of
+        whether the viewer is logged in — never the sharp/identifiable
+        original. That slider also sets $member->homepageFaceBlurredImage
+        (see HomeController) when a face-only-pixelated version has been
+        pre-generated (AWS Rekognition + GenerateHomepageFaceBlur), which
+        takes priority over the whole-image blur so the body/outfit/
+        background stay visible and only the face is obscured.
 
-    Optional: $hideImage (bool, default false) — when true, shows a generic
-    gender silhouette instead of the member's real (or guest-blurred) photo.
+    Optional: $hideImage (bool, default false) — when true, shows (in order
+    of preference) the member's face-only-obscured photo if one was
+    pre-generated, else the pre-generated whole-image blur, else a generic
+    gender silhouette — never the sharp original.
 --}}
-<?php use App\User; $hideImage = $hideImage ?? false; ?>
+<?php use App\User; $hideImage = $hideImage ?? false; $hiddenImageUrl = $hideImage ? ($member->homepageFaceBlurredImage ?? $member->getBlurredProfileImage()) : null; ?>
 <div class="member-card" id="block_{{$member->dataid}}">
     <div class="member-card__photo">
         <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-            <span class="member-card__photo-bg" style="background-image:url('{{ $hideImage ? \App\Profile::defaultImage($member->gender) : $member->getProfileImage() }}')"></span>
-            <img src="{{ $hideImage ? \App\Profile::defaultImage($member->gender) : $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
+            <span class="member-card__photo-bg" style="background-image:url('{{ $hideImage ? $hiddenImageUrl : $member->getProfileImage() }}')"></span>
+            <img src="{{ $hideImage ? $hiddenImageUrl : $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
         </a>
         @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
             <span class="member-card__ribbon member-card__ribbon--new">New</span>

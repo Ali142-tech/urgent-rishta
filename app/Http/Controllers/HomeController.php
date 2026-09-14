@@ -19,6 +19,24 @@ use Illuminate\Support\Carbon;
 
 class HomeController extends Controller {
     /**
+     * Client-curated, fixed list of profiles for the homepage "Meet Our
+     * Members" slider (sent over WhatsApp Sep 11 2026), shown in this exact
+     * order rather than randomly sampled. Shared with
+     * GenerateHomepageFaceBlur (php artisan homepage:blur-faces) — re-run
+     * that command after updating this list so new entries get a face-blur
+     * file generated before they can appear on the slider.
+     */
+    const CURATED_PROFILE_DATAIDS = [
+        'I2M2LNKVV', 'NZHV8PEFM', '24L0ZK1T1', '285ABV24J', '9L7X195LS', '321US8KXU',
+        '6VVVCIJV2', 'R2QSYGYF9', 'I8RBBI61E', '3NY5HQ7AU', '7FN3BYRUL', 'RAD86075Z',
+        'TRQAEO4F7', 'JIU4JDXE1', 'H0BNEOCJI', 'KD7D6P5N5', '8L5L4JVAQ', 'G8IWL9735',
+        'ESTC23MRV', 'M9D7J1LAY', '7SUEWATKP',
+    ];
+
+    /** Where GenerateHomepageFaceBlur saves its output — public/homepage-blurred/<dataid>.jpg */
+    const FACE_BLUR_DIR = 'homepage-blurred';
+
+    /**
      * Create a new controller instance.
      *
      * @return void
@@ -50,49 +68,42 @@ class HomeController extends Controller {
         $verifiedProfilesCount = User::where('active', 1)->count();
         $successfulMatchesCount = Interest::where('interest_back', 1)->count();
 
-        // Guest-facing "meet our members" slider — 5 real active profiles
-        // (each with at least one uploaded photo), reserving one slot each
-        // for the US and UK specifically (per client request — the site's
-        // audience skews heavily toward those two, so they should always be
-        // represented), then filling the rest across other distinct
-        // countries from a random sample. Reuses member.partials.member-card
-        // with hideImage=true, so guests automatically get the same
-        // "register to view/interest" gating already built into that
-        // partial — the photo itself is swapped for a generic silhouette
-        // rather than the real (even blurred) photo, per client request.
-        $sampleProfiles = collect();
-        $seenCountries = [];
-        // masterdata COUNTRY dataids — confirmed via `MasterData::where('type','COUNTRY')`.
-        $usaCountryId = 233;
-        $ukCountryId = 232;
-        foreach ([$usaCountryId, $ukCountryId] as $countryId) {
-            $match = Profile::profiles("`u`.`active`=1 and `u`.`con_of_residence`=" . $countryId, "`images`<>''", "RAND()", 1)->first();
-            if ($match) {
-                $sampleProfiles->push($match);
-                $seenCountries[$countryId] = true;
-            }
-        }
-
-        $sampleProfilesPool = Profile::profiles("`u`.`active`=1", "`images`<>''", "RAND()", 30);
-        foreach ($sampleProfilesPool as $profile) {
-            if ($sampleProfiles->count() >= 5) break;
-            $countryKey = $profile->con_of_residence;
-            if (!empty($countryKey)) {
-                if (isset($seenCountries[$countryKey])) continue;
-                $seenCountries[$countryKey] = true;
-            }
-            $sampleProfiles->push($profile);
-        }
-        if ($sampleProfiles->count() < 5) {
-            // Fewer than 5 distinct countries in the random sample — top up
-            // with any remaining profiles rather than showing fewer than 5.
-            foreach ($sampleProfilesPool as $profile) {
-                if ($sampleProfiles->count() >= 5) break;
-                if ($sampleProfiles->contains('dataid', $profile->dataid)) continue;
-                $sampleProfiles->push($profile);
-            }
-        }
-        $sampleProfiles = $sampleProfiles->shuffle()->values();
+        // Guest-facing "meet our members" slider — a client-curated, fixed
+        // list of specific profiles, shown in the exact order given rather
+        // than randomly sampled. Reuses member.partials.member-card with
+        // hideImage=true, so guests automatically get the same "register to
+        // view/interest" gating already built into that partial.
+        //
+        // Photo shown: the member's real photo with ONLY the face obscured
+        // (via GenerateHomepageFaceBlur, pre-generated to
+        // public/homepage-blurred/<dataid>.jpg using AWS Rekognition face
+        // detection + pixelation) — body/outfit/background stay sharp, per
+        // client request. If that file hasn't been generated yet for a
+        // given profile (e.g. list just updated, command not re-run), falls
+        // back to the site's existing whole-image blur rather than showing
+        // nothing/broken.
+        //
+        // Any dataid here that's currently inactive or has no uploaded photo
+        // is silently skipped (never shown broken/empty) rather than erroring —
+        // so if fewer than 21 show up on the live site, check those accounts'
+        // active/photo status there.
+        $quotedDataids = "'" . implode("','", array_map(function ($id) {
+            return addslashes($id);
+        }, self::CURATED_PROFILE_DATAIDS)) . "'";
+        $curatedProfilesPool = Profile::profiles("`u`.`active`=1 and `u`.`dataid` in ($quotedDataids)", "`images`<>''", null, null)->keyBy('dataid');
+        $sampleProfiles = collect(self::CURATED_PROFILE_DATAIDS)
+            ->map(function ($dataid) use ($curatedProfilesPool) {
+                return $curatedProfilesPool->get($dataid);
+            })
+            ->filter()
+            ->values()
+            ->map(function ($profile) {
+                $faceBlurPath = self::FACE_BLUR_DIR . '/' . $profile->dataid . '.jpg';
+                if (file_exists(public_path($faceBlurPath))) {
+                    $profile->homepageFaceBlurredImage = '/' . $faceBlurPath . '?v=' . filemtime(public_path($faceBlurPath));
+                }
+                return $profile;
+            });
 
         return view('welcome', compact('maritalstatuses', 'countries', 'mothertongues', 'caste', 'verifiedProfilesCount', 'successfulMatchesCount', 'sampleProfiles'));
     }
