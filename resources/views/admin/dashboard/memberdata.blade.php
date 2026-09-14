@@ -82,7 +82,7 @@
                                     'verified' => 'ur-admin-badge--success',
                                     'resubmit' => 'ur-admin-badge--warning',
                                     'rejected' => 'ur-admin-badge--danger',
-                                    default => 'ur-admin-badge--info', // pending / not started
+                                    default => 'ur-admin-badge--danger', // pending / not started — deliberately red, not the muted/neutral "info" style, so it's not mistaken for "verified" at a glance
                                 };
                                 $photoLabel = match ($photoStatus) {
                                     'verified' => 'Photo Verified',
