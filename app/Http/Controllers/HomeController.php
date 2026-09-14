@@ -220,8 +220,10 @@ class HomeController extends Controller {
         // Matches" preview) — null/empty for guests.
         $completeness = null;
         $recommendedMatches = collect();
+        $hasPartnerPreferences = false;
         if (!empty($loggedInUser)) {
             $completeness = $loggedInUser->profile()->profileCompleteness();
+            $hasPartnerPreferences = $loggedInUser->hasPartnerPreferences();
             $recommendedMatches = $loggedInUser->getRecommendedMatches(4);
         }
 
@@ -348,6 +350,7 @@ class HomeController extends Controller {
                 'selectedGender' => $selectedGender,
                 'completeness' => $completeness,
                 'recommendedMatches' => $recommendedMatches,
+                'hasPartnerPreferences' => $hasPartnerPreferences,
                 'viewerUser' => $loggedInUser,
                 'hasSearched' => $hasSearched
             ]);
@@ -394,6 +397,7 @@ class HomeController extends Controller {
             'resultCount' => $resultCount,
             'currentPage' => $pageRequested,
             'numPages' => $numPages,
+            'hasPartnerPreferences' => $loggedInUser->hasPartnerPreferences(),
         ]);
     }
 

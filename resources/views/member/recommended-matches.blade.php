@@ -86,6 +86,45 @@
         border-color: var(--ur-border) !important;
         color: var(--ur-green) !important;
     }
+
+    /* "No partner preferences saved yet" prompt — see hasPartnerPreferences() gate. */
+    .ur-rm-page__no-prefs {
+        background: #fff;
+        border: 1px dashed var(--ur-border);
+        border-radius: 14px;
+        padding: 36px 24px;
+        text-align: center;
+    }
+
+    .ur-rm-page__no-prefs i.fa-heart-o {
+        font-size: 28px;
+        color: var(--ur-gold);
+        display: block;
+        margin-bottom: 12px;
+    }
+
+    .ur-rm-page__no-prefs p {
+        font-size: 14px;
+        color: var(--ur-text-muted);
+        margin: 0 0 18px;
+    }
+
+    .ur-rm-page__no-prefs a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 46px;
+        padding: 0 24px;
+        border-radius: 999px;
+        background: var(--ur-gold);
+        color: #fff !important;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .ur-rm-page__no-prefs a:hover {
+        background: #B07C3D;
+    }
 </style>
 
 <div class="ur-rm-page">
@@ -98,7 +137,13 @@
         @endif
     </div>
 
-    @if(!empty($members) && sizeof($members) > 0)
+    @if(empty($hasPartnerPreferences))
+    <div class="ur-rm-page__no-prefs">
+        <i class="fa fa-heart-o" aria-hidden="true"></i>
+        <p>Please add your partner preferences so we can show you Recommended Matches tailored to what you're looking for.</p>
+        <a href="{{ route('member.preferences') }}"><i class="fa fa-sliders"></i> Add Partner Preferences</a>
+    </div>
+    @elseif(!empty($members) && sizeof($members) > 0)
     <div class="member-results">
         @foreach ($members as $member)
             @include('member.partials.member-card', ['member' => $member])

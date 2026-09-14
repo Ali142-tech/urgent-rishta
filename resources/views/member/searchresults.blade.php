@@ -326,6 +326,47 @@
         margin: 8px 0 36px;
     }
 
+    /* "No partner preferences saved yet" prompt shown in place of the
+       recommended-matches preview — see hasPartnerPreferences() gate. */
+    .ur-dash-home__no-prefs {
+        margin: 8px 0 36px;
+        background: #fff;
+        border: 1px dashed var(--ur-border);
+        border-radius: 14px;
+        padding: 28px 24px;
+        text-align: center;
+    }
+
+    .ur-dash-home__no-prefs i.fa-heart-o {
+        font-size: 26px;
+        color: var(--ur-gold);
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .ur-dash-home__no-prefs p {
+        font-size: 13.5px;
+        color: var(--ur-text-muted);
+        margin: 0 0 16px;
+    }
+
+    .ur-dash-home__no-prefs a {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 22px;
+        border-radius: 999px;
+        background: var(--ur-gold);
+        color: #fff !important;
+        font-size: 13.5px;
+        font-weight: 700;
+    }
+
+    .ur-dash-home__no-prefs a:hover {
+        background: #B07C3D;
+    }
+
     /* Heading for the real search-results area — only rendered once the
        member has actually searched (see searchdata.blade.php's
        $hasSearched gate), so it never sits next to/duplicates the
@@ -590,7 +631,13 @@
              route — there's no JS involved in that case, so it has to be
              gated here too or this preview and the real results would both
              render at once. --}}
-        @if(empty($hasSearched) && !empty($recommendedMatches) && $recommendedMatches->count() > 0)
+        @if(empty($hasSearched) && empty($hasPartnerPreferences))
+        <div class="ur-dash-home__no-prefs" id="ur_recommended_matches">
+            <i class="fa fa-heart-o" aria-hidden="true"></i>
+            <p>Please add your partner preferences so we can show you Recommended Matches tailored to what you're looking for.</p>
+            <a href="{{ route('member.preferences') }}"><i class="fa fa-sliders"></i> Add Partner Preferences</a>
+        </div>
+        @elseif(empty($hasSearched) && !empty($recommendedMatches) && $recommendedMatches->count() > 0)
         <div class="ur-dash-home__recommended" id="ur_recommended_matches">
             <div class="ur-dash-home__recommended-head">
                 <h3>Recommended Matches For You</h3>

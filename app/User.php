@@ -115,6 +115,32 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $this->hasOne(PartnerPreference::class);
     }
 
+    /**
+     * Whether this member has actually filled in at least one partner
+     * preference field — used to gate "Recommended Matches" (no
+     * preferences = we have nothing to base a recommendation on, show a
+     * prompt to set them instead of a generic/irrelevant list). Checks
+     * every fillable field except the housekeeping ones (id/user_id/
+     * timestamps), so setting just one field (e.g. only a religion) already
+     * counts as "has preferences".
+     */
+    public function hasPartnerPreferences(): bool
+    {
+        $pref = $this->partnerPreference;
+        if (empty($pref)) {
+            return false;
+        }
+        $meaningfulFields = ['age_min', 'age_max', 'height', 'weight', 'marital_status', 'with_children',
+            'country_id', 'state_id', 'city_id', 'religion_id', 'caste_id', 'sect', 'education_id',
+            'profession', 'mother_tongue_id', 'languages', 'preferred_country_id', 'general_requirement'];
+        foreach ($meaningfulFields as $field) {
+            if (!empty($pref->{$field})) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function profile($refresh = null) {
         if ($this->profileObj == null || $refresh) {
             $this->profileObj = Profile::profiles("`u`.`dataid`='".$this->dataid."'")->first();
@@ -234,9 +260,25 @@ class User extends Authenticatable implements MustVerifyEmail {
     /**
      * WHERE clause shared by getRecommendedMatches()/getRecommendedMatchesCount()
      * — same active/package visibility rules as the real search
-     * (HomeController::search()), restricted to the opposite gender. Null
-     * when the viewer can't search yet (inactive profile / no package) or
-     * has no gender set — callers treat that as "no recommendations".
+     * (HomeController::search()), restricted to the opposite gender, AND
+     * (per client request) narrowed down to whatever this member has
+     * actually set on their Partner Preferences page. Null when the viewer
+     * can't search yet (inactive profile / no package), has no gender set,
+     * or — crucially — has no partner preferences saved at all: with
+     * nothing to base a recommendation on, callers show a "please add your
+     * preferences" prompt instead of falling back to an unrelated list (see
+     * hasPartnerPreferences()).
+     *
+     * Hard-filtered fields (per client request, Sep 2026): age range,
+     * marital status, has-children, country of residence, state, religion,
+     * and a partial-text match on profession. City, caste, and education
+     * are deliberately NOT filtered here — each was found to zero out
+     * results entirely (city for smaller towns, caste for less common
+     * castes, education for narrow country/state/religion combinations)
+     * even with otherwise-good matches available nearby — mother tongue/
+     * height/weight/sect/languages/preferred country/general requirement
+     * are free-text or have no reliable single-column equivalent, so
+     * they're saved on the preferences page but not enforced here either.
      */
     private function recommendedMatchesWhere(): ?string
     {
@@ -247,6 +289,10 @@ class User extends Authenticatable implements MustVerifyEmail {
         $ownGender = strtolower($this->gender ?? '');
         $oppositeGender = $ownGender === 'male' ? 'female' : ($ownGender === 'female' ? 'male' : null);
         if (empty($oppositeGender)) {
+            return null;
+        }
+
+        if (!$this->hasPartnerPreferences()) {
             return null;
         }
 
@@ -261,20 +307,51 @@ class User extends Authenticatable implements MustVerifyEmail {
             $where .= " and `u`.`package` IN (" . implode(',', $quoted) . ")";
         }
 
+        $pref = $this->partnerPreference;
+        if (!empty($pref->age_min) || !empty($pref->age_max)) {
+            $min = !empty($pref->age_min) ? (int) $pref->age_min : 18;
+            $max = !empty($pref->age_max) ? (int) $pref->age_max : 99;
+            $where .= " and FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/365.25) between " . $min . " and " . $max;
+        }
+        if (!empty($pref->marital_status)) {
+            $where .= " and `u`.`marital_status`='" . addslashes($pref->marital_status) . "'";
+        }
+        // `u`.`children` stores a free-text/number of kids ("0", "2", ...);
+        // the preference is a Yes/No/Does-not-matter question — "No" means
+        // childless (0/blank), "Yes" means at least one, "Does not matter"
+        // (or empty) applies no filter at all.
+        if ($pref->with_children === 'No') {
+            $where .= " and (`u`.`children` is null or `u`.`children`='' or CAST(`u`.`children` AS UNSIGNED)=0)";
+        } elseif ($pref->with_children === 'Yes') {
+            $where .= " and CAST(`u`.`children` AS UNSIGNED) > 0";
+        }
+        if (!empty($pref->country_id)) {
+            $where .= " and `u`.`con_of_residence`='" . addslashes($pref->country_id) . "'";
+        }
+        if (!empty($pref->state_id)) {
+            $where .= " and `u`.`state`='" . addslashes($pref->state_id) . "'";
+        }
+        if (!empty($pref->religion_id)) {
+            $where .= " and `u`.`religion`='" . addslashes($pref->religion_id) . "'";
+        }
+        if (!empty($pref->profession)) {
+            $where .= " and `u`.`profession` LIKE '%" . addslashes($pref->profession) . "%'";
+        }
+
         return $where;
     }
 
     /**
      * Up to $limit "recommended" profiles for this member, starting at
      * $offset (for the dedicated "Recommended Matches" page's
-     * pagination). Prioritized (via ORDER BY, not WHERE) same-city first,
-     * then same-country (any city), then everyone else by recency — a
-     * same-city match implies same-country too, so this cascades rather
-     * than requiring both. Nothing is ever excluded by city/country, so
-     * the result still fills up to $limit even when the viewer has no
-     * exact geographic match. This is NOT a real recommendation engine
-     * (no preference/compatibility scoring) — just a small, safe default
-     * result set.
+     * pagination). Filtered by this member's own Partner Preferences (age
+     * range, marital status, country/city, religion, caste, mother tongue,
+     * profession — see recommendedMatchesWhere()); returns empty when no
+     * preferences have been saved at all, rather than an unrelated default
+     * list — callers should check hasPartnerPreferences() to show a
+     * "please add your preferences" prompt in that case. Beyond the
+     * preference filters, same-city results are still prioritized first
+     * (via ORDER BY), then same-country, then everyone else by recency.
      */
     public function getRecommendedMatches($limit = 3, $offset = 0)
     {
