@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\CampaignSend;
+use App\Jobs\Concerns\ClassifiesMailFailures;
 use App\Mail\GenderCampaign;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,7 +31,7 @@ use Throwable;
  */
 class SendCampaignEmailJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use ClassifiesMailFailures, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 6;
 
@@ -89,7 +90,7 @@ class SendCampaignEmailJob implements ShouldQueue
         } catch (Throwable $e) {
             $row->update(['last_error' => $e->getMessage()]);
 
-            if ($this->isPermanentSmtpFailure($e)) {
+            if ($this->isPermanentMailFailure($e)) {
                 Log::warning("Campaign mail permanently failed for {$row->dataid}: " . $e->getMessage());
                 $this->fail($e);
                 return;
@@ -114,21 +115,4 @@ class SendCampaignEmailJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * SMTP 5xx = permanent (bad/rejected address, will never succeed).
-     * SMTP 4xx (incl. Hostinger's 451 ratelimit) = temporary, worth retrying.
-     * Anything we can't classify (connection errors, timeouts, etc.) is
-     * treated as temporary too — safer to retry a few times than to silently
-     * drop a recipient over an ambiguous error.
-     */
-    private function isPermanentSmtpFailure(Throwable $e): bool
-    {
-        $message = $e->getMessage();
-
-        if (preg_match('/got code "(\d{3})"/', $message, $m)) {
-            return $m[1][0] === '5';
-        }
-
-        return (bool) preg_match('/\b5\d{2}\b/', $message) && !preg_match('/\b4\d{2}\b/', $message);
-    }
 }

@@ -123,7 +123,7 @@ class SendGenderCampaign extends Command
                     $remaining--;
                 }
             }
-        }, 'users.id');
+        }, 'users.id', 'id');
 
         $this->info("Dispatched {$dispatched} jobs. Run 'php artisan queue:work' (if it isn't already running) to actually send them.");
         $this->info("Check progress anytime with: php artisan campaign:send {$gender} --status");

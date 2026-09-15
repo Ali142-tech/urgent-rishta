@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Session;
+use App\Services\ProfileCompletionCampaignService;
 use App\Mail\ProfileVerified;
 use App\Mail\ProfileRejected;
 use App\PhotoVerificationLog;
@@ -67,6 +69,41 @@ class AdminController extends Controller
     {
         Artisan::call('vendor:publish --provider="Intervention\Image\ImageServiceProviderLaravelRecent"');
         return 'Published.';
+    }
+
+    public function profileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        return view('admin.dashboard.profile-completion-campaign', ['stats' => $service->status()]);
+    }
+
+    public function startProfileCompletionCampaign(Request $request, ProfileCompletionCampaignService $service)
+    {
+        $limit = $request->filled('limit') ? (int) $request->input('limit') : null;
+        $dispatched = $service->dispatchEligible($limit);
+
+        Session::flash('message', "success|Dispatched {$dispatched} emails for sending. They'll go out at the configured rate — check back here for progress.|8000");
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    public function retryFailedProfileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        $requeued = $service->retryFailed();
+        Session::flash('message', "success|Re-queued {$requeued} previously-failed emails.|8000");
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    public function pauseProfileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        $service->pause();
+        Session::flash('message', 'warning|Campaign paused. Already-queued emails will hold and re-check every 5 minutes instead of sending.|8000');
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    public function resumeProfileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        $service->resume();
+        Session::flash('message', 'success|Campaign resumed.|5000');
+        return redirect()->route('admin.campaigns.profile-completion');
     }
 
     function profiles()

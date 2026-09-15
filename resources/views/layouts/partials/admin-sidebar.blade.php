@@ -50,6 +50,11 @@
                 <i class="fa fa-id-badge"></i> Photo Verification
             </a>
         </li>
+        <li>
+            <a href="{{ url('admin/campaigns/profile-completion') }}" class="{{ request()->is('admin/campaigns/profile-completion') ? 'is-active' : '' }}">
+                <i class="fa fa-envelope"></i> Profile Completion Campaign
+            </a>
+        </li>
     </ul>
 
     <div class="ur-dash-sidebar__footer">

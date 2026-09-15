@@ -74,6 +74,12 @@ Route::get('admin/photo-verification/logs', [App\Http\Controllers\AdminControlle
 Route::post('admin/photo-verification/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approvePhotoVerification']);
 Route::post('admin/photo-verification/{dataid}/reject', [App\Http\Controllers\AdminController::class, 'rejectPhotoVerification']);
 Route::post('admin/photo-verification/{dataid}/reopen', [App\Http\Controllers\AdminController::class, 'reopenPhotoVerification']);
+// Profile-completion email campaign (targets members with unverified photo status)
+Route::get('admin/campaigns/profile-completion', [App\Http\Controllers\AdminController::class, 'profileCompletionCampaign'])->name('admin.campaigns.profile-completion');
+Route::post('admin/campaigns/profile-completion/start', [App\Http\Controllers\AdminController::class, 'startProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.start');
+Route::post('admin/campaigns/profile-completion/retry-failed', [App\Http\Controllers\AdminController::class, 'retryFailedProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.retry-failed');
+Route::post('admin/campaigns/profile-completion/pause', [App\Http\Controllers\AdminController::class, 'pauseProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.pause');
+Route::post('admin/campaigns/profile-completion/resume', [App\Http\Controllers\AdminController::class, 'resumeProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.resume');
 // admin profile routes
 Route::delete('admin/profile/{id}',[App\Http\Controllers\AdminController::class, 'deleteProfile']); // delete profile in admin dashboard
 Route::get('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard

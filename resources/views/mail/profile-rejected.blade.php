@@ -11,7 +11,7 @@
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px; background:#ffffff; border-radius:14px; overflow:hidden;">
         <tr>
             <td style="background:#123A2E; padding:26px 30px; text-align:center;">
-                <img src="{{ url('/images/header_logo2.png') }}" alt="Urgent Rishta" height="44" style="display:inline-block;">
+                <img src="https://urgentrishta.com/images/header_logo2.png" alt="Urgent Rishta" height="44" style="display:inline-block;">
             </td>
         </tr>
         <tr>
