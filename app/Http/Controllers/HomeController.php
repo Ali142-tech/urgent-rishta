@@ -59,7 +59,7 @@ class HomeController extends Controller {
     public Function index() {
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
-        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
+        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
 
         // Real counts for the homepage trust strip / enquiry bar — "Verified
@@ -319,7 +319,7 @@ class HomeController extends Controller {
         }
 
         $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
-        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
+        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();

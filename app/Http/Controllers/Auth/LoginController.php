@@ -350,9 +350,8 @@ class LoginController extends Controller
             return redirect()->route('login');
         }
 
-        // Website Upgrade Brief §5/§9 — a new account isn't let into the site
-        // until its photos are admin-verified; a rejected account is locked
-        // out of login entirely (no self-service resubmit via login).
+        // Website Upgrade Brief §5/§9 — a rejected account (old manual-review
+        // outcome) is locked out of login entirely until an admin reopens it.
         if ($blockMessage = $loggedInUser->photoVerificationBlockMessage()) {
             Auth::logout();
             Log::info('Login blocked for ' . $loggedInUser->dataid . ' — photo_verification_status=' . $loggedInUser->photo_verification_status);
@@ -360,11 +359,15 @@ class LoginController extends Controller
             return redirect()->route('login');
         }
 
-        // Admin reopened a previously-rejected account for one resubmission
-        // attempt (old photos already wiped) — send straight to the gate
-        // instead of the normal post-login destination.
-        if ($loggedInUser->photo_verification_status === 'resubmit') {
-            Session::flash('message', 'warning|Please re-upload your photos and selfie for review.');
+        // Photos never verified yet, or AI verification failed and needs a
+        // retry — login still succeeds (see photoVerificationBlockMessage()
+        // for why), but send them straight to the gate instead of the
+        // normal post-login destination, with a message explaining why.
+        if (in_array($loggedInUser->photo_verification_status, ['pending', 'resubmit'], true)) {
+            $message = $loggedInUser->photo_verification_status === 'resubmit'
+                ? 'warning|Your photo verification wasn\'t successful. Please re-upload your photos and selfie to try again.'
+                : 'warning|Please verify your photos first — upload your photos and take a selfie to unlock your account.';
+            Session::flash('message', $message);
             return redirect()->route('member.photos.required');
         }
 

@@ -41,7 +41,7 @@ class RegisterController extends Controller
     {
         $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
-        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
+        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
@@ -52,8 +52,33 @@ class RegisterController extends Controller
             $mode = 'start';
         }
 
-        // Fresh "Register" click (/register with no mode) → start from step 1, drop stale session
+        // Bare "/register" (no mode param) used to unconditionally wipe any
+        // in-progress registration and restart at step 1 — but nothing
+        // stops a user from landing on that exact URL by accident mid-flow
+        // (browser address-bar autocomplete/history suggesting the bare
+        // URL, a stray click, etc.), and every one of the flow's own
+        // buttons/back-links always includes an explicit `mode`, so this
+        // was silently discarding real progress (name, DOB, religion,
+        // country, everything) and dropping them back at step 1 — which
+        // then surfaces confusingly at whatever LATER step they try to
+        // resubmit next, since that step's own session checks fail and
+        // send them back to re-enter fields they'd already filled in.
+        //
+        // Now: only wipe for a genuinely fresh visitor (no progress yet at
+        // all); anyone with an in-progress session gets resumed at their
+        // furthest completed step instead of losing everything.
         if (!$request->has('mode')) {
+            if (Session::has('register_first_name')) {
+                $resumeMode = 'community';
+                if (Session::has('register_religion')) $resumeMode = 'contact';
+                if (Session::get('register_contact_saved')) $resumeMode = 'otp';
+                if (Session::get('register_verified')) $resumeMode = 'build';
+                if (Session::has('register_city')) $resumeMode = 'build2';
+                if (Session::has('register_height')) $resumeMode = 'build3';
+                if (Session::has('register_education')) $resumeMode = 'preferences';
+                if (Session::get('register_preferences_saved')) $resumeMode = 'build4';
+                return redirect()->route('register', ['mode' => $resumeMode]);
+            }
             $this->forgetRegisterSession();
             $googleOAuth = null;
             $mode = 'start';

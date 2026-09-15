@@ -66,8 +66,11 @@ class GoogleAuthController extends Controller
                 return redirect()->route('login');
             }
 
-            if ($user->photo_verification_status === 'resubmit') {
-                Session::flash('message', 'warning|Please re-upload your photos and selfie for review.');
+            if (in_array($user->photo_verification_status, ['pending', 'resubmit'], true)) {
+                $message = $user->photo_verification_status === 'resubmit'
+                    ? 'warning|Your photo verification wasn\'t successful. Please re-upload your photos and selfie to try again.'
+                    : 'warning|Please verify your photos first — upload your photos and take a selfie to unlock your account.';
+                Session::flash('message', $message);
                 return redirect()->route('member.photos.required');
             }
 

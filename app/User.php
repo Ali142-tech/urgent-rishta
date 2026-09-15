@@ -542,19 +542,28 @@ class User extends Authenticatable implements MustVerifyEmail {
      * per controller). Null means fine, proceed; otherwise a "type|text"
      * flash string ready for Session::flash('message', ...).
      *
-     * Note 'resubmit' (set by AdminController@reopenPhotoVerification) is
-     * intentionally NOT blocked here — that status means "let this
-     * previously-rejected account log in one time specifically to redo the
-     * photo gate", handled in LoginController@finishLogin /
-     * GoogleAuthController@callback.
+     * 'rejected' is the ONLY status that hard-blocks login here — it's the
+     * old manual-admin-review outcome and genuinely requires an admin to
+     * call reopenPhotoVerification() before the account can do anything
+     * again, so there's no self-service path being cut off.
+     *
+     * 'pending' (never yet completed photo verification) and 'resubmit'
+     * (AI verification failed, needs to try again) are deliberately NOT
+     * blocked here — login always succeeds for them, and
+     * LoginController@finishLogin / GoogleAuthController@callback instead
+     * redirect straight to the photo verification gate with an explanatory
+     * message. Hard-blocking either of those at login would leave the
+     * member with no way to ever reach the gate again to fix it themselves
+     * (client explicitly wants zero manual/admin involvement in this flow)
+     * — the EnsurePhotosUploaded middleware already fully prevents them
+     * from reaching search, other profiles, or sending interest while in
+     * either state, so nothing is lost security-wise by letting login
+     * proceed.
      */
     public function photoVerificationBlockMessage(): ?string {
         if ($this->photo_verification_status === 'rejected') {
             $reason = $this->photo_rejection_reason;
             return 'danger|Your account was not approved' . (!empty($reason) ? ': ' . $reason : '') . '. Please contact support.';
-        }
-        if ($this->photo_verification_status === 'pending') {
-            return 'warning|Your account is pending admin approval. We will notify you by email once your photos are verified.';
         }
         return null;
     }
