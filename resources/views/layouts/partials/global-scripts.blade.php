@@ -96,15 +96,26 @@
         }
 
         toast.querySelector('.ur-toast__close').addEventListener('click', dismiss);
-        var autoTimer = setTimeout(dismiss, duration);
 
-        // Pause the countdown while the user is reading it.
+        // Pause the countdown while the user is reading it, and resume with
+        // whatever time was actually left — not a fixed short delay. (A
+        // previous version restarted the timer at a hardcoded 1.5s on
+        // mouseleave regardless of the real duration, so a toast set to
+        // show for e.g. 15s would vanish almost immediately the moment the
+        // cursor so much as passed over/off it, which sits right in the
+        // corner the mouse naturally travels through.)
+        var remaining = duration;
+        var timerStartedAt = Date.now();
+        var autoTimer = setTimeout(dismiss, remaining);
+
         toast.addEventListener('mouseenter', function() {
             clearTimeout(autoTimer);
+            remaining -= (Date.now() - timerStartedAt);
             toast.querySelector('.ur-toast__bar').style.animationPlayState = 'paused';
         });
         toast.addEventListener('mouseleave', function() {
-            autoTimer = setTimeout(dismiss, 1500);
+            timerStartedAt = Date.now();
+            autoTimer = setTimeout(dismiss, Math.max(remaining, 1000));
             toast.querySelector('.ur-toast__bar').style.animationPlayState = 'running';
         });
     }
@@ -516,6 +527,64 @@
         @endif
 
         $(".selectpicker").select2();
+
+        @auth
+        @if(!Auth::user()->isAdmin())
+        @php
+            $__profile = Auth::user()->profile();
+            $__completenessPercent = $__profile ? $__profile->profileCompleteness()['percent'] : 100;
+        @endphp
+        @if($__completenessPercent < 100)
+        // Client request: nag an incomplete-profile member every ~60s until
+        // it's 100% complete. Uses a localStorage timestamp (not just a
+        // page-local setInterval) so the reminder keeps firing roughly on
+        // schedule even as they navigate between pages, rather than
+        // resetting its countdown on every page load.
+        (function() {
+            var pct = {{ $__completenessPercent }};
+            var INTERVAL_MS = 60000;
+            var STORAGE_KEY = 'ur_profile_nag_last_shown';
+
+            function nag() {
+                var stack = document.getElementById('message_alert');
+                // Replace any nag toast still showing from the last cycle
+                // rather than piling a new one on top of it.
+                if (stack) {
+                    stack.querySelectorAll('.ur-profile-nag-toast').forEach(function(el) { el.remove(); });
+                }
+
+                var message =
+                    '<div style="font-family:\'Playfair Display\',Georgia,serif;font-weight:700;font-size:14.5px;color:#123A2E;margin-bottom:6px;">Your Profile is ' + pct + '% Complete</div>' +
+                    '<div style="height:6px;background:#EFEAE0;border-radius:99px;overflow:hidden;margin-bottom:10px;">' +
+                        '<div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#CF8267,#B5674A);border-radius:99px;"></div>' +
+                    '</div>' +
+                    '<div style="font-size:13px;color:#5B6560;margin-bottom:12px;line-height:1.5;">A complete profile gets noticed more and matched better.</div>' +
+                    '<a href="{{ url('member/profile') }}" style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 18px;border-radius:999px;background:#123A2E;color:#fff;font-size:12.5px;font-weight:700;text-decoration:none;">Complete Now <i class="fa fa-angle-right"></i></a>';
+
+                showAlert('warning', message, 15000);
+
+                if (stack) {
+                    var toasts = stack.querySelectorAll('.ur-toast');
+                    var last = toasts[toasts.length - 1];
+                    if (last) last.classList.add('ur-profile-nag-toast');
+                }
+                try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch (e) {}
+            }
+
+            var last = 0;
+            try { last = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10) || 0; } catch (e) {}
+            var elapsed = Date.now() - last;
+
+            if (elapsed >= INTERVAL_MS) {
+                nag();
+            } else {
+                setTimeout(nag, INTERVAL_MS - elapsed);
+            }
+            setInterval(nag, INTERVAL_MS);
+        })();
+        @endif
+        @endif
+        @endauth
     });
 
 </script>
