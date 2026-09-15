@@ -99,16 +99,20 @@
                         <td colspan="3"><a href="{{url('/member/profile/'.$member->dataid)}}" target="_blank">{{$member->dataid}}</a></td>
                     </tr>
                     <tr>
+                        <td><b>Gender</b></td>
+                        <td>{{ ucfirst($member->gender) }}</td>
                         <td><b>Age</b></td>
                         <td>{{date_diff(date_create($member->birthday), date_create('now'))->y}}</td>
-                        <td><b>Height</b></td>
-                        <td>{{$member->height}}</td>
                     </tr>
                     <tr>
+                        <td><b>Height</b></td>
+                        <td>{{$member->height}}</td>
                         <td><b>Religion</b></td>
                         <td>{{$member->lbl_religion}}</td>
+                    </tr>
+                    <tr>
                         <td><b>Caste / Sect</b></td>
-                        <td>{{$member->lbl_caste}}</td>
+                        <td colspan="3">{{$member->lbl_caste}}</td>
                     </tr>
                     <tr>
                         <td><b>Mother Tongue</b></td>
