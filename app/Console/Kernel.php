@@ -29,6 +29,9 @@ class Kernel extends ConsoleKernel
         // withoutOverlapping() guards against a slow run still going when
         // the next day's run would otherwise start.
         $schedule->command('reminders:inactivity')->dailyAt('10:00')->withoutOverlapping();
+
+        // Weekly "match preview" email — see App\Console\Commands\SendMatchPreviewEmails.
+        $schedule->command('matches:send-preview')->weeklyOn(1, '09:00')->withoutOverlapping();
     }
 
     /**

@@ -91,11 +91,21 @@ class HomeController extends Controller {
             return addslashes($id);
         }, self::CURATED_PROFILE_DATAIDS)) . "'";
         $curatedProfilesPool = Profile::profiles("`u`.`active`=1 and `u`.`dataid` in ($quotedDataids)", "`images`<>''", null, null)->keyBy('dataid');
+
+        // Logged-in members see only the opposite gender from this curated
+        // list (client request); guests (gender unknown) keep seeing the
+        // full mixed list exactly as before.
+        $viewerGender = Auth::check() ? Auth::user()->gender : null;
+        $oppositeGender = $viewerGender === 'male' ? 'female' : ($viewerGender === 'female' ? 'male' : null);
+
         $sampleProfiles = collect(self::CURATED_PROFILE_DATAIDS)
             ->map(function ($dataid) use ($curatedProfilesPool) {
                 return $curatedProfilesPool->get($dataid);
             })
             ->filter()
+            ->when($oppositeGender, function ($collection) use ($oppositeGender) {
+                return $collection->filter(fn ($profile) => $profile->gender === $oppositeGender);
+            })
             ->values()
             ->map(function ($profile) {
                 $faceBlurPath = self::FACE_BLUR_DIR . '/' . $profile->dataid . '.jpg';
