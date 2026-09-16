@@ -48,8 +48,8 @@ class MatchPreviewService
                 // concatenation, easier to get right than juggling optional
                 // pieces inline in the view.
                 $nameLine = $profile->first_name . ($age ? ", {$age} yrs" : '');
-                $locationParts = array_filter([$profile->height, trim(($profile->city ?: '') . ($profile->country ? ', ' . $profile->country : ''))]);
-                $locationLine = implode(' • ', $locationParts);
+                $cityCountry = implode(', ', array_filter([$profile->lbl_city, $profile->lbl_con_of_residence]));
+                $locationLine = implode(' • ', array_filter([$profile->height, $cityCountry]));
 
                 return (object) [
                     'dataid' => $profile->dataid,
