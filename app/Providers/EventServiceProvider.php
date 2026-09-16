@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -29,6 +30,11 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        //
+        // Fires on every successful login regardless of method (password,
+        // OTP, Google OAuth) — used to detect "inactive 7+ days" for the
+        // automatic re-engagement reminder (see App\Services\InactivityReminderService).
+        Event::listen(Login::class, function (Login $event) {
+            $event->user->forceFill(['last_login_at' => now()])->saveQuietly();
+        });
     }
 }
