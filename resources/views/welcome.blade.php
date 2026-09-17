@@ -3,6 +3,10 @@
 <link rel="stylesheet" href="/css/ur-hero.css?29">
 {{-- member.partials.member-card (used by the "Meet Our Members" slider below) is styled by this --}}
 <link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
+{{-- Country-flag phone input for the consultation request form (same library/version as auth/register.blade.php) --}}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/css/intlTelInput.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/intlTelInput.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js"></script>
 {{-- Variation 1a — Editorial Luxe (emerald + gold). ur-1a.css is loaded after the page styles. --}}
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,600;1,700&family=DM+Sans:wght@400;500;600;700&display=swap');
@@ -28,7 +32,10 @@
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.6);
-        z-index: 1000;
+        /* Must beat #myHeader's sticky z-index (1040, see ur-navbar.css) —
+           otherwise the header renders on top of the modal's title/close
+           button whenever the popup is tall enough to reach the top. */
+        z-index: 2000;
     }
     .popup-content {
         background: white;
@@ -36,6 +43,8 @@
         border-radius: 12px;
         max-width: 450px;
         width: 90%;
+        max-height: 88vh;
+        overflow-y: auto;
         text-align: left;
         position: absolute;
         top: 50%;
@@ -109,8 +118,8 @@
         margin-right: 8px;
     }
     .close-btn {
-        background: #d63384;
-        color: white;
+        background: #0F2E24;
+        color: #C9974D;
         border: none;
         padding: 8px 16px;
         cursor: pointer;
@@ -121,7 +130,7 @@
         right: 10px;
     }
     .close-btn:hover {
-        background: #b02a70;
+        background: #16493A;
     }
 
     /* ===== Option A full page sections (pink theme) ===== */
@@ -1774,37 +1783,56 @@ team, with senior-level involvement where applicable.</p>
     <div class="popup-overlay" id="popup">
         <div class="popup-content">
             <button class="close-btn" onclick="closePopup()">×</button>
-            
-            <!-- Title Added -->
-            <h2>Consultation Fee</h2>
-            <p class="package-price">Fee: 2000 PKR</p>
 
-            <!-- Bank Details -->
-            <div class="bank-details">
-                <p><strong>Account Title:</strong> Urgent Rishta</p>
-                <p>
-                    <strong>Account Number:</strong> 07900010047772550026 
-                    <span class="copy-icon" onclick="copyToClipboard('07900010047772550026')">📋</span>
-                </p>
-                <p><strong>Bank Name:</strong> Allied Bank Limited</p>
-                <p>
-                    <strong>IBAN:</strong> PK12ABPA0010047772550026 
-                    <span class="copy-icon" onclick="copyToClipboard('PK12ABPA0010047772550026')">📋</span>
-                </p>
-                <p><strong>SWIFT Code:</strong> ABPAPKKA</p>
-            </div>
+            <h2>Book a Private Consultation</h2>
+            <p class="package-price">Fee: 3000 PKR</p>
+            <p style="font-size:13px; color:#6B7570; margin:-8px 0 16px;">Submit your request below — our team will review it and contact you to confirm the appointment and arrange payment.</p>
 
-            <!-- Note Box -->
-            <div class="note-box">
-                Please provide a screenshot of your payment on our WhatsApp after completing the transaction.
-            </div>
+            <div id="consultation-success" class="note-box" style="display:none; background:#e6f4ea; color:#1e7e34;"></div>
+            <div id="consultation-error" class="note-box" style="display:none; background:#fdecea; color:#b3261e;"></div>
 
-            <!-- WhatsApp Button -->
-            <a href="https://wa.me/923040227000?text=I%20have%20made%20the%20payment.%20Here%20is%20the%20screenshot."
-               target="_blank" class="whatsapp-btn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp">
-                Contact Us on WhatsApp
-            </a>
+            <form id="consultation-form" onsubmit="return submitConsultationRequest(event);">
+                @csrf
+                @guest
+                <div class="form-group">
+                    <label>Full Name <span class="text-danger">*</span></label>
+                    <input type="text" name="guest_name" class="form-control" required>
+                </div>
+                @endguest
+                <div class="form-group">
+                    <label>Email <span class="text-danger">*</span></label>
+                    <input type="email" name="guest_email" class="form-control" value="{{ Auth::check() ? Auth::user()->email : '' }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone / WhatsApp Number <span class="text-danger">*</span></label>
+                    <input type="tel" id="consultation_phone_input" name="guest_phone" class="form-control" required>
+                    <div id="consultation-phone-error" style="display:none; color:#b3261e; font-size:12px; margin-top:4px;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Date <span class="text-danger">*</span></label>
+                    <input type="date" name="appointment_date" class="form-control" min="{{ date('Y-m-d') }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Preferred Time <span class="text-danger">*</span></label>
+                    <select name="appointment_time" class="form-control" required>
+                        <option value="">Select a time...</option>
+                        <option value="Morning (9am - 12pm)">Morning (9am - 12pm)</option>
+                        <option value="Afternoon (12pm - 4pm)">Afternoon (12pm - 4pm)</option>
+                        <option value="Evening (4pm - 8pm)">Evening (4pm - 8pm)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reason for Consultation <span class="text-danger">*</span></label>
+                    <input type="text" name="subject" class="form-control" placeholder="e.g. Looking for a match for my daughter" required>
+                </div>
+                <div class="form-group">
+                    <label>Additional Notes (optional)</label>
+                    <textarea name="notes" class="form-control" rows="3"></textarea>
+                </div>
+                <button type="submit" class="whatsapp-btn" style="background:#25D366; border:none; width:100%; cursor:pointer;">
+                    Submit Request
+                </button>
+            </form>
         </div>
     </div>
 
@@ -1819,10 +1847,80 @@ team, with senior-level involvement where applicable.</p>
             document.getElementById("popup").style.display = "none";
         }
 
-        // Copy to clipboard function
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text);
-            alert("Copied to clipboard: " + text);
+        // Country-flag phone input for the consultation form — same pattern as
+        // initIti() in auth/register.blade.php, inlined here since this page
+        // only needs one instance.
+        var consultationIti = null;
+        (function initConsultationPhoneInput() {
+            var input = document.getElementById('consultation_phone_input');
+            if (!input || !window.intlTelInput) return;
+            consultationIti = window.intlTelInput(input, {
+                initialCountry: 'pk',
+                separateDialCode: true,
+                nationalMode: true,
+                preferredCountries: ['pk', 'in', 'ae', 'sa', 'gb', 'us'],
+                utilsScript: 'https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/18.1.1/js/utils.js'
+            });
+            input.addEventListener('input', function () {
+                document.getElementById('consultation-phone-error').style.display = 'none';
+            });
+            input.addEventListener('countrychange', function () {
+                document.getElementById('consultation-phone-error').style.display = 'none';
+            });
+        })();
+
+        function submitConsultationRequest(event) {
+            event.preventDefault();
+            var form = document.getElementById('consultation-form');
+            var successBox = document.getElementById('consultation-success');
+            var errorBox = document.getElementById('consultation-error');
+            var phoneErrorBox = document.getElementById('consultation-phone-error');
+            successBox.style.display = 'none';
+            errorBox.style.display = 'none';
+            phoneErrorBox.style.display = 'none';
+
+            var phoneInput = document.getElementById('consultation_phone_input');
+            if (consultationIti) {
+                if (!phoneInput.value.trim() || !consultationIti.isValidNumber()) {
+                    var errorCode = consultationIti.getValidationError && consultationIti.getValidationError();
+                    var messages = {
+                        1: 'That country code doesn\'t look right — please re-select your country.',
+                        2: 'This number is too short for the selected country.',
+                        3: 'This number is too long for the selected country.',
+                        5: 'This number doesn\'t match the selected country\'s format.'
+                    };
+                    phoneErrorBox.textContent = messages[errorCode] || 'Please enter a valid phone number for the selected country.';
+                    phoneErrorBox.style.display = 'block';
+                    phoneInput.focus();
+                    return false;
+                }
+                // Store the full E.164 number (e.g. +923001234567) so admin/WhatsApp links work regardless of country.
+                phoneInput.value = consultationIti.getNumber();
+            }
+
+            fetch("{{ route('consultation.store') }}", {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: new FormData(form)
+            })
+            .then(function (res) {
+                return res.json().then(function (body) { return { ok: res.ok, body: body }; });
+            })
+            .then(function (result) {
+                if (result.ok && result.body.code === '200') {
+                    successBox.textContent = result.body.message;
+                    successBox.style.display = 'block';
+                    form.style.display = 'none';
+                } else {
+                    errorBox.textContent = result.body.message || 'Something went wrong. Please try again.';
+                    errorBox.style.display = 'block';
+                }
+            })
+            .catch(function () {
+                errorBox.textContent = 'Something went wrong. Please check your connection and try again.';
+                errorBox.style.display = 'block';
+            });
+            return false;
         }
     </script>
     <!-- END -->

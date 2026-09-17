@@ -44,6 +44,25 @@
             $('#pagerequested').val(newPage ? newPage : 1);
         renderPage("{{ url('admin/appointments/refresh') }}", "post", $("#controls-form").serialize(), $("#appointments-data"));
     }
+
+    function updateAppointment(event, id) {
+        event.preventDefault();
+        var form = $(event.target);
+        $.ajax({
+            type: 'post',
+            url: "{{ url('admin/appointments') }}/" + id + "/status",
+            data: form.serialize() + "&_token={{ csrf_token() }}",
+            success: function (result) {
+                if (result.code == '200') {
+                    showAlert('success', result.message, 3000);
+                    refreshAppointments(false);
+                } else {
+                    showAlert('danger', result.message, 5000);
+                }
+            }
+        });
+        return false;
+    }
 </script>
 @endsection
 

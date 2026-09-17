@@ -37,22 +37,29 @@
                 <tr>
                     <th>Member ID</th>
                     <th>Name</th>
-                    <th>Email</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Subject</th>
+                    <th>Contact</th>
+                    <th>Requested Date/Time</th>
+                    <th>Reason</th>
                     <th>Status</th>
-                    <th>Created</th>
+                    <th>Reschedule &amp; Update</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($appointments as $apt)
                     <tr>
-                        <td><a href="{{ url('/member/profile/'.$apt->member_id) }}" target="_blank" class="c-base-1">{{ $apt->member_id }}</a></td>
-                        <td>{{ $apt->member_name }}</td>
-                        <td><a href="mailto:{{ $apt->member_email }}">{{ $apt->member_email }}</a></td>
-                        <td>{{ \Carbon\Carbon::parse($apt->appointment_date)->format('d/m/Y') }}</td>
-                        <td>{{ $apt->appointment_time ?? '—' }}</td>
+                        <td>
+                            @if($apt->member_id)
+                                <a href="{{ url('/member/profile/'.$apt->member_id) }}" target="_blank" class="c-base-1">{{ $apt->member_id }}</a>
+                            @else
+                                <span class="ur-admin-badge ur-admin-badge--neutral">Guest</span>
+                            @endif
+                        </td>
+                        <td>{{ $apt->member_name ?: '—' }}</td>
+                        <td>
+                            @if($apt->member_email)<a href="mailto:{{ $apt->member_email }}">{{ $apt->member_email }}</a><br>@endif
+                            @if($apt->member_phone)<a href="https://wa.me/{{ preg_replace('/\D/', '', $apt->member_phone) }}" target="_blank">{{ $apt->member_phone }}</a>@endif
+                        </td>
+                        <td>{{ \Carbon\Carbon::parse($apt->appointment_date)->format('d/m/Y') }} &bull; {{ $apt->appointment_time ?? '—' }}</td>
                         <td>{{ $apt->subject ?: '—' }}</td>
                         <td>
                             @if($apt->status === 'pending')
@@ -65,7 +72,19 @@
                                 <span class="ur-admin-badge ur-admin-badge--info">{{ ucfirst($apt->status) }}</span>
                             @endif
                         </td>
-                        <td>{{ \Carbon\Carbon::parse($apt->created_at)->format('d/m/Y H:i') }}</td>
+                        <td>
+                            <form class="ur-admin-appointment-form" onsubmit="return updateAppointment(event, {{ $apt->id }});">
+                                <input type="date" name="appointment_date" class="form-control form-control-sm" value="{{ \Carbon\Carbon::parse($apt->appointment_date)->format('Y-m-d') }}">
+                                <input type="text" name="appointment_time" class="form-control form-control-sm" value="{{ $apt->appointment_time }}" placeholder="Time">
+                                <select name="status" class="form-control form-control-sm">
+                                    <option value="pending" {{ $apt->status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="confirmed" {{ $apt->status === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
+                                    <option value="cancelled" {{ $apt->status === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                    <option value="completed" {{ $apt->status === 'completed' ? 'selected' : '' }}>Completed</option>
+                                </select>
+                                <button type="submit" class="ur-btn ur-btn--dark">Save</button>
+                            </form>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>

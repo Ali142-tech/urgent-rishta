@@ -11,7 +11,9 @@ class AppointmentController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'verified']);
+        // The homepage's "Book a Private Consultation" form is public —
+        // guests (not just logged-in verified members) can submit it.
+        $this->middleware(['auth', 'verified'])->except(['storeConsultationRequest']);
     }
 
     /**
@@ -35,7 +37,7 @@ class AppointmentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'appointment_date' => 'required|date|after_or_equal:today',
-            'appointment_time' => 'required|string|max:20',
+            'appointment_time' => 'required|string|max:40',
             'subject' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:2000',
         ], [
@@ -62,6 +64,72 @@ class AppointmentController extends Controller
         return redirect()
             ->route('appointments.index')
             ->with('message', 'success|Your appointment has been booked. We will confirm it shortly.');
+    }
+
+    /**
+     * Public "Book a Private Consultation" request — the homepage popup
+     * (welcome.blade.php). Open to guests as well as logged-in members;
+     * this is a REQUEST only (status starts 'pending') — the ₨300 fee is
+     * collected separately after admin reviews and schedules it, not
+     * through this form. Admin sets the final date/time when confirming
+     * (see AdminController::updateAppointmentStatus).
+     */
+    public function storeConsultationRequest(Request $request)
+    {
+        $isGuest = !Auth::check();
+
+        $rules = [
+            'appointment_date' => 'required|date|after_or_equal:today',
+            'appointment_time' => 'required|string|max:40',
+            'subject' => 'required|string|max:255',
+            'notes' => 'nullable|string|max:2000',
+            // Required for both guests and logged-in members. The phone
+            // field always submits a full "+<dialcode><number>" value (see
+            // welcome.blade.php's intl-tel-input integration); client-side
+            // iti.isValidNumber() checks it against the selected country's
+            // format before submit, but that's just UX — the `phone` rule
+            // here (no country param = auto-detects country from the
+            // leading "+<dialcode>") is the authoritative check, since
+            // client JS can be bypassed or buggy.
+            'guest_email' => 'required|email|max:150',
+            'guest_phone' => ['required', 'phone', 'max:30'],
+        ];
+
+        if ($isGuest) {
+            $rules['guest_name'] = 'required|string|max:150';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json(['code' => '422', 'message' => $validator->errors()->first()], 422);
+            }
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $user = Auth::user();
+
+        Appointment::create([
+            'user_id' => $user->id ?? null,
+            'guest_name' => $isGuest ? $request->guest_name : null,
+            // Kept for logged-in members too, in case the email/number
+            // submitted here differs from their account (e.g. a different
+            // contact for this specific consultation).
+            'guest_email' => $request->guest_email,
+            'guest_phone' => $request->guest_phone,
+            'appointment_date' => $request->appointment_date,
+            'appointment_time' => $request->appointment_time,
+            'subject' => $request->subject,
+            'notes' => $request->notes,
+            'status' => 'pending',
+        ]);
+
+        if ($request->ajax()) {
+            return response()->json(['code' => '200', 'message' => 'Your consultation request has been received. Our team will review it and contact you to confirm.']);
+        }
+
+        return back()->with('message', 'success|Your consultation request has been received. Our team will review it and contact you to confirm.');
     }
 
     /**

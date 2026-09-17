@@ -607,11 +607,22 @@ class AdminController extends Controller
     /**
      * Admin view: all user appointments.
      */
+    /** Shared SELECT for both appointments() and refreshAppointments() — COALESCEs to the guest_* columns so requests submitted without an account (see AppointmentController::storeConsultationRequest) still show a name/email/phone. */
+    private function appointmentsSelect(): string
+    {
+        return 'a.id, a.appointment_date, a.appointment_time, a.subject, a.notes, a.status, a.created_at, a.updated_at,
+                u.dataid as member_id,
+                COALESCE(CONCAT(u.first_name, " ", u.last_name), a.guest_name) as member_name,
+                COALESCE(u.email, a.guest_email) as member_email,
+                COALESCE(u.contact_mobile_number, a.guest_phone) as member_phone,
+                (u.id IS NULL) as is_guest';
+    }
+
     function appointments()
     {
         $pageSize = 10;
         $query = DB::table('appointments as a')
-            ->select(DB::raw('a.id, a.appointment_date, a.appointment_time, a.subject, a.notes, a.status, a.created_at, a.updated_at, u.dataid as member_id, CONCAT(u.first_name, " ", u.last_name) as member_name, u.email as member_email'))
+            ->select(DB::raw($this->appointmentsSelect()))
             ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
         $total = $query->count();
         $view = view('admin.dashboard.appointmentsdata')->with([
@@ -645,7 +656,7 @@ class AdminController extends Controller
             $pageRequested = (int) ($request->pagerequested ?? 1);
 
             $query = DB::table('appointments as a')
-                ->select(DB::raw('a.id, a.appointment_date, a.appointment_time, a.subject, a.notes, a.status, a.created_at, a.updated_at, u.dataid as member_id, CONCAT(u.first_name, " ", u.last_name) as member_name, u.email as member_email'))
+                ->select(DB::raw($this->appointmentsSelect()))
                 ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
 
             if (!empty($status)) {
@@ -659,7 +670,9 @@ class AdminController extends Controller
                     $sub->whereRaw('LOWER(u.dataid) LIKE ?', [$like])
                         ->orWhereRaw('LOWER(u.first_name) LIKE ?', [$like])
                         ->orWhereRaw('LOWER(u.last_name) LIKE ?', [$like])
-                        ->orWhereRaw('LOWER(u.email) LIKE ?', [$like]);
+                        ->orWhereRaw('LOWER(u.email) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(a.guest_name) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(a.guest_email) LIKE ?', [$like]);
                 });
             }
 
@@ -687,6 +700,39 @@ class AdminController extends Controller
         return [
             'code' => '200',
         ];
+    }
+
+    /**
+     * Admin reviews a consultation/appointment request — sets the final
+     * status and, when confirming, can adjust the date/time to whatever
+     * slot actually works on their schedule (the member/guest only
+     * submitted a PREFERENCE via the public request form).
+     */
+    function updateAppointmentStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,cancelled,completed',
+            'appointment_date' => 'nullable|date',
+            'appointment_time' => 'nullable|string|max:20',
+        ]);
+
+        $appointment = Appointment::find($id);
+        if (!$appointment) {
+            return ['code' => '404', 'message' => 'Appointment not found.'];
+        }
+
+        $appointment->status = $request->status;
+        if ($request->filled('appointment_date')) {
+            $appointment->appointment_date = $request->appointment_date;
+        }
+        if ($request->filled('appointment_time')) {
+            $appointment->appointment_time = $request->appointment_time;
+        }
+        $appointment->save();
+
+        Log::info("Admin updated appointment #{$id} to status '{$request->status}'");
+
+        return ['code' => '200', 'message' => 'Appointment updated.'];
     }
 
     /**

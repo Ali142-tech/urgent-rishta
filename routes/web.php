@@ -68,6 +68,7 @@ Route::get('admin/package-subscribers', [App\Http\Controllers\AdminController::c
 Route::post('admin/package-subscribers/refresh', [App\Http\Controllers\AdminController::class, 'refreshPackageSubscribers']);
 Route::get('admin/appointments', [App\Http\Controllers\AdminController::class, 'appointments']);
 Route::post('admin/appointments/refresh', [App\Http\Controllers\AdminController::class, 'refreshAppointments']);
+Route::post('admin/appointments/{id}/status', [App\Http\Controllers\AdminController::class, 'updateAppointmentStatus']);
 // Photo & Identity Verification queue (Website Upgrade Brief §9)
 Route::get('admin/photo-verification', [App\Http\Controllers\AdminController::class, 'photoVerificationQueue']);
 Route::get('admin/photo-verification/logs', [App\Http\Controllers\AdminController::class, 'photoVerificationLogs']);
@@ -178,6 +179,7 @@ Route::get('contact-us', [App\Http\Controllers\HomeController::class, 'contactUs
 Route::post('contact-us',[App\Http\Controllers\HomeController::class, 'contactUsEmail']);
 
 // Appointments (auth required)
+Route::post('consultation-request', [App\Http\Controllers\AppointmentController::class, 'storeConsultationRequest'])->name('consultation.store');
 Route::get('appointments', [App\Http\Controllers\AppointmentController::class, 'index'])->name('appointments.index');
 Route::post('appointments', [App\Http\Controllers\AppointmentController::class, 'store'])->name('appointments.store');
 Route::post('appointments/{id}/cancel', [App\Http\Controllers\AppointmentController::class, 'cancel'])->name('appointments.cancel');

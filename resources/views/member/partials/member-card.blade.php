@@ -37,6 +37,11 @@
         @if($member->photo_verification_status === 'verified')
             <span class="member-card__badge--verified"><i class="fa fa-check-circle"></i> Verified</span>
         @endif
+        @if(!empty($member->lbl_package))
+            <span class="member-card__badge--package member-card__badge--package-{{ \Illuminate\Support\Str::slug($member->lbl_package) }}">
+                <i class="fa fa-diamond"></i> {{ $member->lbl_package }}
+            </span>
+        @endif
         <span class="member-card__id-badge">
             @auth
                 ID: {{$member->dataid}}
