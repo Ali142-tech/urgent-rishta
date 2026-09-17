@@ -61,7 +61,7 @@ class Profile extends Model {
     }
 
     private function showBlur() {
-        return Auth::guest();
+        return Auth::guest() || $this->photo_visibility === 'blurred';
     }
 
     private function getBlurName($name) {
@@ -74,6 +74,10 @@ class Profile extends Model {
     }
 
     public function getProfileImage($tiny = null) {
+        if ($this->photo_visibility === 'hidden') {
+            return self::defaultImage($this->gender);
+        }
+
         $path = null;
         if (!empty($this->displaypic)) {
             $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->displaypic)[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->displaypic)[2]);
@@ -105,6 +109,10 @@ class Profile extends Model {
      * visitor is logged in or not.
      */
     public function getBlurredProfileImage($tiny = null) {
+        if ($this->photo_visibility === 'hidden') {
+            return self::defaultImage($this->gender);
+        }
+
         $path = null;
         if (!empty($this->displaypic)) {
             $path = self::MEMBER_IMAGES_PATH.'/'.$this->getBlurName(explode("/",$this->displaypic)[2]);
@@ -160,6 +168,13 @@ class Profile extends Model {
 
     public function getLightGalleryImages() {
         $lightgallery = array();
+        // Admin-hidden photos must not be reachable via the gallery either —
+        // showBlur() below only accounts for 'blurred' (and guests), so
+        // 'hidden' needs its own check or the sharp originals would still
+        // show here even though getProfileImage() correctly hides the main photo.
+        if ($this->photo_visibility === 'hidden') {
+            return json_encode($lightgallery);
+        }
         if (!empty($this->images)) {
             if (!is_array($this->images))
                 $this->images = explode(',', $this->images);
@@ -544,7 +559,21 @@ class Profile extends Model {
         return User::select('id')->count();
     }
 
-    public static function profiles($where = null, $having = null, $orderBy = null, $limit = null, $offset = null, $count = null) {
+    public static function profiles($where = null, $having = null, $orderBy = null, $limit = null, $offset = null, $count = null, $includeTrashed = false) {
+        // Soft-deleted members (see users.deleted_at / App\User's SoftDeletes
+        // trait) must never appear anywhere this shared query is used —
+        // admin list, public search, homepage, recommended matches, API —
+        // so it's baked in here once rather than relying on every caller to
+        // remember it. This raw-SQL query doesn't go through Eloquent, so
+        // SoftDeletes' automatic query scope doesn't reach it on its own.
+        // $includeTrashed opts out, for the one case that needs to see a
+        // trashed profile on purpose (admin's "View" action on the Deleted
+        // Profiles page) — default stays false for every existing caller.
+        if (!$includeTrashed) {
+            $deletedFilter = "`u`.`deleted_at` IS NULL";
+            $where = empty($where) ? $deletedFilter : "{$deletedFilter} and ({$where})";
+        }
+
         // For count queries, use a simpler approach without all the joins
         if (!empty($count)) {
             // If WHERE references joined tables, we need to do a proper count with joins

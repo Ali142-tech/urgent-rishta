@@ -240,6 +240,29 @@
     text-overflow: ellipsis;
 }
 
+/* Below ~480px, 3 equal columns leave too little width per value (e.g.
+   "Soni / Muslim", "Never Married") and they get ellipsis-truncated —
+   stack each as its own full-width row instead, label left / value right. */
+@media (max-width: 480px) {
+    .member-card__details {
+        grid-template-columns: 1fr;
+        gap: 8px 0;
+    }
+    .member-card__details li {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+    }
+    .member-card__details li span { margin-bottom: 0; white-space: nowrap; }
+    .member-card__details li b {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        text-align: right;
+    }
+}
+
 .member-card__footer {
     display: flex;
     gap: 10px;

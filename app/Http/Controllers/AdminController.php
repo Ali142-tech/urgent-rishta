@@ -109,7 +109,12 @@ class AdminController extends Controller
     function profiles()
     {
         $pageSize = 10;
-        $total = Profile::getTotalCount();
+        // Admin accounts are excluded here (and in refreshProfiles()) — this
+        // list's actions (delete, suspend, package changes, etc.) are meant
+        // for regular members only. Mixing admin accounts in, distinguished
+        // only by a small badge, is exactly how an admin account got
+        // accidentally deleted before this fix.
+        $total = User::where('admin', 0)->count();
         $numPages = (int) ceil($total / $pageSize);
 
         // Honor ?page=N (e.g. returning here from the Change Package screen
@@ -124,7 +129,7 @@ class AdminController extends Controller
             'pageSize' => $pageSize,
             'total' => $total,
             'numPages' => $numPages,
-            'members' => Profile::profiles(null, null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1)),
+            'members' => Profile::profiles("`u`.`admin` = 0", null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1)),
             'packages' => MasterData::where('type', '=', 'PACKAGE')->get()
         ]);
 
@@ -328,13 +333,14 @@ class AdminController extends Controller
             $pageRequested = $request->pagerequested;
             $showOnly = $request->showonly;
             $showWithin = $request->showwithin;
-            $where = "";
+            // Always excluded — see the comment on profiles() above.
+            $where = "`u`.`admin` = 0";
             $resultCount = null;
             $members = null;
 
             if (!empty($searchTerm)) {
                 $searchTerm = strtolower($searchTerm);
-                $where = "(lower(`u`.`first_name`) LIKE '%" . $searchTerm . "%'" .
+                $where = $where . " and (lower(`u`.`first_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`last_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`dataid`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`email`) LIKE '%" . $searchTerm . "%'" .
@@ -376,7 +382,7 @@ class AdminController extends Controller
             $members = Profile::profiles($where, null, $orderBy, $pageSize, $pageSize * ($pageRequested - 1));
 
             $resultCount = Profile::profiles($where, null, null, null, null, true);
-            $total = empty($searchTerm) && empty($gender) ? Profile::getTotalCount() : $resultCount;
+            $total = empty($searchTerm) && empty($gender) ? User::where('admin', 0)->count() : $resultCount;
 
             return [
                 'code' => '200',
@@ -915,6 +921,52 @@ class AdminController extends Controller
         return view('admin.dashboard.profile-package', compact('member', 'packages', 'returnPage'));
     }
 
+    /**
+     * "Profile Preview" admin page — a live-website-style preview of the
+     * member's card alongside admin controls (package, photo privacy,
+     * verification/security actions, suspend/delete), reached via the
+     * "Full Profile" button on the member list.
+     */
+    function profilePreview($dataid)
+    {
+        $quotedDataid = "'" . addslashes($dataid) . "'";
+        // includeTrashed=true so the "View" action on Deleted Profiles works
+        // too — harmless for a normal (non-trashed) dataid either way.
+        $member = Profile::profiles("`u`.`dataid` = $quotedDataid", null, null, null, null, null, true)->first();
+        if (!$member) {
+            abort(404);
+        }
+
+        $returnPage = (int) request()->query('page', 1);
+        return view('admin.dashboard.profile-preview', compact('member', 'returnPage'));
+    }
+
+    /**
+     * Sets the admin-controlled override for how this member's photo
+     * appears to OTHER members — independent of photo_verification_status
+     * (see Profile::showBlur()/getProfileImage()).
+     */
+    function updatePhotoVisibility(Request $request, $dataid)
+    {
+        $request->validate(['visibility' => 'required|in:visible,blurred,hidden']);
+
+        $user = User::where('dataid', $dataid)->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Member not found.'];
+        }
+
+        $user->photo_visibility = $request->visibility;
+        $user->save();
+
+        // Without this, other members viewing this profile keep seeing the
+        // stale cached copy (retrieveUserObject caches for 4 hours) and the
+        // change wouldn't actually take effect for up to that long — same
+        // fix toggleActive() already applies after changing active.
+        User::retrieveUserObject($dataid, true);
+
+        return ['code' => '200', 'message' => 'Photo privacy updated.', 'visibility' => $request->visibility];
+    }
+
     function fixDataId($table)
     {
         $msg_array = array();
@@ -1096,19 +1148,36 @@ class AdminController extends Controller
         try {
             if (!empty($dataid)) {
                 $user = User::retrieveUserObject($dataid);
-                Log::info("Initiating profile delete for " . $dataid);
-                $id = $user->id;
-                Images::where('user_id', $id)->delete();
-                Log::info("Deleted images");
-                Interest::where('sender', $id)->delete();
-                Interest::where('receiver', $id)->delete();
-                Log::info("Deleted interests");
-                Filtered::where('user', $id)->delete();
-                Log::info("Deleted Filtered");
+
+                // Admin accounts can appear in this same member list/search
+                // (see memberdata.blade.php's small admin badge) — nothing
+                // was stopping one from being deleted exactly like a regular
+                // member, by accident, with no way back. Refuse outright
+                // rather than relying on an admin noticing a small icon.
+                if ($user && $user->isAdmin()) {
+                    DB::rollback();
+                    return [
+                        'code' => '403',
+                        'message' => 'Admin accounts cannot be deleted from this page.',
+                    ];
+                }
+
+                Log::info("Initiating profile soft-delete for " . $dataid);
                 $displayName = $user->first_name . " " . $user->last_name;
+
+                // Soft delete only (App\User's SoftDeletes trait makes this
+                // set deleted_at rather than remove the row) — images,
+                // interests, and filtered-list entries are deliberately left
+                // untouched so restoring the account restores everything,
+                // not just a name. Also flips active off, matching how
+                // "Suspend Account" already works, as defense-in-depth for
+                // any other code path that checks active without also
+                // checking deleted_at.
+                $user->active = 0;
+                $user->save();
                 $user->delete();
                 DB::commit();
-                Log::info("User (" . $loggedInUser->dataid . ") deleted profile of " . $displayName . " (" . $user->email . ")");
+                Log::info("User (" . $loggedInUser->dataid . ") soft-deleted profile of " . $displayName . " (" . $user->email . ")");
             }
             if (request()->ajax()) {
                 return [
@@ -1117,6 +1186,84 @@ class AdminController extends Controller
             } else return [
                 'code' => '200'
             ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            return ['code' => '500', 'message' => $e->getMessage()];
+        }
+    }
+
+    /** List of soft-deleted (non-admin) profiles, for recovery. Supports ?search= filtering by email. */
+    function deletedProfiles()
+    {
+        $pageSize = 20;
+        $currentPage = (int) request()->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+        $search = trim((string) request()->query('search', ''));
+
+        $query = User::onlyTrashed()->where('admin', 0);
+        if ($search !== '') {
+            $query->where('email', 'like', '%' . $search . '%');
+        }
+        $query->orderBy('deleted_at', 'desc');
+
+        $total = (clone $query)->count();
+        $numPages = (int) ceil($total / $pageSize);
+        if ($numPages > 0 && $currentPage > $numPages) $currentPage = $numPages;
+
+        $members = $query->forPage($currentPage, $pageSize)->get();
+
+        return view('admin.dashboard.deleted-profiles', compact('members', 'currentPage', 'pageSize', 'total', 'numPages', 'search'));
+    }
+
+    /**
+     * Undoes a soft delete (App\User's SoftDeletes trait) — deliberately
+     * does NOT also reactivate the account (active stays 0), so an admin
+     * reviews it via the normal "Activate Account" action rather than a
+     * restored account silently going live again.
+     */
+    function restoreProfile($dataid)
+    {
+        $user = User::onlyTrashed()->where('dataid', $dataid)->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Deleted profile not found.'];
+        }
+
+        $user->restore();
+        Log::info("User (" . User::retrieveUserObject()->dataid . ") restored profile of " . $user->first_name . " " . $user->last_name . " (" . $user->email . ")");
+
+        return ['code' => '200', 'message' => 'Profile restored. It is still inactive until you activate it.'];
+    }
+
+    /**
+     * Permanently removes an already soft-deleted profile — unlike the
+     * regular "Delete Profile" action, this really is unrecoverable, so it
+     * only ever operates on a profile that's already in the trash (never a
+     * live one), and this time really does cascade-delete images/interests/
+     * filtered-list rows along with the user row.
+     */
+    function permanentlyDeleteProfile($dataid)
+    {
+        $user = User::onlyTrashed()->where('dataid', $dataid)->where('admin', 0)->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Deleted profile not found.'];
+        }
+
+        $displayName = $user->first_name . " " . $user->last_name;
+        $email = $user->email;
+        $id = $user->id;
+
+        DB::beginTransaction();
+        try {
+            Images::where('user_id', $id)->delete();
+            Interest::where('sender', $id)->delete();
+            Interest::where('receiver', $id)->delete();
+            Filtered::where('user', $id)->delete();
+            $user->forceDelete();
+            DB::commit();
+
+            Log::warning("User (" . User::retrieveUserObject()->dataid . ") PERMANENTLY deleted profile of " . $displayName . " (" . $email . ") — unrecoverable");
+
+            return ['code' => '200', 'message' => 'Profile permanently deleted.'];
         } catch (\Exception $e) {
             DB::rollback();
             return ['code' => '500', 'message' => $e->getMessage()];

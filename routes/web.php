@@ -82,6 +82,9 @@ Route::post('admin/campaigns/profile-completion/pause', [App\Http\Controllers\Ad
 Route::post('admin/campaigns/profile-completion/resume', [App\Http\Controllers\AdminController::class, 'resumeProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.resume');
 // admin profile routes
 Route::delete('admin/profile/{id}',[App\Http\Controllers\AdminController::class, 'deleteProfile']); // delete profile in admin dashboard
+Route::get('admin/profiles/deleted', [App\Http\Controllers\AdminController::class, 'deletedProfiles']);
+Route::post('admin/profile/{dataid}/restore', [App\Http\Controllers\AdminController::class, 'restoreProfile']);
+Route::delete('admin/profile/{dataid}/permanent', [App\Http\Controllers\AdminController::class, 'permanentlyDeleteProfile']);
 Route::get('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
 Route::get('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
 Route::get('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
@@ -90,6 +93,8 @@ Route::get('admin/profile/listing/{type}/{id}', [App\Http\Controllers\AdminContr
 Route::get('admin/profile/package/modal/{id}', [App\Http\Controllers\AdminController::class, 'renderUpdatePackageModal']);
 Route::get('admin/profile/package/{id}', [App\Http\Controllers\AdminController::class, 'changePackagePage']);
 Route::get('admin/profile/pdf/{id}', [App\Http\Controllers\AdminController::class, 'downloadProfilePdf']);
+Route::get('admin/profile/preview/{dataid}', [App\Http\Controllers\AdminController::class, 'profilePreview']);
+Route::post('admin/profile/{dataid}/photo-visibility', [App\Http\Controllers\AdminController::class, 'updatePhotoVisibility']);
 // admin package routes
 Route::post('admin/packages/',[App\Http\Controllers\AdminController::class, 'addPackage']); // add a new package in admin dashboard
 Route::post('admin/packages/{id}',[App\Http\Controllers\AdminController::class, 'updatePackage']); // update package details in admin dashboard

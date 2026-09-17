@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
@@ -14,7 +15,7 @@ use App\MasterData;
 //use App\Profile;
 
 class User extends Authenticatable implements MustVerifyEmail {
-    use Notifiable;
+    use Notifiable, SoftDeletes;
     /**
      * The channels the user receives notification broadcasts on.
      *

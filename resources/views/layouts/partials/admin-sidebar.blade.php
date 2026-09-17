@@ -55,6 +55,11 @@
                 <i class="fa fa-envelope"></i> Profile Completion Campaign
             </a>
         </li>
+        <li>
+            <a href="{{ url('admin/profiles/deleted') }}" class="{{ request()->is('admin/profiles/deleted') ? 'is-active' : '' }}">
+                <i class="fa fa-trash"></i> Deleted Profiles
+            </a>
+        </li>
     </ul>
 
     <div class="ur-dash-sidebar__footer">

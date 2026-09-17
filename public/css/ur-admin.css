@@ -53,6 +53,21 @@
 }
 .ur-admin-panel + .ur-admin-panel { margin-top: 24px; }
 
+/* The filter form and the member card list used to share one continuous
+   white background (both live inside .ur-admin-panel), so individual
+   member cards didn't visually "pop" as separate — everything just read as
+   one big block. Bleeding #member-data out to the panel's edges and giving
+   it its own grey backdrop lets each .ur-admin-card's own white box/border/
+   shadow actually show as a distinct card, while the filter section above
+   stays in its own white area untouched. */
+#member-data {
+    background: var(--ur-dash-bg);
+    margin: 18px -22px -22px;
+    padding: 18px 22px 4px;
+    border-top: 1px solid var(--ur-dash-border);
+    border-radius: 0 0 14px 14px;
+}
+
 .ur-admin-toolbar {
     display: flex;
     align-items: center;
@@ -191,6 +206,28 @@ table.ur-admin-table .ur-admin-icon-link {
     font-size: 14px;
 }
 table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
+.ur-admin-table__thumb {
+    display: inline-block;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    background-color: var(--ur-dash-bg);
+    border: 1px solid var(--ur-dash-border);
+    vertical-align: middle;
+}
+.ur-admin-table__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ur-admin-table__actions .ur-btn { padding: 6px 12px; font-size: 11.5px; }
+/* table.ur-admin-table a { color: var(--ur-dash-green); } (higher specificity
+   than a single .ur-btn--* class) was overriding these buttons' own text
+   color — e.g. "Restore" rendering as green-on-green (invisible) instead of
+   white-on-green. Re-assert explicitly, scoped to beat that rule. */
+table.ur-admin-table .ur-btn--dark,
+table.ur-admin-table .ur-btn--dark:hover { color: #fff; }
+table.ur-admin-table .ur-btn--outline,
+table.ur-admin-table .ur-btn--outline:hover { color: var(--ur-dash-text); }
+table.ur-admin-table .ur-btn--danger-outline,
+table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); }
 
 /* ---------------------------------------------------------- */
 /* Badges                                                        */
@@ -315,8 +352,13 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
     border: 1px solid var(--ur-dash-border);
     border-radius: 14px;
     padding: 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 10px rgba(15,46,36,.04);
+    margin-bottom: 22px;
+    box-shadow: 0 6px 18px rgba(15,46,36,.07);
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+.ur-admin-card:hover {
+    box-shadow: 0 12px 28px rgba(15,46,36,.12);
+    transform: translateY(-2px);
 }
 
 /* -- Profile card (used on Member Profiles) -- */
@@ -573,28 +615,28 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
 /* ---------------------------------------------------------- */
 /* Responsive                                                    */
 /* ---------------------------------------------------------- */
+/* Mobile-only card view (see memberdata.blade.php) — hidden on desktop by
+   default; the full admin card (media/body) shows instead there. Reuses
+   member-card__* classes directly rather than the outer boxed .member-card,
+   so it gets the same rich visual as the live site without nesting a
+   second bordered/shadowed box inside .ur-admin-card's own framing. */
+.ur-admin-mobile-card { display: none; margin: -20px; }
+.ur-admin-mobile-card .member-card__photo { border-radius: 14px 14px 0 0; }
+.ur-admin-mobile-card .member-card__footer { padding: 14px 20px 20px; }
+
 @media (max-width: 767.98px) {
     .ur-admin-panel { padding: 16px; }
-    .ur-admin-profile-card__badges { align-items: flex-start; flex-direction: row; }
+    #member-data { margin: 16px -16px -16px; padding: 16px 16px 4px; }
     .ur-admin-profile-card__head { flex-direction: column; }
     .ur-admin-pv-card__photos { justify-content: flex-start; }
 
-    /* The mini-table crams 4 columns of member data (label+value x2) into
-       one row — fine on desktop, but on a narrow phone the cells get
-       crushed/illegible. Stack each label/value pair onto its own line. */
-    .ur-admin-mini-table,
-    .ur-admin-mini-table tbody,
-    .ur-admin-mini-table tr,
-    .ur-admin-mini-table td {
-        display: block;
-        width: 100%;
-    }
-    .ur-admin-mini-table td { border-bottom: 0; padding: 3px 10px; text-align: center; }
-    .ur-admin-mini-table tr:not(:last-child) {
-        border-bottom: 1px solid var(--ur-dash-border);
-        padding-bottom: 4px;
-        margin-bottom: 4px;
-    }
+    /* Member list card, mobile: show the real member-card (same one members/
+       guests see) instead of the full admin detail view — matches the live
+       site look, and admins drill into Profile Preview for admin-only
+       actions rather than scrolling a long detail card per row. */
+    .ur-admin-mobile-card { display: block; }
+    .ur-admin-profile-card__media,
+    .ur-admin-profile-card__body { display: none; }
 }
 
 @media (max-width: 480px) {
@@ -639,4 +681,175 @@ table.ur-admin-table .ur-admin-icon-link:hover { color: var(--ur-dash-green); }
         height: auto;
         aspect-ratio: 1 / 1;
     }
+}
+
+/* ---------------------------------------------------------- */
+/* Profile Preview (admin/profile/preview/{dataid})              */
+/* ---------------------------------------------------------- */
+.ur-profile-preview__crumbs {
+    font-size: 12.5px;
+    color: var(--ur-dash-text-muted);
+    margin-bottom: 14px;
+}
+.ur-profile-preview__crumbs a { color: var(--ur-dash-text-muted); text-decoration: none; }
+.ur-profile-preview__crumbs a:hover { color: var(--ur-dash-green); }
+
+.ur-profile-preview__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: var(--ur-dash-green);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+.ur-profile-preview__header h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; color: #fff; }
+.ur-profile-preview__header p { margin: 0; font-size: 12.5px; color: rgba(255,255,255,.7); }
+.ur-profile-preview__header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.ur-viewport-toggle { display: inline-flex; background: rgba(255,255,255,.12); border-radius: 8px; padding: 3px; }
+.ur-viewport-toggle button {
+    border: none; background: transparent; color: rgba(255,255,255,.75);
+    font-size: 12.5px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+}
+.ur-viewport-toggle button.is-active { background: #fff; color: var(--ur-dash-green); }
+
+.ur-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; font-weight: 700; padding: 9px 16px; border-radius: 8px;
+    text-decoration: none; cursor: pointer; border: none; white-space: nowrap;
+}
+.ur-btn--ghost-light { background: rgba(255,255,255,.12); color: #fff; }
+.ur-btn--ghost-light:hover { background: rgba(255,255,255,.2); color: #fff; }
+.ur-btn--gold { background: var(--ur-dash-gold); color: var(--ur-dash-green); }
+.ur-btn--gold:hover { color: var(--ur-dash-green); opacity: .92; }
+.ur-btn--dark { background: var(--ur-dash-green); color: #fff; }
+.ur-btn--dark:hover { color: #fff; opacity: .92; }
+.ur-btn--outline { background: #fff; color: var(--ur-dash-text); border: 1px solid var(--ur-dash-border); }
+.ur-btn--outline:hover { border-color: var(--ur-dash-green); color: var(--ur-dash-green); }
+.ur-btn--danger-outline { background: #fff; color: var(--ur-dash-red); border: 1px solid rgba(181,103,74,.35); }
+.ur-btn--danger-outline:hover { background: rgba(181,103,74,.08); }
+
+.ur-profile-preview__body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .ur-profile-preview__body { grid-template-columns: 1fr; }
+}
+
+.ur-profile-preview__panel {
+    background: #fff;
+    border: 1px solid var(--ur-dash-border);
+    border-radius: 14px;
+    padding: 20px;
+}
+.ur-profile-preview__panel h3 {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 700; color: var(--ur-dash-text);
+    margin: 0 0 16px;
+}
+.ur-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ur-dash-gold); display: inline-block; }
+
+.ur-profile-preview__frame {
+    background: var(--ur-dash-bg);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+.ur-profile-preview__frame .member-card { max-width: 340px; width: 100%; }
+/* This card is a read-only preview — its footer links (View Full Profile /
+   Express Interest) are wired for a real member's own session and would
+   otherwise act using the ADMIN's account, so hide them entirely rather
+   than showing a disabled-but-still-visible button that could still invite
+   a click. Done here rather than touching the shared member-card partial
+   itself, which other pages still use fully interactive. */
+.ur-profile-preview__frame .member-card__footer { display: none; }
+/* Mobile-viewport simulation is just a narrower frame for now — full
+   mobile-specific card styling is a follow-up, not part of this pass. */
+.ur-profile-preview__frame.is-mobile { max-width: 380px; margin: 0 auto; }
+
+.ur-admin-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 18px;
+}
+.ur-admin-controls-grid label {
+    display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .4px;
+    text-transform: uppercase; color: var(--ur-dash-text-muted); margin-bottom: 6px;
+}
+
+.ur-section-label {
+    display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .4px;
+    text-transform: uppercase; color: var(--ur-dash-text-muted);
+    margin: 20px 0 8px;
+    border-top: 1px solid var(--ur-dash-border);
+    padding-top: 16px;
+}
+.ur-section-label .ur-hint { text-transform: none; font-weight: 400; letter-spacing: 0; }
+.ur-hint { font-size: 11.5px; color: var(--ur-dash-text-muted); margin: 6px 0 0; }
+
+.ur-current-package { font-size: 14px; font-weight: 700; color: var(--ur-dash-text); }
+
+.ur-profile-preview__actions-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+
+.ur-segmented { display: inline-flex; border: 1px solid var(--ur-dash-border); border-radius: 8px; overflow: hidden; }
+.ur-segmented button {
+    border: none; background: #fff; color: var(--ur-dash-text-muted);
+    font-size: 12.5px; font-weight: 700; padding: 9px 18px; cursor: pointer;
+}
+.ur-segmented button + button { border-left: 1px solid var(--ur-dash-border); }
+.ur-segmented button.is-active { background: var(--ur-dash-green); color: #fff; }
+
+/* ---------------------------------------------------------- */
+/* Profile Preview — responsive                                  */
+/* ---------------------------------------------------------- */
+@media (max-width: 767.98px) {
+    .ur-profile-preview__header {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 18px;
+    }
+    .ur-profile-preview__header-actions {
+        justify-content: space-between;
+    }
+    .ur-admin-controls-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .ur-profile-preview__crumbs { font-size: 11.5px; word-break: break-word; }
+
+    .ur-profile-preview__header { padding: 16px; gap: 12px; }
+    .ur-profile-preview__header h2 { font-size: 17px; }
+    .ur-profile-preview__header-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    .ur-profile-preview__header-actions .ur-btn,
+    .ur-profile-preview__header-actions .ur-viewport-toggle {
+        width: 100%;
+        justify-content: center;
+    }
+    .ur-viewport-toggle { padding: 3px; }
+    .ur-viewport-toggle button { flex: 1; }
+
+    .ur-profile-preview__panel { padding: 16px; }
+    .ur-profile-preview__frame { padding: 14px; }
+    .ur-profile-preview__frame .member-card { max-width: 100%; }
+
+    .ur-admin-controls-grid { grid-template-columns: 1fr; gap: 12px; }
+
+    .ur-profile-preview__actions-row .ur-btn { flex: 1 1 calc(50% - 5px); justify-content: center; }
+
+    .ur-segmented { display: flex; width: 100%; }
+    .ur-segmented button { flex: 1; padding: 9px 8px; }
 }

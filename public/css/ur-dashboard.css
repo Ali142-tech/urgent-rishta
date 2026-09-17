@@ -21,7 +21,7 @@
     --ur-dash-topbar-h: 68px;
 }
 
-.ur-dash-body { background: var(--ur-dash-bg); }
+.ur-dash-body { background: var(--ur-dash-bg); overflow-x: hidden; }
 
 .ur-dash-shell {
     display: flex;

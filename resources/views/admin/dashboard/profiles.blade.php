@@ -1,5 +1,10 @@
 @extends('layouts.admin.master')
 @section('dashboard-title', 'Member Profiles')
+@push('styles')
+{{-- Needed for the mobile-only card view in memberdata.blade.php, which
+     reuses member-card__* classes (not the outer boxed .member-card). --}}
+<link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
+@endpush
 @section('admin-content')
 <div class="ur-admin-header">
     <h2>Member Profiles</h2>
