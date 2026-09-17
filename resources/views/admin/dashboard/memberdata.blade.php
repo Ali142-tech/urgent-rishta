@@ -44,7 +44,21 @@
                     <span class="member-card__ribbon member-card__ribbon--updated">Updated</span>
                 @endif
                 @if($member->photo_verification_status === 'verified')
-                    <span class="member-card__badge--verified"><i class="fa fa-check-circle"></i> Verified</span>
+                    <span class="member-card__badge--verified"><i class="fa fa-check-circle"></i> Verified <i class="fa fa-shield"></i></span>
+                @endif
+                @if(!empty($member->lbl_package))
+                    @php
+                        $packageSlug = \Illuminate\Support\Str::slug($member->lbl_package);
+                        $packageIcon = match ($packageSlug) {
+                            'platinum' => '<i class="fa fa-star"></i>',
+                            'diamond' => '<i class="fa fa-diamond"></i>',
+                            'royal', 'imperial' => '&#128081;',
+                            default => '<i class="fa fa-diamond"></i>',
+                        };
+                    @endphp
+                    <span class="member-card__badge--package member-card__badge--package-{{ $packageSlug }}">
+                        {!! $packageIcon !!} {{ $member->lbl_package }}
+                    </span>
                 @endif
                 <span class="member-card__id-badge">ID: {{ $member->dataid }}</span>
             </div>
