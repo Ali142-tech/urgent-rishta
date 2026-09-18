@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class RegisterController extends Controller
 {
@@ -899,10 +900,25 @@ class RegisterController extends Controller
         return $n;
     }
 
+    /**
+     * $n is digits-only with the country's dial code already prepended
+     * (see normalizePhoneNumber(), e.g. "923001234567") — previously this
+     * only checked "digits, length >= 7", which happily accepted a
+     * Pakistani-shaped number under any other country's dial code. Now
+     * uses the same real per-country validation (libphonenumber, via
+     * propaganistas/laravel-phone) as the consultation-request form.
+     */
     private function validPhoneNumber($n)
     {
         $n = preg_replace('/\D+/', '', (string) $n);
-        return preg_match('/^\d+$/', $n) == 1 && strlen($n) >= 7;
+        if ($n === '') {
+            return false;
+        }
+        try {
+            return (new PhoneNumber('+' . $n))->isValid();
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     private function maskEmail(string $email): string
