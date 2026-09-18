@@ -166,6 +166,39 @@ class Profile extends Model {
         return "https://flagcdn.com/w{$width}/{$code}.png";
     }
 
+    /**
+     * All of this member's photos (thumbnail-sized, blur/hidden-respecting —
+     * same rules as getProfileImage()), for the member-card carousel. Falls
+     * back to a single-element array with the gender default avatar when
+     * there are no real photos, so callers can always safely index [0].
+     */
+    public function getCardImages($tiny = null) {
+        if ($this->photo_visibility === 'hidden') {
+            return [self::defaultImage($this->gender)];
+        }
+
+        $images = $this->images;
+        if (!empty($images)) {
+            if (!is_array($images))
+                $images = explode(',', $images);
+        } else {
+            $images = [];
+        }
+
+        $paths = [];
+        foreach ($images as $image) {
+            if (empty($image)) continue;
+            $filename = explode("/", $image)[2] ?? null;
+            if (!$filename) continue;
+            $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur() ? $this->getBlurName($filename) : "thumbnail_".($tiny?"sm_":"").$filename);
+            if (file_exists(public_path($path))) {
+                $paths[] = $path;
+            }
+        }
+
+        return !empty($paths) ? $paths : [self::defaultImage($this->gender)];
+    }
+
     public function getLightGalleryImages() {
         $lightgallery = array();
         // Admin-hidden photos must not be reachable via the gallery either —

@@ -286,13 +286,31 @@ class AdminController extends Controller
         if ($currentPage < 1) $currentPage = 1;
         if ($numPages > 0 && $currentPage > $numPages) $currentPage = $numPages;
 
+        $members = Profile::profiles("`u`.`admin` = 0", null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1));
+
+        // The list+detail layout (desktop) shows one member's full summary
+        // in the right-hand panel. ?selected=<dataid> (set via pushState
+        // when clicking a row — see loadMemberDetail() in profiles.blade.php)
+        // lets that be bookmarked/shared; otherwise default to the first row
+        // on the current page, same as the mockup.
+        $selectedDataid = request()->query('selected');
+        $selectedMember = null;
+        if ($selectedDataid) {
+            $quoted = "'" . addslashes($selectedDataid) . "'";
+            $selectedMember = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+        }
+        if (!$selectedMember) {
+            $selectedMember = collect($members)->first();
+        }
+
         $view = view('admin.dashboard.memberdata')->with([
             'currentPage' => $currentPage,
             'pageSize' => $pageSize,
             'total' => $total,
             'numPages' => $numPages,
-            'members' => Profile::profiles("`u`.`admin` = 0", null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1)),
-            'packages' => MasterData::where('type', '=', 'PACKAGE')->get()
+            'members' => $members,
+            'packages' => MasterData::where('type', '=', 'PACKAGE')->get(),
+            'selectedMember' => $selectedMember,
         ]);
 
         if (request()->ajax()) {
@@ -301,6 +319,25 @@ class AdminController extends Controller
                 'html' => $view->renderSections()['admin-content']
             ]; // only return whats in the main-content section
         } else return $view;
+    }
+
+    /**
+     * AJAX-loaded right-hand summary panel for the Member Profiles
+     * list+detail layout — clicking a row in the list fetches this instead
+     * of a full page reload (see loadMemberDetail() in profiles.blade.php).
+     */
+    function profilePanel($dataid)
+    {
+        $quoted = "'" . addslashes($dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+        if (!$member) {
+            return response()->json(['code' => '404', 'message' => 'Member not found.'], 404);
+        }
+
+        return [
+            'code' => '200',
+            'html' => view('admin.dashboard.profile-detail-panel', ['member' => $member])->render(),
+        ];
     }
 
     /** Website Upgrade Brief §9 "Photo & Identity Verification" module. */

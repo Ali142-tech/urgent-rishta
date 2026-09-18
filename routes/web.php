@@ -58,6 +58,7 @@ Route::get('member/recommended-matches', [App\Http\Controllers\HomeController::c
 // Admin page routes
 Route::get('admin/dashboard', [App\Http\Controllers\AdminController::class, 'dashboardOverview']); // Dashboard Overview landing page (stat cards, growth, recent activity)
 Route::get('admin/profiles', [App\Http\Controllers\AdminController::class, 'profiles']); // route to index which will list profiles
+Route::get('admin/profile/panel/{id}', [App\Http\Controllers\AdminController::class, 'profilePanel']); // AJAX-loaded detail panel for the Member Profiles list+detail layout
 Route::post('admin/profiles/refresh', [App\Http\Controllers\AdminController::class, 'refreshProfiles']); // list all profiles in admin dashboard
 Route::get('admin/interests', [App\Http\Controllers\AdminController::class, 'interests']);
 Route::post('admin/interests/refresh', [App\Http\Controllers\AdminController::class, 'refreshInterests']); // list all interests in admin dashboard

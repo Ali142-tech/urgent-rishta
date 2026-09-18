@@ -22,29 +22,52 @@
     pre-generated, else the pre-generated whole-image blur, else a generic
     gender silhouette — never the sharp original.
 --}}
-<?php use App\User; $hideImage = $hideImage ?? false; $hiddenImageUrl = $hideImage ? ($member->homepageFaceBlurredImage ?? $member->getBlurredProfileImage()) : null; ?>
+<?php
+use App\User;
+use Illuminate\Support\Str;
+$hideImage = $hideImage ?? false;
+$hiddenImageUrl = $hideImage ? ($member->homepageFaceBlurredImage ?? $member->getBlurredProfileImage()) : null;
+// Guests on the homepage slider only ever get the single pre-blurred
+// image (never the real gallery) — the carousel is member-card-images
+// only, so guest/hideImage mode stays a single static photo.
+$cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages();
+$packageSlug = !empty($member->lbl_package) ? Str::slug($member->lbl_package) : null;
+$packageIcon = match ($packageSlug) {
+    'platinum' => '<i class="fa fa-star"></i>',
+    'diamond' => '<i class="fa fa-diamond"></i>',
+    'royal', 'imperial' => '&#128081;', // crown emoji
+    default => '<i class="fa fa-diamond"></i>',
+};
+?>
 <div class="member-card" id="block_{{$member->dataid}}">
     <div class="member-card__photo">
-        <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-            <span class="member-card__photo-bg" style="background-image:url('{{ $hideImage ? $hiddenImageUrl : $member->getProfileImage() }}')"></span>
-            <img src="{{ $hideImage ? $hiddenImageUrl : $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
-        </a>
+        @foreach($cardImages as $i => $cardImage)
+            <a class="member-card__slide {{ $i === 0 ? 'is-active' : '' }}" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                <span class="member-card__photo-bg" style="background-image:url('{{ $cardImage }}')"></span>
+                <img src="{{ $cardImage }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
+            </a>
+        @endforeach
+        @if(count($cardImages) > 1)
+            <button type="button" class="member-card__nav member-card__nav--prev" onclick="return cardCarouselNav(event, this, -1);" aria-label="Previous photo">&lsaquo;</button>
+            <button type="button" class="member-card__nav member-card__nav--next" onclick="return cardCarouselNav(event, this, 1);" aria-label="Next photo">&rsaquo;</button>
+        @endif
         @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
             <span class="member-card__ribbon member-card__ribbon--new">New</span>
         @elseif(round((time() - strtotime($member->updated_at))/(604800)) <= config('app.updated_profile_duration'))
             <span class="member-card__ribbon member-card__ribbon--updated">Updated</span>
         @endif
         @if($member->photo_verification_status === 'verified')
-            <span class="member-card__badge--verified"><i class="fa fa-check-circle"></i> Verified</span>
+            <span class="member-card__badge--verified"><i class="fa fa-check-circle"></i> Verified <i class="fa fa-shield"></i></span>
         @endif
-        @if(!empty($member->lbl_package))
-            <span class="member-card__badge--package member-card__badge--package-{{ \Illuminate\Support\Str::slug($member->lbl_package) }}">
-                <i class="fa fa-diamond"></i> {{ $member->lbl_package }}
+        @if($packageSlug)
+            <span class="member-card__badge--package member-card__badge--package-{{ $packageSlug }}">
+                {!! $packageIcon !!} {{ $member->lbl_package }}
             </span>
         @endif
         <span class="member-card__id-badge">
             @auth
                 ID: {{$member->dataid}}
+                <i class="fa fa-clipboard member-card__id-copy" onclick="return copyMemberId(event, '{{$member->dataid}}');" title="Copy ID"></i>
             @endauth
             @guest
                 <i class="fa fa-lock"></i> ID Hidden

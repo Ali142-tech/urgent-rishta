@@ -54,6 +54,51 @@
     height: 100%;
 }
 
+/* Carousel slides — stacked on top of each other, only .is-active shown.
+   Selector needs to out-specificity ".member-card__photo a" above. */
+.member-card__photo a.member-card__slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+}
+
+.member-card__photo a.member-card__slide.is-active {
+    display: block;
+}
+
+.member-card__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 46, 36, 0.55);
+    color: #fff;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background .2s ease;
+}
+
+.member-card__nav:hover {
+    background: rgba(15, 46, 36, 0.85);
+}
+
+.member-card__nav--prev {
+    left: 8px;
+}
+
+.member-card__nav--next {
+    right: 8px;
+}
+
 /* Member photos are only ever generated up to ~210px on their longest
    side, so forcing them to `cover` a much larger box upscales and
    crops them hard (blurry, oddly zoomed faces). We show the photo
@@ -112,6 +157,9 @@
     top: 10px;
     right: 10px;
     z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: rgba(15, 46, 36, 0.6);
     color: #fff;
     font-size: 11px;
@@ -120,6 +168,16 @@
     padding: 4px 9px;
     border-radius: 20px;
     pointer-events: none;
+}
+
+.member-card__id-copy {
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: .85;
+}
+
+.member-card__id-copy:hover {
+    opacity: 1;
 }
 
 /* Admin-verified badge — bottom-left over the photo so it never

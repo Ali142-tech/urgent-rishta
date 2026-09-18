@@ -22,6 +22,37 @@
         }
     }
 
+    /** Prev/next through a member-card's photo carousel (member-card.blade.php) without navigating to the profile. */
+    function cardCarouselNav(event, btn, dir) {
+        event.stopPropagation();
+        event.preventDefault();
+        var photoEl = btn.closest('.member-card__photo');
+        var slides = photoEl.querySelectorAll('.member-card__slide');
+        if (slides.length < 2) return false;
+        var currentIndex = 0;
+        slides.forEach(function (s, i) {
+            if (s.classList.contains('is-active')) currentIndex = i;
+        });
+        var nextIndex = (currentIndex + dir + slides.length) % slides.length;
+        slides[currentIndex].classList.remove('is-active');
+        slides[nextIndex].classList.add('is-active');
+        return false;
+    }
+
+    /** Copy a member's ID to the clipboard from the member-card ID badge. */
+    function copyMemberId(event, dataid) {
+        event.stopPropagation();
+        event.preventDefault();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(dataid).then(function () {
+                showAlert('success', 'Member ID copied.', 1500);
+            }).catch(function () {
+                showAlert('danger', 'Could not copy the ID.', 2000);
+            });
+        }
+        return false;
+    }
+
     function register_request() {
         swal({
             'title': 'Register for Full Access',
