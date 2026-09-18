@@ -17,7 +17,12 @@
              Clicking it AJAX-loads the full summary into the right-hand
              panel instead of navigating away; see loadMemberDetail(). --}}
         <div class="ur-admin-list-item {{ isset($selectedMember) && $selectedMember && $selectedMember->dataid === $member->dataid ? 'is-active' : '' }}" onclick="loadMemberDetail('{{ $member->dataid }}', this);">
-            <span class="ur-admin-list-item__thumb" style="background-image:url('{{ $member->getProfileImage() }}')"></span>
+            <span class="ur-avatar-wrap">
+                <span class="ur-admin-list-item__thumb" style="background-image:url('{{ $member->getProfileImage() }}')"></span>
+                @if($member->isOnline())
+                    <span class="ur-online-dot" title="Online in the last month"></span>
+                @endif
+            </span>
             <div class="ur-admin-list-item__body">
                 <div class="ur-admin-list-item__name">{{ $member->first_name }} {{ $member->last_name }}</div>
                 <div class="ur-admin-list-item__sub">
@@ -73,7 +78,12 @@
                 <span class="member-card__id-badge">ID: {{ $member->dataid }}</span>
             </div>
             <div class="member-card__body">
-                <h3 class="member-card__name">{{ $member->first_name }}</h3>
+                <h3 class="member-card__name">
+                    @if($member->isOnline())
+                        <span class="member-card__online-dot" title="Online in the last month"></span>
+                    @endif
+                    {{ $member->first_name }}
+                </h3>
                 <ul class="member-card__quick">
                     @if(!empty($member->birthday))<li><i class="fa fa-birthday-cake"></i>{{ date_diff(date_create($member->birthday), date_create('now'))->y }} yrs</li>@endif
                     @if(!empty($member->height))<li><i class="fa fa-arrows-v"></i>{{ $member->height }}</li>@endif

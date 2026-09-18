@@ -76,6 +76,9 @@ $packageIcon = match ($packageSlug) {
     </div>
     <div class="member-card__body">
         <h3 class="member-card__name">
+            @if($member->isOnline())
+                <span class="member-card__online-dot" title="Online in the last month"></span>
+            @endif
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">{{$member->first_name}}</a>
         </h3>
         <ul class="member-card__quick">

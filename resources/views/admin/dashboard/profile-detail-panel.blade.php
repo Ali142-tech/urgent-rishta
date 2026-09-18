@@ -28,7 +28,12 @@
          collision while both are on the page at once. --}}
     <div class="ur-detail-panel" data-dataid="{{ $member->dataid }}">
         <div class="ur-detail-panel__head">
-            <img class="ur-detail-panel__photo" src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
+            <span class="ur-avatar-wrap">
+                <img class="ur-detail-panel__photo" src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
+                @if($member->isOnline())
+                    <span class="ur-online-dot ur-online-dot--lg" title="Online in the last month"></span>
+                @endif
+            </span>
             <div class="ur-detail-panel__who">
                 <h3>{{ $member->first_name }} {{ $member->last_name }}</h3>
                 <p class="ur-detail-panel__contact">

@@ -199,6 +199,15 @@ class Profile extends Model {
         return !empty($paths) ? $paths : [self::defaultImage($this->gender)];
     }
 
+    /**
+     * "Online" for the green-dot indicator = logged in within the last month.
+     * Profile::profiles() already selects `u.*` (users.last_login_at included),
+     * so this is available on every Profile row with no extra query.
+     */
+    public function isOnline() {
+        return !empty($this->last_login_at) && Carbon::parse($this->last_login_at)->gt(now()->subMonth());
+    }
+
     public function getLightGalleryImages() {
         $lightgallery = array();
         // Admin-hidden photos must not be reachable via the gallery either —
