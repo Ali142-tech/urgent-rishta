@@ -44,7 +44,7 @@
                 <a href="{{ url('member/profile') }}"><i class="fa fa-user"></i> My Profile</a>
                 <a href="{{ url('member/profile/password/update') }}"><i class="fa fa-key"></i> Change Password</a>
                 @if(User::retrieveUserObject()->admin == 1)
-                <a href="{{ url('admin/profiles') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
+                <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
                 @endif
                 <button type="button" class="is-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fa fa-power-off"></i> Log Out

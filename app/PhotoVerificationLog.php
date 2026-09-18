@@ -13,6 +13,11 @@ class PhotoVerificationLog extends Model
         'action', 'reason',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     /**
      * Record one verification decision. $admin may be null (shouldn't happen
      * in practice — these actions require an authenticated admin — but this

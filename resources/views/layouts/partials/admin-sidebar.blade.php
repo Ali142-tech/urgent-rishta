@@ -16,6 +16,11 @@
 
     <ul class="ur-dash-nav">
         <li>
+            <a href="{{ url('admin/dashboard') }}" class="{{ request()->is('admin/dashboard') ? 'is-active' : '' }}">
+                <i class="fa fa-tachometer"></i> Dashboard
+            </a>
+        </li>
+        <li>
             <a href="{{ url('admin/profiles') }}" class="{{ request()->is('admin/profiles') ? 'is-active' : '' }}">
                 <i class="fa fa-user"></i> Profiles
             </a>

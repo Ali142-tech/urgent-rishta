@@ -106,6 +106,168 @@ class AdminController extends Controller
         return redirect()->route('admin.campaigns.profile-completion');
     }
 
+    /**
+     * Admin "Dashboard Overview" landing page — stat cards, membership
+     * growth, package distribution, recent activity and pending approvals.
+     * Everything here is built from real tables; there's no PKR revenue or
+     * CNIC-verification data in this app, so revenue is shown per-currency
+     * (the `payments` table is Stripe/USD+GBP, never PKR) and "pending
+     * approvals" reuses the real photo-verification queue.
+     */
+    function dashboardOverview()
+    {
+        $now = now();
+        $startOfThisMonth = $now->copy()->startOfMonth();
+        $startOfLastMonth = $now->copy()->subMonthNoOverflow()->startOfMonth();
+
+        // --- Stat cards ---------------------------------------------------
+        $totalMembers = User::where('admin', 0)->count();
+        $totalMembersAtMonthStart = User::where('admin', 0)->where('created_at', '<', $startOfThisMonth)->count();
+        $totalMembersGrowthPct = $totalMembersAtMonthStart > 0
+            ? round((($totalMembers - $totalMembersAtMonthStart) / $totalMembersAtMonthStart) * 100, 1)
+            : null;
+
+        $requiredPhotos = ProfileController::REQUIRED_PHOTO_COUNT;
+        $pendingVerification = User::where('photo_verification_status', 'pending')
+            ->has('regularImages', '>=', $requiredPhotos)
+            ->count();
+
+        $activeMemberships = User::where('admin', 0)->where('active', 1)->count();
+        $activeMembershipsAtMonthStart = User::where('admin', 0)->where('active', 1)
+            ->where('created_at', '<', $startOfThisMonth)->count();
+        $activeGrowthPct = $activeMembershipsAtMonthStart > 0
+            ? round((($activeMemberships - $activeMembershipsAtMonthStart) / $activeMembershipsAtMonthStart) * 100, 1)
+            : null;
+
+        $appointmentsToday = Appointment::whereDate('appointment_date', $now->toDateString())->count();
+        $appointmentsUnconfirmedToday = Appointment::whereDate('appointment_date', $now->toDateString())
+            ->where('status', 'pending')->count();
+
+        // Revenue — real `payments` rows only (status=paid), grouped by
+        // currency since this app has never actually charged in PKR.
+        $revenueThisMonth = DB::table('payments')->where('status', 'paid')
+            ->where('paid_at', '>=', $startOfThisMonth)
+            ->select('currency', DB::raw('SUM(amount) as total'))
+            ->groupBy('currency')->pluck('total', 'currency');
+        $revenueLastMonth = DB::table('payments')->where('status', 'paid')
+            ->whereBetween('paid_at', [$startOfLastMonth, $startOfThisMonth])
+            ->select('currency', DB::raw('SUM(amount) as total'))
+            ->groupBy('currency')->pluck('total', 'currency');
+
+        // --- Membership growth (last 6 months, new non-admin registrations) ---
+        $membershipGrowth = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthStart = $now->copy()->subMonthsNoOverflow($i)->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+            $membershipGrowth[] = [
+                'label' => $monthStart->format('M'),
+                'count' => User::where('admin', 0)->whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+            ];
+        }
+
+        // --- Members by package (two separate breakdowns) -----------------
+        $matchmakingTiers = MasterData::where('type', 'PACKAGE')->orderByRaw('CAST(dataid AS UNSIGNED)')->get();
+        $packageDistribution = [];
+        foreach ($matchmakingTiers as $tier) {
+            $count = User::where('admin', 0)->where('package', $tier->dataid)->count();
+            $packageDistribution[] = [
+                'name' => $tier->name,
+                'slug' => Str::slug($tier->name),
+                'count' => $count,
+                'pct' => $totalMembers > 0 ? round(($count / $totalMembers) * 100) : 0,
+            ];
+        }
+        $assignedMatchmakingCount = array_sum(array_column($packageDistribution, 'count'));
+        $packageDistribution[] = [
+            'name' => 'Unassigned', 'slug' => 'unassigned',
+            'count' => $totalMembers - $assignedMatchmakingCount,
+            'pct' => $totalMembers > 0 ? round((($totalMembers - $assignedMatchmakingCount) / $totalMembers) * 100) : 0,
+        ];
+
+        $onlineTiers = OnlinePackage::orderBy('id')->get();
+        $onlinePackageDistribution = [];
+        foreach ($onlineTiers as $tier) {
+            $count = User::where('admin', 0)->where('online_package', $tier->dataid)->count();
+            $onlinePackageDistribution[] = [
+                'name' => $tier->name,
+                'slug' => Str::slug($tier->name),
+                'count' => $count,
+                'pct' => $totalMembers > 0 ? round(($count / $totalMembers) * 100) : 0,
+            ];
+        }
+        $assignedOnlineCount = array_sum(array_column($onlinePackageDistribution, 'count'));
+        $onlinePackageDistribution[] = [
+            'name' => 'None', 'slug' => 'none',
+            'count' => $totalMembers - $assignedOnlineCount,
+            'pct' => $totalMembers > 0 ? round((($totalMembers - $assignedOnlineCount) / $totalMembers) * 100) : 0,
+        ];
+
+        // --- Recent activity (merged real events, newest first) -----------
+        $recentActivity = collect();
+
+        User::where('admin', 0)->orderByDesc('created_at')->limit(5)->get(['first_name', 'last_name', 'created_at'])
+            ->each(function ($u) use ($recentActivity) {
+                $recentActivity->push([
+                    'type' => 'registered',
+                    'text' => trim($u->first_name . ' ' . $u->last_name) . ' registered',
+                    'at' => $u->created_at,
+                ]);
+            });
+
+        PhotoVerificationLog::with(['user' => fn ($q) => $q->select('id', 'dataid', 'first_name', 'last_name')])
+            ->orderByDesc('created_at')->limit(5)->get()
+            ->each(function ($log) use ($recentActivity) {
+                $name = $log->user ? trim($log->user->first_name . ' ' . $log->user->last_name) : 'A member';
+                $verb = match ($log->action) {
+                    'approved' => "$name's photo was approved",
+                    'rejected' => "$name's photo was flagged for review",
+                    'reopened' => "$name's photo verification was reopened",
+                    default => "$name's photo verification was updated",
+                };
+                $recentActivity->push(['type' => 'photo', 'text' => $verb, 'at' => $log->created_at]);
+            });
+
+        DB::table('payments')->where('status', 'paid')->orderByDesc('paid_at')->limit(5)
+            ->get(['amount', 'currency', 'paid_at'])
+            ->each(function ($p) use ($recentActivity) {
+                $recentActivity->push([
+                    'type' => 'payment',
+                    'text' => 'Payment received — ' . $p->currency . ' ' . number_format($p->amount, 2),
+                    'at' => $p->paid_at,
+                ]);
+            });
+
+        Appointment::orderByDesc('created_at')->limit(5)->get()
+            ->each(function ($a) use ($recentActivity) {
+                $recentActivity->push([
+                    'type' => 'appointment',
+                    'text' => 'Consultation requested by ' . ($a->contact_name ?: 'a guest'),
+                    'at' => $a->created_at,
+                ]);
+            });
+
+        $recentActivity = $recentActivity->filter(fn ($a) => !empty($a['at']))
+            ->sortByDesc('at')->take(8)->values();
+
+        // --- Pending approvals (real photo-verification queue) ------------
+        $pendingApprovals = User::where('photo_verification_status', 'pending')
+            ->has('regularImages', '>=', $requiredPhotos)
+            ->orderByDesc('updated_at')
+            ->limit(5)
+            ->get(['dataid', 'first_name', 'last_name']);
+
+        return view('admin.dashboard.overview', compact(
+            'totalMembers', 'totalMembersGrowthPct',
+            'pendingVerification',
+            'activeMemberships', 'activeGrowthPct',
+            'appointmentsToday', 'appointmentsUnconfirmedToday',
+            'revenueThisMonth', 'revenueLastMonth',
+            'membershipGrowth',
+            'packageDistribution', 'onlinePackageDistribution',
+            'recentActivity', 'pendingApprovals'
+        ));
+    }
+
     function profiles()
     {
         $pageSize = 10;

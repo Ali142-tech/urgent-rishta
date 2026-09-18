@@ -853,3 +853,106 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
     .ur-segmented { display: flex; width: 100%; }
     .ur-segmented button { flex: 1; padding: 9px 8px; }
 }
+
+/* ---------------------------------------------------------- */
+/* Dashboard Overview page                                      */
+/* ---------------------------------------------------------- */
+
+.ur-ov-header { margin-bottom: 20px; }
+.ur-ov-header h2 { margin: 0 0 4px; font-size: 22px; font-weight: 700; color: var(--ur-dash-text); }
+.ur-ov-header p { margin: 0; font-size: 13px; color: var(--ur-dash-text-muted); }
+
+.ur-ov-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+@media (max-width: 1200px) { .ur-ov-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 767.98px) { .ur-ov-stats { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .ur-ov-stats { grid-template-columns: 1fr; } }
+
+.ur-ov-stat {
+    background: #fff;
+    border: 1px solid var(--ur-dash-border);
+    border-radius: 14px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.ur-ov-stat__label { font-size: 12px; font-weight: 600; color: var(--ur-dash-text-muted); }
+.ur-ov-stat__value { font-size: 26px; font-weight: 700; color: var(--ur-dash-text); font-family: 'Playfair Display', Georgia, serif; }
+.ur-ov-stat__delta { font-size: 11.5px; font-weight: 600; text-decoration: none; }
+.ur-ov-stat__delta.is-up { color: #1E7A46; }
+.ur-ov-stat__delta.is-down { color: var(--ur-dash-red); }
+.ur-ov-stat__delta.is-warning { color: #8a6529; }
+
+.ur-ov-stat--accent {
+    background: var(--ur-dash-green-dark);
+    border-color: var(--ur-dash-green-dark);
+}
+.ur-ov-stat--accent .ur-ov-stat__label { color: rgba(255,255,255,.65); }
+.ur-ov-stat--accent .ur-ov-stat__value { color: var(--ur-dash-gold); }
+.ur-ov-stat--accent .ur-ov-stat__delta { color: rgba(255,255,255,.75); }
+
+.ur-ov-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+    align-items: start;
+}
+@media (max-width: 900px) { .ur-ov-row { grid-template-columns: 1fr; } }
+
+/* A grid item's default min-width is `auto`, i.e. it won't shrink below its
+   content's intrinsic size — a <canvas> has no intrinsic width of its own,
+   so without this the panel (and the whole row) stretches to fit whatever
+   width Chart.js happened to render at, overflowing small screens instead
+   of the canvas resizing to fit the panel. */
+.ur-ov-row > .ur-profile-preview__panel { min-width: 0; }
+
+.ur-ov-chart-wrap { position: relative; width: 100%; height: 260px; }
+.ur-ov-chart-wrap canvas { max-width: 100%; }
+@media (max-width: 480px) { .ur-ov-chart-wrap { height: 200px; } }
+
+.ur-ov-progress__row { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; color: var(--ur-dash-text); margin-bottom: 4px; }
+.ur-ov-progress__bar { height: 8px; border-radius: 6px; background: var(--ur-dash-bg); overflow: hidden; margin-bottom: 14px; }
+.ur-ov-progress__fill { height: 100%; border-radius: 6px; background: var(--ur-dash-green); }
+.ur-ov-progress__fill--platinum { background: linear-gradient(135deg, #B8C0CC, #6D7686); }
+.ur-ov-progress__fill--diamond  { background: linear-gradient(135deg, #4FC3F7, #0277BD); }
+.ur-ov-progress__fill--royal    { background: linear-gradient(135deg, #9B59B6, #5B2C6F); }
+.ur-ov-progress__fill--imperial { background: linear-gradient(135deg, #2B2B2B, #000); }
+.ur-ov-progress__fill--unassigned,
+.ur-ov-progress__fill--none     { background: var(--ur-dash-border); }
+.ur-ov-progress__fill--online   { background: var(--ur-dash-gold); }
+
+.ur-ov-activity { list-style: none; margin: 0; padding: 0; }
+.ur-ov-activity__item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--ur-dash-border); }
+.ur-ov-activity__item:last-child { border-bottom: none; padding-bottom: 0; }
+.ur-ov-activity__dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; background: var(--ur-dash-text-muted); }
+.ur-ov-activity__dot--registered { background: var(--ur-dash-text-muted); }
+.ur-ov-activity__dot--photo { background: var(--ur-dash-red); }
+.ur-ov-activity__dot--payment { background: var(--ur-dash-gold); }
+.ur-ov-activity__dot--appointment { background: #1E7A46; }
+.ur-ov-activity__text { font-size: 13px; color: var(--ur-dash-text); }
+.ur-ov-activity__time { font-size: 11.5px; color: var(--ur-dash-text-muted); margin-top: 2px; }
+
+.ur-ov-approvals { list-style: none; margin: 0 0 12px; padding: 0; }
+.ur-ov-approval__item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--ur-dash-border); }
+.ur-ov-approval__item:last-child { border-bottom: none; }
+.ur-ov-approval__avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: var(--ur-dash-bg); color: var(--ur-dash-green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+}
+.ur-ov-approval__body { flex: 1; min-width: 0; }
+.ur-ov-approval__name { font-size: 13px; font-weight: 700; color: var(--ur-dash-text); }
+.ur-ov-approval__sub { font-size: 11.5px; color: var(--ur-dash-text-muted); }
+.ur-ov-view-all { display: block; text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ur-dash-green); text-decoration: none; }
+.ur-ov-view-all:hover { color: var(--ur-dash-gold); }
+
+@media (max-width: 767.98px) {
+    .ur-ov-stat__value { font-size: 22px; }
+}

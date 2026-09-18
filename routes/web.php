@@ -56,6 +56,7 @@ Route::match(['get', 'post'], 'member/searchresults/{refresh?}', [App\Http\Contr
 Route::get('member/recommended-matches', [App\Http\Controllers\HomeController::class, 'recommendedMatches'])->name('member.recommended-matches');
 
 // Admin page routes
+Route::get('admin/dashboard', [App\Http\Controllers\AdminController::class, 'dashboardOverview']); // Dashboard Overview landing page (stat cards, growth, recent activity)
 Route::get('admin/profiles', [App\Http\Controllers\AdminController::class, 'profiles']); // route to index which will list profiles
 Route::post('admin/profiles/refresh', [App\Http\Controllers\AdminController::class, 'refreshProfiles']); // list all profiles in admin dashboard
 Route::get('admin/interests', [App\Http\Controllers\AdminController::class, 'interests']);

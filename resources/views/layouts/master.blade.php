@@ -437,7 +437,7 @@ a.appointment-btn::before{
                                             </li>
                                             @if(User::retrieveUserObject()->admin==1)
                                             <li class="custom-nav d-lg-none">
-                                                <a class="nav-link" href="{{ url('admin/profiles') }}" aria-haspopup="true" aria-expanded="false">
+                                                <a class="nav-link" href="{{ url('admin/dashboard') }}" aria-haspopup="true" aria-expanded="false">
                                                     <i class="fa fa-cogs mr-2"></i> Dashboard
                                                 </a>
                                             </li>
@@ -502,7 +502,7 @@ a.appointment-btn::before{
                                                 <div class="dropdown-menu dropdown-menu-right ur-account-menu">
                                                     <a class="dropdown-item" href="{{ url('member/profile') }}"><i class="fa fa-user mr-2"></i> Member Dashboard</a>
                                                     @if(User::retrieveUserObject()->admin==1)
-                                                    <a class="dropdown-item" href="{{ url('admin/profiles') }}"><i class="fa fa-cogs mr-2"></i> Admin Dashboard</a>
+                                                    <a class="dropdown-item" href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs mr-2"></i> Admin Dashboard</a>
                                                     @endif
                                                 </div>
                                             </li>
