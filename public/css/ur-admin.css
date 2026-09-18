@@ -740,7 +740,12 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
        desktop-only here, so nothing needed edge spacing. Now that Search/
        Gender/Package/etc. show on mobile too, zero padding left them
        touching the box's edges directly. */
-    .ur-admin-list-detail__list { border: none; padding: 16px; }
+    /* min-width: 0 overrides the grid item's default `min-width: auto` —
+       without it, the 1fr track can't shrink this item below its content's
+       natural min-content width (e.g. the "Show Only" inline radio row),
+       so the item — and the whole page — got forced wider than the
+       viewport instead of that content wrapping to fit. */
+    .ur-admin-list-detail__list { border: none; padding: 16px; min-width: 0; }
     #member-data { margin-top: 16px; }
     .ur-admin-mobile-card { display: block; }
     .ur-admin-list-item { display: none; }

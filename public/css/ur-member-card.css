@@ -351,13 +351,16 @@
         align-items: baseline;
         justify-content: space-between;
         gap: 10px;
+        min-width: 0;
     }
-    .member-card__details li span { margin-bottom: 0; white-space: nowrap; }
+    .member-card__details li span { margin-bottom: 0; white-space: nowrap; flex-shrink: 0; }
     .member-card__details li b {
         white-space: normal;
         overflow: visible;
         text-overflow: clip;
         text-align: right;
+        min-width: 0;
+        overflow-wrap: anywhere;
     }
 }
 
