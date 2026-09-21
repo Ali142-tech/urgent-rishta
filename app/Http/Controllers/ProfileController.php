@@ -31,6 +31,7 @@ use Intervention\Image\ImageManager;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 use Mail;
 
@@ -485,7 +486,6 @@ class ProfileController extends Controller
                     $publicPath = null;
                     $salt = null;
                     try {
-                        $imageExtension = $image->getClientOriginalExtension();
                         $imageSize = $image->getSize();
                         $imageSizeInMb = floatval(number_format($imageSize / (1024 * 1024), 2));
                         if ($imageSizeInMb > 5) { // only allow images of 5 MB or less
@@ -495,9 +495,14 @@ class ProfileController extends Controller
                             continue;
                         }
 
-                        if (!$image->isValid()) {
+                        // Verifies real image content (not just a plausible
+                        // filename) and returns our own canonical extension —
+                        // see validateUploadedImage()'s docblock.
+                        $imageExtension = $this->validateUploadedImage($image);
+                        if (!$imageExtension) {
                             $invalidFiles .= ", " . $imageName;
                             $countInvalidFiles += 1;
+                            Log::warning("Rejected non-image or invalid upload: " . $imageName);
                             continue;
                         }
 
@@ -601,6 +606,12 @@ class ProfileController extends Controller
                 return ['code' => '400', 'message' => 'danger|Selfie capture is too large. Please try again.'];
             }
 
+            // Verifies real image content — see validateUploadedImage()'s docblock.
+            $extension = $this->validateUploadedImage($selfie);
+            if (!$extension) {
+                return ['code' => '400', 'message' => 'danger|That file doesn\'t look like a valid image. Please try again.'];
+            }
+
             // Only one live selfie kept per account — replace on resubmission.
             $existing = Images::where('user_id', $id)->where('is_selfie', 1)->get();
             foreach ($existing as $old) {
@@ -609,7 +620,6 @@ class ProfileController extends Controller
                 $old->delete();
             }
 
-            $extension = $selfie->getClientOriginalExtension() ?: 'jpg';
             $name = time() . '_selfie_' . $id . '.' . $extension;
             $rootImgPath = Profile::MEMBER_IMAGES_PATH;
             $path = $rootImgPath . '/' . $name;
@@ -1279,6 +1289,41 @@ class ProfileController extends Controller
                 'message' => 'Member was not found (id: ' . $dataid . ')'
             ];
         }
+    }
+
+    /**
+     * Verifies an uploaded file is genuinely an image (not just named like
+     * one) and returns the safe extension to store it under, or null if it
+     * fails validation. Security-critical: uploadImages()/uploadSelfie()
+     * used to trust getClientOriginalExtension() blindly and move the file
+     * straight into public/users (a directly web-served, script-executable
+     * folder) with no server-side content check — a file like "shell.php"
+     * could be uploaded and run directly. Laravel's 'image' rule decodes
+     * the file (getimagesize()-equivalent) to confirm it's real image data,
+     * not just a plausible filename/extension, and the returned extension
+     * is our own canonical mapping (never the client-supplied one) so a
+     * trick like "shell.php.jpg" can't smuggle a second extension through.
+     */
+    private function validateUploadedImage($file): ?string
+    {
+        if (!$file || !$file->isValid()) {
+            return null;
+        }
+
+        $validator = Validator::make(['file' => $file], [
+            'file' => 'required|image|mimes:jpeg,jpg,png,webp,gif|max:5120',
+        ]);
+        if ($validator->fails()) {
+            return null;
+        }
+
+        $mimeToExt = [
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+            'image/gif' => 'gif',
+        ];
+        return $mimeToExt[$file->getMimeType()] ?? null;
     }
 
     /**

@@ -145,8 +145,9 @@
     function resendVerificationEmail(elem, id) {
         swalConfirm("Resend Verification Email?", "Are you sure you want to resend verification email to this profile? This will override any previous verification email sent.", () => {
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "{{ url('admin/profile/resendemail') }}" + "/" + id,
+                data: { '_token': '{{ csrf_token() }}' },
                 success: function (result) {
                     if (result.code == '200') showAlert('success', result.message, 3000);
                     else showAlert('danger', result.message, 5000);
@@ -159,8 +160,9 @@
     function sendPasswordResetEmail(elem, id) {
         swalConfirm("Reset Password?", "Are you sure you want to request password reset for this profile?", () => {
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "{{ url('admin/profile/requestreset') }}" + "/" + id,
+                data: { '_token': '{{ csrf_token() }}' },
                 success: function (result) {
                     if (result.code == '200') showAlert('success', result.message, 3000);
                     else showAlert('danger', result.message, 5000);
@@ -172,8 +174,9 @@
 
     function toggleActive(elem, id) {
         $.ajax({
-            type: "get",
+            type: "post",
             url: "{{ url('admin/profile/toggle') }}" + "/" + id,
+            data: { '_token': '{{ csrf_token() }}' },
             success: function (result) {
                 if (result.code == "200") {
                     var active = result.active;

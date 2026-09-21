@@ -44,11 +44,6 @@ class AdminController extends Controller
         $this->middleware(['auth', 'admin']);
     }
 
-    public function phpInfo()
-    {
-        return phpinfo();
-    }
-
     public function artisanOptimize()
     {
         Artisan::call('optimize');
@@ -537,8 +532,14 @@ class AdminController extends Controller
             $resultCount = null;
             $members = null;
 
+            // Every value below is admin-submitted but still goes straight
+            // into a raw SQL string (Profile::profiles() has no parameter
+            // binding) — addslashes() before concatenation is required to
+            // prevent SQL injection via any of these filter fields, same as
+            // the fix applied to the public search (HomeController::search())
+            // and API search (APIController::searchProfiles()).
             if (!empty($searchTerm)) {
-                $searchTerm = strtolower($searchTerm);
+                $searchTerm = addslashes(strtolower($searchTerm));
                 $where = $where . " and (lower(`u`.`first_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`last_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`dataid`) LIKE '%" . $searchTerm . "%'" .
@@ -558,17 +559,17 @@ class AdminController extends Controller
 
             $gender = $request->gender;
             if (!empty($gender)) {
-                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`gender`='" . $gender . "'");
+                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`gender`='" . addslashes($gender) . "'");
             }
 
             $status = $request->status;
             if (!empty($status)) {
-                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`active`='" . $status . "'");
+                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`active`='" . addslashes($status) . "'");
             }
 
             $package = $request->package;
             if (!empty($package)) {
-                $where = $where . ((empty($where) ? "" : " and ") . ($package == "null" ? "`u`.`package` IS NULL" : "`u`.`package`='" . $package . "'"));
+                $where = $where . ((empty($where) ? "" : " and ") . ($package == "null" ? "`u`.`package` IS NULL" : "`u`.`package`='" . addslashes($package) . "'"));
             }
 
             if (!empty($showOnly) && $showOnly != 'all' && !empty($showWithin)) {

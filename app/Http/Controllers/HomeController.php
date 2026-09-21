@@ -250,7 +250,14 @@ class HomeController extends Controller {
         $members = collect();
 
         if ($hasSearched) {
-            $where = $selectedGender ? "`u`.`gender`='".$selectedGender."'" : "1=1";
+            // Every value below is user-supplied and goes straight into a raw
+            // SQL string (Profile::profiles() has no parameter binding), so
+            // each one MUST be escaped with addslashes() before concatenation
+            // — this was previously unescaped (SQL injection via any of these
+            // search fields, reachable by any logged-in member). Numeric
+            // fields are additionally cast to int since they sit in an
+            // unquoted context where addslashes() alone wouldn't help.
+            $where = $selectedGender ? "`u`.`gender`='".addslashes($selectedGender)."'" : "1=1";
 
             // Restrict results by package tier (admin users can search all profiles without filter).
             $visiblePackageDataids = $loggedInUser->getVisiblePackageDataidsForSearch();
@@ -264,37 +271,37 @@ class HomeController extends Controller {
             }
 
             if (!empty($request->member_id)) { // if dataid only search on dataid
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`dataid`='".$request->member_id."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`dataid`='".addslashes($request->member_id)."'");
             } else {
                 if (!empty($request->aged_from)) {
-                    $where = $where.((empty($where) ? "" : " and ")."FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/ 365.25) between ".$request->aged_from." and  ".($request->aged_to?$request->aged_to:75));
+                    $where = $where.((empty($where) ? "" : " and ")."FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/ 365.25) between ".(int) $request->aged_from." and  ".($request->aged_to ? (int) $request->aged_to : 75));
                 }
                 if (!empty($request->first_name)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`first_name`='".$request->first_name."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`first_name`='".addslashes($request->first_name)."'");
                 }
                 if (!empty($request->profession)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`profession`='".$request->profession."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`profession`='".addslashes($request->profession)."'");
                 }
                 if (!empty($request->religion)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`religion`='".$request->religion."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`religion`='".addslashes($request->religion)."'");
                 }
                 if (!empty($request->city)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`city`='".$request->city."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`city`='".addslashes($request->city)."'");
                 }
                 if (!empty($request->state)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`state`='".$request->state."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`state`='".addslashes($request->state)."'");
                 }
                 if (!empty($request->country)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`con_of_residence`='".$request->country."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`con_of_residence`='".addslashes($request->country)."'");
                 }
                 if (!empty($request->marital_status)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`marital_status`='".$request->marital_status."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`marital_status`='".addslashes($request->marital_status)."'");
                 }
                 if (!empty($request->mother_tongue)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue`='".$request->mother_tongue."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue`='".addslashes($request->mother_tongue)."'");
                 }
                 if (!empty($request->caste)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`caste`='".$request->caste."'");
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`caste`='".addslashes($request->caste)."'");
                 }
                 if (!empty($request->withpics)) {
                     $having = "`images`<>''";

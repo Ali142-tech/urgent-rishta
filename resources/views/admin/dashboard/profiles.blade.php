@@ -205,8 +205,9 @@
         elem.prop('disabled', true);
 
         $.ajax({
-            type: "get",
+            type: "post",
             url: "{{url('admin/profile/toggle/')}}" + "/" + id,
+            data: { '_token': '{{ csrf_token() }}' },
             success: function(result) {
                 elem.html(oldHtml);
                 elem.prop('disabled', false);
@@ -266,8 +267,9 @@
             elem.prop('disabled', true);
 
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "{{ url('admin/profile/resendemail')}}" + "/" + id,
+                data: { '_token': '{{ csrf_token() }}' },
                 success: function(result) {
                     elem.html(oldHtml);
                     elem.prop('disabled', false);
@@ -288,8 +290,9 @@
             elem.prop('disabled', true);
 
             $.ajax({
-                type: "get",
+                type: "post",
                 url: "{{ url('admin/profile/requestreset')}}" + "/" + id,
+                data: { '_token': '{{ csrf_token() }}' },
                 success: function(result) {
                     elem.html(oldHtml);
                     elem.prop('disabled', false);

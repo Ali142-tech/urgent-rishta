@@ -54,13 +54,18 @@ class User extends Authenticatable implements MustVerifyEmail {
         'education',
         'profession',
         'password',
-        'package',
-        'package_started_at',
-        'package_expires_at',
-        'online_package',
-        'online_package_started_at',
-        'online_package_expires_at',
     ];
+
+    /**
+     * Entitlement fields deliberately excluded from $fillable — no legitimate
+     * code path mass-assigns them (they're always set via explicit property
+     * writes, e.g. activateOnlinePackage() below, or AdminController's
+     * package-change flow), so keeping them out of $fillable closes off a
+     * mass-assignment privilege-escalation path (a user self-granting a
+     * package via a crafted request) for any future code that isn't as
+     * careful: 'package', 'package_started_at', 'package_expires_at',
+     * 'online_package', 'online_package_started_at', 'online_package_expires_at'.
+     */
 
     /**
      * The attributes that should be hidden for arrays.

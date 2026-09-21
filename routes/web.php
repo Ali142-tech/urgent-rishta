@@ -18,8 +18,14 @@ use Illuminate\Support\Facades\Artisan;
 Auth::routes(['verify' => true]);
 
 // Shaadi-style login extras (OTP via email for now; SMS later)
-Route::post('login/otp/send', [App\Http\Controllers\Auth\LoginController::class, 'sendOtp'])->name('login.otp.send');
-Route::post('login/otp/verify', [App\Http\Controllers\Auth\LoginController::class, 'verifyOtp'])->name('login.otp.verify');
+// throttle:10,1 — 10 requests/minute per IP. Unlike password login (which
+// uses ThrottlesLogins), these custom methods had NO route-level rate limit
+// at all: sendOtp() only had a 60s per-identifier resend cooldown, and
+// verifyOtp()'s only protection was a 5-guess cap tied to each OTP row —
+// neither stopped an attacker hammering the endpoint directly / requesting
+// unlimited fresh codes to reset that per-code counter.
+Route::post('login/otp/send', [App\Http\Controllers\Auth\LoginController::class, 'sendOtp'])->middleware('throttle:10,1')->name('login.otp.send');
+Route::post('login/otp/verify', [App\Http\Controllers\Auth\LoginController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('login.otp.verify');
 Route::post('login/password', [App\Http\Controllers\Auth\LoginController::class, 'loginWithPassword'])->name('login.password');
 Route::post('login/email', [App\Http\Controllers\Auth\LoginController::class, 'loginWithEmail'])->name('login.email');
 Route::get('login/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('login.google');
@@ -89,9 +95,13 @@ Route::delete('admin/profile/{id}',[App\Http\Controllers\AdminController::class,
 Route::get('admin/profiles/deleted', [App\Http\Controllers\AdminController::class, 'deletedProfiles']);
 Route::post('admin/profile/{dataid}/restore', [App\Http\Controllers\AdminController::class, 'restoreProfile']);
 Route::delete('admin/profile/{dataid}/permanent', [App\Http\Controllers\AdminController::class, 'permanentlyDeleteProfile']);
-Route::get('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
-Route::get('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
-Route::get('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
+// POST, not GET — these change real account state (toggling active status,
+// sending password-reset/verification emails), so a GET route would be
+// exploitable via CSRF (Laravel's CSRF protection doesn't cover GET, so any
+// page a logged-in admin loads could trigger these with a plain <img src>).
+Route::post('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
+Route::post('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
+Route::post('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
 Route::post('admin/profile/updatepackage/{id}',[App\Http\Controllers\AdminController::class, 'updateProfilePackage']); // update package for profile in admin dashboard
 Route::get('admin/profile/listing/{type}/{id}', [App\Http\Controllers\AdminController::class, 'showListingModal']);
 Route::get('admin/profile/package/modal/{id}', [App\Http\Controllers\AdminController::class, 'renderUpdatePackageModal']);
@@ -110,7 +120,6 @@ Route::get('admin/generate-thumbnails', [App\Http\Controllers\AdminController::c
 //generate blurs route
 Route::get('admin/generate-blurs', [App\Http\Controllers\AdminController::class, 'generateBlurs']);
 
-Route::get('admin/phpinfo', [App\Http\Controllers\AdminController::class, 'phpInfo']);
 Route::get('admin/art-optimize', [App\Http\Controllers\AdminController::class, 'artisanOptimize']);
 Route::get('admin/art-all-clear', [App\Http\Controllers\AdminController::class, 'artisanAllClear']);
 Route::get('admin/publish-image', [App\Http\Controllers\AdminController::class, 'registerPublishImageVendor']);

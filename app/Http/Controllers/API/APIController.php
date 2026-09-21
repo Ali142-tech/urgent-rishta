@@ -427,7 +427,14 @@ class APIController extends Controller {
             ]);
         }
 
-        $where = "`u`.`gender`='".$gender."'";
+        // Every value below is user-supplied (decoded JSON body) and goes
+        // straight into a raw SQL string (Profile::profiles() has no
+        // parameter binding), so each one MUST be escaped with addslashes()
+        // before concatenation — this was previously unescaped (SQL
+        // injection via the mobile/API search, reachable by any
+        // authenticated API user). aged_from/aged_to are additionally cast
+        // to int since they sit in an unquoted numeric context.
+        $where = "`u`.`gender`='".addslashes($gender)."'";
         $having = "";
 
         // Restrict results by package tier (admin users can search all profiles without filter).
@@ -443,52 +450,52 @@ class APIController extends Controller {
 
         $member_id = property_exists($data, "member_id") ? $data->member_id : "";
         if (!empty($member_id)) { // if dataid only search on dataid
-            $where = $where.((empty($where) ? "" : " and ")."`u`.`dataid`='".$request->member_id."'");
+            $where = $where.((empty($where) ? "" : " and ")."`u`.`dataid`='".addslashes($member_id)."'");
         } else {
             $aged_from = property_exists($data, "aged_from") ? $data->aged_from : "";
             if (!empty($aged_from)) {
                 $aged_to = property_exists($data, "aged_to") ? $data->aged_to : "";
-                $where = $where.((empty($where) ? "" : " and ")."FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/ 365.25) between ".$aged_from." and  ".(!empty($aged_to)?$aged_to:75));
+                $where = $where.((empty($where) ? "" : " and ")."FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/ 365.25) between ".(int) $aged_from." and  ".(!empty($aged_to) ? (int) $aged_to : 75));
             }
 
             $first_name = property_exists($data, "first_name") ? $data->first_name : "";
             if (!empty($first_name)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`first_name`='".$first_name."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`first_name`='".addslashes($first_name)."'");
             }
 
             $profession = property_exists($data, "profession") ? $data->profession : "";
             if (!empty($profession)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`profession`='".$profession."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`profession`='".addslashes($profession)."'");
             }
 
             $religion = property_exists($data, "religion") ? $data->religion : "";
             if (!empty($religion)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`religion`='".$religion."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`religion`='".addslashes($religion)."'");
             }
 
             $city = property_exists($data, "city") ? $data->city : "";
             if (!empty($city)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`city`='".$city."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`city`='".addslashes($city)."'");
             }
 
             $state = property_exists($data, "state") ? $data->state : "";
             if (!empty($state)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`state`='".$state."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`state`='".addslashes($state)."'");
             }
 
             $country = property_exists($data, "country") ? $data->country : "";
             if (!empty($country)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`con_of_residence`='".$country."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`con_of_residence`='".addslashes($country)."'");
             }
 
             $marital_status = property_exists($data, "marital_status") ? $data->marital_status : "";
             if (!empty($marital_status)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`marital_status`='".$marital_status."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`marital_status`='".addslashes($marital_status)."'");
             }
 
             $mother_tongue = property_exists($data, "mother_tongue") ? $data->mother_tongue : "";
             if (!empty($mother_tongue)) {
-                $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue`='".$mother_tongue."'");
+                $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue`='".addslashes($mother_tongue)."'");
             }
 
             $withpics = property_exists($data, "withpics") ? $data->withpics : "";
