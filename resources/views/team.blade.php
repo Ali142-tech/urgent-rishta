@@ -132,12 +132,16 @@
     }
     .tm-team-note { font-size: 13.5px; color: var(--tm-text); margin: -20px 0 28px; max-width: 620px; }
 
-    .tm-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 8px; }
+    .tm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 8px; }
     .tm-card { text-align: center; }
     .tm-card img { width: 100%; height: 260px; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 16px; box-shadow: 0 10px 24px rgba(15,46,36,.08); }
     .tm-card-img--top { object-position: center 12%; }
     .tm-card h4 { font-family: 'Playfair Display', Georgia, serif; font-weight: 600; font-size: 17px; margin: 0 0 4px; color: var(--tm-ink); }
-    .tm-card p { font-size: 12.5px; color: var(--tm-text); margin: 0 0 10px; }
+    /* min-height (2 lines) so a longer title (e.g. "Co-Founder — National &
+       International Client Handler") doesn't push that card's social icons
+       lower than the rest of the row — every card reserves the same space
+       for its role line whether it wraps or not. */
+    .tm-card p { font-size: 12.5px; line-height: 1.4; color: var(--tm-text); margin: 0 0 10px; min-height: 35px; }
 
     .tm-social { display: flex; gap: 8px; justify-content: center; list-style: none; padding: 0; margin: 0; }
     .tm-social a { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--tm-line); color: var(--tm-green); font-size: 12.5px; display: flex; align-items: center; justify-content: center; }
@@ -253,6 +257,16 @@
                 <img src="/images/profiles/usman-idrees.jpg" alt="Usman Idrees" loading="lazy" class="tm-card-img--top">
                 <h4>Usman Idrees</h4>
                 <p>Client Coordinator</p>
+                <ul class="tm-social">
+                    <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
+                    <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                    <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
+                </ul>
+            </div>
+            <div class="tm-card">
+                <img src="/images/profiles/niamat-ali.jpg" alt="Dr. Niamat Ali" loading="lazy">
+                <h4>Dr. Niamat Ali</h4>
+                <p>Co-Founder &mdash; National &amp; International Client Handler</p>
                 <ul class="tm-social">
                     <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
                     <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>

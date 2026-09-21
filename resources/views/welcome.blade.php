@@ -807,7 +807,7 @@
     }
 
     .ur-team { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 70px; }
-    .ur-team--rest { grid-template-columns: repeat(3, 1fr); }
+    .ur-team--rest { grid-template-columns: repeat(4, 1fr); }
     .ur-team__card { text-align: center; }
     .ur-team__card img { width: 100%; height: 230px; object-fit: cover; border-radius: 4px; display: block; margin-bottom: 14px; }
     .ur-team__card-img--top { object-position: center 12%; }
@@ -1071,7 +1071,7 @@
         .ur-gallery { grid-template-columns: repeat(3, 1fr); }
         .ur-contact-row { grid-template-columns: 1fr; }
         .ur-team { grid-template-columns: 1fr 1fr; }
-        .ur-team--rest { grid-template-columns: 1fr 1fr 1fr; }
+        .ur-team--rest { grid-template-columns: 1fr 1fr; }
         .ur-founder { grid-template-columns: 1fr; text-align: center; padding: 32px 28px; }
         .ur-founder__photo img { height: 320px; }
         .ur-founder__desc { max-width: none; margin-left: auto; margin-right: auto; }
@@ -1739,6 +1739,18 @@ team, with senior-level involvement where applicable.</p>
                     <img src="images/profiles/usman-idrees.jpg" alt="Usman Idrees" loading="lazy" class="ur-team__card-img--top">
                     <h4>Usman Idrees</h4>
                     <p>Client Coordinator</p>
+                    <ul class="ur-team__social">
+                        <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
+                        <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
+                        <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener"><i class="fa fa-facebook"></i></a></li>
+                        <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener"><i class="fa fa-instagram"></i></a></li>
+                        <li><a href="https://x.com/overseasrishta?s=09" target="_blank" rel="noopener"><i class="fa fa-twitter"></i></a></li>
+                    </ul>
+                </div>
+                <div class="ur-team__card">
+                    <img src="images/profiles/niamat-ali.jpg" alt="Dr. Niamat Ali" loading="lazy">
+                    <h4>Dr. Niamat Ali</h4>
+                    <p>Co-Founder &mdash; National &amp; International Client Handler</p>
                     <ul class="ur-team__social">
                         <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
                         <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
