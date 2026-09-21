@@ -1748,9 +1748,9 @@ team, with senior-level involvement where applicable.</p>
                     </ul>
                 </div>
                 <div class="ur-team__card">
-                    <img src="images/profiles/niamat-ali.jpg" alt="Dr. Niamat Ali" loading="lazy">
-                    <h4>Dr. Niamat Ali</h4>
-                    <p>Co-Founder &mdash; National &amp; International Client Handler</p>
+                    <img src="images/profiles/niamat-ali.jpg" alt="Niamat Ali" loading="lazy" class="ur-team__card-img--top">
+                    <h4>Niamat Ali</h4>
+                    <p>Co-Founder &mdash; Director, Overseas Operations</p>
                     <ul class="ur-team__social">
                         <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i></a></li>
                         <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener"><i class="fa fa-linkedin"></i></a></li>
