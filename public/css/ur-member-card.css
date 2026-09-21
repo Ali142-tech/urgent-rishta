@@ -415,6 +415,72 @@
     color: #fff;
 }
 
+/* Homepage "Meet Our Members" teaser ($hideImage) — lock overlay on the
+   photo + a matching "paid members only" footer, instead of the normal
+   View Full Profile / Express Interest pair. */
+.member-card__lock-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 6px;
+    padding: 20px;
+    background: linear-gradient(180deg, rgba(15,46,36,.35), rgba(15,46,36,.6));
+    cursor: pointer;
+}
+.member-card__lock-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15,46,36,.85);
+    border: 2px solid var(--ur-gold, #C9974D);
+    color: var(--ur-gold, #C9974D);
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+.member-card__lock-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+.member-card__lock-sub {
+    color: rgba(255,255,255,.88);
+    font-size: 12px;
+}
+
+.member-card__locked-footer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+.member-card__locked-note {
+    margin: 0;
+    text-align: center;
+    font-size: .7rem;
+    color: var(--ur-text-muted, #6B7570);
+}
+.member-card__footer a.member-card__unlock-btn {
+    flex: none;
+    background: var(--ur-green, #123A2E);
+    border-color: var(--ur-green, #123A2E);
+    color: #fff;
+}
+.member-card__footer a.member-card__unlock-btn:hover {
+    background: var(--ur-green-dark, #0F2E24);
+    border-color: var(--ur-green-dark, #0F2E24);
+}
+
 /* Force white text even for the accepted/declined states, whose
    inner <span class="c-green"/"c-red"> otherwise override the
    color with !important. */

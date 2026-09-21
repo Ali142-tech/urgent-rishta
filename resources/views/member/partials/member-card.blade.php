@@ -9,24 +9,23 @@
       - member/user.blade.php (the "Recommended Matches For You" grid on
         the My Profile dashboard-home section)
       - welcome.blade.php's "Meet Our Members" guest-facing slider, passing
-        hideImage=true so the real photo always shows blurred regardless of
-        whether the viewer is logged in — never the sharp/identifiable
-        original. That slider also sets $member->homepageFaceBlurredImage
-        (see HomeController) when a face-only-pixelated version has been
-        pre-generated (AWS Rekognition + GenerateHomepageFaceBlur), which
-        takes priority over the whole-image blur so the body/outfit/
-        background stay visible and only the face is obscured.
+        hideImage=true so the real photo always shows blurred (whole image,
+        not just the face) regardless of whether the viewer is logged in —
+        never the sharp/identifiable original. Now that the photo also gets
+        the "Private Photo" lock overlay below, a fully-blurred backdrop
+        reads more consistently than the old face-only-pixelated version
+        (client's earlier request) — see $member->homepageFaceBlurredImage /
+        GenerateHomepageFaceBlur if that's ever wanted back.
 
-    Optional: $hideImage (bool, default false) — when true, shows (in order
-    of preference) the member's face-only-obscured photo if one was
-    pre-generated, else the pre-generated whole-image blur, else a generic
-    gender silhouette — never the sharp original.
+    Optional: $hideImage (bool, default false) — when true, shows the
+    pre-generated whole-image blur, or a generic gender silhouette if none
+    exists — never the sharp original.
 --}}
 <?php
 use App\User;
 use Illuminate\Support\Str;
 $hideImage = $hideImage ?? false;
-$hiddenImageUrl = $hideImage ? ($member->homepageFaceBlurredImage ?? $member->getBlurredProfileImage()) : null;
+$hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // Guests on the homepage slider only ever get the single pre-blurred
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.
@@ -50,6 +49,20 @@ $packageIcon = match ($packageSlug) {
         @if(count($cardImages) > 1)
             <button type="button" class="member-card__nav member-card__nav--prev" onclick="return cardCarouselNav(event, this, -1);" aria-label="Previous photo">&lsaquo;</button>
             <button type="button" class="member-card__nav member-card__nav--next" onclick="return cardCarouselNav(event, this, 1);" aria-label="Next photo">&rsaquo;</button>
+        @endif
+        {{-- Homepage teaser slider only ($hideImage) — the photo underneath
+             is already a real (never-sharp) blur, this just makes the "this
+             is locked" intent explicit instead of just looking indistinctly
+             blurry. Sits below the ribbon/ID/verified/package badges
+             (z-index 1 vs their 2) so those stay visible on top, and repeats
+             the same open-profile/register click so tapping the overlay
+             itself still works like tapping the photo. --}}
+        @if($hideImage)
+            <div class="member-card__lock-overlay" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                <div class="member-card__lock-icon"><i class="fa fa-lock"></i></div>
+                <div class="member-card__lock-title">Private Photo</div>
+                <div class="member-card__lock-sub">Upgrade your plan to view this profile</div>
+            </div>
         @endif
         @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
             <span class="member-card__ribbon member-card__ribbon--new">New</span>
@@ -101,33 +114,45 @@ $packageIcon = match ($packageSlug) {
         </ul>
     </div>
     <div class="member-card__footer">
-        <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-            <i class="fa fa-eye"></i> View Full Profile
-        </a>
-        @guest
-            <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return register_request();">
-                <i class="fa fa-heart"></i> <span>Express Interest</span>
+        @if($hideImage)
+            {{-- Homepage teaser slider — no Express Interest here (it's a
+                 sample card, not a real search result), just the same
+                 register/open-profile action styled as an explicit unlock CTA. --}}
+            <div class="member-card__locked-footer">
+                <p class="member-card__locked-note">Available to paid members only</p>
+                <a class="member-card__unlock-btn" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                    <i class="fa fa-lock"></i> Unlock Full Profile
+                </a>
+            </div>
+        @else
+            <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                <i class="fa fa-eye"></i> View Full Profile
             </a>
-        @endguest
-        @auth
-            @if (User::retrieveUserObject()->inList($member->dataid, 'interest'))
-                @php
-                    $interest = User::retrieveUserObject()->getInterest($member->dataid);
-                @endphp
-                <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return {{$interest==-1? "false":"withdrawInterest($(this), 's')"}};">
-                    @if ($interest==1)
-                        <span class="c-green"><i class="fa fa-heart"></i> Interest Accepted</span>
-                    @elseif ($interest==-1)
-                        <span class="c-red"><i class="fa fa-heart"></i> Interest Declined</span>
-                    @else
-                        <span><i class="fa fa-heart"></i> Interest Expressed</span>
-                    @endif
+            @guest
+                <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return register_request();">
+                    <i class="fa fa-heart"></i> <span>Express Interest</span>
                 </a>
-            @else
-                <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return sendInterest($(this));">
-                    <span><i class="fa fa-heart"></i> Express Interest</span>
-                </a>
-            @endif
-        @endauth
+            @endguest
+            @auth
+                @if (User::retrieveUserObject()->inList($member->dataid, 'interest'))
+                    @php
+                        $interest = User::retrieveUserObject()->getInterest($member->dataid);
+                    @endphp
+                    <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return {{$interest==-1? "false":"withdrawInterest($(this), 's')"}};">
+                        @if ($interest==1)
+                            <span class="c-green"><i class="fa fa-heart"></i> Interest Accepted</span>
+                        @elseif ($interest==-1)
+                            <span class="c-red"><i class="fa fa-heart"></i> Interest Declined</span>
+                        @else
+                            <span><i class="fa fa-heart"></i> Interest Expressed</span>
+                        @endif
+                    </a>
+                @else
+                    <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return sendInterest($(this));">
+                        <span><i class="fa fa-heart"></i> Express Interest</span>
+                    </a>
+                @endif
+            @endauth
+        @endif
     </div>
 </div>
