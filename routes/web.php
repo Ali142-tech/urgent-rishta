@@ -69,6 +69,7 @@ Route::get('admin/packages/modal/{id?}', [App\Http\Controllers\AdminController::
 Route::get('admin/package-subscribers', [App\Http\Controllers\AdminController::class, 'packageSubscribers']);
 Route::post('admin/package-subscribers/refresh', [App\Http\Controllers\AdminController::class, 'refreshPackageSubscribers']);
 Route::get('admin/appointments', [App\Http\Controllers\AdminController::class, 'appointments']);
+Route::get('admin/appointments/panel/{id}', [App\Http\Controllers\AdminController::class, 'appointmentPanel']); // AJAX-loaded detail panel for the Appointments list+detail layout
 Route::post('admin/appointments/refresh', [App\Http\Controllers\AdminController::class, 'refreshAppointments']);
 Route::post('admin/appointments/{id}/status', [App\Http\Controllers\AdminController::class, 'updateAppointmentStatus']);
 // Photo & Identity Verification queue (Website Upgrade Brief §9)

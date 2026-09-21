@@ -73,8 +73,12 @@ class VerificationController extends Controller
             return $response;
         }
 
+        // Not a bare view("auth.login") — that skips LoginController::
+        // showLoginForm(), which is the only place that builds $mode and
+        // the other variables login.blade.php requires, causing an
+        // "Undefined variable $mode" 500 on this exact fallback path.
         return $request->wantsJson()
                     ? new Response('', 204)
-                    : view("auth.login");
+                    : redirect()->route('login');
     }
 }

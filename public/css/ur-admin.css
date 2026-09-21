@@ -510,6 +510,60 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
 .ur-admin-list-item__status--warning { background: rgba(201,151,77,.16); color: #8a6529; }
 .ur-admin-list-item__status--danger  { background: rgba(181,103,74,.14); color: var(--ur-dash-red); }
 
+/* -- Appointments: list+detail layout --
+   Deliberately its OWN row class (.ur-apt-row) rather than reusing
+   .ur-admin-list-item — that class is display:none'd on mobile in favor
+   of Member Profiles' separate .ur-admin-mobile-card fallback, which
+   appointments doesn't have. Rows here just stay visible and wrap
+   instead. The panel similarly gets its own wrapper (.ur-apt-panel)
+   so it isn't hidden by .ur-admin-list-detail__panel's mobile rule —
+   it just stacks below the list on narrow screens. Detail-panel CONTENT
+   still reuses the generic .ur-detail-panel__* classes (head/who/grid/
+   actions), which aren't tied to any particular page. */
+.ur-apt-layout { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+@media (min-width: 992px) {
+    .ur-apt-layout { grid-template-columns: 1fr 380px; }
+}
+.ur-apt-list, .ur-apt-panel {
+    background: #fff;
+    border: 1px solid var(--ur-dash-border);
+    border-radius: 14px;
+    padding: 16px;
+}
+.ur-apt-panel { min-height: 320px; }
+.ur-apt-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--ur-dash-border);
+    cursor: pointer;
+    border-radius: 10px;
+}
+.ur-apt-row:last-child { border-bottom: none; }
+.ur-apt-row:hover { background: var(--ur-dash-bg); }
+.ur-apt-row.is-active { background: rgba(201,151,77,.12); }
+.ur-apt-row__thumb {
+    width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ur-dash-green); color: #fff; font-weight: 700; font-size: 14px;
+}
+.ur-apt-row__body { flex: 1 1 150px; min-width: 0; }
+.ur-apt-row__name { font-size: 13.5px; font-weight: 700; color: var(--ur-dash-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ur-apt-row__sub { font-size: 11.5px; color: var(--ur-dash-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ur-apt-row__reason { flex: 2 1 180px; min-width: 0; font-size: 12px; color: var(--ur-dash-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ur-apt-row__status { flex-shrink: 0; }
+.ur-admin-appointment-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ur-admin-appointment-form input { flex: 1 1 140px; }
+.ur-apt-reschedule-box {
+    background: var(--ur-dash-bg);
+    border: 1px solid var(--ur-dash-border);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 20px;
+}
+
 /* -- Detail panel content -- */
 /* flex-wrap (not viewport-conditional) — the panel's actual width doesn't
    track the viewport 1:1: the sidebar alone stays visible/fixed-width until
@@ -523,6 +577,12 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
 .ur-detail-panel__photo {
     width: 68px; height: 68px; border-radius: 50%; object-fit: cover;
     background: var(--ur-dash-bg); border: 1px solid var(--ur-dash-border); flex-shrink: 0;
+}
+/* Appointments have no photo (guest requests especially) — an initials
+   circle in the same slot/size as a real photo. */
+.ur-detail-panel__photo--initials {
+    display: flex; align-items: center; justify-content: center;
+    background: var(--ur-dash-green); color: #fff; font-weight: 700; font-size: 22px;
 }
 .ur-detail-panel__who { flex: 1 1 200px; min-width: 0; }
 .ur-detail-panel__who h3 { margin: 0 0 4px; font-size: 19px; font-weight: 700; color: var(--ur-dash-text); font-family: 'Playfair Display', Georgia, serif; }
@@ -828,6 +888,18 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
 .ur-btn--gold:hover { color: var(--ur-dash-green); opacity: .92; }
 .ur-btn--dark { background: var(--ur-dash-green); color: #fff; }
 .ur-btn--dark:hover { color: #fff; opacity: .92; }
+/* Vivid CTA green (same tone as the "Verified" badge elsewhere) — .ur-btn--dark
+   uses the near-black brand green shared by headers/sidebar/every other dark
+   button, so a primary action next to Reschedule/Cancel didn't stand out. */
+.ur-btn--success,
+.ur-btn--success i {
+    color: #fff !important;
+}
+.ur-btn--success {
+    background: #1E7A46;
+    box-shadow: 0 2px 8px rgba(30,122,70,.35);
+}
+.ur-btn--success:hover { background: #17603A; }
 .ur-btn--outline { background: #fff; color: var(--ur-dash-text); border: 1px solid var(--ur-dash-border); }
 .ur-btn--outline:hover { border-color: var(--ur-dash-green); color: var(--ur-dash-green); }
 .ur-btn--danger-outline { background: #fff; color: var(--ur-dash-red); border: 1px solid rgba(181,103,74,.35); }

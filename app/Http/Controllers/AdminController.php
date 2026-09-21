@@ -820,18 +820,40 @@ class AdminController extends Controller
     function appointments()
     {
         $pageSize = 10;
-        $query = DB::table('appointments as a')
-            ->select(DB::raw($this->appointmentsSelect()))
-            ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
-        $total = $query->count();
-        $view = view('admin.dashboard.appointmentsdata')->with([
-            'currentPage' => 1,
+        $currentPage = (int) request()->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+
+        $baseQuery = function () {
+            return DB::table('appointments as a')
+                ->select(DB::raw($this->appointmentsSelect()))
+                ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
+        };
+
+        $total = $baseQuery()->count();
+        $numPages = (int) ceil(max(1, $total) / $pageSize);
+        if ($currentPage > $numPages) $currentPage = $numPages;
+
+        $appointments = $baseQuery()
+            ->orderBy('a.appointment_date', 'DESC')->orderBy('a.appointment_time', 'DESC')
+            ->offset($pageSize * ($currentPage - 1))->limit($pageSize)->get();
+
+        // List+detail layout (desktop) — same ?selected= pattern as Member
+        // Profiles: bookmarkable/shareable, falls back to the first row.
+        $selectedId = request()->query('selected');
+        $selectedAppointment = $selectedId ? Appointment::find($selectedId) : null;
+        if (!$selectedAppointment && !empty($appointments)) {
+            $selectedAppointment = Appointment::find($appointments[0]->id);
+        }
+
+        $view = view('admin.dashboard.appointmentsdata')->with(array_merge([
+            'currentPage' => $currentPage,
             'pageSize' => $pageSize,
             'total' => $total,
-            'numPages' => ceil(max(1, $total) / $pageSize),
+            'numPages' => $numPages,
             'resultCount' => null,
-            'appointments' => $query->orderBy('a.appointment_date', 'DESC')->orderBy('a.appointment_time', 'DESC')->limit($pageSize)->get(),
-        ]);
+            'appointments' => $appointments,
+            'selectedAppointment' => $selectedAppointment,
+        ], $this->appointmentStats()));
 
         if (request()->ajax()) {
             return [
@@ -844,6 +866,50 @@ class AdminController extends Controller
     }
 
     /**
+     * Stat cards for the Appointments list+detail page — real data only.
+     * There's no fee/payment column on appointments (the consultation fee
+     * is collected separately after admin review, see AppointmentController
+     * ::storeConsultationRequest), so there's deliberately no revenue card
+     * here — "Completed" (lifetime) fills that slot instead.
+     */
+    private function appointmentStats(): array
+    {
+        $now = now();
+        $lastMonth = $now->copy()->subMonth();
+
+        $thisMonthCount = Appointment::whereYear('created_at', $now->year)->whereMonth('created_at', $now->month)->count();
+        $lastMonthCount = Appointment::whereYear('created_at', $lastMonth->year)->whereMonth('created_at', $lastMonth->month)->count();
+        $thisMonthDeltaPct = $lastMonthCount > 0
+            ? round((($thisMonthCount - $lastMonthCount) / $lastMonthCount) * 100)
+            : ($thisMonthCount > 0 ? 100 : 0);
+
+        return [
+            'pendingCount' => Appointment::where('status', 'pending')->count(),
+            'confirmedTodayCount' => Appointment::where('status', 'confirmed')->whereDate('appointment_date', $now->toDateString())->count(),
+            'thisMonthCount' => $thisMonthCount,
+            'thisMonthDeltaPct' => $thisMonthDeltaPct,
+            'completedCount' => Appointment::where('status', 'completed')->count(),
+        ];
+    }
+
+    /**
+     * AJAX-loaded right-hand summary panel for the Appointments list+detail
+     * layout — same pattern as profilePanel() for Member Profiles.
+     */
+    function appointmentPanel($id)
+    {
+        $appointment = Appointment::find($id);
+        if (!$appointment) {
+            return response()->json(['code' => '404', 'message' => 'Appointment not found.'], 404);
+        }
+
+        return [
+            'code' => '200',
+            'html' => view('admin.dashboard.appointment-detail-panel', ['appointment' => $appointment])->render(),
+        ];
+    }
+
+    /**
      * AJAX refresh for appointments list.
      */
     function refreshAppointments(Request $request)
@@ -851,6 +917,7 @@ class AdminController extends Controller
         if ($request->ajax()) {
             $searchTerm = $request->term;
             $status = $request->status;
+            $date = $request->date;
             $pageSize = (int) ($request->pagesize ?? 10);
             $pageRequested = (int) ($request->pagerequested ?? 1);
 
@@ -860,6 +927,10 @@ class AdminController extends Controller
 
             if (!empty($status)) {
                 $query->where('a.status', '=', $status);
+            }
+
+            if (!empty($date)) {
+                $query->whereDate('a.appointment_date', '=', $date);
             }
 
             if (!empty($searchTerm)) {
@@ -885,14 +956,18 @@ class AdminController extends Controller
 
             return [
                 'code' => '200',
-                'html' => view('admin.dashboard.appointmentsdata')->with([
+                // renderSections() evaluates the WHOLE extends chain (including
+                // the parent's stat cards) even though only 'appointments-data'
+                // is used below — appointmentStats() must be included here too
+                // or those variables are undefined on every filter/search AJAX call.
+                'html' => view('admin.dashboard.appointmentsdata')->with(array_merge([
                     'currentPage' => $pageRequested,
                     'pageSize' => $pageSize,
                     'total' => $resultCount,
                     'numPages' => ceil(max(1, $resultCount) / $pageSize),
                     'resultCount' => $resultCount,
                     'appointments' => $appointments,
-                ])->renderSections()['appointments-data'],
+                ], $this->appointmentStats()))->renderSections()['appointments-data'],
             ];
         }
 
