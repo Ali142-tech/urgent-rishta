@@ -381,9 +381,13 @@
         transition: background-color .2s ease, color .2s ease;
     }
 
+    .ur-mp-btn--solid,
+    .ur-mp-btn--solid i,
+    .ur-mp-btn--solid span {
+        color: #fff !important;
+    }
     .ur-mp-btn--solid {
         background: var(--ur-green);
-        color: #fff !important;
     }
 
     .ur-mp-btn--solid:hover {
@@ -1347,7 +1351,10 @@
                 </div>
             </div>
             <div class="ur-mp-cta__actions">
-                <a class="ur-mp-btn ur-mp-btn--solid" onclick="document.getElementById('ur_mp_actions').scrollIntoView({behavior:'smooth', block:'center'});"><i class="fa fa-heart"></i> Send Interest</a>
+                {{-- Proxies a click to the real interest button above (id="interest_{dataid}")
+                     instead of duplicating its guest/pending/accepted/declined state logic here —
+                     two independent copies of that logic would drift out of sync with each other. --}}
+                <a class="ur-mp-btn ur-mp-btn--solid" onclick="document.getElementById('interest_{{ $profile->dataid }}').click(); document.getElementById('ur_mp_actions').scrollIntoView({behavior:'smooth', block:'center'}); return false;"><i class="fa fa-heart"></i> Send Interest</a>
                 <a class="ur-mp-btn ur-mp-btn--outline" onclick="chatComingSoon();"><i class="fa fa-headphones"></i> Ask Matchmaker</a>
                 <a class="ur-mp-btn ur-mp-btn--outline" onclick="shortlistComingSoon();"><i class="fa fa-bookmark-o"></i> Shortlist</a>
             </div>

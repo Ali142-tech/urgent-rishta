@@ -984,6 +984,20 @@ class ProfileController extends Controller
         if ($member) {
             $id = $member->id;
             $message = null;
+
+            // Client request (Sep 2026): Royal+ profiles are now visible to
+            // everyone in search, but sending an interest TO one still
+            // requires the sender to also be Royal+ — shown as a dedicated
+            // upgrade popup on the frontend (see sendInterest() in
+            // global-scripts.blade.php), not the normal toast.
+            if (User::packageIsRoyalOrHigher($member->package) && !User::packageIsRoyalOrHigher($loggedInUser->package)) {
+                Log::info("User (" . $loggedInUser->dataid . ") blocked from sending interest to Royal+ member (" . $dataid . ") — sender's plan isn't Royal+.");
+                return [
+                    'code' => '403',
+                    'message' => 'This profile is on our Royal plan. Upgrade your plan to Royal to send an interest request.'
+                ];
+            }
+
             $existing = Interest::where('receiver', $id)->where('sender', $loggedInUser->id)->first();
             if (empty($existing)) {
                 $interest = new Interest;

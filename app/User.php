@@ -250,17 +250,36 @@ class User extends Authenticatable implements MustVerifyEmail {
         if ($this->isAdmin()) {
             return $packages->pluck('dataid')->values()->all();
         }
-        // No admin package: if they have active online package, allow seeing all tiers; otherwise none.
+        // Per client request (Sep 2026): every member who can search at all
+        // now sees EVERY package tier's profiles — previously a lower tier
+        // couldn't see higher tiers at all (rank-limited to their own tier
+        // and below). The package gate has moved to sending an interest to
+        // a Royal+ profile instead (see canMessageRoyalTier() below and
+        // ProfileController::sendInterest()), not to browsing/searching.
         if (empty($this->package)) {
             return $this->hasActiveOnlinePackage()
                 ? $packages->pluck('dataid')->values()->all()
                 : [];
         }
-        $searcherPackage = $packages->firstWhere('dataid', $this->package);
-        if (!$searcherPackage) {
-            return [];
+        return $packages->pluck('dataid')->values()->all();
+    }
+
+    /**
+     * True if the given package dataid ranks Royal or higher (currently
+     * Royal, Imperial — see the PACKAGE masterdata rank order, lowest id
+     * first: Platinum, Diamond, Royal, Imperial). Used to gate sending an
+     * interest request to a Royal+ profile: the sender must also be Royal+
+     * (see ProfileController::sendInterest()) — client request Sep 2026.
+     */
+    public static function packageIsRoyalOrHigher(?string $packageDataid): bool
+    {
+        if (empty($packageDataid)) {
+            return false;
         }
-        return $packages->where('id', '<=', $searcherPackage->id)->pluck('dataid')->values()->all();
+        $packages = MasterData::where('type', 'PACKAGE')->orderBy('id')->get();
+        $royal = $packages->firstWhere('name', 'Royal');
+        $target = $packages->firstWhere('dataid', $packageDataid);
+        return $royal && $target && $target->id >= $royal->id;
     }
 
     /**

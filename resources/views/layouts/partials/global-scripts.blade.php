@@ -239,6 +239,15 @@
                     clickHighlight(null, null,
                         $(elem.children("span")[0]), null, "Interest Expressed", true, true,  "return withdrawInterest($(this), 's');");
                     showAlert(message[0], message[1], 7000);
+                } else if (result.code=="403") {
+                    // Royal-plan upgrade gate — a dedicated pop-up (not the
+                    // usual toast) since it's actionable, not just a notice.
+                    // package-details/7 is the Royal package's page — note
+                    // this route looks the package up by its masterdata
+                    // primary key (id=7), not its dataid (9).
+                    swalAlert('warning', 'Upgrade Required', result.message + ' Click OK to view the Royal plan.', function () {
+                        window.location.href = "{{ url('package-details/7') }}";
+                    });
                 } else showAlert('danger', message, 5000);
             },
             error: function() {
