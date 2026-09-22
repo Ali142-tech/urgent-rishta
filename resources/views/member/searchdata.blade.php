@@ -28,7 +28,7 @@
 @if(!empty($members) && sizeof($members)>0)
 <div class="member-results">
 @foreach ($members as $member)
-    @include('member.partials.member-card', ['member' => $member])
+    @include('member.partials.member-card', ['member' => $member, 'viewerPreference' => $viewerPreference ?? null])
 @endforeach
 </div>
 @else

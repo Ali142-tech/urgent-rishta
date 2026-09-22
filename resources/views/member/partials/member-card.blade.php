@@ -20,6 +20,14 @@
     Optional: $hideImage (bool, default false) — when true, shows the
     pre-generated whole-image blur, or a generic gender silhouette if none
     exists — never the sharp original.
+
+    Optional: $viewerPreference (App\PartnerPreference|null) — the LOGGED-IN
+    VIEWER's own partner preferences (not $member's), passed once per page
+    by the controller (never recomputed per-card — see HomeController::
+    search()/recommendedMatches()). When present, shows a "XX% Match" badge
+    using the same Profile::compatibilityWith() calculation as the single
+    profile page's Compatibility tab — a pure in-memory comparison against
+    already-loaded fields, no extra query per card. Client request (Sep 2026).
 --}}
 <?php
 use App\User;
@@ -30,6 +38,7 @@ $hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.
 $cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages();
+$compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
 $packageSlug = !empty($member->lbl_package) ? Str::slug($member->lbl_package) : null;
 $packageIcon = match ($packageSlug) {
     'platinum' => '<i class="fa fa-star"></i>',
@@ -94,6 +103,11 @@ $packageIcon = match ($packageSlug) {
             @endif
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">{{$member->first_name}}</a>
         </h3>
+        @if($compatibility)
+            <span class="member-card__match-badge" title="{{ $compatibility['matched'] }} of {{ $compatibility['total'] }} of your preferences matched">
+                <i class="fa fa-check-circle"></i> {{ $compatibility['percent'] }}% Match
+            </span>
+        @endif
         <ul class="member-card__quick">
             <li><i class="fa fa-birthday-cake"></i>{{date_diff(date_create($member->birthday), date_create('now'))->y}} yrs</li>
             <li><i class="fa fa-arrows-v"></i>{{$member->height}}</li>

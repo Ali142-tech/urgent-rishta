@@ -231,10 +231,19 @@ class HomeController extends Controller {
         $completeness = null;
         $recommendedMatches = collect();
         $hasPartnerPreferences = false;
+        // Fetched once here (not per-card) — member-card.blade.php calls
+        // $member->compatibilityWith($viewerPreference) for each card, which
+        // is a pure in-memory comparison against this single row, no extra
+        // queries per card. Client request (Sep 2026): show the match % on
+        // every card, not just the single profile page.
+        $viewerPreference = null;
         if (!empty($loggedInUser)) {
             $completeness = $loggedInUser->profile()->profileCompleteness();
             $hasPartnerPreferences = $loggedInUser->hasPartnerPreferences();
             $recommendedMatches = $loggedInUser->getRecommendedMatches(4);
+            if ($hasPartnerPreferences) {
+                $viewerPreference = $loggedInUser->partnerPreference()->first();
+            }
         }
 
         // Only run the real search once the member has actually submitted
@@ -369,6 +378,7 @@ class HomeController extends Controller {
                 'recommendedMatches' => $recommendedMatches,
                 'hasPartnerPreferences' => $hasPartnerPreferences,
                 'viewerUser' => $loggedInUser,
+                'viewerPreference' => $viewerPreference,
                 'hasSearched' => $hasSearched
             ]);
 
@@ -408,13 +418,15 @@ class HomeController extends Controller {
         $numPages = max(1, (int) ceil($resultCount / $pageSize));
         $pageRequested = min(max(1, (int) $request->query('page', 1)), $numPages);
         $members = $loggedInUser->getRecommendedMatches($pageSize, $pageSize * ($pageRequested - 1));
+        $hasPartnerPreferences = $loggedInUser->hasPartnerPreferences();
 
         return view('member.recommended-matches', [
             'members' => $members,
             'resultCount' => $resultCount,
             'currentPage' => $pageRequested,
             'numPages' => $numPages,
-            'hasPartnerPreferences' => $loggedInUser->hasPartnerPreferences(),
+            'hasPartnerPreferences' => $hasPartnerPreferences,
+            'viewerPreference' => $hasPartnerPreferences ? $loggedInUser->partnerPreference()->first() : null,
         ]);
     }
 

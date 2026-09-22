@@ -645,7 +645,7 @@
             </div>
             <div class="member-results">
                 @foreach($recommendedMatches as $member)
-                    @include('member.partials.member-card', ['member' => $member])
+                    @include('member.partials.member-card', ['member' => $member, 'viewerPreference' => $viewerPreference ?? null])
                 @endforeach
             </div>
         </div>

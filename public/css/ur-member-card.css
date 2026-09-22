@@ -276,6 +276,25 @@
     vertical-align: middle;
 }
 
+/* Compatibility % badge (client request, Sep 2026) — shown on every card,
+   not just the single profile page, whenever the logged-in viewer has
+   partner preferences saved. Same tone as the package badge (gold), since
+   it's a similarly "premium insight" signal, but placed in the body (not
+   the photo) since all 4 photo corners are already taken. */
+.member-card__match-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--ur-gold, #C9974D);
+    color: #fff;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .2px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+}
+
 .member-card__quick {
     display: flex;
     flex-wrap: wrap;
