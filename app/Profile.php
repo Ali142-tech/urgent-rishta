@@ -311,42 +311,73 @@ class Profile extends Model {
 
         $checks = [];
 
+        // Age and Location are the only two factors below with a genuine
+        // "closeness" concept, so they get a graduated 0-100 score instead
+        // of a flat matched/unmatched — a candidate one year outside the
+        // preferred range reads very differently from one 15 years outside.
+        // Every other factor (religion, caste, marital status, education,
+        // mother tongue, children) is inherently categorical — there's no
+        // meaningful "70% religion match" — so those stay a clean 100/0.
         if (!empty($preference->age_min) || !empty($preference->age_max)) {
             $age = !empty($this->birthday) ? Carbon::parse($this->birthday)->age : null;
             $matched = $age !== null
                 && (empty($preference->age_min) || $age >= $preference->age_min)
                 && (empty($preference->age_max) || $age <= $preference->age_max);
-            $checks[] = ['label' => 'Preferred age range matched', 'matched' => (bool) $matched];
+            $score = 0;
+            if ($age !== null) {
+                if ($matched) {
+                    $score = 100;
+                } else {
+                    $distance = 0;
+                    if (!empty($preference->age_min) && $age < $preference->age_min) {
+                        $distance = $preference->age_min - $age;
+                    } elseif (!empty($preference->age_max) && $age > $preference->age_max) {
+                        $distance = $age - $preference->age_max;
+                    }
+                    $score = max(0, 100 - ($distance * 15)); // -15%/year outside the range
+                }
+            }
+            $checks[] = ['factor' => 'Age', 'label' => 'Preferred age range matched', 'matched' => (bool) $matched, 'score' => (int) round($score)];
         }
 
         // City is the most specific ask; country and "preferred country (if
         // different from residence)" are both acceptable alternatives to it.
         if (!empty($preference->city_id) || !empty($preference->country_id) || !empty($preference->preferred_country_id)) {
-            $matched = (!empty($preference->city_id) && $this->city == $preference->city_id)
-                || (!empty($preference->country_id) && $this->con_of_residence == $preference->country_id)
+            $cityMatched = !empty($preference->city_id) && $this->city == $preference->city_id;
+            $countryMatched = (!empty($preference->country_id) && $this->con_of_residence == $preference->country_id)
                 || (!empty($preference->preferred_country_id) && $this->con_of_residence == $preference->preferred_country_id);
+            $matched = $cityMatched || $countryMatched;
+            // Exact city = 100%, right country but different city = 65%,
+            // neither = 20% — a location mismatch alone isn't treated as a
+            // total dealbreaker the way e.g. marital status would be.
+            $score = $cityMatched ? 100 : ($countryMatched ? 65 : 20);
             $locationLabel = $preferenceLabels['city'] ?? $preferenceLabels['country'] ?? $preferenceLabels['preferred_country'] ?? null;
-            $checks[] = ['label' => $locationLabel ? "{$locationLabel} location matched" : 'Location preference matched', 'matched' => (bool) $matched];
+            $checks[] = ['factor' => 'Location', 'label' => $locationLabel ? "{$locationLabel} location matched" : 'Location preference matched', 'matched' => (bool) $matched, 'score' => $score];
         }
 
         if (!empty($preference->religion_id)) {
-            $checks[] = ['label' => 'Religion preference matched', 'matched' => $this->religion == $preference->religion_id];
+            $matched = $this->religion == $preference->religion_id;
+            $checks[] = ['factor' => 'Religion', 'label' => 'Religion preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         if (!empty($preference->caste_id)) {
-            $checks[] = ['label' => 'Caste preference matched', 'matched' => $this->caste == $preference->caste_id];
+            $matched = $this->caste == $preference->caste_id;
+            $checks[] = ['factor' => 'Caste', 'label' => 'Caste preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         if (!empty($preference->marital_status)) {
-            $checks[] = ['label' => 'Marital status matched', 'matched' => $this->marital_status == $preference->marital_status];
+            $matched = $this->marital_status == $preference->marital_status;
+            $checks[] = ['factor' => 'Marital Status', 'label' => 'Marital status matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         if (!empty($preference->education_id)) {
-            $checks[] = ['label' => 'Education preference matched', 'matched' => $this->education == $preference->education_id];
+            $matched = $this->education == $preference->education_id;
+            $checks[] = ['factor' => 'Education', 'label' => 'Education preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         if (!empty($preference->mother_tongue_id)) {
-            $checks[] = ['label' => 'Mother tongue matched', 'matched' => $this->mother_tongue == $preference->mother_tongue_id];
+            $matched = $this->mother_tongue == $preference->mother_tongue_id;
+            $checks[] = ['factor' => 'Mother Tongue', 'label' => 'Mother tongue matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         // "Does not matter" means the viewer explicitly has no preference
@@ -354,7 +385,7 @@ class Profile extends Model {
         if (!empty($preference->with_children) && $preference->with_children !== 'Does not matter') {
             $hasChildren = !empty($this->children) && $this->children > 0;
             $matched = $preference->with_children === 'Yes' ? $hasChildren : !$hasChildren;
-            $checks[] = ['label' => 'Children preference matched', 'matched' => $matched];
+            $checks[] = ['factor' => 'Children', 'label' => 'Children preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         if (empty($checks)) {
@@ -363,9 +394,14 @@ class Profile extends Model {
 
         $matchedCount = count(array_filter($checks, fn ($c) => $c['matched']));
         $total = count($checks);
+        // Overall percent is now the average of each check's own graduated
+        // score (not just matchedCount/total) — a near-miss on age nudges
+        // the overall number instead of counting as a full miss, same as
+        // the per-factor bars now shown on member-card.blade.php.
+        $overallScore = (int) round(array_sum(array_column($checks, 'score')) / $total);
 
         return [
-            'percent' => (int) round($matchedCount / $total * 100),
+            'percent' => $overallScore,
             'matched' => $matchedCount,
             'total' => $total,
             'checks' => $checks,

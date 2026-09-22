@@ -487,6 +487,74 @@
         color: var(--ur-green);
     }
 
+    /* Compatibility Report bars (client request, Sep 2026) — same bar
+       style already shown on member-card.blade.php's search-result cards,
+       reused here so the single profile page matches. Unlike the card
+       (limited to 5 factors for space), this full page shows every factor
+       the viewer actually set a preference for. */
+    .ur-mp-compat-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 0 0 14px;
+    }
+
+    .ur-mp-compat-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ur-mp-compat-row__label {
+        flex: 0 0 220px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #b9b2a2;
+    }
+
+    .ur-mp-compat-row__label i {
+        font-size: 15px;
+        color: #b9b2a2;
+    }
+
+    .ur-mp-compat-row__label.is-done {
+        color: var(--ur-text);
+    }
+
+    .ur-mp-compat-row__label.is-done i {
+        color: var(--ur-green);
+    }
+
+    .ur-mp-compat-row__track {
+        flex: 1;
+        height: 7px;
+        border-radius: 4px;
+        background: var(--ur-bg);
+        overflow: hidden;
+    }
+
+    .ur-mp-compat-row__fill {
+        display: block;
+        height: 100%;
+        background: var(--ur-gold);
+        border-radius: 4px;
+    }
+
+    .ur-mp-compat-row__pct {
+        flex: 0 0 36px;
+        text-align: right;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: var(--ur-text);
+    }
+
+    @media (max-width: 640px) {
+        .ur-mp-compat-row { flex-wrap: wrap; }
+        .ur-mp-compat-row__label { flex: 1 1 100%; }
+    }
+
     .ur-mp-confidential {
         display: inline-flex;
         align-items: center;
@@ -1248,11 +1316,15 @@
                                     <span>Based on {{ $compatibility['matched'] }} of {{ $compatibility['total'] }} of your saved Partner Preferences matching {{ $profile->first_name }}'s profile.</span>
                                 </div>
                             </div>
-                            <ul class="ur-mp-checklist">
+                            <div class="ur-mp-compat-bars">
                                 @foreach($compatibility['checks'] as $check)
-                                    <li class="{{ $check['matched'] ? 'is-done' : '' }}"><i class="fa {{ $check['matched'] ? 'fa-check-circle' : 'fa-circle-o' }}"></i> {{ $check['label'] }}</li>
+                                    <div class="ur-mp-compat-row">
+                                        <span class="ur-mp-compat-row__label {{ $check['matched'] ? 'is-done' : '' }}"><i class="fa {{ $check['matched'] ? 'fa-check-circle' : 'fa-circle-o' }}"></i> {{ $check['label'] }}</span>
+                                        <span class="ur-mp-compat-row__track"><span class="ur-mp-compat-row__fill" style="width:{{ $check['score'] }}%"></span></span>
+                                        <span class="ur-mp-compat-row__pct">{{ $check['score'] }}%</span>
+                                    </div>
                                 @endforeach
-                            </ul>
+                            </div>
                             <div class="ur-mp-note"><i class="fa fa-info-circle"></i> Only preferences you've actually set are checked here — anything left blank on your Partner Preferences isn't counted for or against a match.</div>
                             @else
                             <p style="font-size:13.5px;color:var(--ur-text-muted);line-height:1.6;">You haven't set any Partner Preferences yet, so we can't calculate a compatibility score against {{ $profile->first_name }}'s profile.</p>

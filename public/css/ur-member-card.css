@@ -276,23 +276,80 @@
     vertical-align: middle;
 }
 
-/* Compatibility % badge (client request, Sep 2026) — shown on every card,
-   not just the single profile page, whenever the logged-in viewer has
-   partner preferences saved. Same tone as the package badge (gold), since
-   it's a similarly "premium insight" signal, but placed in the body (not
-   the photo) since all 4 photo corners are already taken. */
-.member-card__match-badge {
-    display: inline-flex;
+/* Compatibility box (client request, Sep 2026 — restyled from a simple
+   badge to a fuller breakdown per client-provided reference) — shown on
+   every card, not just the single profile page, whenever the logged-in
+   viewer has partner preferences saved. Brand colors (green/gold), not the
+   reference mockup's maroon — and labeled "Compatibility Score", matching
+   what the single profile page already calls it, not "AI Match" (this
+   isn't AI/ML-driven, so that label would overclaim). */
+.member-card__compat {
+    background: var(--ur-bg, #F6F4EF);
+    border: 1px solid var(--ur-border, #E7E2D6);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+.member-card__compat-head {
+    display: flex;
     align-items: center;
-    gap: 5px;
-    background: var(--ur-gold, #C9974D);
-    color: #fff;
-    font-size: .7rem;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.member-card__compat-score {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--ur-green, #123A2E);
+    line-height: 1;
+    flex-shrink: 0;
+}
+.member-card__compat-label {
+    font-size: .78rem;
     font-weight: 700;
-    letter-spacing: .2px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    margin-bottom: 10px;
+    color: var(--ur-green, #123A2E);
+}
+.member-card__compat-sub {
+    font-size: .68rem;
+    color: var(--ur-text-muted, #6B7570);
+    margin-top: 1px;
+}
+.member-card__compat-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.member-card__compat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.member-card__compat-row-label {
+    flex: 0 0 78px;
+    font-size: .65rem;
+    color: var(--ur-text-muted, #6B7570);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.member-card__compat-row-track {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: var(--ur-border, #E7E2D6);
+    overflow: hidden;
+}
+.member-card__compat-row-fill {
+    display: block;
+    height: 100%;
+    background: var(--ur-gold, #C9974D);
+    border-radius: 3px;
+}
+.member-card__compat-row-pct {
+    flex: 0 0 30px;
+    text-align: right;
+    font-size: .65rem;
+    font-weight: 700;
+    color: var(--ur-text, #1C2321);
 }
 
 .member-card__quick {

@@ -39,6 +39,21 @@ $hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // only, so guest/hideImage mode stays a single static photo.
 $cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages();
 $compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
+$compatTier = null;
+if ($compatibility) {
+    $compatTier = match (true) {
+        $compatibility['percent'] >= 85 => ['label' => 'Excellent Match', 'sub' => 'High compatibility across key factors'],
+        $compatibility['percent'] >= 70 => ['label' => 'Very Good Match', 'sub' => 'Strong alignment with your preferences'],
+        $compatibility['percent'] >= 50 => ['label' => 'Good Match', 'sub' => 'Solid compatibility with potential'],
+        $compatibility['percent'] >= 30 => ['label' => 'Fair Match', 'sub' => 'Some shared preferences'],
+        default => ['label' => 'Low Match', 'sub' => 'Few of your preferences matched'],
+    };
+}
+// Card shows only these 5 factor bars (client request, Sep 2026) — Education/
+// Mother Tongue/Children are still counted in the overall $compatibility['percent']
+// above if the viewer set them, just not shown as their own bar on the card.
+$compatCardFactors = ['Age', 'Location', 'Religion', 'Caste', 'Marital Status'];
+$compatCardChecks = $compatibility ? array_filter($compatibility['checks'], fn ($c) => in_array($c['factor'], $compatCardFactors, true)) : [];
 $packageSlug = !empty($member->lbl_package) ? Str::slug($member->lbl_package) : null;
 $packageIcon = match ($packageSlug) {
     'platinum' => '<i class="fa fa-star"></i>',
@@ -104,9 +119,24 @@ $packageIcon = match ($packageSlug) {
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">{{$member->first_name}}</a>
         </h3>
         @if($compatibility)
-            <span class="member-card__match-badge" title="{{ $compatibility['matched'] }} of {{ $compatibility['total'] }} of your preferences matched">
-                <i class="fa fa-check-circle"></i> {{ $compatibility['percent'] }}% Match
-            </span>
+            <div class="member-card__compat">
+                <div class="member-card__compat-head">
+                    <div class="member-card__compat-score">{{ $compatibility['percent'] }}%</div>
+                    <div>
+                        <div class="member-card__compat-label">{{ $compatTier['label'] }}</div>
+                        <div class="member-card__compat-sub">{{ $compatTier['sub'] }}</div>
+                    </div>
+                </div>
+                <div class="member-card__compat-bars">
+                    @foreach($compatCardChecks as $check)
+                        <div class="member-card__compat-row">
+                            <span class="member-card__compat-row-label">{{ $check['factor'] }}</span>
+                            <span class="member-card__compat-row-track"><span class="member-card__compat-row-fill" style="width:{{ $check['score'] }}%"></span></span>
+                            <span class="member-card__compat-row-pct">{{ $check['score'] }}%</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         @endif
         <ul class="member-card__quick">
             <li><i class="fa fa-birthday-cake"></i>{{date_diff(date_create($member->birthday), date_create('now'))->y}} yrs</li>
