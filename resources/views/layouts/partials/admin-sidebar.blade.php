@@ -55,11 +55,16 @@
                 <i class="fa fa-id-badge"></i> Photo Verification
             </a>
         </li>
+        {{-- Hidden from the admin nav for now (client request, Sep 2026) — the
+             route/controller/service/view are untouched, just not linked to
+             here, so it's a one-line revert to bring back. --}}
+        {{--
         <li>
             <a href="{{ url('admin/campaigns/profile-completion') }}" class="{{ request()->is('admin/campaigns/profile-completion') ? 'is-active' : '' }}">
                 <i class="fa fa-envelope"></i> Profile Completion Campaign
             </a>
         </li>
+        --}}
         <li>
             <a href="{{ url('admin/profiles/deleted') }}" class="{{ request()->is('admin/profiles/deleted') ? 'is-active' : '' }}">
                 <i class="fa fa-trash"></i> Deleted Profiles

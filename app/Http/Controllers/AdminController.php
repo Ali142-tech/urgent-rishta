@@ -612,6 +612,8 @@ class AdminController extends Controller
             ur.email as receiver_email,
             us.contact_mobile_number as sender_mobile,
             ur.contact_mobile_number as receiver_mobile,
+            us.gender as sender_gender,
+            ur.gender as receiver_gender,
             (select group_concat(img_url separator ",") from images where user_id=i.sender) as sender_images,
             (select group_concat(img_url separator ",") from images where user_id=i.receiver) as receiver_images,
             i.interest_back as interest_back, i.created_at as created_at, i.updated_at as updated_at')
@@ -648,6 +650,8 @@ class AdminController extends Controller
             us.email as sender_email, ur.email as receiver_email,
             us.contact_mobile_number as sender_mobile,
             ur.contact_mobile_number as receiver_mobile,
+            us.gender as sender_gender,
+            ur.gender as receiver_gender,
             (select group_concat(img_url separator ",") from images where user_id=i.sender) as sender_images,
             (select group_concat(img_url separator ",") from images where user_id=i.receiver) as receiver_images,
             i.interest_back as interest_back, i.created_at as created_at, i.updated_at as updated_at'))

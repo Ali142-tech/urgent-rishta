@@ -639,6 +639,7 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
     min-width: 220px;
 }
 .ur-admin-duo-card__side .ur-admin-thumb {
+    display: block;
     width: 72px;
     height: 72px;
     border-radius: 12px;
@@ -677,6 +678,33 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
     font-size: 11.5px;
     color: var(--ur-dash-text-muted);
     font-style: italic;
+}
+
+/* -- Member Interests page: matches the client's Figma mockup — a single
+   continuous list (thin separators, no per-row shadow/box) instead of
+   individual floating cards, plus a status arrow, serif names, and
+   blue/green contact lines. Scoped to #interest-data (unique to this page)
+   so Photo Access — which reuses the same .ur-admin-duo-card* markup/CSS —
+   is completely unaffected. */
+#interest-data .ur-admin-card {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 22px 4px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--ur-dash-border);
+}
+#interest-data .ur-admin-card:hover { box-shadow: none; transform: none; }
+#interest-data .ur-admin-card:last-child { border-bottom: none; }
+#interest-data .ur-admin-duo-card__name { font-family: 'Playfair Display', Georgia, serif; font-size: 15.5px; }
+#interest-data .ur-admin-duo-card__email { color: #2E6FDB; }
+#interest-data .ur-admin-duo-card__mobile { color: var(--ur-dash-green); }
+#interest-data .ur-admin-duo-card__mobile a { text-decoration: underline; }
+#interest-data .ur-admin-duo-card__arrow {
+    display: block;
+    font-size: 15px;
+    color: var(--ur-dash-text-muted);
+    margin-bottom: 8px;
 }
 
 /* ---------------------------------------------------------- */

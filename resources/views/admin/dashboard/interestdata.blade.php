@@ -25,11 +25,34 @@
     out of <span>{{ $total }}</span> total interests @endif</div>
 @if(!empty($interests) && sizeof($interests)>0)
 @foreach ($interests as $interest)
+    @php
+        // A DB row can point at an img_url whose file isn't actually on disk
+        // (e.g. this local DB is a dump imported without also copying
+        // public/users — see Profile::getProfileImage()'s same handling) —
+        // fall back to the gender default avatar instead of a blank box.
+        $senderImg = null;
+        if (!empty($interest->sender_images)) {
+            $candidate = explode(',', $interest->sender_images)[0];
+            if ($candidate && file_exists(public_path($candidate))) {
+                $senderImg = $candidate;
+            }
+        }
+        $senderImg = $senderImg ?: \App\Profile::defaultImage($interest->sender_gender ?? null);
+
+        $receiverImg = null;
+        if (!empty($interest->receiver_images)) {
+            $candidate = explode(',', $interest->receiver_images)[0];
+            if ($candidate && file_exists(public_path($candidate))) {
+                $receiverImg = $candidate;
+            }
+        }
+        $receiverImg = $receiverImg ?: \App\Profile::defaultImage($interest->receiver_gender ?? null);
+    @endphp
 <div class="ur-admin-card">
     <div class="ur-admin-duo-card__row">
         <div class="ur-admin-duo-card__side" id="block_{{$interest->sid}}">
             <a href="{{url('/member/profile/'.$interest->sid)}}" target="_blank">
-                <span class="ur-admin-thumb" style="background-image: url('{{ explode(',', $interest->sender_images)[0] }}')"></span>
+                <span class="ur-admin-thumb" style="background-image: url('{{ $senderImg }}')"></span>
             </a>
             <div>
                 <a href="{{url('/member/profile/'.$interest->sid)}}" target="_blank" class="ur-admin-duo-card__name">{{ $interest->sender }}</a>
@@ -41,6 +64,7 @@
             </div>
         </div>
         <div class="ur-admin-duo-card__status">
+            <i class="fa fa-long-arrow-right ur-admin-duo-card__arrow" aria-hidden="true"></i>
             @php
                 $interest_back = $interest->interest_back;
                 if ($interest_back==1) {
@@ -62,7 +86,7 @@
         </div>
         <div class="ur-admin-duo-card__side" id="block_{{$interest->rid}}">
             <a href="{{url('/member/profile/'.$interest->rid)}}" target="_blank">
-                <span class="ur-admin-thumb" style="background-image: url('{{ explode(',', $interest->receiver_images)[0] }}')"></span>
+                <span class="ur-admin-thumb" style="background-image: url('{{ $receiverImg }}')"></span>
             </a>
             <div>
                 <a href="{{url('/member/profile/'.$interest->rid)}}" target="_blank" class="ur-admin-duo-card__name">{{ $interest->receiver }}</a>
