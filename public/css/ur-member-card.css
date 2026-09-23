@@ -352,6 +352,15 @@
     color: var(--ur-text, #1C2321);
 }
 
+.member-card__compat-explain {
+    font-size: .68rem;
+    color: var(--ur-text-muted, #6B7570);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--ur-border, #E7E2D6);
+    line-height: 1.4;
+}
+
 .member-card__quick {
     display: flex;
     flex-wrap: wrap;

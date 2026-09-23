@@ -8,7 +8,7 @@
 <?php use App\User; ?>
 @php
     $isVerified = $profile->photo_verification_status === 'verified';
-    $galleryImages = json_decode($profile->getLightGalleryImages(), true) ?: [];
+    $galleryImages = json_decode($profile->getLightGalleryImages(!empty($profile->added_by) && empty($canViewContactInfo)), true) ?: [];
     $imageCount = $profile->getImageCount();
     $age = $profile->birthday ? date_diff(date_create($profile->birthday), date_create('now'))->y : null;
     $pronounTitle = $profile->gender === 'female' ? 'Her' : ($profile->gender === 'male' ? 'Him' : ($profile->first_name ?: 'Them'));
@@ -1023,8 +1023,9 @@
             <div class="col-lg-3">
                 <div class="ur-mp-gallery">
                     <div class="ur-mp-gallery__main">
-                        <span class="ur-mp-gallery__bg" style="background-image:url('{{ $profile->getProfileImage() }}')"></span>
-                        <img id="mp_main_photo" src="{{ $profile->getProfileImage() }}" alt="{{ $profile->first_name }}" />
+                        @php $mainPhotoWatermarked = !empty($profile->added_by) && empty($canViewContactInfo); @endphp
+                        <span class="ur-mp-gallery__bg" style="background-image:url('{{ $profile->getProfileImage(null, $mainPhotoWatermarked) }}')"></span>
+                        <img id="mp_main_photo" src="{{ $profile->getProfileImage(null, $mainPhotoWatermarked) }}" alt="{{ $profile->first_name }}" />
                         @if($isVerified)
                             <span class="ur-mp-badge ur-mp-badge--verified"><i class="fa fa-check-circle"></i> Verified Profile</span>
                         @endif
@@ -1206,6 +1207,63 @@
                                 @if(!empty($profile->lbl_city) || !empty($profile->lbl_con_of_residence))<div><span>Living In</span><b>{{ collect([$profile->lbl_city ?? null, $profile->lbl_con_of_residence ?? null])->filter()->implode(', ') }}</b></div>@endif
                             </div>
                         </div>
+                        @endif
+
+                        @if(!empty($profile->added_by))
+                        <div class="ur-mp-detail-card">
+                            <h3 class="ur-mp-detail-card__title"><i class="fa fa-id-card"></i> Contact Info</h3>
+                            @if(!empty($canViewContactInfo))
+                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                @if($contactUnlockSettings['unlock_name'] ?? true)<div><span>Full Name</span><b>{{ $profile->first_name }} {{ $profile->last_name }}</b></div>@endif
+                                @if($contactUnlockSettings['unlock_email'] ?? true)<div><span>Email</span><b>{{ $profile->email }}</b></div>@endif
+                                @if($contactUnlockSettings['unlock_phone'] ?? true)<div><span>Phone</span><b>{{ $profile->contact_mobile_number }}</b></div>@endif
+                                @if(!empty($profile->address) && ($contactUnlockSettings['unlock_address'] ?? true))<div><span>Address</span><b>{{ $profile->address }}</b></div>@endif
+                            </div>
+                            @else
+                            <p class="ur-mp-detail-card__locked-note"><i class="fa fa-lock"></i> Contact info is hidden.</p>
+                            @endif
+                            @if(!empty(auth()->user()) && auth()->user()->is_team_member == 1)
+                            {{-- Never sends phone/email/address — see User::whatsappShareLink()
+                                 and TeamController::shareWhatsapp(). --}}
+                            <a class="ur-btn ur-btn--outline" style="margin-top:10px;" href="{{ route('team.proposals.share.whatsapp', $profile->dataid) }}" target="_blank" rel="noopener">
+                                <i class="fa fa-whatsapp"></i> Share via WhatsApp
+                            </a>
+                            @endif
+                        </div>
+
+                        <div class="ur-mp-detail-card">
+                            <h3 class="ur-mp-detail-card__title"><i class="fa fa-flag"></i> Profile Status</h3>
+                            @php
+                                $statusLabels = ['active' => 'Active', 'on_hold' => 'On Hold', 'matched' => 'Matched', 'engaged' => 'Engaged', 'married' => 'Married', 'closed' => 'Closed'];
+                                $canEditStatus = !empty(auth()->user()) && ($profile->added_by == auth()->id() || auth()->user()->isAdmin());
+                            @endphp
+                            @if($canEditStatus)
+                            <form method="POST" action="{{ route('team.proposals.status', $profile->dataid) }}" style="display:flex; gap:10px; align-items:center;">
+                                @csrf
+                                <select name="profile_status" class="form-control" style="max-width:220px;">
+                                    @foreach($statusLabels as $value => $label)
+                                        <option value="{{ $value }}" {{ $profile->profile_status == $value ? 'selected' : '' }}>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="ur-btn ur-btn--outline">Update</button>
+                            </form>
+                            @else
+                            <p><b>{{ $statusLabels[$profile->profile_status] ?? ucfirst($profile->profile_status) }}</b></p>
+                            @endif
+                        </div>
+
+                        @if(!empty($profile->income) || !empty($profile->property_financial_status) || !empty($profile->profile_description))
+                        <div class="ur-mp-detail-card">
+                            <h3 class="ur-mp-detail-card__title"><i class="fa fa-info-circle"></i> About</h3>
+                            <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
+                                @if(!empty($profile->income))<div><span>Income</span><b>{{ $profile->income }}</b></div>@endif
+                                @if(!empty($profile->property_financial_status))<div><span>Property / Financial Status</span><b>{{ $profile->property_financial_status }}</b></div>@endif
+                            </div>
+                            @if(!empty($profile->profile_description))
+                            <p style="margin-top:10px;">{{ $profile->profile_description }}</p>
+                            @endif
+                        </div>
+                        @endif
                         @endif
 
                         <div class="ur-mp-detail-card">

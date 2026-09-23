@@ -47,6 +47,13 @@
                     @else
                         <span class="ur-admin-badge ur-admin-badge--neutral">Unassigned</span>
                     @endif
+                    @if($member->is_team_member == 1)
+                        <span id="team_member_label_{{ $member->dataid }}" class="ur-admin-badge ur-admin-badge--neutral">Team Member</span>
+                        <span id="team_member_status_label_{{ $member->dataid }}" class="ur-admin-badge {{ $member->team_member_status === 'active' ? 'ur-admin-badge--success' : 'ur-admin-badge--warning' }}">{{ ucfirst($member->team_member_status ?? 'active') }}</span>
+                    @endif
+                    @if(!empty($member->added_by))
+                        <span class="ur-admin-badge ur-admin-badge--neutral">{{ ucfirst(str_replace('_', ' ', $member->profile_status ?? 'active')) }}</span>
+                    @endif
                 </div>
             </div>
             <a href="{{ url('admin/profile/preview/'.$member->dataid) }}?page={{ request()->query('page', 1) }}" class="ur-btn ur-btn--dark ur-detail-panel__full">Full Profile &rarr;</a>
@@ -75,6 +82,15 @@
             <a href="{{ url('admin/profile/package/'.$member->dataid) }}?page={{ request()->query('page', 1) }}" class="ur-btn ur-btn--outline"><i class="fa fa-archive"></i> Change Package</a>
             <a class="ur-btn ur-btn--outline" onclick="return resendVerificationEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-envelope"></i> Resend Verification Email</a>
             <a class="ur-btn ur-btn--outline" onclick="return sendPasswordResetEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-unlock"></i> Password Reset</a>
+            <a id="team_toggle_{{ $member->dataid }}" class="ur-btn ur-btn--outline" onclick="return toggleTeamMember($(this), '{{ $member->dataid }}');"><i class="fa fa-briefcase"></i> {{ $member->is_team_member == 1 ? 'Revoke Team Access' : 'Make Team Member' }}</a>
+            @if($member->is_team_member == 1)
+                @if(($member->team_member_status ?? 'active') === 'active')
+                    <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatus($(this), 'suspend', '{{ $member->dataid }}');"><i class="fa fa-pause"></i> Suspend</a>
+                    <a class="ur-btn ur-btn--danger-outline" onclick="return updateTeamMemberStatus($(this), 'deactivate', '{{ $member->dataid }}');"><i class="fa fa-ban"></i> Deactivate</a>
+                @else
+                    <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatus($(this), 'reactivate', '{{ $member->dataid }}');"><i class="fa fa-play"></i> Reactivate</a>
+                @endif
+            @endif
             <a class="ur-btn ur-btn--danger-outline" onclick="return deleteProfile($(this), '{{ $member->dataid }}');"><i class="fa fa-trash"></i> Delete Profile</a>
         </div>
     </div>

@@ -53,6 +53,13 @@ class User extends Authenticatable implements MustVerifyEmail {
         'marital_status',
         'education',
         'profession',
+        'con_of_citizenship',
+        'immigration_status',
+        'family_residence',
+        'family_values',
+        'income',
+        'property_financial_status',
+        'profile_description',
         'password',
     ];
 
@@ -65,6 +72,10 @@ class User extends Authenticatable implements MustVerifyEmail {
      * package via a crafted request) for any future code that isn't as
      * careful: 'package', 'package_started_at', 'package_expires_at',
      * 'online_package', 'online_package_started_at', 'online_package_expires_at'.
+     * Same reasoning covers 'is_team_member' (set only via AdminController::
+     * toggleTeamMember()) and 'added_by' (set only via TeamController::store()
+     * to Auth::id() of the acting team member) — neither should ever be
+     * settable from a mass-assigned request body.
      */
 
     /**
@@ -363,6 +374,10 @@ class User extends Authenticatable implements MustVerifyEmail {
             $where .= " and `u`.`profession` LIKE '%" . addslashes($pref->profession) . "%'";
         }
 
+        // Team-added proposals (see TeamController::store()) are team-exclusive
+        // — they must never surface in the regular recommended-matches pool.
+        $where .= " and `u`.`added_by` IS NULL";
+
         return $where;
     }
 
@@ -405,6 +420,98 @@ class User extends Authenticatable implements MustVerifyEmail {
     public function getRecommendedMatchesCount(): int
     {
         $where = $this->recommendedMatchesWhere();
+        if ($where === null) {
+            return 0;
+        }
+
+        return (int) Profile::profiles($where, "", null, null, null, true);
+    }
+
+    /**
+     * Parallel to recommendedMatchesWhere() — NOT a modification of it,
+     * kept fully separate so self-registered members' behavior is
+     * untouched. $this is expected to be a PROPOSAL (a `users` row with
+     * `added_by` set — see TeamController::store()), not a logged-in
+     * viewer. Deliberate difference from recommendedMatchesWhere(): skips
+     * the isActive()/canSearchSoulMates() package gate — a proposal has
+     * no package, that gate would always return null for one. Candidate
+     * pool is restricted to OTHER team-added proposals only
+     * (`added_by IS NOT NULL`) — client confirmed 2026-09-23 the Team
+     * Dashboard's AI Matches must only ever surface manually-added
+     * proposals, never the regular self-registered pool (matches how
+     * every other Team Dashboard page already works).
+     */
+    private function proposalMatchesWhere(): ?string
+    {
+        $ownGender = strtolower($this->gender ?? '');
+        $oppositeGender = $ownGender === 'male' ? 'female' : ($ownGender === 'female' ? 'male' : null);
+        if (empty($oppositeGender)) {
+            return null;
+        }
+
+        if (!$this->hasPartnerPreferences()) {
+            return null;
+        }
+
+        $where = "`u`.`gender`='" . $oppositeGender . "' and `u`.`active`=1 and `u`.`id`!=" . (int) $this->id . " and `u`.`added_by` IS NOT NULL";
+
+        $pref = $this->partnerPreference;
+        if (!empty($pref->age_min) || !empty($pref->age_max)) {
+            $min = !empty($pref->age_min) ? (int) $pref->age_min : 18;
+            $max = !empty($pref->age_max) ? (int) $pref->age_max : 99;
+            $where .= " and FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/365.25) between " . $min . " and " . $max;
+        }
+        if (!empty($pref->marital_status)) {
+            $where .= " and `u`.`marital_status`='" . addslashes($pref->marital_status) . "'";
+        }
+        if ($pref->with_children === 'No') {
+            $where .= " and (`u`.`children` is null or `u`.`children`='' or CAST(`u`.`children` AS UNSIGNED)=0)";
+        } elseif ($pref->with_children === 'Yes') {
+            $where .= " and CAST(`u`.`children` AS UNSIGNED) > 0";
+        }
+        if (!empty($pref->country_id)) {
+            $where .= " and `u`.`con_of_residence`='" . addslashes($pref->country_id) . "'";
+        }
+        if (!empty($pref->state_id)) {
+            $where .= " and `u`.`state`='" . addslashes($pref->state_id) . "'";
+        }
+        if (!empty($pref->religion_id)) {
+            $where .= " and `u`.`religion`='" . addslashes($pref->religion_id) . "'";
+        }
+        if (!empty($pref->profession)) {
+            $where .= " and `u`.`profession` LIKE '%" . addslashes($pref->profession) . "%'";
+        }
+
+        return $where;
+    }
+
+    /**
+     * AI Matches Found for a proposal — same shape as
+     * getRecommendedMatches() but drawing from proposalMatchesWhere().
+     */
+    public function getProposalMatches($limit = 3, $offset = 0)
+    {
+        $where = $this->proposalMatchesWhere();
+        if ($where === null) {
+            return collect();
+        }
+
+        $orderParts = [];
+        if (!empty($this->city)) {
+            $orderParts[] = "(`u`.`city`='" . addslashes($this->city) . "') DESC";
+        }
+        if (!empty($this->con_of_residence)) {
+            $orderParts[] = "(`u`.`con_of_residence`='" . addslashes($this->con_of_residence) . "') DESC";
+        }
+        $orderParts[] = "`u`.`updated_at` DESC";
+        $orderBy = implode(', ', $orderParts);
+
+        return Profile::profiles($where, "", $orderBy, $limit, $offset);
+    }
+
+    public function getProposalMatchesCount(): int
+    {
+        $where = $this->proposalMatchesWhere();
         if ($where === null) {
             return 0;
         }
@@ -495,6 +602,21 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $this->getPhotoAccess($owner->dataid) === 1;
     }
 
+    /**
+     * Can this member see $proposalOwner's hidden contact info (email,
+     * phone, last name, exact address) right now? These fields are hidden
+     * by default for any team-added proposal (see TeamController::store())
+     * — but the whole team-added pool is shared/open across the team, so
+     * any active team member can see them, not just the one who added it.
+     */
+    public function canViewContactInfoOf(User $proposalOwner): bool {
+        if ($this->id === $proposalOwner->id) return true;
+        if ($this->isAdmin()) return true;
+        if (empty($proposalOwner->added_by)) return false;
+
+        return (int) $this->is_team_member === 1 && $this->team_member_status === 'active';
+    }
+
     public function getTotalCount() {
         return $this->profile()->getTotalCount();
     }
@@ -531,8 +653,19 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $n;
     }
 
-    public static function whatsappLinkForNumber($n) {
-        return 'https://wa.me/' . self::normalizePhoneNumberValue($n);
+    public static function whatsappLinkForNumber($n, $text = null) {
+        $link = 'https://wa.me/' . self::normalizePhoneNumberValue($n);
+        return $text ? $link . '?text=' . rawurlencode($text) : $link;
+    }
+
+    /**
+     * A "share to anyone" WhatsApp link — no target number, opens WhatsApp's
+     * own contact picker. Used for sharing a proposal (Website Upgrade
+     * Brief §10: never send phone/email/address via WhatsApp — only a
+     * proposal ID and a secure portal link belong in $text).
+     */
+    public static function whatsappShareLink($text) {
+        return 'https://wa.me/?text=' . rawurlencode($text);
     }
 
     public function getNormalizedPhoneNumber() {

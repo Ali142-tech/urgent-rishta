@@ -37,7 +37,7 @@ $hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // Guests on the homepage slider only ever get the single pre-blurred
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.
-$cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages();
+$cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages(null, !empty($watermarked));
 $compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
 $compatTier = null;
 if ($compatibility) {
@@ -136,6 +136,12 @@ $packageIcon = match ($packageSlug) {
                         </div>
                     @endforeach
                 </div>
+                {{-- AI Match Explanation (Website Upgrade Brief §6) — optional,
+                     only passed by team/matches.blade.php and the overview's
+                     AI Match Recommendations preview today. --}}
+                @if(!empty($matchExplanation ?? null))
+                    <div class="member-card__compat-explain">{{ $matchExplanation }}</div>
+                @endif
             </div>
         @endif
         <ul class="member-card__quick">
@@ -156,6 +162,9 @@ $packageIcon = match ($packageSlug) {
             <li><span>Caste / Sect</span><b>{{$member->lbl_caste}} / {{$member->sect}}</b></li>
             <li><span>Marital Status</span><b>{{$member->lbl_marital_status}}</b></li>
         </ul>
+        @if(!empty($addedByName ?? null))
+            <div class="ur-team-added-by"><i class="fa fa-user-circle"></i> Added by {{ $addedByName }}</div>
+        @endif
     </div>
     <div class="member-card__footer">
         @if($hideImage)
@@ -172,6 +181,22 @@ $packageIcon = match ($packageSlug) {
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
                 <i class="fa fa-eye"></i> View Full Profile
             </a>
+            @if(!empty($member->team_card_role))
+                {{-- Team Dashboard card — not the regular Express Interest
+                     flow (team-added proposals are login-less shell
+                     records; see TeamController::store()). The whole
+                     team-added pool is open to every team member, so
+                     only ownership (not any request/approval step) decides
+                     whether Edit shows up. --}}
+                @if($member->team_card_role === 'own')
+                    <a class="is-interest" href="{{ route('team.proposals.edit', $member->dataid) }}">
+                        <i class="fa fa-pencil"></i> <span>Edit</span>
+                    </a>
+                @endif
+                <a class="is-interest" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
+                    <i class="fa fa-whatsapp"></i> <span>Share</span>
+                </a>
+            @else
             @guest
                 <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return register_request();">
                     <i class="fa fa-heart"></i> <span>Express Interest</span>
@@ -197,6 +222,7 @@ $packageIcon = match ($packageSlug) {
                     </a>
                 @endif
             @endauth
+            @endif
         @endif
     </div>
 </div>

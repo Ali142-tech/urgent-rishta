@@ -223,6 +223,60 @@
         })
     }
 
+    function toggleTeamMember(elem, id) {
+        var oldHtml = elem.html();
+        elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
+        elem.prop('disabled', true);
+
+        $.ajax({
+            type: "post",
+            url: "{{url('admin/profile/toggle-team-member/')}}" + "/" + id,
+            data: { '_token': '{{ csrf_token() }}' },
+            success: function(result) {
+                elem.prop('disabled', false);
+
+                var message = result.message;
+                if (result.code == "200") {
+                    var isTeamMember = result.is_team_member == 1;
+                    elem.html((isTeamMember ? "<i class='fa fa-briefcase'></i> Revoke Team Access" : "<i class='fa fa-briefcase'></i> Make Team Member"));
+
+                    var existingLabel = $("#team_member_label_" + id);
+                    if (isTeamMember && existingLabel.length === 0) {
+                        $("<span id='team_member_label_" + id + "' class='ur-admin-badge ur-admin-badge--neutral'>Team Member</span>").appendTo('.ur-detail-panel__badges');
+                    } else if (!isTeamMember) {
+                        existingLabel.remove();
+                    }
+                    showAlert('success', message, 3000);
+                } else {
+                    elem.html(oldHtml);
+                    showAlert('danger', message, 5000);
+                }
+            }
+        })
+    }
+
+    function updateTeamMemberStatus(elem, action, id) {
+        var oldHtml = elem.html();
+        elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
+        elem.prop('disabled', true);
+
+        $.ajax({
+            type: "post",
+            url: "{{url('admin/profile/team-member-status')}}" + "/" + action + "/" + id,
+            data: { '_token': '{{ csrf_token() }}' },
+            success: function(result) {
+                if (result.code == "200") {
+                    showAlert('success', result.message, 3000);
+                    loadMemberDetail(id); // button set changes shape (suspend/deactivate <-> reactivate) — simplest to re-render the whole panel
+                } else {
+                    elem.html(oldHtml);
+                    elem.prop('disabled', false);
+                    showAlert('danger', result.message, 5000);
+                }
+            }
+        })
+    }
+
     function deleteProfile(elem, id) {
         swalConfirm("Delete Profile?", "Are you sure you want to delete this profile? You will not be able to revert this!", () => {
             var oldHtml = elem.html();

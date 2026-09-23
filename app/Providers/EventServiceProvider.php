@@ -35,6 +35,11 @@ class EventServiceProvider extends ServiceProvider
         // automatic re-engagement reminder (see App\Services\InactivityReminderService).
         Event::listen(Login::class, function (Login $event) {
             $event->user->forceFill(['last_login_at' => now()])->saveQuietly();
+            // last_login_at only ever holds the MOST RECENT login (overwritten
+            // every time) — this is what turns that into real login history,
+            // queryable in the admin Audit Log without touching any of the
+            // three separate login controllers (password/OTP/Google).
+            \App\AuditLog::record($event->user, 'login');
         });
     }
 }

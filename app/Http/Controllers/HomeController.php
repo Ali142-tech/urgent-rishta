@@ -317,6 +317,9 @@ class HomeController extends Controller {
                 }
             }
             $where = $where.((empty($where) ? "" : " and ")."`u`.`active`=1");
+            // Team-added proposals (see TeamController::store()) are team-exclusive
+            // — never surfaced in the regular search results.
+            $where .= " and `u`.`added_by` IS NULL";
             $members = Profile::profiles($where, $having, "`u`.`updated_at` DESC", $pageSize, $pageSize*($pageRequested-1));
             $resultCount = Profile::profiles($where, $having, null, null, null, true);
 

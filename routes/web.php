@@ -79,6 +79,15 @@ Route::get('admin/appointments/panel/{id}', [App\Http\Controllers\AdminControlle
 Route::post('admin/appointments/refresh', [App\Http\Controllers\AdminController::class, 'refreshAppointments']);
 Route::post('admin/appointments/{id}/status', [App\Http\Controllers\AdminController::class, 'updateAppointmentStatus']);
 // Photo & Identity Verification queue (Website Upgrade Brief §9)
+Route::get('admin/match-weights', [App\Http\Controllers\AdminController::class, 'matchWeights'])->name('admin.match-weights');
+Route::post('admin/match-weights', [App\Http\Controllers\AdminController::class, 'updateMatchWeights'])->name('admin.match-weights.update');
+Route::get('admin/team-members', [App\Http\Controllers\AdminController::class, 'teamMembers'])->name('admin.team-members');
+Route::post('admin/team-members/message', [App\Http\Controllers\AdminController::class, 'sendAdminMessage'])->name('admin.team-members.message');
+Route::get('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'contactUnlockSettings'])->name('admin.contact-unlock-settings');
+Route::post('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'updateContactUnlockSettings'])->name('admin.contact-unlock-settings.update');
+Route::get('admin/successful-matches', [App\Http\Controllers\AdminController::class, 'successfulMatches'])->name('admin.successful-matches');
+Route::post('admin/successful-matches/{id}/share', [App\Http\Controllers\AdminController::class, 'updateSuccessfulMatchShare'])->name('admin.successful-matches.share');
+Route::get('admin/audit-log', [App\Http\Controllers\AdminController::class, 'auditLog'])->name('admin.audit-log');
 Route::get('admin/photo-verification', [App\Http\Controllers\AdminController::class, 'photoVerificationQueue']);
 Route::get('admin/photo-verification/logs', [App\Http\Controllers\AdminController::class, 'photoVerificationLogs']);
 Route::post('admin/photo-verification/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approvePhotoVerification']);
@@ -100,6 +109,8 @@ Route::delete('admin/profile/{dataid}/permanent', [App\Http\Controllers\AdminCon
 // exploitable via CSRF (Laravel's CSRF protection doesn't cover GET, so any
 // page a logged-in admin loads could trigger these with a plain <img src>).
 Route::post('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
+Route::post('admin/profile/toggle-team-member/{user}', [App\Http\Controllers\AdminController::class, 'toggleTeamMember']); // grant/revoke Team Member role in admin dashboard
+Route::post('admin/profile/team-member-status/{action}/{user}', [App\Http\Controllers\AdminController::class, 'updateTeamMemberStatus'])->whereIn('action', ['suspend', 'deactivate', 'reactivate']);
 Route::post('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
 Route::post('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
 Route::post('admin/profile/updatepackage/{id}',[App\Http\Controllers\AdminController::class, 'updateProfilePackage']); // update package for profile in admin dashboard
@@ -126,6 +137,28 @@ Route::get('admin/publish-image', [App\Http\Controllers\AdminController::class, 
 
 // check email in use route
 Route::post('eiu', [App\Http\Controllers\Auth\RegisterController::class, 'emailInUse']);
+
+// Team Dashboard — team_member-only routes (see EnsureUserIsTeamMember,
+// TeamController::__construct()). Proposals manually added here are
+// team-exclusive: see the `added_by IS NULL` exclusion added to
+// HomeController::search() and User::recommendedMatchesWhere().
+Route::get('team/dashboard', [App\Http\Controllers\TeamController::class, 'dashboard'])->name('team.dashboard');
+Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, 'myProposals'])->name('team.proposals.mine');
+Route::get('team/proposals/search', [App\Http\Controllers\TeamController::class, 'searchProposals'])->name('team.proposals.search');
+Route::get('team/matches', [App\Http\Controllers\TeamController::class, 'matches'])->name('team.matches');
+Route::get('team/matches/{dataid}', [App\Http\Controllers\TeamController::class, 'matchesForProposal'])->name('team.matches.show');
+Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
+Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
+Route::get('team/proposals/create', [App\Http\Controllers\TeamController::class, 'create'])->name('team.proposals.create');
+Route::post('team/proposals', [App\Http\Controllers\TeamController::class, 'store'])->name('team.proposals.store');
+Route::get('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'edit'])->name('team.proposals.edit');
+Route::post('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'update'])->name('team.proposals.update');
+Route::get('team/proposals/{dataid}/photos', [App\Http\Controllers\TeamController::class, 'photos'])->name('team.proposals.photos');
+Route::post('team/proposals/{dataid}/photos', [App\Http\Controllers\TeamController::class, 'uploadPhoto'])->name('team.proposals.photos.store');
+Route::delete('team/proposals/{dataid}/photos/{imageId}', [App\Http\Controllers\TeamController::class, 'deletePhoto'])->name('team.proposals.photos.destroy');
+Route::post('team/successful-matches', [App\Http\Controllers\TeamController::class, 'markSuccessfulMatch'])->name('team.successful-matches.store');
+Route::get('team/proposals/{dataid}/share/whatsapp', [App\Http\Controllers\TeamController::class, 'shareWhatsapp'])->name('team.proposals.share.whatsapp');
+Route::post('team/proposals/{dataid}/status', [App\Http\Controllers\TeamController::class, 'updateProfileStatus'])->name('team.proposals.status');
 
 // profile routes
 Route::get('member/profile',[App\Http\Controllers\ProfileController::class, 'profile']);

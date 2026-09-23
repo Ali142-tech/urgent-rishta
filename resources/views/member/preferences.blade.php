@@ -9,6 +9,11 @@
     <div class="ur-prefs__card">
         <h2 class="ur-prefs__title">Partner Preferences</h2>
         <p class="ur-prefs__sub">Tell us what you're looking for in a match — this isn't shown on your own profile, it's used to help find and filter better matches for you.</p>
+        @if(!empty(auth()->user()) && auth()->user()->is_team_member == 1)
+        <p class="ur-prefs__sub" style="background:#FCF3E3; border-left:3px solid #C9974D; padding:10px 12px; border-radius:6px;">
+            <i class="fa fa-info-circle"></i> This page is for <b>your own</b> personal preferences, not for any proposal you've added. To set what a client's proposal is looking for (so AI Matches can find candidates for them), open that proposal under <a href="{{ route('team.proposals.mine') }}">My Proposals</a> and edit its "Partner Requirements" section instead.
+        </p>
+        @endif
 
         <form id="preferences_form" role="form" method="post" action="{{ route('member.preferences.update') }}">
             @csrf

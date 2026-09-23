@@ -809,6 +809,168 @@ class AdminController extends Controller
     }
 
     /**
+     * Admin-configurable weight per compatibility factor (see
+     * Profile::compatibilityWith(), MatchWeightSetting::current()) — the
+     * AI match % is no longer a hard-coded flat average once an admin
+     * edits these.
+     */
+    function matchWeights()
+    {
+        return view('admin.dashboard.match-weights', ['weights' => \App\MatchWeightSetting::current()]);
+    }
+
+    function updateMatchWeights(Request $request)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $validated = $request->validate([
+            'age_weight' => 'required|integer|min:0|max:100',
+            'location_weight' => 'required|integer|min:0|max:100',
+            'religion_weight' => 'required|integer|min:0|max:100',
+            'caste_weight' => 'required|integer|min:0|max:100',
+            'marital_status_weight' => 'required|integer|min:0|max:100',
+            'education_weight' => 'required|integer|min:0|max:100',
+            'mother_tongue_weight' => 'required|integer|min:0|max:100',
+            'children_weight' => 'required|integer|min:0|max:100',
+        ]);
+
+        $row = \App\MatchWeightSetting::first() ?? new \App\MatchWeightSetting();
+        $row->fill($validated);
+        $row->save();
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") updated AI match weights: " . json_encode($validated));
+
+        Session::flash('message', 'success|AI match weights updated.');
+        return redirect()->route('admin.match-weights');
+    }
+
+    /**
+     * Website Upgrade Brief §13 "Manage notifications" — the admin-facing
+     * side of App\Notifications\AdminMessage. Lists team members so admin
+     * can message one specifically, or broadcast to all of them.
+     */
+    function teamMembers()
+    {
+        $members = User::where('is_team_member', 1)->orderBy('first_name')->get();
+        return view('admin.dashboard.team-members', ['members' => $members]);
+    }
+
+    function sendAdminMessage(Request $request)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $request->validate([
+            'recipient' => 'required|string',
+            'message' => 'required|string|max:1000',
+        ]);
+
+        if ($request->recipient === 'all') {
+            $recipients = User::where('is_team_member', 1)->get();
+        } else {
+            $recipients = User::where('dataid', $request->recipient)->where('is_team_member', 1)->get();
+        }
+
+        foreach ($recipients as $recipient) {
+            $recipient->notify(new \App\Notifications\AdminMessage($request->message));
+        }
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") sent a message to " . $recipients->count() . " team member(s)");
+
+        Session::flash('message', 'success|Message sent to ' . $recipients->count() . ' team member(s).');
+        return redirect()->route('admin.team-members');
+    }
+
+    /**
+     * Which of the 4 contact fields actually render once a viewer passes
+     * User::canViewContactInfoOf() — the gate itself stays all-or-nothing
+     * (has this person earned access at all); this only prunes which
+     * fields show once that gate is open (member/profile.blade.php's
+     * Contact Info card, ProfileController::profile()).
+     */
+    function contactUnlockSettings()
+    {
+        return view('admin.dashboard.contact-unlock-settings', ['settings' => \App\ContactUnlockSetting::current()]);
+    }
+
+    function updateContactUnlockSettings(Request $request)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $validated = [
+            'unlock_email' => $request->boolean('unlock_email'),
+            'unlock_phone' => $request->boolean('unlock_phone'),
+            'unlock_name' => $request->boolean('unlock_name'),
+            'unlock_address' => $request->boolean('unlock_address'),
+        ];
+
+        $row = \App\ContactUnlockSetting::first() ?? new \App\ContactUnlockSetting();
+        $row->fill($validated);
+        $row->save();
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") updated contact unlock settings: " . json_encode($validated));
+
+        Session::flash('message', 'success|Contact unlock settings updated.');
+        return redirect()->route('admin.contact-unlock-settings');
+    }
+
+    /**
+     * Website Upgrade Brief §18 — admin-visible list of every match a
+     * team member has marked successful, with the revenue-share split
+     * editable "case by case" (§15).
+     */
+    function successfulMatches(Request $request)
+    {
+        $matches = \App\SuccessfulMatch::with('proposal', 'counterpartProposal', 'partnerA', 'partnerB')
+            ->orderByDesc('matched_at')
+            ->paginate(25);
+
+        return view('admin.dashboard.successful-matches', ['matches' => $matches]);
+    }
+
+    function updateSuccessfulMatchShare(Request $request, $id)
+    {
+        $loggedInUser = User::retrieveUserObject();
+        $match = \App\SuccessfulMatch::find($id);
+        if (!$match) {
+            return ['code' => '404', 'message' => 'Successful match record was not found.'];
+        }
+
+        $validated = $request->validate([
+            'share_partner_a' => 'nullable|integer|min:0|max:100',
+            'share_partner_b' => 'nullable|integer|min:0|max:100',
+        ]);
+
+        $match->fill($validated);
+        $match->save();
+
+        Log::info('Admin (' . $loggedInUser->dataid . ') updated revenue share for successful match ' . $id);
+
+        return ['code' => '200', 'message' => 'Revenue share updated.'];
+    }
+
+    /**
+     * Website Upgrade Brief §16 — queryable audit trail (see App\AuditLog).
+     * Every other Log::info(...) call in this app only ever reaches
+     * storage/logs/laravel.log; this is the one admin-visible, filterable
+     * history of who did what.
+     */
+    function auditLog(Request $request)
+    {
+        $action = trim((string) $request->query('action'));
+
+        $logs = \App\AuditLog::with('actor')
+            ->when($action !== '', fn ($q) => $q->where('action', $action))
+            ->orderByDesc('created_at')
+            ->paginate(30)
+            ->appends($request->query());
+
+        return view('admin.dashboard.audit-log', [
+            'logs' => $logs,
+            'action' => $action,
+        ]);
+    }
+
+    /**
      * Admin view: all user appointments.
      */
     /** Shared SELECT for both appointments() and refreshAppointments() — COALESCEs to the guest_* columns so requests submitted without an account (see AppointmentController::storeConsultationRequest) still show a name/email/phone. */
@@ -1463,6 +1625,72 @@ class AdminController extends Controller
                 'message' => 'User was not found (id: ' . $dataid . ')'
             ];
         }
+    }
+
+    function toggleTeamMember($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $user = User::retrieveUserObject($dataid);
+        if ($user) {
+            $user->is_team_member = $user->is_team_member ? 0 : 1;
+            // Re-granting always restores full access — otherwise a
+            // previously suspended/deactivated partner would still be
+            // blocked by EnsureUserIsTeamMember after being re-approved.
+            if ($user->is_team_member == 1) {
+                $user->team_member_status = 'active';
+            }
+            $user->save();
+
+            $displayName = $user->first_name . ' ' . $user->last_name;
+            $status = $user->is_team_member == 1 ? 'granted team member access to' : 'revoked team member access from';
+            Log::info("Admin (" . $loggedInUser->dataid . ") " . $status . " " . $displayName . " (" . $user->email . ")");
+            User::retrieveUserObject($dataid, true);
+            return [
+                'code' => '200',
+                'message' => $status . ' ' . $displayName . ' (' . $user->email . ')',
+                'is_team_member' => $user->is_team_member
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not update team member status of " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'User was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    /**
+     * Suspend/deactivate/reactivate an ALREADY-approved partner without
+     * touching is_team_member — mirrors approvePhotoVerification/
+     * rejectPhotoVerification/reopenPhotoVerification's shape exactly.
+     */
+    function updateTeamMemberStatus($action, $dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $statusMap = ['suspend' => 'suspended', 'deactivate' => 'deactivated', 'reactivate' => 'active'];
+        if (!isset($statusMap[$action])) {
+            return ['code' => '404', 'message' => 'Action not permitted!!!'];
+        }
+
+        $user = User::retrieveUserObject($dataid);
+        if (!$user || (int) $user->is_team_member !== 1) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $user->team_member_status = $statusMap[$action];
+        $user->save();
+
+        $displayName = $user->first_name . ' ' . $user->last_name;
+        Log::info("Admin (" . $loggedInUser->dataid . ") set team member status of " . $displayName . " (" . $user->email . ") to " . $statusMap[$action]);
+        User::retrieveUserObject($dataid, true);
+
+        return [
+            'code' => '200',
+            'message' => $displayName . ' is now ' . $statusMap[$action] . '.',
+            'team_member_status' => $user->team_member_status
+        ];
     }
 
     function deleteProfile($dataid)

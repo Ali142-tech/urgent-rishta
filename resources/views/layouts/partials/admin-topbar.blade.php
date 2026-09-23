@@ -40,6 +40,7 @@
                 </div>
                 <a href="{{ url('member/profile') }}"><i class="fa fa-user"></i> My Profile</a>
                 <a href="{{ url('member/profile/password/update') }}"><i class="fa fa-key"></i> Change Password</a>
+                <a href="{{ route('team.dashboard') }}"><i class="fa fa-briefcase"></i> Team Dashboard</a>
                 <button type="button" class="is-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fa fa-power-off"></i> Log Out
                 </button>

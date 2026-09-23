@@ -3,6 +3,7 @@
     Active-state highlighting is done with request()->is(...) so no JS is
     needed just to mark the current page.
 --}}
+<?php use App\User; ?>
 <aside class="ur-dash-sidebar" id="ur_dash_sidebar">
     <button type="button" class="ur-dash-sidebar__close" id="ur_dash_sidebar_close" aria-label="Close menu">
         <i class="fa fa-times"></i>
@@ -60,6 +61,20 @@
     </ul>
 
     <div class="ur-dash-sidebar__footer">
+        @if(User::retrieveUserObject()->admin == 1 || User::retrieveUserObject()->is_team_member == 1)
+        <div class="ur-dash-nav__section-label" style="padding-top:0;">Switch Dashboard</div>
+        @if(User::retrieveUserObject()->admin == 1)
+        <a href="{{ url('admin/dashboard') }}" class="ur-dash-nav__link">
+            <i class="fa fa-cogs"></i> Admin Dashboard
+        </a>
+        @endif
+        @if(User::retrieveUserObject()->is_team_member == 1 || User::retrieveUserObject()->admin == 1)
+        <a href="{{ route('team.dashboard') }}" class="ur-dash-nav__link">
+            <i class="fa fa-briefcase"></i> Team Dashboard
+        </a>
+        @endif
+        <div class="ur-dash-nav__divider"></div>
+        @endif
         <button type="button" class="ur-dash-nav__link is-danger" onclick="javascript:deleteAccount($(this));">
             <i class="fa fa-close"></i> Close Account
         </button>

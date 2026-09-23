@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AuditLog;
 use App\Mail\InterestSent as InterestSentMail;
 use App\Mail\InterestAccepted as InterestAcceptedMail;
 use App\Mail\InterestDeclined as InterestDeclinedMail;
@@ -27,16 +28,16 @@ use App\Notifications\UserFollowed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\ImageManager;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 use Mail;
 
 class ProfileController extends Controller
 {
+    use \App\Traits\HandlesImageUploads;
+
     /** Website Upgrade Brief §5 "Mandatory photo policy": minimum before a profile is Active. */
     const REQUIRED_PHOTO_COUNT = 2;
 
@@ -56,6 +57,20 @@ class ProfileController extends Controller
         $hiddenPhotos = null;
         if ($dataid) {
             $ownerUser = User::retrieveUserObject($dataid);
+            if (!$ownerUser) {
+                abort(404);
+            }
+            // Team-added proposals (see TeamController::store()) are only
+            // ever browsable by team members/admins — a regular member
+            // must never reach a team-exclusive proposal just by
+            // guessing/sharing its dataid.
+            $loggedInUser = User::retrieveUserObject();
+            if (!empty($ownerUser->added_by) && (!$loggedInUser || (!$loggedInUser->isAdmin() && !$loggedInUser->is_team_member))) {
+                abort(404);
+            }
+            if ($loggedInUser && $loggedInUser->id !== $ownerUser->id) {
+                AuditLog::record($loggedInUser, 'profile.viewed', $ownerUser);
+            }
             $profile = $ownerUser->profile();
             $hiddenPhotos = $this->hiddenPhotosFor($ownerUser, $profile);
         } else $profile = User::retrieveUserObject()->profile();
@@ -119,7 +134,20 @@ class ProfileController extends Controller
         // member/user.blade.php's "Profile Scorer" tab.
         $compatibility = $dataid ? $profile->compatibilityWith($hasPreferenceData ? $preference : null, $preferenceLabels) : null;
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility'));
+        // Contact info (email/phone/last name/exact address) is hidden by
+        // default for a team-added proposal (see TeamController::store())
+        // — unlocked for any active team member (the whole pool is shared
+        // across the team) or an admin. See User::canViewContactInfoOf().
+        // Not relevant for the regular self-registered pool, which never
+        // shows these fields anyway.
+        $canViewContactInfo = $dataid && !empty($ownerUser->added_by) && $loggedInUser
+            ? $loggedInUser->canViewContactInfoOf($ownerUser)
+            : false;
+        // Which of the 4 fields actually render once the gate above passes
+        // — admin-configurable, see AdminController::contactUnlockSettings().
+        $contactUnlockSettings = \App\ContactUnlockSetting::current();
+
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility', 'canViewContactInfo', 'contactUnlockSettings'));
     }
 
     /**
@@ -1302,159 +1330,6 @@ class ProfileController extends Controller
                 'code' => '404',
                 'message' => 'Member was not found (id: ' . $dataid . ')'
             ];
-        }
-    }
-
-    /**
-     * Verifies an uploaded file is genuinely an image (not just named like
-     * one) and returns the safe extension to store it under, or null if it
-     * fails validation. Security-critical: uploadImages()/uploadSelfie()
-     * used to trust getClientOriginalExtension() blindly and move the file
-     * straight into public/users (a directly web-served, script-executable
-     * folder) with no server-side content check — a file like "shell.php"
-     * could be uploaded and run directly. Laravel's 'image' rule decodes
-     * the file (getimagesize()-equivalent) to confirm it's real image data,
-     * not just a plausible filename/extension, and the returned extension
-     * is our own canonical mapping (never the client-supplied one) so a
-     * trick like "shell.php.jpg" can't smuggle a second extension through.
-     */
-    private function validateUploadedImage($file): ?string
-    {
-        if (!$file || !$file->isValid()) {
-            return null;
-        }
-
-        $validator = Validator::make(['file' => $file], [
-            'file' => 'required|image|mimes:jpeg,jpg,png,webp,gif|max:5120',
-        ]);
-        if ($validator->fails()) {
-            return null;
-        }
-
-        $mimeToExt = [
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            'image/gif' => 'gif',
-        ];
-        return $mimeToExt[$file->getMimeType()] ?? null;
-    }
-
-    /**
-     * Intervention Image driver: prefer Imagick when available, else GD.
-     */
-    private function createImageManager(): ?ImageManager
-    {
-        if (extension_loaded('imagick')) {
-            return new ImageManager(['driver' => 'imagick']);
-        }
-        if (extension_loaded('gd')) {
-            return new ImageManager(['driver' => 'gd']);
-        }
-
-        return null;
-    }
-
-//     private function createImageManager(): ?ImageManager
-// {
-//     if (extension_loaded('imagick')) {
-//         return new ImageManager('imagick');
-//     }
-
-//     if (extension_loaded('gd')) {
-//         return new ImageManager('gd');
-//     }
-
-//     return null;
-// }
-
-    private function generateBlurAndThumbnails(ImageManager $manager, string $publicPath, string $name, int $salt): void
-    {
-        $thumbnail = $manager->make($publicPath . '/' . $name);
-        $height = $thumbnail->height();
-        $width = $thumbnail->width();
-
-        $blur = $manager->make($publicPath . '/' . $name);
-        $blurAmt = 70;
-
-        if ($width > $height) {
-            $blur->resize(210, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $blur->blur($blurAmt);
-            $blurName = explode("_", $name);
-            $blur->save($publicPath . '/' . $blurName[0] . $salt . $blurName[1]);
-
-            $thumbnail->resize(210, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_" . $name);
-
-            $thumbnail->resize(100, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_md_" . $name);
-
-            $thumbnail->resize(32, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_sm_" . $name);
-        } else {
-            $blur->resize(null, 210, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $blur->blur($blurAmt);
-            $blurName = explode("_", $name);
-            $blur->save($publicPath . '/' . $blurName[0] . $salt . $blurName[1]);
-
-            $thumbnail->resize(null, 210, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_" . $name);
-
-            $thumbnail->resize(null, 100, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_md_" . $name);
-
-            $thumbnail->resize(null, 32, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_sm_" . $name);
-        }
-    }
-
-    /**
-     * Last resort when neither GD nor Imagick is loaded: duplicate the original so expected paths exist.
-     */
-    private function copyDerivativesWithoutProcessing(string $publicPath, string $name, int $salt): void
-    {
-        $src = $publicPath . '/' . $name;
-        File::copy($src, $publicPath . '/thumbnail_' . $name);
-        File::copy($src, $publicPath . '/thumbnail_md_' . $name);
-        File::copy($src, $publicPath . '/thumbnail_sm_' . $name);
-        $blurName = explode("_", $name);
-        if (count($blurName) >= 2) {
-            File::copy($src, $publicPath . '/' . $blurName[0] . $salt . $blurName[1]);
-        }
-    }
-
-    private function deleteUploadDerivatives(string $publicPath, string $name, ?int $salt): void
-    {
-        $paths = [
-            $publicPath . '/' . $name,
-            $publicPath . '/thumbnail_' . $name,
-            $publicPath . '/thumbnail_md_' . $name,
-            $publicPath . '/thumbnail_sm_' . $name,
-        ];
-        $blurName = explode("_", $name);
-        if ($salt !== null && count($blurName) >= 2) {
-            $paths[] = $publicPath . '/' . $blurName[0] . $salt . $blurName[1];
-        }
-        foreach ($paths as $p) {
-            if (File::exists($p)) {
-                File::delete($p);
-            }
         }
     }
 

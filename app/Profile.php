@@ -73,19 +73,34 @@ class Profile extends Model {
         return strtolower($this->gender?$this->gender:'male').'_large.jpg';
     }
 
-    public function getProfileImage($tiny = null) {
+    /**
+     * $watermarked: see getCardImages()'s docblock — same gate, same
+     * watermark_ derivative, checked before the normal thumbnail path.
+     */
+    public function getProfileImage($tiny = null, $watermarked = false) {
         if ($this->photo_visibility === 'hidden') {
             return self::defaultImage($this->gender);
         }
 
-        $path = null;
-        if (!empty($this->displaypic)) {
-            $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->displaypic)[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->displaypic)[2]);
-        } else if (!empty($this->images)) {
+        $sourceImage = !empty($this->displaypic) ? $this->displaypic : null;
+        if ($sourceImage === null && !empty($this->images)) {
             if (!is_array($this->images))
-                $this->images=explode(',', $this->images);
-            if (!empty($this->images[0]))
-                $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->images[0])[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->images[0])[2]);
+                $this->images = explode(',', $this->images);
+            $sourceImage = $this->images[0] ?? null;
+        }
+
+        $path = null;
+        if (!empty($sourceImage)) {
+            $filename = explode("/", $sourceImage)[2] ?? null;
+            if ($watermarked && $filename && !$this->showBlur()) {
+                $watermarkPath = self::MEMBER_IMAGES_PATH.'/watermark_'.$filename;
+                if (file_exists(public_path($watermarkPath))) {
+                    return $watermarkPath;
+                }
+            }
+            if ($filename) {
+                $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):"thumbnail_".($tiny?"sm_":"").$filename);
+            }
         }
 
         // Fall back to the gender default avatar both when there's no photo
@@ -172,7 +187,15 @@ class Profile extends Model {
      * back to a single-element array with the gender default avatar when
      * there are no real photos, so callers can always safely index [0].
      */
-    public function getCardImages($tiny = null) {
+    /**
+     * $watermarked: currently always passed as false — any team member can
+     * see any team-added proposal's sharp photo directly (see
+     * User::canViewContactInfoOf()). Kept as a parameter (and
+     * App\Services\WatermarkService still bakes the watermark_ derivative
+     * at upload time, TeamController::uploadPhoto()) in case per-proposal
+     * photo gating is reintroduced later.
+     */
+    public function getCardImages($tiny = null, $watermarked = false) {
         if ($this->photo_visibility === 'hidden') {
             return [self::defaultImage($this->gender)];
         }
@@ -190,7 +213,15 @@ class Profile extends Model {
             if (empty($image)) continue;
             $filename = explode("/", $image)[2] ?? null;
             if (!$filename) continue;
-            $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur() ? $this->getBlurName($filename) : "thumbnail_".($tiny?"sm_":"").$filename);
+            $derivative = $this->showBlur() ? $this->getBlurName($filename) : "thumbnail_".($tiny?"sm_":"").$filename;
+            if ($watermarked && !$this->showBlur()) {
+                $watermarkPath = self::MEMBER_IMAGES_PATH.'/watermark_'.$filename;
+                if (file_exists(public_path($watermarkPath))) {
+                    $paths[] = $watermarkPath;
+                    continue;
+                }
+            }
+            $path = self::MEMBER_IMAGES_PATH.'/'.$derivative;
             if (file_exists(public_path($path))) {
                 $paths[] = $path;
             }
@@ -208,7 +239,14 @@ class Profile extends Model {
         return !empty($this->last_login_at) && Carbon::parse($this->last_login_at)->gt(now()->subMonth());
     }
 
-    public function getLightGalleryImages() {
+    /**
+     * $watermarked: see getCardImages()'s docblock — same gate, same
+     * watermark_ derivative. All three of src/thumb/mobileSrc point at
+     * that one (thumbnail-sized) derivative when watermarked, rather than
+     * the full-size original, since there's no full-size watermarked
+     * variant baked at upload time.
+     */
+    public function getLightGalleryImages($watermarked = false) {
         $lightgallery = array();
         // Admin-hidden photos must not be reachable via the gallery either —
         // showBlur() below only accounts for 'blurred' (and guests), so
@@ -223,10 +261,18 @@ class Profile extends Model {
             $images = $this->images;
 
             for ($i=0; $i<sizeof($images); $i++) {
+                $filename = explode("/",$images[$i])[2];
+                if ($watermarked && !$this->showBlur()) {
+                    $watermarkPath = self::MEMBER_IMAGES_PATH.'/watermark_'.$filename;
+                    if (file_exists(public_path($watermarkPath))) {
+                        $lightgallery[] = ["src" => $watermarkPath, "thumb" => $watermarkPath, "mobileSrc" => $watermarkPath];
+                        continue;
+                    }
+                }
                 $lightgallery[] = [
-                    "src" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$images[$i])[2]):explode("/",$images[$i])[2]),
-                    "thumb" => !empty($images[$i])?self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$images[$i])[2]):"thumbnail_".explode("/",$images[$i])[2]):"",
-                    "mobileSrc" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$images[$i])[2]):explode("/",$images[$i])[2])
+                    "src" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):$filename),
+                    "thumb" => !empty($images[$i])?self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):"thumbnail_".$filename):"",
+                    "mobileSrc" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):$filename)
                 ];
             }
         }
@@ -394,11 +440,22 @@ class Profile extends Model {
 
         $matchedCount = count(array_filter($checks, fn ($c) => $c['matched']));
         $total = count($checks);
-        // Overall percent is now the average of each check's own graduated
+        // Overall percent is a WEIGHTED average of each check's own graduated
         // score (not just matchedCount/total) — a near-miss on age nudges
         // the overall number instead of counting as a full miss, same as
-        // the per-factor bars now shown on member-card.blade.php.
-        $overallScore = (int) round(array_sum(array_column($checks, 'score')) / $total);
+        // the per-factor bars now shown on member-card.blade.php. Weights are
+        // admin-configurable (see MatchWeightSetting, AdminController::
+        // matchWeights()); a factor missing from settings defaults to 1, so
+        // this stays a flat average until an admin actually changes something.
+        $weights = \App\MatchWeightSetting::current();
+        $weightedSum = 0;
+        $weightTotal = 0;
+        foreach ($checks as $check) {
+            $weight = $weights[$check['factor']] ?? 1;
+            $weightedSum += $check['score'] * $weight;
+            $weightTotal += $weight;
+        }
+        $overallScore = $weightTotal > 0 ? (int) round($weightedSum / $weightTotal) : 0;
 
         return [
             'percent' => $overallScore,
@@ -406,6 +463,35 @@ class Profile extends Model {
             'total' => $total,
             'checks' => $checks,
         ];
+    }
+
+    /**
+     * Website Upgrade Brief §6 "AI Match Explanation" — one short sentence
+     * built from the top-scoring factors in an already-computed
+     * compatibilityWith() result, e.g. "Age, Location and Profession
+     * strongly match." Deterministic (not a real LLM call) — the
+     * underlying scores are already real per-factor comparisons, this
+     * just turns them into a sentence.
+     */
+    public static function compatibilityExplanation(array $compatibility): string
+    {
+        $strong = collect($compatibility['checks'] ?? [])
+            ->filter(fn ($c) => $c['score'] >= 70)
+            ->sortByDesc('score')
+            ->take(3)
+            ->pluck('factor')
+            ->all();
+
+        if (empty($strong)) {
+            return 'A few shared preferences, but no strong standout factors yet.';
+        }
+
+        $count = count($strong);
+        $list = $count === 1
+            ? $strong[0]
+            : implode(', ', array_slice($strong, 0, -1)) . ' and ' . end($strong);
+
+        return $list . ($count > 1 ? ' requirements strongly match.' : ' strongly matches.');
     }
 
     public function getFilteredCount($type) {

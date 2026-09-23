@@ -442,6 +442,13 @@ a.appointment-btn::before{
                                                 </a>
                                             </li>
                                             @endif
+                                            @if(User::retrieveUserObject()->is_team_member==1)
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ route('team.dashboard') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-briefcase mr-2"></i> Team Dashboard
+                                                </a>
+                                            </li>
+                                            @endif
                                             <li class="custom-nav d-lg-none">
                                                 <a class="nav-link" href="{{ url('/member/profile/listing/interests') }}" aria-haspopup="true" aria-expanded="false">
                                                     <i class="fa fa-heart mr-2"></i> Interests
@@ -503,6 +510,9 @@ a.appointment-btn::before{
                                                     <a class="dropdown-item" href="{{ url('member/profile') }}"><i class="fa fa-user mr-2"></i> Member Dashboard</a>
                                                     @if(User::retrieveUserObject()->admin==1)
                                                     <a class="dropdown-item" href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs mr-2"></i> Admin Dashboard</a>
+                                                    @endif
+                                                    @if(User::retrieveUserObject()->is_team_member==1 || User::retrieveUserObject()->admin==1)
+                                                    <a class="dropdown-item" href="{{ route('team.dashboard') }}"><i class="fa fa-briefcase mr-2"></i> Team Dashboard</a>
                                                     @endif
                                                 </div>
                                             </li>
