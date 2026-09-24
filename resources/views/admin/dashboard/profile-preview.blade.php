@@ -56,6 +56,12 @@
                     <label>Member ID</label>
                     <span>{{ $member->dataid }}</span>
                 </div>
+                @if($member->is_team_member == 1)
+                <div>
+                    <label>Team Status</label>
+                    <span id="team_member_status_label_{{ $member->dataid }}" class="ur-admin-badge {{ ($member->team_member_status ?? 'active') === 'active' ? 'ur-admin-badge--success' : 'ur-admin-badge--warning' }}">{{ ucfirst($member->team_member_status ?? 'active') }}</span>
+                </div>
+                @endif
             </div>
 
             <label class="ur-section-label">Current Package</label>
@@ -80,6 +86,19 @@
             <div class="ur-profile-preview__actions-row">
                 <a class="ur-btn ur-btn--outline" onclick="return resendVerificationEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-envelope"></i> Resend Verification</a>
                 <a class="ur-btn ur-btn--outline" onclick="return sendPasswordResetEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-unlock"></i> Send Password Reset</a>
+            </div>
+
+            <label class="ur-section-label">Team Membership</label>
+            <div class="ur-profile-preview__actions-row">
+                <a id="team_toggle_{{ $member->dataid }}" class="ur-btn ur-btn--outline" onclick="return toggleTeamMemberPreview($(this), '{{ $member->dataid }}');"><i class="fa fa-briefcase"></i> {{ $member->is_team_member == 1 ? 'Revoke Team Access' : 'Make Team Member' }}</a>
+                @if($member->is_team_member == 1)
+                    @if(($member->team_member_status ?? 'active') === 'active')
+                        <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatusPreview($(this), 'suspend', '{{ $member->dataid }}');"><i class="fa fa-pause"></i> Suspend</a>
+                        <a class="ur-btn ur-btn--danger-outline" onclick="return updateTeamMemberStatusPreview($(this), 'deactivate', '{{ $member->dataid }}');"><i class="fa fa-ban"></i> Deactivate</a>
+                    @else
+                        <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatusPreview($(this), 'reactivate', '{{ $member->dataid }}');"><i class="fa fa-play"></i> Reactivate</a>
+                    @endif
+                @endif
             </div>
 
             <label class="ur-section-label">Account Actions <span class="ur-hint">sensitive actions are logged</span></label>
@@ -168,6 +187,59 @@
                     else showAlert('danger', result.message, 5000);
                 }
             });
+        });
+        return false;
+    }
+
+    // Mirrors toggleTeamMember()/updateTeamMemberStatus() in profiles.blade.php
+    // (the desktop split-panel) — this page is the mobile equivalent (see
+    // ur-admin.css's .ur-admin-list-detail__panel { display: none; } rule
+    // and memberdata.blade.php's "Full Profile" link), so team-member
+    // actions need their own copy here rather than none at all. Simplest
+    // approach: reload on success instead of the desktop panel's inline
+    // DOM swap, since this page has no equivalent panel to re-render.
+    function toggleTeamMemberPreview(elem, id) {
+        var oldHtml = elem.html();
+        elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
+        elem.prop('disabled', true);
+
+        $.ajax({
+            type: "post",
+            url: "{{ url('admin/profile/toggle-team-member') }}" + "/" + id,
+            data: { '_token': '{{ csrf_token() }}' },
+            success: function (result) {
+                if (result.code == "200") {
+                    showAlert('success', result.message, 3000);
+                    location.reload();
+                } else {
+                    elem.html(oldHtml);
+                    elem.prop('disabled', false);
+                    showAlert('danger', result.message, 5000);
+                }
+            }
+        });
+        return false;
+    }
+
+    function updateTeamMemberStatusPreview(elem, action, id) {
+        var oldHtml = elem.html();
+        elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
+        elem.prop('disabled', true);
+
+        $.ajax({
+            type: "post",
+            url: "{{ url('admin/profile/team-member-status') }}" + "/" + action + "/" + id,
+            data: { '_token': '{{ csrf_token() }}' },
+            success: function (result) {
+                if (result.code == "200") {
+                    showAlert('success', result.message, 3000);
+                    location.reload();
+                } else {
+                    elem.html(oldHtml);
+                    elem.prop('disabled', false);
+                    showAlert('danger', result.message, 5000);
+                }
+            }
         });
         return false;
     }

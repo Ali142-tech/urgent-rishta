@@ -41,6 +41,10 @@ class PartnerPreference extends Model
         'languages',
         'preferred_country_id',
         'general_requirement',
+        'pref_height',
+        'pref_city',
+        'pref_caste_note',
+        'pref_qualification_note',
     ];
 
     public function user()

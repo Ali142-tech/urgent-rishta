@@ -60,6 +60,15 @@ class User extends Authenticatable implements MustVerifyEmail {
         'income',
         'property_financial_status',
         'profile_description',
+        'address',
+        'college_university',
+        'residence_size',
+        'current_city',
+        'father_occupation',
+        'mother_occupation',
+        'siblings_brothers',
+        'siblings_sisters',
+        'siblings_married_note',
         'password',
     ];
 

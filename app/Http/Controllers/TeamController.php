@@ -172,6 +172,12 @@ class TeamController extends Controller
         if (!empty($request->caste)) {
             $where .= " and `u`.`caste`='" . addslashes($request->caste) . "'";
         }
+        if (!empty($request->education)) {
+            $where .= " and `u`.`education`='" . addslashes($request->education) . "'";
+        }
+        if (!empty($request->current_city)) {
+            $where .= " and `u`.`current_city` LIKE '%" . addslashes($request->current_city) . "%'";
+        }
 
         $grid = $this->buildProposalGrid($where, (int) $request->query('page', 1));
 
@@ -180,8 +186,9 @@ class TeamController extends Controller
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
+        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
 
-        return view('team.proposals-search', array_merge($grid, compact('religions', 'maritalstatuses', 'mothertongues', 'countries', 'caste')));
+        return view('team.proposals-search', array_merge($grid, compact('religions', 'maritalstatuses', 'mothertongues', 'countries', 'caste', 'education')));
     }
 
     /**
@@ -339,8 +346,67 @@ class TeamController extends Controller
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
+        $sendTemplate = $this->clientIntakeTemplate();
 
-        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste'));
+        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'sendTemplate'));
+    }
+
+    /**
+     * The blank WhatsApp-style intake template a team member sends to a
+     * prospective client — its section headers/field labels are exactly
+     * what the Add Proposal page's paste-box parser (proposal-create.
+     * blade.php) recognizes, so whatever comes back pastes in cleanly.
+     * Keep the two in sync if either one changes.
+     */
+    private function clientIntakeTemplate(): string
+    {
+        return <<<'TEMPLATE'
+Hi! To create your profile, please fill in the details below and send it back exactly in this format:
+
+1. PERSONAL INFORMATION:
+Gender:
+Name:
+Age:
+Marital Status:
+Height:
+
+2. EDUCATION DETAILS:
+Qualification:
+College/University:
+
+3. OCCUPATION DETAIL:
+Job/Business:
+Income:
+
+4. RELIGION DETAILS:
+Religion:
+Sect:
+Caste:
+
+5. RESIDENCE DETAILS:
+Home Own/On Rent:
+Size:
+City:
+Address:
+Nationality:
+Current City:
+
+6. FAMILY DETAILS:
+Father's Occupation:
+Mother's Occupation:
+Brothers:
+Sisters:
+Married:
+
+7. YOUR REQUIREMENTS:
+Age Limit:
+Height:
+City:
+Caste:
+Qualification:
+
+Please also send 1-2 recent photos along with this.
+TEMPLATE;
     }
 
     /**
@@ -354,11 +420,18 @@ class TeamController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
+            // Optional (client request) — a name-less shell record is odd
+            // but harmless everywhere it's displayed (just renders blank),
+            // same reasoning as email/contact below.
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
             'gender' => 'required|string',
-            'email' => 'required|email|unique:users,email',
-            'contact_mobile_number' => 'required|string|max:30',
+            // Optional (client's WhatsApp intake template doesn't collect
+            // these) — checked directly against the DB (SHOW INDEX): no
+            // real unique constraint on either column, so a blank one is
+            // safe to leave null rather than needing a placeholder value.
+            'email' => 'nullable|email|unique:users,email',
+            'contact_mobile_number' => 'nullable|string|max:30',
             'height' => 'nullable|string|max:20',
             'day' => 'required|string|size:2',
             'month' => 'required|string|size:2',
@@ -381,12 +454,23 @@ class TeamController extends Controller
             'income' => 'nullable|string|max:50',
             'property_financial_status' => 'nullable|string|max:255',
             'profile_description' => 'nullable|string|max:2000',
+            'address' => 'nullable|string|max:255',
+            'college_university' => 'nullable|string|max:2000',
+            'residence_size' => 'nullable|string|max:100',
+            'current_city' => 'nullable|string|max:150',
+            'father_occupation' => 'nullable|string|max:255',
+            'mother_occupation' => 'nullable|string|max:255',
+            'siblings_brothers' => 'nullable|string|max:2000',
+            'siblings_sisters' => 'nullable|string|max:2000',
+            'siblings_married_note' => 'nullable|string|max:255',
+            'image1' => 'nullable|image|max:5120',
+            'image2' => 'nullable|image|max:5120',
             'pref_age_min' => 'nullable|integer|min:18|max:99',
             'pref_age_max' => 'nullable|integer|min:18|max:99',
-            'pref_country' => 'nullable|string',
-            'pref_education' => 'nullable|string',
-            'pref_marital_status' => 'nullable|string',
-            'pref_profession' => 'nullable|string|max:150',
+            'pref_height' => 'nullable|string|max:100',
+            'pref_city' => 'nullable|string|max:150',
+            'pref_caste_note' => 'nullable|string|max:255',
+            'pref_qualification_note' => 'nullable|string|max:2000',
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
@@ -418,6 +502,15 @@ class TeamController extends Controller
             'income' => $request->income,
             'property_financial_status' => $request->property_financial_status,
             'profile_description' => $request->profile_description,
+            'address' => $request->address,
+            'college_university' => $request->college_university,
+            'residence_size' => $request->residence_size,
+            'current_city' => $request->current_city,
+            'father_occupation' => $request->father_occupation,
+            'mother_occupation' => $request->mother_occupation,
+            'siblings_brothers' => $request->siblings_brothers,
+            'siblings_sisters' => $request->siblings_sisters,
+            'siblings_married_note' => $request->siblings_married_note,
             // Shell record — never intended to log in, so the password is
             // random and never surfaced anywhere.
             'password' => Hash::make(Str::random(40)),
@@ -429,6 +522,18 @@ class TeamController extends Controller
         $user->save();
 
         $this->savePreferenceAndCheckMatches($request, $user);
+
+        // Add Proposal form's own 2-image upload (client asked for this to
+        // be part of the same form, not a separate step) — same storage
+        // path as the dedicated proposal-photos page, see
+        // storeProposalPhoto(). Silently skipped if a slot is empty or the
+        // file fails validation — image1/image2 are optional either way.
+        if ($request->hasFile('image1')) {
+            $this->storeProposalPhoto($user, $request->file('image1'));
+        }
+        if ($request->hasFile('image2')) {
+            $this->storeProposalPhoto($user, $request->file('image2'));
+        }
 
         $loggedInUser = auth()->user();
         User::where('is_team_member', 1)->where('id', '!=', $loggedInUser->id)
@@ -471,18 +576,34 @@ class TeamController extends Controller
      */
     private function savePreferenceAndCheckMatches(Request $request, User $proposal): void
     {
-        PartnerPreference::updateOrCreate(
-            ['user_id' => $proposal->id],
-            [
-                'age_min' => $request->pref_age_min,
-                'age_max' => $request->pref_age_max,
-                'country_id' => $request->pref_country,
-                'education_id' => $request->pref_education,
-                'marital_status' => $request->pref_marital_status,
-                'profession' => $request->pref_profession,
-                'general_requirement' => $request->partner_requirements,
-            ]
-        );
+        // store() (the redesigned Add Proposal form) and update() (the
+        // still-unchanged Edit Proposal form) submit two different sets of
+        // "partner requirements" inputs — only write a column when its
+        // request key is actually PRESENT, so submitting from one form
+        // never wipes out data the other form saved (e.g. editing a
+        // proposal for an unrelated reason must not null out pref_height/
+        // pref_city, which only the Add Proposal form collects).
+        $columnToRequestKey = [
+            'age_min' => 'pref_age_min',
+            'age_max' => 'pref_age_max',
+            'marital_status' => 'pref_marital_status',
+            'country_id' => 'pref_country',
+            'education_id' => 'pref_education',
+            'profession' => 'pref_profession',
+            'general_requirement' => 'partner_requirements',
+            'pref_height' => 'pref_height',
+            'pref_city' => 'pref_city',
+            'pref_caste_note' => 'pref_caste_note',
+            'pref_qualification_note' => 'pref_qualification_note',
+        ];
+        $preferenceData = [];
+        foreach ($columnToRequestKey as $column => $requestKey) {
+            if ($request->has($requestKey)) {
+                $preferenceData[$column] = $request->input($requestKey);
+            }
+        }
+
+        PartnerPreference::updateOrCreate(['user_id' => $proposal->id], $preferenceData);
 
         $proposal = $proposal->fresh();
         $bestMatch = $proposal->getProposalMatches(1)->first();
@@ -521,11 +642,16 @@ class TeamController extends Controller
         $proposal = $this->authorizeProposalOwner($dataid);
 
         $request->validate([
-            'first_name' => 'required|string|max:100',
-            'last_name' => 'required|string|max:100',
+            // Matches store()'s relaxed rules — a proposal saved without a
+            // name/email/phone (the paste-and-fill workflow doesn't
+            // collect the latter two, and name is now optional per client
+            // request) must still be editable afterward for unrelated
+            // reasons without being forced to backfill these first.
+            'first_name' => 'nullable|string|max:100',
+            'last_name' => 'nullable|string|max:100',
             'gender' => 'required|string',
-            'email' => 'required|email|unique:users,email,' . $proposal->id,
-            'contact_mobile_number' => 'required|string|max:30',
+            'email' => 'nullable|email|unique:users,email,' . $proposal->id,
+            'contact_mobile_number' => 'nullable|string|max:30',
             'height' => 'nullable|string|max:20',
             'day' => 'required|string|size:2',
             'month' => 'required|string|size:2',
@@ -611,20 +737,20 @@ class TeamController extends Controller
      * derivative (see App\Services\WatermarkService) — currently unused
      * (any team member can see the sharp photo directly, see
      * User::canViewContactInfoOf()), kept in case per-proposal photo
-     * gating is reintroduced later.
+     * gating is reintroduced later. Shared by uploadPhoto() (the
+     * proposal-photos page, one at a time) and store() (up to 2 images
+     * directly on the Add Proposal form) — returns false on a missing/
+     * invalid file rather than throwing, so both callers decide how to
+     * report that themselves.
      */
-    public function uploadPhoto(Request $request, $dataid)
+    private function storeProposalPhoto(User $proposal, $image): bool
     {
-        $proposal = $this->authorizeProposalOwner($dataid);
-
-        $image = $request->file('image');
-        $imageExtension = $this->validateUploadedImage($image);
+        $imageExtension = $image ? $this->validateUploadedImage($image) : null;
         if (!$imageExtension) {
-            Session::flash('message', 'danger|Please upload a valid image (jpeg, png, webp or gif, max 5MB).');
-            return redirect()->back();
+            return false;
         }
 
-        $name = time() . '_' . $proposal->id . '.' . $imageExtension;
+        $name = time() . '_' . $proposal->id . '_' . random_int(1000, 9999) . '.' . $imageExtension;
         $rootImgPath = Profile::MEMBER_IMAGES_PATH;
         $path = $rootImgPath . '/' . $name;
         $publicPath = public_path($rootImgPath);
@@ -664,6 +790,18 @@ class TeamController extends Controller
         $img->visibility = 'Public';
         $img->displaypic = Images::where('user_id', $proposal->id)->count() === 0 ? 1 : 0;
         $img->save();
+
+        return true;
+    }
+
+    public function uploadPhoto(Request $request, $dataid)
+    {
+        $proposal = $this->authorizeProposalOwner($dataid);
+
+        if (!$this->storeProposalPhoto($proposal, $request->file('image'))) {
+            Session::flash('message', 'danger|Please upload a valid image (jpeg, png, webp or gif, max 5MB).');
+            return redirect()->back();
+        }
 
         Log::info('Team member (' . auth()->user()->dataid . ') uploaded a photo for proposal ' . $proposal->dataid);
 

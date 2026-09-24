@@ -11,6 +11,7 @@
     .ur-team-form h1 { font-family: 'Playfair Display', serif; color: #123A2E; font-weight: 700; font-size: 24px; margin: 0 0 18px; }
     .ur-team-form .row { margin-bottom: 14px; }
     .ur-team-form label { font-size: 13px; font-weight: 600; color: #1C2321; margin-bottom: 4px; display: block; }
+    .ur-team-form label .ur-opt { font-weight: 400; font-size: 11px; color: #9AA5A0; }
     .ur-team-form .form-control, .ur-team-form select { border: 1px solid #E7E2D6; border-radius: 8px; height: 42px; padding: 0 12px; width: 100%; }
     .ur-team-form .ur-submit-btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 28px; border-radius: 999px; background: #C9974D; color: #fff !important; font-size: 14px; font-weight: 700; border: none; }
     .ur-team-form .ur-submit-btn:hover { background: #B07C3D; }
@@ -37,12 +38,12 @@
         @csrf
         <div class="row">
             <div class="col-md-6">
-                <label>First Name</label>
-                <input type="text" class="form-control" name="first_name" value="{{ old('first_name', $proposal->first_name) }}" required>
+                <label>First Name <span class="ur-opt">Optional</span></label>
+                <input type="text" class="form-control" name="first_name" value="{{ old('first_name', $proposal->first_name) }}">
             </div>
             <div class="col-md-6">
-                <label>Last Name</label>
-                <input type="text" class="form-control" name="last_name" value="{{ old('last_name', $proposal->last_name) }}" required>
+                <label>Last Name <span class="ur-opt">Optional</span></label>
+                <input type="text" class="form-control" name="last_name" value="{{ old('last_name', $proposal->last_name) }}">
             </div>
         </div>
         <div class="row">
@@ -69,12 +70,12 @@
         </div>
         <div class="row">
             <div class="col-md-6">
-                <label>Email</label>
-                <input type="email" class="form-control" name="email" value="{{ old('email', $proposal->email) }}" required>
+                <label>Email <span class="ur-opt">Optional</span></label>
+                <input type="email" class="form-control" name="email" value="{{ old('email', $proposal->email) }}">
             </div>
             <div class="col-md-6">
-                <label>Contact Number</label>
-                <input type="text" class="form-control" name="contact_mobile_number" value="{{ old('contact_mobile_number', $proposal->contact_mobile_number) }}" required>
+                <label>Contact Number <span class="ur-opt">Optional</span></label>
+                <input type="text" class="form-control" name="contact_mobile_number" value="{{ old('contact_mobile_number', $proposal->contact_mobile_number) }}">
             </div>
         </div>
         <div class="row">
