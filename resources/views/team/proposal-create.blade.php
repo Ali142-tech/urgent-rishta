@@ -75,7 +75,7 @@
     <div class="ur-paste-box">
         <h3><i class="fa fa-clipboard" style="color:#C9974D;"></i> Step 2 — Paste their reply here</h3>
         <p>Paste the filled-in template the client sent back — this reads it and fills in the fields below automatically. Review everything before saving; nothing is submitted until you click "Add Proposal".</p>
-        <textarea id="paste_box" placeholder="PERSONAL INFORMATION&#10;Gender: ...&#10;Name: ...&#10;Age: ...&#10;..."></textarea>
+        <textarea id="paste_box" placeholder="PERSONAL INFORMATION&#10;Gender: ...&#10;Age: ...&#10;Marital Status: ...&#10;..."></textarea>
         <div class="ur-paste-box__actions">
             <button type="button" class="ur-paste-box__fill-btn" id="paste_fill_btn"><i class="fa fa-magic"></i> Fill fields from this text</button>
             <span class="ur-paste-box__status" id="paste_status"></span>

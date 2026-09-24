@@ -365,7 +365,6 @@ Hi! To create your profile, please fill in the details below and send it back ex
 
 1. PERSONAL INFORMATION:
 Gender:
-Name:
 Age:
 Marital Status:
 Height:
@@ -387,7 +386,6 @@ Caste:
 Home Own/On Rent:
 Size:
 City:
-Address:
 Nationality:
 Current City:
 
