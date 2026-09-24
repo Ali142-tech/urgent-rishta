@@ -42,3 +42,30 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
     ->everyMinute()
     ->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| Scheduled email jobs
+|--------------------------------------------------------------------------
+|
+| Moved here from app/Console/Kernel::schedule() — that Kernel class is
+| never instantiated by this app (see bootstrap/app.php: Laravel 12's
+| ->withRouting(commands: 'routes/console.php') is what actually wires up
+| the scheduler, the same "new bootstrap-based registration, not the old
+| Kernel class" gotcha already hit once before with middleware aliases in
+| bootstrap/app.php vs. the unused app/Http/Kernel.php). Kernel.php's
+| schedule() method is left empty on purpose — do not add entries there,
+| they will silently never run.
+*/
+
+// Checks daily for members inactive 7+ days and emails them a reminder —
+// see App\Console\Commands\SendInactivityReminders.
+Schedule::command('reminders:inactivity')->dailyAt('10:00')->withoutOverlapping();
+
+// Weekly "match preview" email — see App\Console\Commands\SendMatchPreviewEmails.
+Schedule::command('matches:send-preview')->weeklyOn(1, '09:00')->withoutOverlapping();
+
+// Daily check for members due their personalized weekly match email (7+
+// days since last sent, or never sent) — see
+// App\Console\Commands\SendWeeklyMatches / App\Services\WeeklyMatchService.
+Schedule::command('matches:send-weekly')->dailyAt('09:30')->withoutOverlapping();
