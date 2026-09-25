@@ -5,12 +5,14 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * `is_team_member` (binary) already IS the approve/revoke step (see
- * AdminController::toggleTeamMember()). This adds the orthogonal lifecycle
- * dimension the brief also wants — suspend/deactivate/reactivate an
- * ALREADY-approved partner without revoking the role itself, so
- * reactivating doesn't require re-granting it from scratch. Same plain
- * string-column shape as profile_status/photo_verification_status.
+ * `is_team_member` (binary) already IS the approve/revoke step (originally
+ * AdminController::toggleTeamMember(), now AdminController::
+ * approveMatchmakerApplication()/rejectMatchmakerApplication()). This adds
+ * the orthogonal lifecycle dimension the brief also wants — suspend/
+ * deactivate/reactivate an ALREADY-approved partner without revoking the
+ * role itself, so reactivating doesn't require re-granting it from
+ * scratch. Same plain string-column shape as profile_status/
+ * photo_verification_status.
  */
 return new class extends Migration
 {

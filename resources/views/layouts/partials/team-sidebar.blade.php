@@ -58,11 +58,13 @@
                 <i class="fa fa-envelope-o"></i> Messages
             </a>
         </li>
+        @unless(User::retrieveUserObject()->isMatchmakerOnly())
         <li>
             <a href="{{ url('member/profile') }}">
                 <i class="fa fa-user-o"></i> Partner Account
             </a>
         </li>
+        @endunless
         <li>
             <a href="{{ url('member/profile/password/update') }}">
                 <i class="fa fa-cog"></i> Settings
@@ -71,10 +73,12 @@
     </ul>
 
     <div class="ur-dash-sidebar__footer">
+        @unless(User::retrieveUserObject()->isMatchmakerOnly())
         <div class="ur-dash-nav__section-label" style="padding-top:0;">Switch Dashboard</div>
         <a href="{{ url('member/profile') }}" class="ur-dash-nav__link">
             <i class="fa fa-user"></i> Member Dashboard
         </a>
+        @endunless
         @if(User::retrieveUserObject()->admin == 1)
         <a href="{{ url('admin/dashboard') }}" class="ur-dash-nav__link">
             <i class="fa fa-cogs"></i> Admin Dashboard

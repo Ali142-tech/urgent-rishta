@@ -851,8 +851,19 @@ class AdminController extends Controller
      */
     function teamMembers()
     {
-        $members = User::where('is_team_member', 1)->orderBy('first_name')->get();
-        return view('admin.dashboard.team-members', ['members' => $members]);
+        $search = trim((string) request()->query('search', ''));
+
+        $query = User::where('is_team_member', 1);
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', '%' . $search . '%')
+                    ->orWhere('last_name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+        $members = $query->orderBy('first_name')->get();
+
+        return view('admin.dashboard.team-members', ['members' => $members, 'search' => $search]);
     }
 
     function sendAdminMessage(Request $request)
@@ -1627,39 +1638,6 @@ class AdminController extends Controller
         }
     }
 
-    function toggleTeamMember($dataid)
-    {
-        $loggedInUser = User::retrieveUserObject();
-
-        $user = User::retrieveUserObject($dataid);
-        if ($user) {
-            $user->is_team_member = $user->is_team_member ? 0 : 1;
-            // Re-granting always restores full access — otherwise a
-            // previously suspended/deactivated partner would still be
-            // blocked by EnsureUserIsTeamMember after being re-approved.
-            if ($user->is_team_member == 1) {
-                $user->team_member_status = 'active';
-            }
-            $user->save();
-
-            $displayName = $user->first_name . ' ' . $user->last_name;
-            $status = $user->is_team_member == 1 ? 'granted team member access to' : 'revoked team member access from';
-            Log::info("Admin (" . $loggedInUser->dataid . ") " . $status . " " . $displayName . " (" . $user->email . ")");
-            User::retrieveUserObject($dataid, true);
-            return [
-                'code' => '200',
-                'message' => $status . ' ' . $displayName . ' (' . $user->email . ')',
-                'is_team_member' => $user->is_team_member
-            ];
-        } else {
-            Log::info("User (" . $loggedInUser->dataid . ") could not update team member status of " . $dataid);
-            return [
-                'code' => '404',
-                'message' => 'User was not found (id: ' . $dataid . ')'
-            ];
-        }
-    }
-
     /**
      * Suspend/deactivate/reactivate an ALREADY-approved partner without
      * touching is_team_member — mirrors approvePhotoVerification/
@@ -1691,6 +1669,60 @@ class AdminController extends Controller
             'message' => $displayName . ' is now ' . $statusMap[$action] . '.',
             'team_member_status' => $user->team_member_status
         ];
+    }
+
+    /**
+     * Public "Become a Partner" applications awaiting review — see
+     * MatchmakerApplicationController. Separate from the "Team Members"
+     * page (that one lists already-approved is_team_member=1 accounts;
+     * this one lists matchmaker_status='pending' applicants who aren't
+     * team members yet).
+     */
+    function matchmakerApplications()
+    {
+        $applications = User::where('matchmaker_status', 'pending')->orderBy('created_at')->get();
+        return view('admin.dashboard.matchmaker-applications', ['applications' => $applications]);
+    }
+
+    /**
+     * The only way to become a team member now (client requirement, Sep
+     * 2026) — flips is_team_member/team_member_status the same way the
+     * now-removed admin/profiles "Make Team Member" toggle used to for any
+     * regular member. An approved applicant is simply a normal team member
+     * from this point on.
+     */
+    function approveMatchmakerApplication($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+        $user = User::where('dataid', $dataid)->where('matchmaker_status', 'pending')->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Application was not found or already reviewed.'];
+        }
+
+        $user->matchmaker_status = 'approved';
+        $user->is_team_member = 1;
+        $user->team_member_status = 'active';
+        $user->save();
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") approved matchmaker application " . $user->dataid . " (" . $user->email . ")");
+
+        return ['code' => '200', 'message' => $user->first_name . ' ' . $user->last_name . ' has been approved as a team member.'];
+    }
+
+    function rejectMatchmakerApplication($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+        $user = User::where('dataid', $dataid)->where('matchmaker_status', 'pending')->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Application was not found or already reviewed.'];
+        }
+
+        $user->matchmaker_status = 'rejected';
+        $user->save();
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") rejected matchmaker application " . $user->dataid . " (" . $user->email . ")");
+
+        return ['code' => '200', 'message' => $user->first_name . ' ' . $user->last_name . '\'s application has been rejected.'];
     }
 
     function deleteProfile($dataid)

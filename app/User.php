@@ -69,6 +69,8 @@ class User extends Authenticatable implements MustVerifyEmail {
         'siblings_brothers',
         'siblings_sisters',
         'siblings_married_note',
+        'experience',
+        'about_me',
         'password',
     ];
 
@@ -82,9 +84,15 @@ class User extends Authenticatable implements MustVerifyEmail {
      * careful: 'package', 'package_started_at', 'package_expires_at',
      * 'online_package', 'online_package_started_at', 'online_package_expires_at'.
      * Same reasoning covers 'is_team_member' (set only via AdminController::
-     * toggleTeamMember()) and 'added_by' (set only via TeamController::store()
+     * approveMatchmakerApplication()/rejectMatchmakerApplication()) and
+     * 'added_by' (set only via TeamController::store()
      * to Auth::id() of the acting team member) — neither should ever be
-     * settable from a mass-assigned request body.
+     * settable from a mass-assigned request body. 'matchmaker_status' joins
+     * this list for the same reason — a signup form submitter must never be
+     * able to set their own application straight to 'approved' by including
+     * that field in a crafted request; only MatchmakerApplicationController::
+     * store() (hardcoded to 'pending') and AdminController's approve/reject
+     * actions ever write it.
      */
 
     /**
@@ -733,5 +741,43 @@ class User extends Authenticatable implements MustVerifyEmail {
             return 'danger|Your account was not approved' . (!empty($reason) ? ': ' . $reason : '') . '. Please contact support.';
         }
         return null;
+    }
+
+    /**
+     * Matchmaker signup (see MatchmakerApplicationController::store())
+     * creates a real `users` row with a real password specifically so it
+     * CAN log in — but unlike a normal member, login itself must stay
+     * gated on admin review here, not just Team Dashboard access. Unlike
+     * photoVerificationBlockMessage()'s 'pending'/'resubmit' states (which
+     * deliberately let login through because there's a self-service gate
+     * to send them to), there's no self-service path for an unreviewed
+     * matchmaker application, so both 'pending' and 'rejected' block login
+     * entirely until an admin acts (AdminController::approve/reject
+     * MatchmakerApplication()).
+     */
+    public function matchmakerLoginBlockMessage(): ?string {
+        if ($this->matchmaker_status === 'pending') {
+            return 'warning|Your matchmaker application is still under review. We\'ll notify you once it\'s approved.';
+        }
+        if ($this->matchmaker_status === 'rejected') {
+            return 'danger|Your matchmaker application was not approved. Please contact support at 0304-0227000.';
+        }
+        return null;
+    }
+
+    /**
+     * True for a matchmaker-signup account (see MatchmakerApplicationController::
+     * store()) — one with no real dating profile (no gender/DOB ever
+     * collected). Used by the nav/sidebar "Switch Dashboard" links to hide
+     * Member Dashboard for these accounts, since there's nothing there for
+     * them to see. Approving a matchmaker application is the only way to
+     * become a team member now (client requirement, Sep 2026 — admin can no
+     * longer promote an arbitrary regular member; see the now-removed
+     * AdminController::toggleTeamMember()), so in practice this is
+     * equivalent to is_team_member==1 going forward — kept as its own
+     * check anyway for any pre-existing account promoted the old way.
+     */
+    public function isMatchmakerOnly(): bool {
+        return !empty($this->matchmaker_status);
     }
 }

@@ -1790,6 +1790,14 @@ team, with senior-level involvement where applicable.</p>
         </div>
     </section>
 
+    <section class="ur-sec ur-sec--cream" aria-label="Become a partner">
+        <div class="container" style="max-width:760px; text-align:center; padding:50px 20px;">
+            <span style="display:inline-block; font-size:11.5px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#C9974D; margin-bottom:10px;">For Matchmakers</span>
+            <h2 style="font-family:'Playfair Display', Georgia, serif; font-weight:700; font-size:26px; color:#123A2E; margin:0 0 12px;">Are You a Matchmaker?</h2>
+            <p style="font-size:14.5px; color:#5B6560; line-height:1.6; max-width:520px; margin:0 auto 22px;">Join Urgent Rishta as a partner matchmaker — add and manage proposals, and get matched candidates powered by our AI matching engine.</p>
+            <a href="{{ url('become-a-partner') }}" class="ur-btn" style="display:inline-block; background:#123A2E; color:#fff; font-weight:700; font-size:13.5px; padding:13px 30px; border-radius:999px; text-decoration:none;">Become a Partner</a>
+        </div>
+    </section>
 
     <!-- Popup Modal -->
     <div class="popup-overlay" id="popup">

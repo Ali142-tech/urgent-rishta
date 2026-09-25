@@ -83,6 +83,9 @@ Route::get('admin/match-weights', [App\Http\Controllers\AdminController::class, 
 Route::post('admin/match-weights', [App\Http\Controllers\AdminController::class, 'updateMatchWeights'])->name('admin.match-weights.update');
 Route::get('admin/team-members', [App\Http\Controllers\AdminController::class, 'teamMembers'])->name('admin.team-members');
 Route::post('admin/team-members/message', [App\Http\Controllers\AdminController::class, 'sendAdminMessage'])->name('admin.team-members.message');
+Route::get('admin/matchmaker-applications', [App\Http\Controllers\AdminController::class, 'matchmakerApplications'])->name('admin.matchmaker-applications');
+Route::post('admin/matchmaker-applications/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approveMatchmakerApplication'])->name('admin.matchmaker-applications.approve');
+Route::post('admin/matchmaker-applications/{dataid}/reject', [App\Http\Controllers\AdminController::class, 'rejectMatchmakerApplication'])->name('admin.matchmaker-applications.reject');
 Route::get('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'contactUnlockSettings'])->name('admin.contact-unlock-settings');
 Route::post('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'updateContactUnlockSettings'])->name('admin.contact-unlock-settings.update');
 Route::get('admin/successful-matches', [App\Http\Controllers\AdminController::class, 'successfulMatches'])->name('admin.successful-matches');
@@ -109,7 +112,11 @@ Route::delete('admin/profile/{dataid}/permanent', [App\Http\Controllers\AdminCon
 // exploitable via CSRF (Laravel's CSRF protection doesn't cover GET, so any
 // page a logged-in admin loads could trigger these with a plain <img src>).
 Route::post('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
-Route::post('admin/profile/toggle-team-member/{user}', [App\Http\Controllers\AdminController::class, 'toggleTeamMember']); // grant/revoke Team Member role in admin dashboard
+// Team member status is managed only for already-approved matchmaker
+// applications now (see AdminController::approve/rejectMatchmakerApplication())
+// — admin can no longer promote an arbitrary regular member to team member
+// (client requirement, Sep 2026). suspend/deactivate/reactivate still applies
+// to whoever is already a team member.
 Route::post('admin/profile/team-member-status/{action}/{user}', [App\Http\Controllers\AdminController::class, 'updateTeamMemberStatus'])->whereIn('action', ['suspend', 'deactivate', 'reactivate']);
 Route::post('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
 Route::post('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
@@ -222,6 +229,11 @@ Route::get('tandc', [App\Http\Controllers\HomeController::class, 'termsAndCondit
 Route::get('privacy', [App\Http\Controllers\HomeController::class, 'privacyPolicyView']);
 Route::get('contact-us', [App\Http\Controllers\HomeController::class, 'contactUsView']);
 Route::post('contact-us',[App\Http\Controllers\HomeController::class, 'contactUsEmail']);
+
+// Public "Become a Partner" matchmaker signup — see MatchmakerApplicationController.
+Route::get('become-a-partner', [App\Http\Controllers\MatchmakerApplicationController::class, 'create'])->name('matchmaker.apply');
+Route::post('become-a-partner', [App\Http\Controllers\MatchmakerApplicationController::class, 'store'])->name('matchmaker.apply.store');
+Route::get('become-a-partner/thanks', [App\Http\Controllers\MatchmakerApplicationController::class, 'thanks'])->name('matchmaker.apply.thanks');
 
 // Appointments (auth required)
 Route::post('consultation-request', [App\Http\Controllers\AppointmentController::class, 'storeConsultationRequest'])->name('consultation.store');

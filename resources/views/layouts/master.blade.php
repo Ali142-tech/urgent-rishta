@@ -419,6 +419,10 @@ a.appointment-btn::before{
                                                     Gallery</a>
                                             </li>
                                             <li class="custom-nav">
+                                                <a class="nav-link " href="{{url('become-a-partner')}}" aria-haspopup="true" aria-expanded="false">
+                                                    Become a Partner</a>
+                                            </li>
+                                            <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">
                                                     Contact</a>
                                             </li>
@@ -430,11 +434,13 @@ a.appointment-btn::before{
                                             </li>
                                             @endguest
                                             @auth
+                                            @unless(User::retrieveUserObject()->isMatchmakerOnly())
                                             <li class="custom-nav d-lg-none">
                                                 <a class="nav-link" href="{{ url('member/profile') }}" aria-haspopup="true" aria-expanded="false">
                                                     <i class="fa fa-user-circle mr-2"></i> Profile
                                                 </a>
                                             </li>
+                                            @endunless
                                             @if(User::retrieveUserObject()->admin==1)
                                             <li class="custom-nav d-lg-none">
                                                 <a class="nav-link" href="{{ url('admin/dashboard') }}" aria-haspopup="true" aria-expanded="false">
@@ -499,7 +505,7 @@ a.appointment-btn::before{
                                                 </div>
                                             </li>
                                             <li class="dropdown dropdown--style-2 dropdown--animated ur-account-dropdown">
-                                                <a class="dropdown-toggle has-badge c-base-1" href="{{url('member/profile')}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+                                                <a class="dropdown-toggle has-badge c-base-1" href="{{ User::retrieveUserObject()->isMatchmakerOnly() ? route('team.dashboard') : url('member/profile') }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
                                                     <div id="top_nav_img" class="top_nav_img" style="background-image: url( '{{ User::retrieveUserObject()->getProfileImage(true) }}')"></div>
                                                 </a>
                                                 {{-- Clicking the avatar opens this instead of navigating straight to
@@ -507,7 +513,9 @@ a.appointment-btn::before{
                                                      dashboards, so the old separate "Dashboard" pill button next to
                                                      the avatar was folded into this menu instead of sitting beside it. --}}
                                                 <div class="dropdown-menu dropdown-menu-right ur-account-menu">
+                                                    @unless(User::retrieveUserObject()->isMatchmakerOnly())
                                                     <a class="dropdown-item" href="{{ url('member/profile') }}"><i class="fa fa-user mr-2"></i> Member Dashboard</a>
+                                                    @endunless
                                                     @if(User::retrieveUserObject()->admin==1)
                                                     <a class="dropdown-item" href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs mr-2"></i> Admin Dashboard</a>
                                                     @endif

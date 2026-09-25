@@ -88,6 +88,11 @@
                 <i class="fa fa-users"></i> Team Members
             </a>
         </li>
+        <li>
+            <a href="{{ route('admin.matchmaker-applications') }}" class="{{ request()->is('admin/matchmaker-applications') ? 'is-active' : '' }}">
+                <i class="fa fa-user-plus"></i> Matchmaker Applications
+            </a>
+        </li>
 
         <div class="ur-dash-nav__section-label">System</div>
         <li>

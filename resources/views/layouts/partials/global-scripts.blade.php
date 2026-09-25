@@ -569,7 +569,11 @@
         $(".selectpicker").select2();
 
         @auth
-        @if(!Auth::user()->isAdmin())
+        {{-- Team members (Team Dashboard only, see EnsureTeamMembersUseTeamDashboard)
+             have no dating profile to complete and can't even reach
+             member/profile this links to — skip the nag entirely for them,
+             not just admins. --}}
+        @if(!Auth::user()->isAdmin() && (int) Auth::user()->is_team_member !== 1)
         @php
             $__profile = Auth::user()->profile();
             $__completenessPercent = $__profile ? $__profile->profileCompleteness()['percent'] : 100;

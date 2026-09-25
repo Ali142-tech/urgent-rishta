@@ -334,6 +334,18 @@ class LoginController extends Controller
     {
         $loggedInUser->profile(true);
 
+        // Matchmaker applications gate login entirely on admin review — no
+        // self-service path exists for them the way there is for photo
+        // verification, so check this before anything else (email
+        // verification / photo gate are both bypassed at creation time for
+        // this account type — see MatchmakerApplicationController::store()).
+        if ($blockMessage = $loggedInUser->matchmakerLoginBlockMessage()) {
+            Auth::logout();
+            Log::info('Login blocked for ' . $loggedInUser->dataid . ' — matchmaker_status=' . $loggedInUser->matchmaker_status);
+            Session::flash('message', $blockMessage);
+            return redirect()->route('login');
+        }
+
         if (!$loggedInUser->hasVerifiedEmail()) {
             try {
                 $loggedInUser->sendEmailVerificationNotification();
@@ -372,6 +384,14 @@ class LoginController extends Controller
         }
 
         Log::info('User (' . $loggedInUser->dataid . ') logged in via ' . $via);
+
+        // An approved matchmaker account has no real dating profile (no
+        // gender/DOB collected at signup — see matchmaker/apply.blade.php)
+        // and never should see the member dashboard; send it straight to
+        // the Team Dashboard it applied for instead.
+        if (!empty($loggedInUser->matchmaker_status)) {
+            return redirect()->route('team.dashboard');
+        }
 
         // Resume a search that was interrupted by the login gate (see Authenticate::redirectTo())
         // instead of dropping the user's filters and sending them to the homepage.

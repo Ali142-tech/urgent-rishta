@@ -82,7 +82,6 @@
             <a href="{{ url('admin/profile/package/'.$member->dataid) }}?page={{ request()->query('page', 1) }}" class="ur-btn ur-btn--outline"><i class="fa fa-archive"></i> Change Package</a>
             <a class="ur-btn ur-btn--outline" onclick="return resendVerificationEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-envelope"></i> Resend Verification Email</a>
             <a class="ur-btn ur-btn--outline" onclick="return sendPasswordResetEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-unlock"></i> Password Reset</a>
-            <a id="team_toggle_{{ $member->dataid }}" class="ur-btn ur-btn--outline" onclick="return toggleTeamMember($(this), '{{ $member->dataid }}');"><i class="fa fa-briefcase"></i> {{ $member->is_team_member == 1 ? 'Revoke Team Access' : 'Make Team Member' }}</a>
             @if($member->is_team_member == 1)
                 @if(($member->team_member_status ?? 'active') === 'active')
                     <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatus($(this), 'suspend', '{{ $member->dataid }}');"><i class="fa fa-pause"></i> Suspend</a>

@@ -265,7 +265,7 @@
                     <span class="reg-label">Living in</span>
                     <div class="reg-field-outline">
                         <span class="float-label">Country</span>
-                        <select name="country" id="reg_country" required>
+                        <select name="country" id="reg_country" autocomplete="off" required>
                             <option value="" disabled {{ old('country', $registerCountry) ? '' : 'selected' }}>Select</option>
                             @foreach($countries as $country)
                                 <option value="{{ $country->dataid }}" @if(old('country', $registerCountry)==$country->dataid) selected @endif>{{ $country->name }}</option>
@@ -700,9 +700,25 @@
         }
         fields.forEach(function (id) {
             var el = document.getElementById(id);
-            if (el) el.addEventListener('change', syncCommunity);
+            if (el) {
+                el.addEventListener('change', syncCommunity);
+                // Browser address-autofill (very likely what filled "Country"
+                // to something like Anguilla without the user touching the
+                // dropdown) doesn't reliably fire a native 'change' event on
+                // a <select> the way a manual click does — 'input' catches
+                // that case too.
+                el.addEventListener('input', syncCommunity);
+            }
         });
         syncCommunity();
+        // Browser back/forward can restore this exact page from cache
+        // (bfcache) with all 3 fields still filled in but without re-running
+        // this script — leaving the button stuck on its hardcoded initial
+        // "disabled" attribute forever. Re-check on that specific restore
+        // event so Continue doesn't stay dead after using the Back button.
+        window.addEventListener('pageshow', function (e) {
+            if (e.persisted) syncCommunity();
+        });
     })();
 
     // Profile build: cities load when state changes (states rendered server-side)

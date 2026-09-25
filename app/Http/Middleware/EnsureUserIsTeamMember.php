@@ -11,9 +11,11 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Gates the Team Dashboard / manual proposal-entry routes to users an admin
- * has promoted via AdminController::toggleTeamMember(). Structural mirror of
- * EnsureUserIsAdmin — same "run after 'auth' so a guest hits login, not a
- * raw 403" reasoning applies here too.
+ * has approved via AdminController::approveMatchmakerApplication() — the
+ * only way to become a team member now (client requirement, Sep 2026;
+ * admin can no longer promote an arbitrary regular member). Structural
+ * mirror of EnsureUserIsAdmin — same "run after 'auth' so a guest hits
+ * login, not a raw 403" reasoning applies here too.
  *
  * Admins also pass through unconditionally: TeamController's per-proposal
  * authorization (authorizeProposalOwner(), etc.) already treats admins as
