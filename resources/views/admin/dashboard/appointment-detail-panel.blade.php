@@ -24,7 +24,14 @@
             <div class="ur-detail-panel__who">
                 <h3>{{ $appointment->contact_name ?: 'Guest' }}</h3>
                 <p class="ur-detail-panel__contact">
-                    {{ $appointment->contact_email ?: '—' }} &bull; {{ $appointment->contact_phone ?: '—' }}
+                    {{ $appointment->contact_email ?: '—' }} &bull;
+                    @if($appointment->contact_phone)
+                        <a href="{{ \App\User::whatsappLinkForNumber($appointment->contact_phone) }}" target="_blank" rel="noopener" title="Chat on WhatsApp">
+                            {{ $appointment->contact_phone }} <i class="fa fa-whatsapp" style="color:#25D366;"></i>
+                        </a>
+                    @else
+                        —
+                    @endif
                     @if($appointment->user_id)
                         &bull; <a href="{{ url('/member/profile/'.$appointment->user->dataid) }}" target="_blank">View Member Profile</a>
                     @endif

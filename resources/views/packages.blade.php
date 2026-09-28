@@ -767,7 +767,7 @@
                     @if($userHasActiveOnlinePackage)
                         <div class="pk-card-expiry">{{ $isCurrent ? 'Expires: '.$userOnlineExpiresAtFormatted : 'Subscribe again after '.$userOnlineExpiresAtFormatted }}</div>
                     @else
-                        <a href="{{ route('packages.checkout', ['id' => $package->id]) }}" class="pk-btn-solid">Buy Now</a>
+                        {{-- <a href="{{ route('packages.checkout', ['id' => $package->id]) }}" class="pk-btn-solid">Buy Now</a> --}}
                     @endif
                 @else
                     <a href="{{ url('login') }}" class="pk-btn-solid">Log In to Buy</a>

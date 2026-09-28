@@ -651,7 +651,11 @@ class User extends Authenticatable implements MustVerifyEmail {
     public static function normalizePhoneNumberValue($n) {
         $pkCodes = ['300', '301', '302', '303', '304', '305', '306', '307', '308', '309', '310', '311', '312', '313', '314', '315', '316', '317', '318', '320', '321', '322', '323', '324', '330', '331', '332', '333', '334', '335', '336', '337', '340', '341', '342', '343', '344', '345', '346', '347', '348', '349', '355'];
 
-        $n = (string) $n;
+        // wa.me requires digits only — a "+" or spaces/dashes (common in
+        // international numbers like a Canadian/US appointment contact
+        // number) would otherwise pass through untouched below and produce
+        // an invalid link.
+        $n = preg_replace('/\D+/', '', (string) $n);
 
         foreach ($pkCodes as $code) {
             if (Str::startsWith($n, $code)) {
