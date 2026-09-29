@@ -60,6 +60,15 @@
 }
 .ur-dash-sidebar__brand:hover { opacity: .85; text-decoration: none; }
 .ur-dash-sidebar__brand img { height: 40px; width: auto; }
+
+/* Team Dashboard only — brand row with a decorative icon chip + the
+   "AI Partner Network" subtitle from the mockup. */
+.ur-dash-sidebar__brand-row { display: flex; align-items: center; gap: 10px; padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.ur-dash-sidebar__brand-row .ur-dash-sidebar__brand { padding: 0; border-bottom: 0; }
+.ur-dash-sidebar__brand-icon { width: 34px; height: 34px; border-radius: 9px; background: rgba(255,255,255,.08); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.ur-dash-sidebar__brand-row .ur-dash-sidebar__brand img { height: 28px; }
+.ur-dash-sidebar__brand small { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ur-dash-gold); margin-top: 1px; }
+
 .ur-dash-sidebar__brand span {
     font-family: 'Manrope', system-ui, sans-serif;
     font-weight: 700;
@@ -81,6 +90,64 @@
     cursor: pointer;
 }
 .ur-dash-sidebar__close:hover { color: #fff; }
+
+/* Team Dashboard profile card ("AI Partner Portal" mockup, Sep 2026) —
+   scoped with ur-dash- prefix like everything else here, but only used by
+   team-sidebar.blade.php today. */
+.ur-dash-sidebar__profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 14px 4px;
+    padding: 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.06);
+}
+.ur-dash-sidebar__profile-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--ur-dash-gold);
+    color: #1C2321;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+}
+.ur-dash-sidebar__profile-name {
+    color: #fff;
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+.ur-dash-sidebar__profile-meta {
+    color: rgba(255,255,255,.55);
+    font-size: 11px;
+    line-height: 1.3;
+}
+.ur-dash-sidebar__status {
+    padding: 12px 20px;
+    font-size: 12px;
+    color: #fff;
+    font-weight: 700;
+    border-top: 1px solid rgba(255,255,255,.08);
+}
+.ur-dash-sidebar__status-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #3ECF8E;
+    margin-right: 6px;
+}
+.ur-dash-sidebar__status div {
+    margin-top: 3px;
+    font-size: 10.5px;
+    font-weight: 400;
+    color: rgba(255,255,255,.45);
+}
 
 .ur-dash-nav {
     list-style: none;
@@ -242,6 +309,21 @@
     gap: 8px;
     flex-shrink: 0;
 }
+.ur-dash-topbar__add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: var(--ur-dash-green);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.ur-dash-topbar__add-btn:hover { background: var(--ur-dash-green-dark); color: #fff; text-decoration: none; }
 
 /* Notification bell (ids/classes match public/app.js polling script) */
 .ur-dash-bell {
@@ -404,5 +486,21 @@ body.ur-dash-body .ur-toast-stack {
 
 @media (max-width: 575.98px) {
     .ur-dash-content { padding: 18px 14px 40px; }
-    .ur-dash-topbar { padding: 0 14px; }
+    .ur-dash-topbar { padding: 0 10px; }
+    .ur-dash-topbar__left { gap: 8px; }
+    .ur-dash-topbar__right { gap: 4px; }
+    .ur-dash-topbar__title { font-size: 15px; }
+}
+
+/* Team Dashboard topbar packs an extra "Add profile" button in on top of
+   the bell + user menu every other dashboard topbar has — at phone widths
+   there isn't room for all of it plus a readable title, so "Add profile"
+   drops to icon-only and the buttons/avatar shrink a bit further. */
+@media (max-width: 420px) {
+    .ur-dash-topbar__add-btn { padding: 0; width: 38px; justify-content: center; }
+    .ur-dash-topbar__add-btn-label { display: none; }
+    .ur-dash-bell { width: 36px; height: 36px; font-size: 15px; }
+    .ur-dash-user { padding: 4px; gap: 0; }
+    .ur-dash-user__avatar { width: 32px; height: 32px; }
+    .ur-dash-user__caret { display: none; }
 }

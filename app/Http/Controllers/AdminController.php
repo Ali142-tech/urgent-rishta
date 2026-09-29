@@ -271,7 +271,16 @@ class AdminController extends Controller
         // for regular members only. Mixing admin accounts in, distinguished
         // only by a small badge, is exactly how an admin account got
         // accidentally deleted before this fix.
-        $total = User::where('admin', 0)->count();
+        //
+        // Team-added proposals (`added_by` IS NOT NULL — login-less shell
+        // records a matchmaker pastes in, with no email/password) are also
+        // excluded here: they were showing up mixed into this list with no
+        // way to tell them apart from real self-registered members, and this
+        // list's account-oriented actions (Resend Verification Email,
+        // Password Reset) are meaningless for them. See admin/team-proposals
+        // (teamProposals()) for that pool's own list instead.
+        $where = "`admin` = 0 and `added_by` IS NULL";
+        $total = User::whereRaw($where)->count();
         $numPages = (int) ceil($total / $pageSize);
 
         // Honor ?page=N (e.g. returning here from the Change Package screen
@@ -281,7 +290,7 @@ class AdminController extends Controller
         if ($currentPage < 1) $currentPage = 1;
         if ($numPages > 0 && $currentPage > $numPages) $currentPage = $numPages;
 
-        $members = Profile::profiles("`u`.`admin` = 0", null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1));
+        $members = Profile::profiles("`u`.`admin` = 0 and `u`.`added_by` IS NULL", null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1));
 
         // The list+detail layout (desktop) shows one member's full summary
         // in the right-hand panel. ?selected=<dataid> (set via pushState
@@ -333,6 +342,55 @@ class AdminController extends Controller
             'code' => '200',
             'html' => view('admin.dashboard.profile-detail-panel', ['member' => $member])->render(),
         ];
+    }
+
+    /**
+     * "Team Proposals" — every profile a team member has manually added
+     * (`added_by` IS NOT NULL), kept as its own list rather than mixed into
+     * profiles() above (see that method's comment). Search fields mirror
+     * TeamController::searchProposals()'s "keyword" quick search; admins can
+     * additionally filter by which matchmaker added the proposal.
+     */
+    function teamProposals(Request $request)
+    {
+        $pageSize = 12;
+        $where = "`u`.`admin` = 0 and `u`.`added_by` IS NOT NULL";
+
+        if (!empty($request->keyword)) {
+            $keyword = addslashes($request->keyword);
+            $where .= " and (`u`.`first_name` LIKE '%{$keyword}%' or `u`.`last_name` LIKE '%{$keyword}%'"
+                . " or `u`.`profession` LIKE '%{$keyword}%' or `u`.`city` LIKE '%{$keyword}%'"
+                . " or `u`.`current_city` LIKE '%{$keyword}%' or `u`.`dataid` LIKE '%{$keyword}%')";
+        }
+        if (!empty($request->matchmaker)) {
+            $where .= " and `u`.`added_by` = " . (int) $request->matchmaker;
+        }
+
+        $resultCount = (int) Profile::profiles($where, null, null, null, null, true);
+        $numPages = max(1, (int) ceil($resultCount / $pageSize));
+        $currentPage = (int) $request->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+        if ($currentPage > $numPages) $currentPage = $numPages;
+
+        $members = Profile::profiles($where, null, "`u`.`created_at` DESC", $pageSize, $pageSize * ($currentPage - 1));
+
+        $addedByIds = collect($members)->pluck('added_by')->filter()->unique()->values();
+        $addedByUsers = $addedByIds->isEmpty()
+            ? collect()
+            : User::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name'])->keyBy('id');
+        foreach ($members as $member) {
+            $addedByUser = $addedByUsers->get($member->added_by);
+            $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
+            // Grants member-card.blade.php's "team card" Edit action to the
+            // admin regardless of who actually added the proposal — same
+            // pass-through TeamController::authorizeProposalOwner() already
+            // gives admins on the Team Dashboard side.
+            $member->team_card_role = 'own';
+        }
+
+        $matchmakers = User::where('is_team_member', 1)->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+
+        return view('admin.team-proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers'));
     }
 
     /** Website Upgrade Brief §9 "Photo & Identity Verification" module. */
@@ -528,7 +586,7 @@ class AdminController extends Controller
             $showOnly = $request->showonly;
             $showWithin = $request->showwithin;
             // Always excluded — see the comment on profiles() above.
-            $where = "`u`.`admin` = 0";
+            $where = "`u`.`admin` = 0 and `u`.`added_by` IS NULL";
             $resultCount = null;
             $members = null;
 

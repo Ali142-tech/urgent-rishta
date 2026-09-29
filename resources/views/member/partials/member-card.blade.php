@@ -178,16 +178,19 @@ $packageIcon = match ($packageSlug) {
                 </a>
             </div>
         @else
-            <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-                <i class="fa fa-eye"></i> View Full Profile
-            </a>
             @if(!empty($member->team_card_role))
                 {{-- Team Dashboard card — not the regular Express Interest
                      flow (team-added proposals are login-less shell
                      records; see TeamController::store()). The whole
                      team-added pool is open to every team member, so
                      only ownership (not any request/approval step) decides
-                     whether Edit shows up. --}}
+                     whether Edit shows up. Opens team.proposals.view (the
+                     Team Dashboard shell), not member/profile/{dataid} (the
+                     Member Dashboard shell) — see TeamController::
+                     viewProposal(). --}}
+                <a onclick="javascript:window.open('{{ route('team.proposals.view', $member->dataid) }}');">
+                    <i class="fa fa-eye"></i> View Full Profile
+                </a>
                 @if($member->team_card_role === 'own')
                     <a class="is-interest" href="{{ route('team.proposals.edit', $member->dataid) }}">
                         <i class="fa fa-pencil"></i> <span>Edit</span>
@@ -197,6 +200,9 @@ $packageIcon = match ($packageSlug) {
                     <i class="fa fa-whatsapp"></i> <span>Share</span>
                 </a>
             @else
+            <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                <i class="fa fa-eye"></i> View Full Profile
+            </a>
             @guest
                 <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return register_request();">
                     <i class="fa fa-heart"></i> <span>Express Interest</span>

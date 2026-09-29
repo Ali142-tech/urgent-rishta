@@ -51,6 +51,10 @@ Route::get('home', [App\Http\Controllers\HomeController::class, 'home'])->name('
 Route::get('states/{id}', [App\Http\Controllers\HomeController::class, 'states']);
 Route::get('cities/{id}/{iscountry}', [App\Http\Controllers\HomeController::class, 'cities']);
 Route::get('castes/{id}', [App\Http\Controllers\HomeController::class, 'castes']);
+// Public WhatsApp/link-preview card for a shared team proposal — see
+// HomeController::sharePreview()'s docblock for why this has to be a
+// separate, unauthenticated route rather than member/profile/{dataid}.
+Route::get('share/proposal/{dataid}', [App\Http\Controllers\HomeController::class, 'sharePreview'])->name('share.proposal');
 // Also accepts GET (not just the form's POST) so that a guest's search can be replayed
 // automatically via redirect after they log in — see Authenticate::redirectTo() and
 // LoginController::finishLogin(), which resume the search instead of losing the filters.
@@ -65,6 +69,7 @@ Route::get('member/recommended-matches', [App\Http\Controllers\HomeController::c
 Route::get('admin/dashboard', [App\Http\Controllers\AdminController::class, 'dashboardOverview']); // Dashboard Overview landing page (stat cards, growth, recent activity)
 Route::get('admin/profiles', [App\Http\Controllers\AdminController::class, 'profiles']); // route to index which will list profiles
 Route::get('admin/profile/panel/{id}', [App\Http\Controllers\AdminController::class, 'profilePanel']); // AJAX-loaded detail panel for the Member Profiles list+detail layout
+Route::get('admin/team-proposals', [App\Http\Controllers\AdminController::class, 'teamProposals'])->name('admin.team-proposals'); // proposals added by team members, kept out of the regular Member Profiles list
 Route::post('admin/profiles/refresh', [App\Http\Controllers\AdminController::class, 'refreshProfiles']); // list all profiles in admin dashboard
 Route::get('admin/interests', [App\Http\Controllers\AdminController::class, 'interests']);
 Route::post('admin/interests/refresh', [App\Http\Controllers\AdminController::class, 'refreshInterests']); // list all interests in admin dashboard
@@ -154,10 +159,14 @@ Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, '
 Route::get('team/proposals/search', [App\Http\Controllers\TeamController::class, 'searchProposals'])->name('team.proposals.search');
 Route::get('team/matches', [App\Http\Controllers\TeamController::class, 'matches'])->name('team.matches');
 Route::get('team/matches/{dataid}', [App\Http\Controllers\TeamController::class, 'matchesForProposal'])->name('team.matches.show');
+Route::get('team/matches/{proposalDataid}/forward/{matchDataid}', [App\Http\Controllers\TeamController::class, 'forwardBothWhatsapp'])->name('team.matches.forward');
 Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
 Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
+Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'matchmakers'])->name('team.matchmakers');
 Route::get('team/proposals/create', [App\Http\Controllers\TeamController::class, 'create'])->name('team.proposals.create');
 Route::post('team/proposals', [App\Http\Controllers\TeamController::class, 'store'])->name('team.proposals.store');
+Route::get('team/proposals/{dataid}/view', [App\Http\Controllers\TeamController::class, 'viewProposal'])->name('team.proposals.view');
+Route::get('team/proposals/{dataid}/file', [App\Http\Controllers\TeamController::class, 'proposalFilePanel'])->name('team.proposals.file');
 Route::get('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'edit'])->name('team.proposals.edit');
 Route::post('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'update'])->name('team.proposals.update');
 Route::get('team/proposals/{dataid}/photos', [App\Http\Controllers\TeamController::class, 'photos'])->name('team.proposals.photos');

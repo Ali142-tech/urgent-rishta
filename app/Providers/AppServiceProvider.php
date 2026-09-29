@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
+use App\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -47,6 +50,27 @@ class AppServiceProvider extends ServiceProvider
         // faster with a Throttling error, so there's no point staying under it.
         RateLimiter::for('campaign-mail', function () {
             return Limit::perSecond((int) env('SES_MAX_SEND_RATE', 14));
+        });
+
+        // "AI Partner Portal" mockup (Sep 2026) — live nav badge counts for
+        // team-sidebar.blade.php, shared across every Team Dashboard page
+        // (not just the overview), so the sidebar always shows current
+        // numbers no matter which team page is loaded. Guarded to only run
+        // for an actual authenticated team member — every other dashboard
+        // (member/admin) either doesn't render this partial at all or
+        // would have no is_team_member row to compute against.
+        View::composer('layouts.partials.team-sidebar', function ($view) {
+            $user = Auth::user();
+            if (!$user || (int) $user->is_team_member !== 1) {
+                return;
+            }
+
+            $view->with([
+                'sidebarTeamProposalsCount' => User::whereNotNull('added_by')->count(),
+                'sidebarAiMatchesCount' => $user->ownedProposalsAiMatchesCount(),
+                'sidebarMatchmakersCount' => User::where('is_team_member', 1)->where('team_member_status', 'active')->count(),
+                'sidebarRequestsCount' => $user->unreadNotifications()->count(),
+            ]);
         });
     }
 }

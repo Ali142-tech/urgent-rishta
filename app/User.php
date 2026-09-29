@@ -57,6 +57,11 @@ class User extends Authenticatable implements MustVerifyEmail {
         'immigration_status',
         'family_residence',
         'family_values',
+        'family_status',
+        'looking_from',
+        'profile_category',
+        'presentation_highlight',
+        'raw_intake_text',
         'income',
         'property_financial_status',
         'profile_description',
@@ -534,6 +539,20 @@ class User extends Authenticatable implements MustVerifyEmail {
         }
 
         return (int) Profile::profiles($where, "", null, null, null, true);
+    }
+
+    /**
+     * Sum of getProposalMatchesCount() across every proposal THIS team
+     * member owns (`added_by` = this user) — the same aggregate
+     * TeamController::dashboard() computed inline before this was
+     * extracted, now also reused by the sidebar's badge composer (see
+     * AppServiceProvider::boot()) so both stay in sync automatically.
+     */
+    public function ownedProposalsAiMatchesCount(): int
+    {
+        return self::where('added_by', $this->id)
+            ->get()
+            ->sum(fn (User $proposal) => $proposal->getProposalMatchesCount());
     }
 
     /**

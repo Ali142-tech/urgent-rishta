@@ -3,8 +3,11 @@
     Team Dashboard topbar. Mirrors layouts/partials/dashboard-topbar.blade.php
     (bell markup copied verbatim — same ids/classes public/app.js already
     polls: #notifications, #notificationsMenu, .noti_counter — so it works
-    unmodified here) plus a search box and mail/WhatsApp shortcut icons
-    added for the Dashboard redesign. Included by layouts/team/dashboard.blade.php only.
+    unmodified here) plus an "Add profile" button. Included by
+    layouts/team/dashboard.blade.php only. At phone widths (see
+    public/css/ur-dashboard.css's ≤420px rule) "Add profile" drops its text
+    label since this topbar has one more element than every other dashboard
+    topbar and there isn't room for both that and a readable title.
 --}}
 <header class="ur-dash-topbar">
     <div class="ur-dash-topbar__left">
@@ -15,12 +18,7 @@
     </div>
 
     <div class="ur-dash-topbar__right">
-        <a href="{{ route('team.notifications') }}" class="ur-dash-bell" title="Messages" style="text-decoration:none;">
-            <i class="fa fa-envelope-o"></i>
-        </a>
-        <a href="{{ route('team.notifications') }}" class="ur-dash-bell" title="WhatsApp" style="text-decoration:none;">
-            <i class="fa fa-whatsapp"></i>
-        </a>
+        <a href="{{ route('team.proposals.create') }}" class="ur-dash-topbar__add-btn"><i class="fa fa-plus"></i> <span class="ur-dash-topbar__add-btn-label">Add profile</span></a>
         <div class="dropdown dropdown--style-2 dropdown--animated">
             <button type="button" class="ur-dash-bell" id="notifications" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Notifications">
                 <i class="fa fa-bell-o"></i>

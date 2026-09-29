@@ -51,6 +51,25 @@ class EnsureTeamMembersUseTeamDashboard
             }
         }
 
+        // "View file" on a Team Dashboard card (member-card.blade.php /
+        // search-result-card.blade.php) links straight to
+        // member/profile/{dataid} — ProfileController::profile() already
+        // has its own logic letting a team member view any proposal/member
+        // this way, but this middleware was catching the request first and
+        // bouncing it back to the Team Dashboard before it ever got there.
+        // Only the bare "view someone's profile by dataid" path is let
+        // through; member/profile with no id (their own Member Dashboard
+        // home) and its own-account sub-pages (pictures/preferences/
+        // password/account) stay blocked below.
+        $segments = explode('/', trim($request->path(), '/'));
+        $isViewingAProfileByDataid = count($segments) === 3
+            && $segments[0] === 'member'
+            && $segments[1] === 'profile'
+            && !in_array($segments[2], ['pictures', 'preferences', 'password', 'notifications', 'account'], true);
+        if ($isViewingAProfileByDataid) {
+            return $next($request);
+        }
+
         return redirect()->route('team.dashboard');
     }
 }

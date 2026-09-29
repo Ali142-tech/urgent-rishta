@@ -93,6 +93,11 @@
                 <i class="fa fa-user-plus"></i> Matchmaker Applications
             </a>
         </li>
+        <li>
+            <a href="{{ route('admin.team-proposals') }}" class="{{ request()->is('admin/team-proposals') ? 'is-active' : '' }}">
+                <i class="fa fa-clipboard"></i> Team Proposals
+            </a>
+        </li>
 
         <div class="ur-dash-nav__section-label">System</div>
         <li>

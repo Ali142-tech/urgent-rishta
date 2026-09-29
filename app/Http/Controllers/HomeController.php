@@ -44,7 +44,7 @@ class HomeController extends Controller {
     public function __construct() {
         $this->middleware(['auth', 'verified'])->except(['index', 'contactUsEmail',
             'packagesView','storiesView', 'teamView', 'galleryView', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
-            'contactUsView', 'states', 'cities', 'castes']);
+            'contactUsView', 'states', 'cities', 'castes', 'sharePreview']);
     }
 
     /**
@@ -448,5 +448,35 @@ class HomeController extends Controller {
         Log::info($obj->sender."(".$obj->sender_email.") sent an email through contact-us form.");
         Session::flash('message','success|Thank you for contacting us. Your message has been received. Someone from our team will get in touch.');
         return view("contactus");
+    }
+
+    /**
+     * Public, unauthenticated WhatsApp/link-preview card for a shared
+     * proposal — TeamController::shareWhatsapp()/forwardBothWhatsapp() link
+     * here instead of straight to member/profile/{dataid}, which requires
+     * login (member/profile/{dataid} sits behind ProfileController's own
+     * blanket 'auth' middleware), so a logged-out crawler like WhatsApp's
+     * link-preview bot could never reach it or read its og:image tag.
+     *
+     * Deliberately public per the client's explicit choice (Sep 2026): the
+     * real photo shows in the WhatsApp link preview, which means it's
+     * reachable by anyone holding the link — not just logged-in
+     * matchmakers. Everything else (contact info, the full field grid,
+     * Partner Requirements) stays behind the login wall this page's own
+     * "View Full Profile" button leads to; this card only ever shows
+     * photo + the same handful of non-sensitive fields the public
+     * homepage slider already exposes to guests.
+     */
+    public function sharePreview($dataid) {
+        $member = Profile::profiles("`u`.`dataid` = '" . addslashes($dataid) . "' and `u`.`added_by` IS NOT NULL", null, null, null, null, null, true)->first();
+        if (!$member) {
+            abort(404);
+        }
+
+        $age = !empty($member->birthday) ? date_diff(date_create($member->birthday), date_create('now'))->y : null;
+        $photoUrl = url($member->getCardImages(null, false)[0] ?? Profile::defaultImage($member->gender));
+        $location = $member->lbl_city ?: $member->lbl_con_of_residence;
+
+        return view('share.proposal-preview', compact('member', 'age', 'photoUrl', 'location'));
     }
 }

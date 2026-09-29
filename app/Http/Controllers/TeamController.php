@@ -50,11 +50,22 @@ class TeamController extends Controller
         // "Added by" display name — a small batched lookup kept separate from
         // Profile::profiles()'s shared raw-SQL query rather than joining it
         // into that query, since that function is relied on by many other
-        // unrelated callers.
+        // unrelated callers. Also grabs dataid/experience so cards can show
+        // an "Owner: Name • ID • Experience" byline (Advanced Search redesign,
+        // Sep 2026 — matches the Matchmakers roster's own name+experience line).
         $addedByIds = collect($members)->pluck('added_by')->filter()->unique()->values();
         $addedByNames = $addedByIds->isEmpty()
             ? collect()
-            : User::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name'])->keyBy('id');
+            : User::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name', 'dataid', 'experience'])->keyBy('id');
+
+        // Whether each proposal has a partner preference saved — gates the
+        // "AI Match" card action, since team.matches.show 404s without one
+        // (see authorizeProposalOwner()/matchesForProposal()).
+        $memberIds = collect($members)->pluck('id');
+        $idsWithPreference = $memberIds->isEmpty()
+            ? collect()
+            : User::whereIn('id', $memberIds)->whereHas('partnerPreference')->pluck('id')->flip();
+
         // 'own' vs 'other' — the whole team-added pool is open to every team
         // member, so this only decides whether member-card.blade.php shows
         // the Edit action (own proposal) or just View/Share (anyone else's).
@@ -62,7 +73,10 @@ class TeamController extends Controller
         foreach ($members as $member) {
             $addedByUser = $addedByNames->get($member->added_by);
             $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
+            $member->added_by_dataid = $addedByUser->dataid ?? null;
+            $member->added_by_experience = $addedByUser->experience ?? null;
             $member->team_card_role = $member->added_by == $viewerId ? 'own' : 'other';
+            $member->has_partner_preference = $idsWithPreference->has($member->id);
         }
 
         return [
@@ -86,6 +100,13 @@ class TeamController extends Controller
         $myProposalsCount = (int) Profile::profiles("`u`.`added_by` = " . (int) $viewerId, null, null, null, null, true);
         $teamProposalsCount = (int) Profile::profiles("`u`.`added_by` IS NOT NULL", null, null, null, null, true);
         $successfulMatchesCount = \App\SuccessfulMatch::where('partner_a_id', $viewerId)->orWhere('partner_b_id', $viewerId)->count();
+        // Grouped in a closure — chaining ->orWhere() then ->whereMonth()/
+        // ->whereYear() directly would bind the month/year filters only to
+        // the OR's second clause, not both (a real precedence bug, not a
+        // style choice).
+        $successfulMatchesThisMonth = \App\SuccessfulMatch::where(function ($q) use ($viewerId) {
+            $q->where('partner_a_id', $viewerId)->orWhere('partner_b_id', $viewerId);
+        })->whereMonth('matched_at', now()->month)->whereYear('matched_at', now()->year)->count();
 
         // AI Matches Found + a short recommendations preview — aggregated
         // across this team member's own proposals only (see
@@ -109,19 +130,24 @@ class TeamController extends Controller
 
         $recentNotifications = auth()->user()->notifications()->latest()->take(5)->get();
 
-        // Quick Add Proposal form dropdowns (right-hand panel).
-        $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
-        $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
+        // "AI Partner Portal" mockup dashboard (Sep 2026) — the 4th stat
+        // card. Stands in for the mockup's "Pending Requests" — the actual
+        // Collaboration Request feature that name used to mean was
+        // deliberately removed (see
+        // 2026_09_23_000001_drop_collaboration_requests_table.php); this
+        // uses unread notifications as a real, honest substitute rather
+        // than fabricating a number with nothing behind it.
+        $pendingRequestsCount = auth()->user()->unreadNotifications()->count();
 
         return view('team.overview', [
             'myProposalsCount' => $myProposalsCount,
             'aiMatchesCount' => $aiMatchesCount,
             'teamProposalsCount' => $teamProposalsCount,
             'successfulMatchesCount' => $successfulMatchesCount,
+            'successfulMatchesThisMonth' => $successfulMatchesThisMonth,
+            'pendingRequestsCount' => $pendingRequestsCount,
             'previewMatches' => $previewMatches,
             'recentNotifications' => $recentNotifications,
-            'countries' => $countries,
-            'maritalstatuses' => $maritalstatuses,
         ]);
     }
 
@@ -143,6 +169,19 @@ class TeamController extends Controller
      */
     public function searchProposals(Request $request)
     {
+        // Default landing state (client request, Sep 2026): with no filters
+        // submitted at all, show a "Doctor" keyword search rather than the
+        // whole unfiltered pool — both applied to $where below and reflected
+        // back into the keyword box via request('keyword') in the view.
+        // "Clear filters" (a plain link back to this same route with no
+        // query string) lands here too, so it resets to this same default
+        // rather than an empty results-head/photo-less page.
+        $filterKeys = ['keyword', 'profession', 'country', 'gender', 'aged_from', 'aged_to', 'religion', 'caste', 'marital_status', 'mother_tongue', 'education', 'city', 'current_city'];
+        $hasAnyFilter = collect($filterKeys)->contains(fn ($key) => $request->filled($key));
+        if (!$hasAnyFilter) {
+            $request->merge(['keyword' => 'Doctor']);
+        }
+
         $where = "`u`.`added_by` IS NOT NULL";
 
         if (!empty($request->aged_from)) {
@@ -178,8 +217,20 @@ class TeamController extends Controller
         if (!empty($request->current_city)) {
             $where .= " and `u`.`current_city` LIKE '%" . addslashes($request->current_city) . "%'";
         }
+        // "Search by keyword" quick-search tab (Advanced Search redesign, Sep
+        // 2026) — a loose OR across the handful of free-text fields, rather
+        // than a single-column match, since a matchmaker typing a name or a
+        // job title into "keyword" has no way to know which column it's in.
+        if (!empty($request->keyword)) {
+            $keyword = addslashes($request->keyword);
+            $where .= " and (`u`.`first_name` LIKE '%{$keyword}%' or `u`.`last_name` LIKE '%{$keyword}%'"
+                . " or `u`.`profession` LIKE '%{$keyword}%' or `u`.`city` LIKE '%{$keyword}%'"
+                . " or `u`.`current_city` LIKE '%{$keyword}%')";
+        }
 
-        $grid = $this->buildProposalGrid($where, (int) $request->query('page', 1));
+        // 10/page (client request, Sep 2026) — buildProposalGrid()'s other
+        // caller (myProposals()) keeps its own default of 12.
+        $grid = $this->buildProposalGrid($where, (int) $request->query('page', 1), 10);
 
         $religions = MasterData::where('type', 'RELIGION')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
@@ -188,127 +239,156 @@ class TeamController extends Controller
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
 
-        return view('team.proposals-search', array_merge($grid, compact('religions', 'maritalstatuses', 'mothertongues', 'countries', 'caste', 'education')));
+        // "X profiles in the shared network" badge on the search panel — the
+        // whole team-added pool, unfiltered (not $grid['resultCount'], which
+        // is post-filter).
+        $totalNetworkCount = (int) Profile::profiles("`u`.`added_by` IS NOT NULL", null, null, null, null, true);
+
+        return view('team.proposals-search', array_merge($grid, compact(
+            'religions', 'maritalstatuses', 'mothertongues', 'countries', 'caste', 'education', 'totalNetworkCount'
+        )));
     }
 
     /**
-     * "AI Matches" — one row per proposal (paginated, 20/page — still
-     * bounded even with dozens/hundreds of proposals), each showing a
-     * COUNT plus a small preview strip (top 3, compact tiles, not the
-     * full member-card component) so there's something useful to see
-     * without an extra click, while staying far lighter than rendering
-     * every match for every proposal on one page. "View all matches"
-     * opens matchesForProposal() below for the full list.
+     * "AI Match Center" (client mockup, Sep 2026) — one page: pick any of
+     * THIS team member's own proposals that has Partner Requirements set
+     * from a dropdown, optionally narrow by minimum score/location, and see
+     * every compatible candidate with a per-factor "why" breakdown.
+     * "Select any team proposal" only ever lists the logged-in team
+     * member's own proposals — client confirmed 2026-09-29 this must NOT
+     * browse other matchmakers' clients, only the matched CANDIDATES (the
+     * right-hand side of each pair) are drawn from the whole shared pool,
+     * same as every other AI matching flow in this app. Replaces the old
+     * list-of-proposals-then-drill-down flow (team.matches + team.matches.show
+     * used to render two different views — matches.blade.php and
+     * matches-detail.blade.php — now both render this same
+     * team/matches.blade.php, just with a different proposal pre-selected).
      */
     public function matches(Request $request)
     {
-        $viewerId = auth()->id();
-        $pageSize = in_array((int) $request->query('per_page', 10), [5, 10, 20, 50], true)
-            ? (int) $request->query('per_page', 10) : 10;
+        $selectedDataid = $request->query('proposal');
+        if (empty($selectedDataid)) {
+            $default = User::where('added_by', auth()->id())->whereHas('partnerPreference')
+                ->orderByDesc('updated_at')->first();
 
-        $proposalsQuery = User::where('added_by', $viewerId)->whereHas('partnerPreference');
-        $totalProposals = $proposalsQuery->count();
-        $numPages = max(1, (int) ceil($totalProposals / $pageSize));
-        $pageRequested = min(max(1, (int) $request->query('page', 1)), $numPages);
-
-        $proposals = $proposalsQuery->orderByDesc('updated_at')
-            ->skip($pageSize * ($pageRequested - 1))->take($pageSize)->get();
-
-        // "New" is approximated as "the candidate proposal itself was added
-        // in the last 7 days" — matches are computed live, not stored, so
-        // there's no real "first seen" timestamp to check without a new
-        // table. This only checks the top-3 preview per row (kept cheap),
-        // not every match, so it undercounts rather than over-claims.
-        $newCutoff = now()->subDays(7);
-
-        $rows = $proposals->map(function ($proposal) use ($newCutoff) {
-            $preference = $proposal->partnerPreference;
-            $previewMatches = $proposal->getProposalMatches(3);
-            $bestScore = 0;
-            $newCount = 0;
-            foreach ($previewMatches as $match) {
-                $compat = $match->compatibilityWith($preference);
-                $match->preview_compat = $compat;
-                $bestScore = max($bestScore, $compat['percent'] ?? 0);
-                if (!empty($match->created_at) && $match->created_at->greaterThan($newCutoff)) {
-                    $newCount++;
-                }
+            if (!$default) {
+                return view('team.matches', ['noProposals' => true]);
             }
+            $selectedDataid = $default->dataid;
+        }
 
-            return [
-                'proposal' => $proposal,
-                'matchCount' => $proposal->getProposalMatchesCount(),
-                'previewMatches' => $previewMatches,
-                'bestScore' => $bestScore,
-                'newCount' => $newCount,
-            ];
-        });
-
-        return view('team.matches', [
-            'rows' => $rows,
-            'totalProposals' => $totalProposals,
-            'totalMatchesThisPage' => $rows->sum('matchCount'),
-            'newThisWeekCount' => $rows->sum('newCount'),
-            'currentPage' => $pageRequested,
-            'numPages' => $numPages,
-            'pageSize' => $pageSize,
-        ]);
+        return view('team.matches', $this->buildMatchCenterData($selectedDataid, $request));
     }
 
     /**
-     * Drill-down from matches() — every match for ONE proposal.
+     * Deep-link variant of matches() — same page/view, just forcing which
+     * proposal is pre-selected (linked from search-result-card.blade.php's
+     * "AI Match" button, member-card.blade.php, proposal-view.blade.php —
+     * all three already only show that button on the viewer's own
+     * proposals, so authorizeProposalOwner() below never blocks a
+     * legitimate click, only a guessed/shared URL to someone else's).
      */
     public function matchesForProposal($dataid)
     {
-        $proposal = $this->authorizeProposalOwner($dataid);
-        $preference = $proposal->partnerPreference;
-        if (!$preference) {
-            abort(404);
-        }
+        return view('team.matches', $this->buildMatchCenterData($dataid, request()));
+    }
 
-        $matches = $proposal->getProposalMatches(24);
+    private function buildMatchCenterData(string $selectedDataid, Request $request): array
+    {
+        $proposal = $this->authorizeProposalOwner($selectedDataid);
+        $proposalProfile = $proposal->profile();
+        $preference = $proposal->partnerPreference;
+
+        // Dropdown options — only the logged-in team member's OWN
+        // proposals that have Partner Requirements set (i.e. actually
+        // usable for matching). Admins fall back to every proposal in the
+        // pool, since authorizeProposalOwner() already lets them view any
+        // of them and an admin has no "own" proposals of their own.
+        $candidateProposals = auth()->user()->isAdmin()
+            ? User::whereNotNull('added_by')->where('admin', 0)->whereHas('partnerPreference')
+                ->orderByDesc('updated_at')
+                ->get(['id', 'dataid', 'first_name', 'last_name', 'gender', 'birthday', 'profession'])
+            : User::where('added_by', auth()->id())->whereHas('partnerPreference')
+                ->orderByDesc('updated_at')
+                ->get(['id', 'dataid', 'first_name', 'last_name', 'gender', 'birthday', 'profession']);
+
+        $minScore = (int) $request->query('min_score', 0);
+        $locationFilter = $request->query('location');
+
+        $rawMatches = $proposal->getProposalMatches(50);
+
+        $addedByIds = collect($rawMatches)->pluck('added_by')->push($proposal->added_by)->filter()->unique()->values();
+        $addedByUsers = $addedByIds->isEmpty()
+            ? collect()
+            : User::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name', 'dataid', 'experience', 'contact_mobile_number'])->keyBy('id');
+
         $existingSuccessfulIds = \App\SuccessfulMatch::where('proposal_id', $proposal->id)
             ->pluck('counterpart_proposal_id')
             ->merge(\App\SuccessfulMatch::where('counterpart_proposal_id', $proposal->id)->pluck('proposal_id'));
-        $viewerId = auth()->id();
-        foreach ($matches as $match) {
-            $match->viewer_preference_for_card = $preference;
+
+        $matches = collect();
+        foreach ($rawMatches as $match) {
+            $compat = $match->compatibilityWith($preference);
+            $percent = $compat['percent'] ?? 0;
+            if ($percent < $minScore) {
+                continue;
+            }
+            if (!empty($locationFilter) && $match->con_of_residence != $locationFilter) {
+                continue;
+            }
+
+            $owner = $addedByUsers->get($match->added_by);
+            $match->added_by_name = $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown';
+            $match->added_by_dataid = $owner->dataid ?? null;
+            $match->added_by_experience = $owner->experience ?? null;
+            $match->added_by_whatsapp = $owner->contact_mobile_number ?? null;
+            $match->compat = $compat;
             $match->already_successful = $existingSuccessfulIds->contains($match->id);
-            $match->interest_sent = auth()->user()->inList($match->dataid, 'interest');
+            $matches->push($match);
+        }
+        $matches = $matches->sortByDesc(fn ($m) => $m->compat['percent'] ?? 0)->values();
+
+        $proposalOwner = $addedByUsers->get($proposal->added_by);
+        $proposalProfile->added_by_name = $proposalOwner ? trim($proposalOwner->first_name . ' ' . $proposalOwner->last_name) : 'Unknown';
+        $proposalProfile->added_by_experience = $proposalOwner->experience ?? null;
+        $proposalProfile->team_card_role = $proposal->added_by == auth()->id() ? 'own' : 'other';
+
+        $locations = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+
+        return compact('proposal', 'proposalProfile', 'preference', 'candidateProposals', 'matches', 'minScore', 'locationFilter', 'locations');
+    }
+
+    /**
+     * "Forward Both" (AI Match Center) — sends the RECOMMENDED profile's
+     * owner a WhatsApp message with both proposals' portal links, so they
+     * can review the pairing together. Separate from shareWhatsapp()
+     * (which forwards a single proposal to its own owner).
+     */
+    public function forwardBothWhatsapp($proposalDataid, $matchDataid)
+    {
+        $loggedInUser = auth()->user();
+        $proposal = User::where('dataid', $proposalDataid)->whereNotNull('added_by')->first();
+        $match = User::where('dataid', $matchDataid)->whereNotNull('added_by')->first();
+        if (!$proposal || !$match) {
+            abort(404);
         }
 
-        // "Partner Requirements" pills on the header banner — only whatever
-        // this proposal's preference actually has filled in (the Add/Edit
-        // Proposal form only collects age/country/marital status/
-        // education/profession — not religion/caste, unlike a self-
-        // registered member's own preferences page).
-        $requirementPills = [];
-        if (!empty($preference->age_min) || !empty($preference->age_max)) {
-            $requirementPills[] = 'Age ' . ($preference->age_min ?: '18') . '-' . ($preference->age_max ?: '99');
-        }
-        if (!empty($preference->country_id)) {
-            $country = MasterData::where('type', 'COUNTRY')->where('dataid', $preference->country_id)->first();
-            if ($country) {
-                $requirementPills[] = $country->name;
-            }
-        }
-        if (!empty($preference->marital_status)) {
-            $maritalStatus = MasterData::where('type', 'MARITAL_STATUS')->where('dataid', $preference->marital_status)->first();
-            if ($maritalStatus) {
-                $requirementPills[] = $maritalStatus->name;
-            }
-        }
-        if (!empty($preference->education_id)) {
-            $education = MasterData::where('type', 'EDUCATION')->where('dataid', $preference->education_id)->first();
-            if ($education) {
-                $requirementPills[] = $education->name;
-            }
-        }
-        if (!empty($preference->profession)) {
-            $requirementPills[] = $preference->profession;
-        }
+        AuditLog::record($loggedInUser, 'profile.shared', $match);
+        Log::info('Team member (' . $loggedInUser->dataid . ') forwarded proposals ' . $proposal->dataid . ' + ' . $match->dataid . ' via WhatsApp');
 
-        return view('team.matches-detail', compact('proposal', 'matches', 'requirementPills'));
+        // route('share.proposal', ...) rather than member/profile/{dataid}
+        // — that route sits behind a login wall, so WhatsApp's link-preview
+        // crawler could never reach it or show the client's photo. See
+        // HomeController::sharePreview().
+        $text = 'Potential match — ' . $proposal->dataid . ': ' . route('share.proposal', $proposal->dataid)
+            . "\n" . $match->dataid . ': ' . route('share.proposal', $match->dataid);
+
+        $matchOwner = User::find($match->added_by);
+        $link = (!empty($matchOwner) && !empty($matchOwner->contact_mobile_number))
+            ? User::whatsappLinkForNumber($matchOwner->contact_mobile_number, $text)
+            : User::whatsappShareLink($text);
+
+        return redirect()->away($link);
     }
 
     /**
@@ -338,17 +418,57 @@ class TeamController extends Controller
         return view('team.successful-matches', ['matches' => $matches]);
     }
 
+    /**
+     * Read-only team roster ("Matchmakers" — client's Partner Portal
+     * mockup, Sep 2026): every active team member with their profile info
+     * and two stats — proposals they currently own that are still
+     * profile_status='active' (client confirmed this should mean
+     * "currently active," not "ever added" — the dashboard stat cards'
+     * looser convention), and successful matches credited to them via
+     * SuccessfulMatch.partner_a_id/partner_b_id (see markSuccessfulMatch()
+     * — a match can legitimately credit two different team members, both
+     * get +1). No management actions here (suspend/deactivate/delete stay
+     * admin-only at admin/team-members) — this is peer visibility only.
+     *
+     * Deliberately does NOT invent a "login ID" style code (the mockup
+     * shows e.g. "MM-UK-001") — nothing in this app tracks or assigns one,
+     * and fabricating a label with no real backing data would be
+     * misleading rather than useful.
+     */
+    public function matchmakers()
+    {
+        $members = User::where('is_team_member', 1)
+            ->where('team_member_status', 'active')
+            ->orderBy('first_name')
+            ->get();
+
+        foreach ($members as $member) {
+            $member->activeProposalsCount = (int) Profile::profiles(
+                "`u`.`added_by` = " . (int) $member->id . " and `u`.`profile_status` = 'active'",
+                null, null, null, null, true
+            );
+            $member->successfulMatchesCount = \App\SuccessfulMatch::where('partner_a_id', $member->id)
+                ->orWhere('partner_b_id', $member->id)
+                ->count();
+        }
+
+        return view('team.matchmakers', ['members' => $members]);
+    }
+
     public function create()
     {
+        // $religions is only used for the partner's REQUIRED religion
+        // (pref_religion, in "Partner Requirements") — the client's own
+        // religion select was dropped along with the rest of the "extra
+        // fields" form (Sep 2026); this query came back for that reason.
         $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
-        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
         $sendTemplate = $this->clientIntakeTemplate();
 
-        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'sendTemplate'));
+        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate'));
     }
 
     /**
@@ -424,51 +544,73 @@ TEMPLATE;
             'first_name' => 'nullable|string|max:100',
             'last_name' => 'nullable|string|max:100',
             'gender' => 'required|string',
+            // The raw pasted text, preserved verbatim (mockup, Sep 2026 —
+            // see add_raw_intake_text_to_users_table's docblock).
+            'raw_intake_text' => 'nullable|string|max:5000',
             // Optional (client's WhatsApp intake template doesn't collect
             // these) — checked directly against the DB (SHOW INDEX): no
             // real unique constraint on either column, so a blank one is
             // safe to leave null rather than needing a placeholder value.
             'email' => 'nullable|email|unique:users,email',
             'contact_mobile_number' => 'nullable|string|max:30',
-            'height' => 'nullable|string|max:20',
             'day' => 'required|string|size:2',
             'month' => 'required|string|size:2',
             'year' => 'required|digits:4',
-            'country' => 'nullable|string',
             'state' => 'nullable|string',
-            'city' => 'nullable|string',
             'religion' => 'nullable|string',
-            'caste' => 'nullable|string',
-            'sect' => 'nullable|string|max:100',
             'profile_for' => 'nullable|string|max:100',
             'mother_tongue' => 'nullable|string',
-            'marital_status' => 'nullable|string',
-            'education' => 'nullable|string',
-            'profession' => 'nullable|string|max:150',
-            'con_of_citizenship' => 'nullable|string',
             'immigration_status' => 'nullable|string|max:100',
             'family_residence' => 'nullable|string|max:20',
             'family_values' => 'nullable|string|max:20',
-            'income' => 'nullable|string|max:50',
             'property_financial_status' => 'nullable|string|max:255',
             'profile_description' => 'nullable|string|max:2000',
             'address' => 'nullable|string|max:255',
             'college_university' => 'nullable|string|max:2000',
             'residence_size' => 'nullable|string|max:100',
-            'current_city' => 'nullable|string|max:150',
+            // The 11 fields below (+ gender/day/month/year above) are the
+            // compact "AI structured profile" panel's core set — client
+            // confirmed "All fields required" (Sep 2026), enforced here
+            // too, not just via the panel's HTML `required` attributes
+            // (which a direct/non-browser POST could bypass).
+            'height' => 'required|string|max:20',
+            'city' => 'required|string',
+            'caste' => 'required|string',
+            'sect' => 'required|string|max:100',
+            'marital_status' => 'required|string',
+            'education' => 'required|string',
+            'profession' => 'required|string|max:150',
+            'con_of_citizenship' => 'required|string',
+            'country' => 'required|string',
+            'current_city' => 'required|string|max:150',
+            'income' => 'required|string|max:50',
             'father_occupation' => 'nullable|string|max:255',
             'mother_occupation' => 'nullable|string|max:255',
             'siblings_brothers' => 'nullable|string|max:2000',
             'siblings_sisters' => 'nullable|string|max:2000',
             'siblings_married_note' => 'nullable|string|max:255',
+            // "AI Partner Portal" mockup fields (Sep 2026) — see the
+            // add_partner_portal_classification_fields_to_users_table
+            // migration. presentation_highlight is deliberately always
+            // manual (never written by the paste parser) — see the
+            // migration's docblock for why.
+            'family_status' => 'nullable|string|max:30',
+            'looking_from' => 'nullable|string|max:20',
+            'profile_category' => 'nullable|string|max:20',
+            'presentation_highlight' => 'nullable|string|max:30',
             'image1' => 'nullable|image|max:5120',
             'image2' => 'nullable|image|max:5120',
-            'pref_age_min' => 'nullable|integer|min:18|max:99',
-            'pref_age_max' => 'nullable|integer|min:18|max:99',
-            'pref_height' => 'nullable|string|max:100',
-            'pref_city' => 'nullable|string|max:150',
-            'pref_caste_note' => 'nullable|string|max:255',
-            'pref_qualification_note' => 'nullable|string|max:2000',
+            // "Partner Requirements" structured fields — also required now
+            // (client request, Sep 2026), same enforcement reasoning as
+            // the client's own core fields above.
+            'pref_age_min' => 'required|integer|min:18|max:99',
+            'pref_age_max' => 'required|integer|min:18|max:99',
+            'pref_height' => 'required|string|max:100',
+            'pref_city' => 'required|string|max:150',
+            'pref_caste_note' => 'required|string|max:255',
+            'pref_qualification_note' => 'required|string|max:2000',
+            'pref_profession' => 'required|string|max:150',
+            'pref_religion' => 'required|string',
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
@@ -509,6 +651,11 @@ TEMPLATE;
             'siblings_brothers' => $request->siblings_brothers,
             'siblings_sisters' => $request->siblings_sisters,
             'siblings_married_note' => $request->siblings_married_note,
+            'family_status' => $request->family_status,
+            'looking_from' => $request->looking_from,
+            'profile_category' => $request->profile_category,
+            'presentation_highlight' => $request->presentation_highlight,
+            'raw_intake_text' => $request->raw_intake_text,
             // Shell record — never intended to log in, so the password is
             // random and never surfaced anywhere.
             'password' => Hash::make(Str::random(40)),
@@ -588,6 +735,7 @@ TEMPLATE;
             'country_id' => 'pref_country',
             'education_id' => 'pref_education',
             'profession' => 'pref_profession',
+            'religion_id' => 'pref_religion',
             'general_requirement' => 'partner_requirements',
             'pref_height' => 'pref_height',
             'pref_city' => 'pref_city',
@@ -617,6 +765,195 @@ TEMPLATE;
                 $owner->notify(new AiMatchFound($proposal, $bestMatch, $compatibility['percent']));
             }
         }
+    }
+
+    /**
+     * Full-detail read view for a proposal, rendered inside the Team
+     * Dashboard shell (layouts.team.dashboard) — a separate route from
+     * member/profile/{dataid} (ProfileController::profile(), which renders
+     * layouts.dashboard, the MEMBER Dashboard shell) so that "View file" on
+     * a Team Dashboard card no longer drops a team member into the Member
+     * Dashboard's own navigation/branding. Any team member or admin can
+     * view any team-added proposal — the whole pool is shared, same as
+     * every other read action here; only Edit stays owner-gated (see
+     * authorizeProposalOwner(), used by edit()/update() below).
+     */
+    public function viewProposal($dataid)
+    {
+        $quoted = "'" . addslashes($dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted and `u`.`added_by` IS NOT NULL", null, null, null, null, null, true)->first();
+        if (!$member) {
+            abort(404);
+        }
+
+        $loggedInUser = auth()->user();
+        $addedByUser = $member->added_by ? User::find($member->added_by) : null;
+        $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
+        $member->added_by_dataid = $addedByUser->dataid ?? null;
+        $member->added_by_experience = $addedByUser->experience ?? null;
+        $member->team_card_role = $member->added_by == $loggedInUser->id ? 'own' : 'other';
+
+        $preference = PartnerPreference::where('user_id', $member->id)->first();
+        $member->has_partner_preference = (bool) $preference;
+        $preferenceLabels = $this->resolvePreferenceLabels($preference);
+
+        $canViewContactInfo = $loggedInUser->canViewContactInfoOf(User::find($member->id));
+        $contactUnlockSettings = \App\ContactUnlockSetting::current();
+
+        return view('team.proposal-view', compact('member', 'preference', 'preferenceLabels', 'canViewContactInfo', 'contactUnlockSettings'));
+    }
+
+    /**
+     * Shared by viewProposal() and proposalFilePanel() — resolves a
+     * PartnerPreference's masterdata-id fields (marital_status/country_id/
+     * etc.) to display names.
+     */
+    private function resolvePreferenceLabels(?PartnerPreference $preference): array
+    {
+        if (!$preference) {
+            return [];
+        }
+
+        $lookup = fn ($type, $id) => $id ? optional(MasterData::where('type', $type)->where('dataid', $id)->first())->name : null;
+
+        return [
+            'marital_status' => $lookup('MARITAL_STATUS', $preference->marital_status),
+            'country' => $lookup('COUNTRY', $preference->country_id),
+            'city' => $lookup('CITY', $preference->city_id),
+            'religion' => $lookup('RELIGION', $preference->religion_id),
+            'caste' => $lookup('CASTE', $preference->caste_id),
+            'education' => $lookup('EDUCATION', $preference->education_id),
+            'mother_tongue' => $lookup('MOTHER_TONGUE', $preference->mother_tongue_id),
+            'preferred_country' => $lookup('COUNTRY', $preference->preferred_country_id),
+        ];
+    }
+
+    /**
+     * "Complete Client File" modal (client mockup, Sep 2026) — an
+     * AJAX-loaded fragment (same pattern as AdminController::profilePanel())
+     * shown as an overlay by the "View Match"/"View file" actions instead
+     * of opening a new tab. Same visibility rule as viewProposal(): any
+     * team member/admin can open any team-added proposal's file.
+     */
+    public function proposalFilePanel($dataid)
+    {
+        $quoted = "'" . addslashes($dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted and `u`.`added_by` IS NOT NULL", null, null, null, null, null, true)->first();
+        if (!$member) {
+            return response()->json(['code' => '404', 'message' => 'Proposal not found.'], 404);
+        }
+
+        $loggedInUser = auth()->user();
+        $addedByUser = $member->added_by ? User::find($member->added_by) : null;
+        $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
+        $member->added_by_dataid = $addedByUser->dataid ?? null;
+        $member->added_by_experience = $addedByUser->experience ?? null;
+
+        // Only used for the header's "N top AI matches" pill and gating
+        // "Run AI Match" — getProposalMatchesCount() already returns 0
+        // gracefully when there's no Partner Requirements row at all, so
+        // no separate preference fetch is needed just for this.
+        $matchCount = User::find($member->id)->getProposalMatchesCount();
+        $canRunAiMatch = $member->added_by == $loggedInUser->id || $loggedInUser->isAdmin();
+        $hasRealPhotos = !empty($member->images);
+        $photos = $hasRealPhotos ? $member->getCardImages(null, false) : [];
+
+        // "Original pasted form" tab (client request, Sep 2026: always show
+        // it — when there's no real raw_intake_text on file, build a
+        // form-shaped stand-in from the structured fields that WERE
+        // entered, rather than hiding the tab). $intakeIsSynthesized lets
+        // the view label it honestly as reconstructed, not the client's
+        // actual original text.
+        $intakeIsSynthesized = empty(trim((string) ($member->raw_intake_text ?? '')));
+        $intakeText = $intakeIsSynthesized ? $this->buildSyntheticIntakeText($member) : $member->raw_intake_text;
+
+        return [
+            'code' => '200',
+            'html' => view('team.partials.proposal-file-modal', compact(
+                'member', 'matchCount', 'canRunAiMatch', 'hasRealPhotos', 'photos', 'intakeText', 'intakeIsSynthesized'
+            ))->render(),
+        ];
+    }
+
+    /**
+     * Fallback for proposalFilePanel()'s "Original pasted form" tab when a
+     * proposal has no raw_intake_text (added via the manual form fields,
+     * not the paste-and-fill workflow) — reformats whatever structured
+     * fields WERE entered into the same section headings the paste parser
+     * itself recognizes (see proposals-search.blade.php's parseAndFill()),
+     * skipping anything left blank rather than padding it out with
+     * "Not provided" placeholders.
+     */
+    private function buildSyntheticIntakeText($member): string
+    {
+        $lines = [];
+        $section = function ($title, array $fields) use (&$lines) {
+            $body = [];
+            foreach ($fields as $label => $value) {
+                if (!empty($value)) {
+                    $body[] = "{$label}: {$value}";
+                }
+            }
+            if (!empty($body)) {
+                $lines[] = $title . ':';
+                $lines = array_merge($lines, $body);
+                $lines[] = '';
+            }
+        };
+
+        $age = !empty($member->birthday) ? date_diff(date_create($member->birthday), date_create('now'))->y : null;
+
+        $section('Personal Information', [
+            'Gender' => $member->gender ? ucfirst($member->gender) : null,
+            'Age' => $age,
+            'Marital Status' => $member->lbl_marital_status,
+            'Height' => $member->height,
+            'Profile For' => $member->profile_for,
+        ]);
+
+        $section('Religion Details', [
+            'Religion' => $member->lbl_religion,
+            'Caste' => $member->lbl_caste,
+            'Sect' => $member->sect,
+            'Mother Tongue' => $member->lbl_mother_tongue,
+        ]);
+
+        $section('Education Details', [
+            'Qualification' => $member->lbl_education,
+        ]);
+
+        $section('Occupation Details', [
+            'Job/Business' => $member->profession,
+            'Income' => $member->income,
+        ]);
+
+        $section('Residence Details', [
+            'City' => $member->lbl_city,
+            'Current City' => $member->current_city,
+            'Country' => $member->lbl_con_of_residence,
+            'Nationality' => $member->lbl_con_of_citizenship,
+        ]);
+
+        $section('Family Details', [
+            'Family Status' => $member->family_status,
+        ]);
+
+        $section('Classification', [
+            'Looking From' => $member->looking_from,
+            'Profile Category' => $member->profile_category,
+            'Presentation Highlight' => $member->presentation_highlight,
+        ]);
+
+        $section('About', [
+            'Description' => $member->profile_description,
+        ]);
+
+        $section('Team Notes', [
+            'Profile Owner' => $member->added_by_name ?? null,
+            'Owner Login ID' => $member->added_by_dataid ?? null,
+        ]);
+
+        return trim(implode("\n", $lines));
     }
 
     public function edit($dataid)
@@ -829,11 +1166,14 @@ TEMPLATE;
      * <a href="wa.me/...">) so it can be audit-logged, and so the message
      * text is built server-side where we can guarantee it only ever
      * contains the proposal ID + a secure portal link — never phone/
-     * email/address (Website Upgrade Brief §10). No target number is set
-     * (see User::whatsappShareLink()) — it opens WhatsApp's own contact
-     * picker instead of messaging the client directly.
+     * email/address (Website Upgrade Brief §10). Opens a chat straight
+     * with the matchmaker who added the proposal (their contact_mobile_
+     * number — same field the Matchmakers roster already shows/links),
+     * so another team member can reach them about that specific client,
+     * rather than WhatsApp's own "pick anyone" contact picker. Falls back
+     * to that generic picker only if the adder has no number on file.
      */
-    public function shareWhatsapp($dataid)
+    public function shareWhatsapp(Request $request, $dataid)
     {
         $loggedInUser = auth()->user();
         $proposal = User::where('dataid', $dataid)->first();
@@ -845,8 +1185,37 @@ TEMPLATE;
         AuditLog::record($loggedInUser, 'profile.shared', $proposal);
         Log::info('Team member (' . $loggedInUser->dataid . ') shared proposal ' . $proposal->dataid . ' via WhatsApp');
 
-        $text = 'Proposal ' . $proposal->dataid . ' — ' . url('member/profile/' . $proposal->dataid);
-        return redirect()->away(User::whatsappShareLink($text));
+        // "Form only" / "Form + N photos" ("Complete Client File" modal,
+        // Sep 2026) — the whole client profile as one WhatsApp-formatted
+        // block (same field set as buildSyntheticIntakeText()'s "Original
+        // pasted form" tab: the real raw_intake_text if there is one,
+        // otherwise reconstructed from whatever structured fields were
+        // entered), not just a bare link. WhatsApp links can't actually
+        // attach files, so ?with_photos=1 just adds a line saying photos
+        // are viewable at the portal link, rather than faking an
+        // attachment.
+        $quoted = "'" . addslashes($dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+        $addedByUser = User::find($proposal->added_by);
+        $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
+        $member->added_by_dataid = $addedByUser->dataid ?? null;
+
+        $intakeText = !empty(trim((string) ($member->raw_intake_text ?? '')))
+            ? $member->raw_intake_text
+            : $this->buildSyntheticIntakeText($member);
+
+        // route('share.proposal', ...), not member/profile/{dataid} — see
+        // the comment on forwardBothWhatsapp()'s own $text above.
+        $text = "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . route('share.proposal', $proposal->dataid);
+        if ($request->boolean('with_photos')) {
+            $text .= "\n(client photos are viewable at this link)";
+        }
+
+        $link = (!empty($addedByUser) && !empty($addedByUser->contact_mobile_number))
+            ? User::whatsappLinkForNumber($addedByUser->contact_mobile_number, $text)
+            : User::whatsappShareLink($text);
+
+        return redirect()->away($link);
     }
 
     /**

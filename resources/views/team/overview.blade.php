@@ -26,7 +26,9 @@
     @media (max-width: 900px) { .ur-ov-stats { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 480px) { .ur-ov-stats { grid-template-columns: 1fr; } }
     .ur-ov-stat { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 18px; }
-    .ur-ov-stat__icon { width: 38px; height: 38px; border-radius: 10px; background: #F6F4EF; color: #C9974D; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-bottom: 10px; }
+    .ur-ov-stat__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ur-ov-stat__icon { width: 38px; height: 38px; border-radius: 10px; background: #F6F4EF; color: #C9974D; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .ur-ov-stat__badge { font-size: 10.5px; font-weight: 700; color: #2E7D5B; background: #EAF6EF; padding: 3px 9px; border-radius: 999px; }
     .ur-ov-stat__label { display: block; font-size: 12.5px; color: #6B7570; }
     .ur-ov-stat__value { display: block; font-size: 26px; font-weight: 700; color: #123A2E; font-family: 'Playfair Display', serif; }
     .ur-ov-stat__delta { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: #C9974D; text-decoration: none; }
@@ -51,68 +53,125 @@
 
     .ur-trust-bar { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 30px; padding: 16px; background: #F6F4EF; border-radius: 12px; font-size: 12.5px; color: #123A2E; font-weight: 600; }
     .ur-trust-bar i { color: #C9974D; margin-right: 6px; }
+
+    .ur-ov-hero { background: linear-gradient(135deg, #123A2E, #0F2E24); border-radius: 16px; padding: 26px 28px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; }
+    .ur-ov-hero h1 { font-family: 'Playfair Display', serif; color: #fff; font-weight: 700; font-size: 24px; margin: 0 0 6px; }
+    .ur-ov-hero p { color: rgba(255,255,255,.7); font-size: 13.5px; margin: 0; max-width: 440px; }
+    .ur-ov-hero__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ur-ov-hero__btn { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 18px; border-radius: 999px; font-size: 12.5px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+    .ur-ov-hero__btn--primary { background: #C9974D; color: #1C2321; }
+    .ur-ov-hero__btn--primary:hover { background: #B07C3D; color: #1C2321; }
+    .ur-ov-hero__btn--outline { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.25); }
+    .ur-ov-hero__btn--outline:hover { background: rgba(255,255,255,.18); color: #fff; }
+
+    .ur-ov-tiles { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 26px; }
+    @media (max-width: 991px) { .ur-ov-tiles { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 560px) { .ur-ov-tiles { grid-template-columns: repeat(2, 1fr); } }
+    .ur-ov-tile { background: #fff; border: 1px solid #E7E2D6; border-radius: 12px; padding: 14px; text-decoration: none; display: block; }
+    .ur-ov-tile:hover { border-color: #C9974D; text-decoration: none; }
+    .ur-ov-tile i { color: #C9974D; font-size: 17px; margin-bottom: 8px; display: block; }
+    .ur-ov-tile__label { display: block; font-size: 12.5px; font-weight: 700; color: #123A2E; }
+    .ur-ov-tile__sub { display: block; font-size: 10.5px; color: #9AA5A0; margin-top: 2px; }
+
+    .ur-ov-mtable { width: 100%; border-collapse: collapse; }
+    .ur-ov-mtable th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: #9AA5A0; padding: 0 0 10px; font-weight: 700; }
+    .ur-ov-mtable td { padding: 10px 0; border-top: 1px solid #F0EEE7; font-size: 13px; color: #1C2321; vertical-align: middle; }
+    .ur-ov-mtable__score { font-weight: 700; color: #123A2E; }
 </style>
 
-<div class="ur-ov-head">
+<div class="ur-ov-hero">
     <div>
-        <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()->first_name }}!</h1>
-        <p>{{ now()->format('l, j F Y') }} &bull; here's how your proposals are doing</p>
+        <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()->first_name }}.</h1>
+        <p>Your team has {{ number_format($teamProposalsCount) }} proposals ready for AI matching and direct owner WhatsApp sharing.</p>
     </div>
+    <div class="ur-ov-hero__actions">
+        <a href="{{ route('team.proposals.create') }}" class="ur-ov-hero__btn ur-ov-hero__btn--primary"><i class="fa fa-clipboard"></i> Paste a Profile</a>
+        <a href="{{ route('team.proposals.search') }}" class="ur-ov-hero__btn ur-ov-hero__btn--outline"><i class="fa fa-search"></i> Advanced Search</a>
+        <a href="{{ route('team.matches') }}" class="ur-ov-hero__btn ur-ov-hero__btn--outline"><i class="fa fa-magic"></i> My Matches</a>
+    </div>
+</div>
+
+<div class="ur-ov-stats">
+    <div class="ur-ov-stat">
+        <div class="ur-ov-stat__top">
+            <div class="ur-ov-stat__icon"><i class="fa fa-users"></i></div>
+        </div>
+        <span class="ur-ov-stat__label">Team Proposals</span>
+        <span class="ur-ov-stat__value">{{ number_format($teamProposalsCount) }}</span>
+        <a href="{{ route('team.proposals.search') }}" class="ur-ov-stat__delta">View all &rarr;</a>
+    </div>
+    <div class="ur-ov-stat">
+        <div class="ur-ov-stat__top">
+            <div class="ur-ov-stat__icon"><i class="fa fa-magic"></i></div>
+            <span class="ur-ov-stat__badge" title="Computed live on every page load, not a cached/batched number">Live</span>
+        </div>
+        <span class="ur-ov-stat__label">AI Match Combinations</span>
+        <span class="ur-ov-stat__value">{{ number_format($aiMatchesCount) }}</span>
+        <a href="{{ route('team.matches') }}" class="ur-ov-stat__delta">View all &rarr;</a>
+    </div>
+    <div class="ur-ov-stat">
+        <div class="ur-ov-stat__top">
+            <div class="ur-ov-stat__icon"><i class="fa fa-bell"></i></div>
+        </div>
+        <span class="ur-ov-stat__label">Pending Requests</span>
+        <span class="ur-ov-stat__value">{{ number_format($pendingRequestsCount) }}</span>
+        <a href="{{ route('team.notifications') }}" class="ur-ov-stat__delta">View all &rarr;</a>
+    </div>
+    <div class="ur-ov-stat">
+        <div class="ur-ov-stat__top">
+            <div class="ur-ov-stat__icon"><i class="fa fa-trophy"></i></div>
+            @if($successfulMatchesThisMonth > 0)
+                <span class="ur-ov-stat__badge">+{{ $successfulMatchesThisMonth }} this month</span>
+            @endif
+        </div>
+        <span class="ur-ov-stat__label">Successful Introductions</span>
+        <span class="ur-ov-stat__value">{{ number_format($successfulMatchesCount) }}</span>
+        <a href="{{ route('team.successful-matches') }}" class="ur-ov-stat__delta">View all &rarr;</a>
+    </div>
+</div>
+
+<div class="ur-ov-tiles">
+    <a href="{{ route('team.proposals.create') }}" class="ur-ov-tile"><i class="fa fa-clipboard"></i><span class="ur-ov-tile__label">Paste Profile</span><span class="ur-ov-tile__sub">Import client text</span></a>
+    <a href="{{ route('team.proposals.search') }}" class="ur-ov-tile"><i class="fa fa-search"></i><span class="ur-ov-tile__label">Advanced Search</span><span class="ur-ov-tile__sub">Search partner profiles</span></a>
+    <a href="{{ route('team.matches') }}" class="ur-ov-tile"><i class="fa fa-magic"></i><span class="ur-ov-tile__label">AI Match</span><span class="ur-ov-tile__sub">Find compatible clients</span></a>
+    <a href="{{ route('team.proposals.search') }}" class="ur-ov-tile"><i class="fa fa-users"></i><span class="ur-ov-tile__label">Team Proposals</span><span class="ur-ov-tile__sub">{{ number_format($teamProposalsCount) }} profiles</span></a>
+    <a href="{{ route('team.proposals.mine') }}" class="ur-ov-tile"><i class="fa fa-file-text-o"></i><span class="ur-ov-tile__label">My Clients</span><span class="ur-ov-tile__sub">Manage your proposals</span></a>
+    <a href="{{ route('team.notifications') }}" class="ur-ov-tile"><i class="fa fa-bell-o"></i><span class="ur-ov-tile__label">Requests</span><span class="ur-ov-tile__sub">Review activity</span></a>
 </div>
 
 <div class="ur-ov-layout">
     <div>
-        <div class="ur-ov-stats">
-            <div class="ur-ov-stat">
-                <div class="ur-ov-stat__icon"><i class="fa fa-file-text-o"></i></div>
-                <span class="ur-ov-stat__label">My Proposals</span>
-                <span class="ur-ov-stat__value">{{ number_format($myProposalsCount) }}</span>
-                <a href="{{ route('team.proposals.mine') }}" class="ur-ov-stat__delta">View all &rarr;</a>
-            </div>
-            <div class="ur-ov-stat">
-                <div class="ur-ov-stat__icon"><i class="fa fa-magic"></i></div>
-                <span class="ur-ov-stat__label">AI Matches Found</span>
-                <span class="ur-ov-stat__value">{{ number_format($aiMatchesCount) }}</span>
-                <a href="{{ route('team.matches') }}" class="ur-ov-stat__delta">View all &rarr;</a>
-            </div>
-            <div class="ur-ov-stat">
-                <div class="ur-ov-stat__icon"><i class="fa fa-users"></i></div>
-                <span class="ur-ov-stat__label">Team Proposals</span>
-                <span class="ur-ov-stat__value">{{ number_format($teamProposalsCount) }}</span>
-                <a href="{{ route('team.proposals.search') }}" class="ur-ov-stat__delta">View all &rarr;</a>
-            </div>
-            <div class="ur-ov-stat">
-                <div class="ur-ov-stat__icon"><i class="fa fa-trophy"></i></div>
-                <span class="ur-ov-stat__label">Successful Matches</span>
-                <span class="ur-ov-stat__value">{{ number_format($successfulMatchesCount) }}</span>
-                <a href="{{ route('team.successful-matches') }}" class="ur-ov-stat__delta">View all &rarr;</a>
-            </div>
-        </div>
-
         <div class="ur-ov-section">
             <div class="ur-ov-section__head">
-                <h2><i class="fa fa-magic" style="color:#C9974D;"></i> AI Match Recommendations</h2>
-                <a href="{{ route('team.matches') }}">View All Matches &rarr;</a>
+                <h2><i class="fa fa-magic" style="color:#C9974D;"></i> Recent AI Matches</h2>
+                <a href="{{ route('team.matches') }}">View All &rarr;</a>
             </div>
             @if($previewMatches->isEmpty())
             <p style="color:#6B7570; font-size:13px; margin:0;">No AI matches yet — add Partner Requirements/Preferred fields on a proposal to start finding matches for it.</p>
             @else
-            <div class="member-results">
-                @foreach($previewMatches as $match)
-                    @php
-                        $compat = $match->compatibilityWith($match->viewer_preference_for_card);
-                        $explanation = $compat ? \App\Profile::compatibilityExplanation($compat) : null;
-                    @endphp
-                    @include('member.partials.member-card', ['member' => $match, 'viewerPreference' => $match->viewer_preference_for_card, 'matchExplanation' => $explanation])
-                @endforeach
-            </div>
+            <table class="ur-ov-mtable">
+                <thead>
+                    <tr><th>Your Client</th><th>Potential Match</th><th>Score</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    @foreach($previewMatches as $match)
+                        @php $compat = $match->compatibilityWith($match->viewer_preference_for_card); @endphp
+                        <tr>
+                            <td>{{ $match->for_proposal_dataid }}</td>
+                            <td>{{ $match->first_name }} {{ $match->last_name }} &bull; {{ $match->lbl_city }}</td>
+                            <td class="ur-ov-mtable__score">{{ $compat ? $compat['percent'].'%' : '—' }}</td>
+                            <td><span style="background:#F6F4EF; color:#123A2E; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">New</span></td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
             @endif
         </div>
     </div>
 
     <div>
         <div class="ur-ov-panel">
-            <h3><i class="fa fa-bell" style="color:#C9974D;"></i> Live Notifications</h3>
+            <h3><i class="fa fa-bell" style="color:#C9974D;"></i> Activity</h3>
             @forelse($recentNotifications as $notification)
                 @php $data = $notification->data; @endphp
                 <div class="ur-notif-mini">
@@ -127,68 +186,6 @@
                 <p style="color:#6B7570; font-size:12.5px; margin:0;">No notifications yet.</p>
             @endforelse
             <a href="{{ route('team.notifications') }}" style="display:block; margin-top:10px; font-size:12px; color:#C9974D; font-weight:700; text-decoration:none;">View All Notifications &rarr;</a>
-        </div>
-
-        <div class="ur-ov-panel">
-            <h3><i class="fa fa-plus-circle" style="color:#C9974D;"></i> Add New Proposal</h3>
-            <form class="ur-quick-form" method="POST" action="{{ route('team.proposals.store') }}">
-                @csrf
-                <div class="row">
-                    <label>First Name</label>
-                    <input type="text" class="form-control" name="first_name" required>
-                </div>
-                <div class="row">
-                    <label>Last Name</label>
-                    <input type="text" class="form-control" name="last_name" required>
-                </div>
-                <div class="row">
-                    <label>Gender</label>
-                    <select name="gender" class="form-control" required>
-                        <option value="" disabled selected>Select</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                    </select>
-                </div>
-                <div class="row">
-                    <label>Date of Birth</label>
-                    <div style="display:flex; gap:4px;">
-                        <input type="text" class="form-control" name="day" placeholder="DD" maxlength="2" required>
-                        <input type="text" class="form-control" name="month" placeholder="MM" maxlength="2" required>
-                        <input type="text" class="form-control" name="year" placeholder="YYYY" maxlength="4" required>
-                    </div>
-                </div>
-                <div class="row">
-                    <label>Email</label>
-                    <input type="email" class="form-control" name="email" required>
-                </div>
-                <div class="row">
-                    <label>Contact Number</label>
-                    <input type="text" class="form-control" name="contact_mobile_number" required>
-                </div>
-                <div class="row">
-                    <label>Country</label>
-                    <select name="country" class="form-control">
-                        <option value="">Select</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->dataid }}">{{ $country->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="row">
-                    <label>Profession</label>
-                    <input type="text" class="form-control" name="profession">
-                </div>
-                <div class="row">
-                    <label>Marital Status</label>
-                    <select name="marital_status" class="form-control">
-                        <option value="">Select</option>
-                        @foreach($maritalstatuses as $maritalstatus)
-                            <option value="{{ $maritalstatus->dataid }}">{{ $maritalstatus->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <button type="submit"><i class="fa fa-plus"></i> Submit Proposal</button>
-            </form>
         </div>
     </div>
 </div>
