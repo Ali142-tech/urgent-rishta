@@ -133,10 +133,11 @@
         .ur-cf-footer__actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .ur-cf-footer__actions button, .ur-cf-footer__actions a { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; border-radius: 999px; font-size: 12.5px; font-weight: 700; border: 1px solid #E7E2D6; background: #fff; color: #123A2E; cursor: pointer; text-decoration: none; white-space: nowrap; }
         .ur-cf-footer__actions button:hover, .ur-cf-footer__actions a:hover { background: #F6F4EF; }
-        .ur-cf-footer__actions a.is-gold { background: #C9974D; border-color: #C9974D; color: #1C2321; }
-        .ur-cf-footer__actions a.is-gold:hover { background: #B07C3D; }
-        .ur-cf-footer__actions a.is-dark { background: #123A2E; border-color: #123A2E; color: #fff; }
-        .ur-cf-footer__actions a.is-dark:hover { background: #0F2E24; }
+        .ur-cf-footer__actions .is-gold { background: #C9974D; border-color: #C9974D; color: #1C2321; }
+        .ur-cf-footer__actions .is-gold:hover { background: #B07C3D; }
+        .ur-cf-footer__actions .is-dark { background: #123A2E; border-color: #123A2E; color: #fff; }
+        .ur-cf-footer__actions .is-dark:hover { background: #0F2E24; }
+        .ur-cf-footer__actions button:disabled { opacity: .6; cursor: default; }
 
         @media (max-width: 767px) {
             .ur-cf-top { grid-template-columns: 1fr; }
@@ -258,9 +259,87 @@
                         }
                         done();
                     }
+                    return;
+                }
+
+                var shareBtn = e.target.closest('#cf_share_photos_btn');
+                if (shareBtn) {
+                    shareTeamProposalPhotos(shareBtn);
                 }
             });
         })();
+
+        // "Form + N photos" (Complete Client File modal) — tries the native
+        // OS/browser share sheet with the real photo FILES attached (the
+        // same "attach to any app" picker Windows/Android/iOS show for a
+        // native Share action), so WhatsApp/Telegram/etc. get actual
+        // images, not just a link. wa.me links can't attach files at all,
+        // so this only works where navigator.share() with files is
+        // supported (most mobile browsers, Edge/Chrome on Windows) — every
+        // other browser falls back to the existing WhatsApp text+link
+        // redirect, same as before.
+        function shareTeamProposalPhotos(btn) {
+            var label = document.getElementById('cf_share_photos_label');
+            var originalLabel = label ? label.textContent : '';
+            var fallback = btn.dataset.fallback;
+            var photoUrls = [];
+            try { photoUrls = JSON.parse(btn.dataset.photos || '[]'); } catch (e) { photoUrls = []; }
+
+            function goFallback() {
+                window.open(fallback, '_blank');
+            }
+
+            if (!navigator.share || !navigator.canShare || !photoUrls.length) {
+                goFallback();
+                return;
+            }
+
+            btn.disabled = true;
+            if (label) label.textContent = 'Preparing photos…';
+
+            // Naming the File from the response's own Content-Type (blob.type)
+            // was the actual bug — a server that sends back a generic/missing
+            // type (common for these thumbnail paths on shared hosting) built
+            // a filename like "photo-1.octet-stream", which WhatsApp then
+            // rejected as a corrupt/unrecognized file. These URLs already end
+            // in a real image extension (.jpg/.png/etc — see
+            // Profile::getCardImages()), so derive both the filename AND the
+            // File's MIME type from THAT instead of trusting the response
+            // header. Also reject a non-OK response outright rather than
+            // packaging a fetched error page as if it were a photo.
+            var MIME_BY_EXT = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+            function extFromUrl(url) {
+                var match = url.split(/[?#]/)[0].match(/\.([a-zA-Z0-9]+)$/);
+                return match ? match[1].toLowerCase() : 'jpg';
+            }
+
+            Promise.all(photoUrls.map(function (url, i) {
+                var ext = extFromUrl(url);
+                var mime = MIME_BY_EXT[ext] || 'image/jpeg';
+                return fetch(url).then(function (r) {
+                    if (!r.ok) throw new Error('Photo fetch failed: ' + r.status);
+                    return r.blob();
+                }).then(function (blob) {
+                    return new File([blob], 'photo-' + (i + 1) + '.' + ext, { type: mime });
+                });
+            })).then(function (files) {
+                var shareData = { files: files, title: btn.dataset.title || '', text: btn.dataset.text || '' };
+                if (!navigator.canShare(shareData)) {
+                    goFallback();
+                    return;
+                }
+                return navigator.share(shareData).catch(function (err) {
+                    // AbortError = the user closed the share sheet themselves —
+                    // not a failure, don't fall back to WhatsApp behind their back.
+                    if (err && err.name !== 'AbortError') goFallback();
+                });
+            }).catch(function () {
+                goFallback();
+            }).finally(function () {
+                btn.disabled = false;
+                if (label) label.textContent = originalLabel;
+            });
+        }
     </script>
 
     @include('layouts.partials.global-scripts')

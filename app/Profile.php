@@ -350,7 +350,7 @@ class Profile extends Model {
      * the caller shows a "set your preferences" prompt in that case
      * instead of a meaningless 0%/100%.
      */
-    public function compatibilityWith(?PartnerPreference $preference, array $preferenceLabels = []): ?array {
+    public function compatibilityWith(?PartnerPreference $preference, array $preferenceLabels = [], $ownProfile = null): ?array {
         if (empty($preference)) {
             return null;
         }
@@ -364,26 +364,45 @@ class Profile extends Model {
         // Every other factor (religion, caste, marital status, education,
         // mother tongue, children) is inherently categorical — there's no
         // meaningful "70% religion match" — so those stay a clean 100/0.
-        if (!empty($preference->age_min) || !empty($preference->age_max)) {
+        //
+        // $ownProfile (optional — the PROPOSAL's own profile, passed only
+        // by team-context callers, e.g. TeamController::buildMatchCenterData())
+        // fills in Age/Religion when no explicit preference was set for
+        // them, and is the ONLY source for the Nationality/Profession
+        // checks below (there's no "preferred nationality" field at all,
+        // and "preferred profession" is free text nobody reliably fills
+        // in). Team-added proposals' Partner Requirements form only
+        // reliably captures Age + Religion as real structured fields (see
+        // TeamController::savePreferenceAndCheckMatches()'s own comment) —
+        // without this fallback, most team proposals scored against just
+        // 1 criterion, which trivially lands on 100%. Every other caller
+        // (self-registered members, whose own Preferences page already
+        // captures a full set) omits $ownProfile and keeps the exact
+        // preference-only behavior this method always had.
+        $hasAgePreference = !empty($preference->age_min) || !empty($preference->age_max);
+        $ownAge = ($ownProfile && !empty($ownProfile->birthday)) ? Carbon::parse($ownProfile->birthday)->age : null;
+        if ($hasAgePreference || $ownAge !== null) {
+            $ageMin = $hasAgePreference ? $preference->age_min : max(18, $ownAge - 7);
+            $ageMax = $hasAgePreference ? $preference->age_max : min(99, $ownAge + 7);
             $age = !empty($this->birthday) ? Carbon::parse($this->birthday)->age : null;
             $matched = $age !== null
-                && (empty($preference->age_min) || $age >= $preference->age_min)
-                && (empty($preference->age_max) || $age <= $preference->age_max);
+                && (empty($ageMin) || $age >= $ageMin)
+                && (empty($ageMax) || $age <= $ageMax);
             $score = 0;
             if ($age !== null) {
                 if ($matched) {
                     $score = 100;
                 } else {
                     $distance = 0;
-                    if (!empty($preference->age_min) && $age < $preference->age_min) {
-                        $distance = $preference->age_min - $age;
-                    } elseif (!empty($preference->age_max) && $age > $preference->age_max) {
-                        $distance = $age - $preference->age_max;
+                    if (!empty($ageMin) && $age < $ageMin) {
+                        $distance = $ageMin - $age;
+                    } elseif (!empty($ageMax) && $age > $ageMax) {
+                        $distance = $age - $ageMax;
                     }
                     $score = max(0, 100 - ($distance * 15)); // -15%/year outside the range
                 }
             }
-            $checks[] = ['factor' => 'Age', 'label' => 'Preferred age range matched', 'matched' => (bool) $matched, 'score' => (int) round($score)];
+            $checks[] = ['factor' => 'Age', 'label' => $hasAgePreference ? 'Preferred age range matched' : 'Similar age', 'matched' => (bool) $matched, 'score' => (int) round($score)];
         }
 
         // City is the most specific ask; country and "preferred country (if
@@ -401,9 +420,32 @@ class Profile extends Model {
             $checks[] = ['factor' => 'Location', 'label' => $locationLabel ? "{$locationLabel} location matched" : 'Location preference matched', 'matched' => (bool) $matched, 'score' => $score];
         }
 
-        if (!empty($preference->religion_id)) {
-            $matched = $this->religion == $preference->religion_id;
-            $checks[] = ['factor' => 'Religion', 'label' => 'Religion preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        $hasReligionPreference = !empty($preference->religion_id);
+        $targetReligion = $hasReligionPreference ? $preference->religion_id : ($ownProfile->religion ?? null);
+        if (!empty($targetReligion)) {
+            $matched = $this->religion == $targetReligion;
+            $checks[] = ['factor' => 'Religion', 'label' => $hasReligionPreference ? 'Religion preference matched' : 'Same religion', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        // No "preferred nationality" field exists anywhere — this only ever
+        // runs via the $ownProfile fallback (see above), comparing the
+        // candidate's citizenship directly against the proposal's own.
+        if ($ownProfile && !empty($ownProfile->con_of_citizenship)) {
+            $matched = $this->con_of_citizenship == $ownProfile->con_of_citizenship;
+            $checks[] = ['factor' => 'Nationality', 'label' => 'Same nationality', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        // "Preferred profession" is free text (pref_profession) that
+        // nobody reliably fills in usefully — a loose substring match
+        // when it IS set, otherwise falls back to comparing the
+        // candidate's profession directly against the proposal's own.
+        $hasProfessionPreference = !empty($preference->profession);
+        if ($hasProfessionPreference) {
+            $matched = !empty($this->profession) && stripos($this->profession, $preference->profession) !== false;
+            $checks[] = ['factor' => 'Profession', 'label' => 'Preferred profession matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        } elseif ($ownProfile && !empty($ownProfile->profession) && !empty($this->profession)) {
+            $matched = strcasecmp(trim($this->profession), trim($ownProfile->profession)) === 0;
+            $checks[] = ['factor' => 'Profession', 'label' => 'Same profession', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
         if (!empty($preference->caste_id)) {

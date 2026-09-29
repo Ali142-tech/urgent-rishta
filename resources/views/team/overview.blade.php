@@ -155,7 +155,7 @@
                 </thead>
                 <tbody>
                     @foreach($previewMatches as $match)
-                        @php $compat = $match->compatibilityWith($match->viewer_preference_for_card); @endphp
+                        @php $compat = $match->compatibilityWith($match->viewer_preference_for_card, [], $match->for_proposal_profile); @endphp
                         <tr>
                             <td>{{ $match->for_proposal_dataid }}</td>
                             <td>{{ $match->first_name }} {{ $match->last_name }} &bull; {{ $match->lbl_city }}</td>

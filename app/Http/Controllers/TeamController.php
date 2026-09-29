@@ -119,10 +119,12 @@ class TeamController extends Controller
             $aiMatchesCount += $proposal->getProposalMatchesCount();
             if ($previewMatches->count() < 3) {
                 $preference = $proposal->partnerPreference;
+                $proposalProfile = $proposal->profile();
                 foreach ($proposal->getProposalMatches(3) as $match) {
                     if ($previewMatches->count() >= 3) break;
                     $match->viewer_preference_for_card = $preference;
                     $match->for_proposal_dataid = $proposal->dataid;
+                    $match->for_proposal_profile = $proposalProfile;
                     $previewMatches->push($match);
                 }
             }
@@ -328,7 +330,7 @@ class TeamController extends Controller
 
         $matches = collect();
         foreach ($rawMatches as $match) {
-            $compat = $match->compatibilityWith($preference);
+            $compat = $match->compatibilityWith($preference, [], $proposalProfile);
             $percent = $compat['percent'] ?? 0;
             if ($percent < $minScore) {
                 continue;
@@ -758,7 +760,7 @@ TEMPLATE;
         }
 
         $preference = $proposal->partnerPreference()->first();
-        $compatibility = $bestMatch->compatibilityWith($preference);
+        $compatibility = $bestMatch->compatibilityWith($preference, [], $proposal->profile());
         if ($compatibility && $compatibility['percent'] >= 70) {
             $owner = User::find($proposal->added_by);
             if ($owner) {

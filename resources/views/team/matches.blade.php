@@ -292,12 +292,13 @@
             </div>
 
             <div class="ur-am-why">
-                <div class="ur-am-why__head">Why AI selected this match <span>{{ count($match->compat['checks'] ?? []) }} checks</span></div>
+                @php $checkCount = count($match->compat['checks'] ?? []); @endphp
+                <div class="ur-am-why__head">Why AI selected this match <span>{{ $checkCount }} check{{ $checkCount == 1 ? '' : 's' }}</span></div>
                 <div class="ur-am-why__grid">
                     @foreach(($match->compat['checks'] ?? []) as $check)
                         <div class="ur-am-why-pill {{ $check['matched'] ? 'ur-am-why-pill--ok' : 'ur-am-why-pill--warn' }}">
                             <i class="fa {{ $check['matched'] ? 'fa-check-circle' : 'fa-exclamation-triangle' }}"></i>
-                            {{ $check['matched'] ? $check['factor'].' preference matched' : $check['factor'].' needs review' }}
+                            {{ $check['matched'] ? $check['label'] : $check['factor'].' needs review' }}
                         </div>
                     @endforeach
                     @if($bothAbroad)

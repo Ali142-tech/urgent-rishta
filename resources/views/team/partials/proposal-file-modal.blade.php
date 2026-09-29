@@ -140,7 +140,20 @@
         <button type="button" onclick="closeClientFile()">Close</button>
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>
         @if($hasRealPhotos)
-            <a href="{{ route('team.proposals.share.whatsapp', ['dataid' => $member->dataid, 'with_photos' => 1]) }}" target="_blank" rel="noopener" class="is-gold"><i class="fa fa-whatsapp"></i> Form + {{ count($photos) }} photo{{ count($photos) == 1 ? '' : 's' }}</a>
+            {{-- Tries the OS/browser native share sheet first (real photo
+                 FILES attached, not just a link — same "attach to any
+                 app" picker Windows/Android/iOS show for a native Share
+                 action) via navigator.share(); falls back to the WhatsApp
+                 text+link redirect below on browsers that don't support
+                 sharing files (see the delegated click handler in
+                 layouts/team/dashboard.blade.php). --}}
+            <button type="button" id="cf_share_photos_btn" class="is-gold"
+                data-photos="{{ json_encode($photos) }}"
+                data-title="{{ $member->dataid }}"
+                data-text="{{ $intakeText }}"
+                data-fallback="{{ route('team.proposals.share.whatsapp', ['dataid' => $member->dataid, 'with_photos' => 1]) }}">
+                <i class="fa fa-whatsapp"></i> <span id="cf_share_photos_label">Form + {{ count($photos) }} photo{{ count($photos) == 1 ? '' : 's' }}</span>
+            </button>
         @endif
         @if($canRunAiMatch)
             <a href="{{ route('team.matches.show', $member->dataid) }}" class="is-dark"><i class="fa fa-magic"></i> Run AI Match</a>
