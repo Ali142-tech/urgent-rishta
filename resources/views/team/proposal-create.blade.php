@@ -133,6 +133,28 @@
     .ur-pp-flow__num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #123A2E; color: #fff; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
     .ur-pp-flow__grid b { display: block; font-size: 13px; color: #123A2E; margin-bottom: 3px; }
     .ur-pp-flow__grid p { font-size: 11.5px; color: #6B7570; margin: 0; }
+
+    /* Paste Profile — polished look (matches the AI Partner Portal mockup) */
+    .ur-team-form .ur-pp-head h1 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
+    .ur-team-form .ur-pp-head p { font-size: 14.5px; color: #4B5651; line-height: 1.5 !important; }
+    .ur-team-form .ur-pp-card { border-radius: 22px; padding: 24px; }
+    .ur-team-form .ur-pp-card__head h3 { font-family: 'Manrope', system-ui, sans-serif; font-size: 18px; font-weight: 800; line-height: 1.3 !important; margin: 0 0 4px; }
+    .ur-team-form .ur-pp-card__head p { font-size: 13px; line-height: 1.4 !important; }
+    .ur-team-form .ur-pp-card > label, .ur-team-form .ur-pp-photos-head label { font-size: 14px; font-weight: 800; color: #1C2321; margin: 0 0 8px; }
+    .ur-team-form .ur-pp-owner-display { height: 48px; border-radius: 14px; background: #fff; font-size: 14.5px; padding: 0 16px; }
+    .ur-team-form .ur-pp-textarea { min-height: 300px; border-radius: 14px; padding: 16px 18px; font-size: 14.5px; line-height: 1.7 !important; margin-bottom: 18px; resize: vertical; }
+    .ur-team-form .ur-pp-photos-head { margin: 4px 0 10px; }
+    .ur-team-form .ur-pp-photos-head .ur-opt { font-size: 12px; color: #6B7570; }
+    .ur-pp-photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ur-pp-photo-slot { position: relative; }
+    .ur-pp-photo-slot__drop { height: 150px; border-radius: 14px; border: 1.5px dashed #D8D2C2; background: #F3F0E8; overflow: hidden; }
+    .ur-pp-photo-slot__drop img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+    .ur-team-form label.ur-pp-photo-slot__btn { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 36px; margin: 0; border-radius: 10px; background: rgba(15,63,48,.92); color: #fff; font-size: 12px; font-weight: 800; line-height: 1 !important; cursor: pointer; text-align: center; }
+    .ur-team-form label.ur-pp-photo-slot__btn:hover { background: #0B3B2E; }
+    .ur-team-form .ur-pp-meta-row { margin-top: 16px; font-size: 13px; color: #6B7570; }
+    .ur-team-form .ur-paste-box__fill-btn { border-radius: 14px; padding: 0 22px; height: 46px; font-size: 14.5px; font-weight: 800; box-shadow: 0 8px 20px rgba(15,46,36,.18); }
+    .ur-team-form .ur-pp-protect-box { border-radius: 14px; padding: 14px 16px; font-size: 13px; line-height: 1.5 !important; }
+    @media (max-width: 560px) { .ur-pp-photo-grid { grid-template-columns: 1fr; } }
 </style>
 
 <div class="ur-team-form">
@@ -191,26 +213,18 @@
                     <label>Client photos</label>
                     <span class="ur-opt">Upload up to 2 clear images</span>
                 </div>
-                <div class="row">
-                    <div class="ur-photo-slots">
-                        <div class="ur-photo-slot">
-                            {{-- Default male/female placeholder (same convention as
-                                 everywhere else — Profile::defaultImage()) instead of
-                                 a bare "No image selected" text, purely for visual
-                                 clarity on what this slot is for. Swaps to match
-                                 whichever gender is picked in the compact panel. --}}
-                            <div class="ur-photo-slot__drop" id="photo_preview_1"><img id="photo_default_1" src="{{ \App\Profile::defaultImage('male') }}" alt=""></div>
-                            <label id="photo_label_1">Photo 1 <span class="ur-opt">Optional</span></label>
-                            <input type="file" name="image1" form="af_form" accept="image/*" onchange="urPreviewProposalPhoto(this, 'photo_preview_1', 'photo_label_1', 'Photo 1')">
-                        </div>
-                        <div class="ur-photo-slot">
-                            <div class="ur-photo-slot__drop" id="photo_preview_2"><img id="photo_default_2" src="{{ \App\Profile::defaultImage('male') }}" alt=""></div>
-                            <label id="photo_label_2">Photo 2 <span class="ur-opt">Optional</span></label>
-                            <input type="file" name="image2" form="af_form" accept="image/*" onchange="urPreviewProposalPhoto(this, 'photo_preview_2', 'photo_label_2', 'Photo 2')">
-                        </div>
+                <div class="ur-pp-photo-grid">
+                    @foreach([1, 2] as $__n)
+                    <div class="ur-pp-photo-slot">
+                        {{-- Default male/female placeholder (Profile::defaultImage()) until a
+                             file is picked; the "Upload/Replace photo" label sits over the
+                             preview and is the only visible file control (input is hidden). --}}
+                        <div class="ur-pp-photo-slot__drop" id="photo_preview_{{ $__n }}"><img id="photo_default_{{ $__n }}" src="{{ \App\Profile::defaultImage($__n === 1 ? 'male' : 'female') }}" alt=""></div>
+                        <label class="ur-pp-photo-slot__btn" id="photo_label_{{ $__n }}" for="photo_input_{{ $__n }}" data-upload="Upload photo {{ $__n }}" data-replace="Replace photo {{ $__n }}"><i class="fa fa-camera"></i> Upload photo {{ $__n }}</label>
+                        <input type="file" id="photo_input_{{ $__n }}" name="image{{ $__n }}" form="af_form" accept="image/*" hidden onchange="urPreviewProposalPhoto(this, 'photo_preview_{{ $__n }}', 'photo_label_{{ $__n }}', 'Photo {{ $__n }}')">
                     </div>
+                    @endforeach
                 </div>
-
                 <div class="ur-pp-meta-row">
                     <span id="paste_char_count">0 characters</span> • Original text is preserved
                     <button type="button" class="ur-paste-box__fill-btn" id="paste_fill_btn"><i class="fa fa-magic"></i> Extract with AI</button>
@@ -448,14 +462,14 @@ function urPreviewProposalPhoto(input, previewId, labelId, baseLabel) {
         var reader = new FileReader();
         reader.onload = function (e) { preview.innerHTML = '<img src="' + e.target.result + '">'; };
         reader.readAsDataURL(input.files[0]);
-        if (label) label.innerHTML = baseLabel + ' <span class="ur-opt">Replace</span>';
+        if (label) label.innerHTML = label.dataset.replace ? '<i class="fa fa-camera"></i> ' + label.dataset.replace : baseLabel + ' <span class="ur-opt">Replace</span>';
     } else {
         // Back to the gender-appropriate default placeholder, not a bare
         // text label — same convention used everywhere else in this app.
         var genderEl = document.querySelector('[name="gender"]');
         var g = (genderEl && genderEl.value === 'female') ? 'female' : 'male';
         preview.innerHTML = '<img src="' + UR_DEFAULT_IMAGES[g] + '">';
-        if (label) label.innerHTML = baseLabel + ' <span class="ur-opt">Optional</span>';
+        if (label) label.innerHTML = label.dataset.upload ? '<i class="fa fa-camera"></i> ' + label.dataset.upload : baseLabel + ' <span class="ur-opt">Optional</span>';
     }
 }
 

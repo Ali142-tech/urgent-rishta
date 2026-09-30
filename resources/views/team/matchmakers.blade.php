@@ -147,7 +147,7 @@
                 @if($member->isSenior)<span class="ur-mk-ribbon"><i class="fa fa-star"></i> Senior Partner</span>@endif
                 <div class="ur-mk-card__avatar" style="background:{{ $color }};">
                     @if($member->hasRealPhoto)
-                        <img src="{{ $member->getProfileImage(true) }}" alt="" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
+                        <img src="{{ $member->getProfileImage() }}" alt="" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
                     @else
                         {{ strtoupper(substr($member->first_name, 0, 1) . substr($member->last_name, 0, 1)) }}
                         <small>Add photo</small>

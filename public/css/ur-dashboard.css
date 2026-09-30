@@ -504,3 +504,33 @@ body.ur-dash-body .ur-toast-stack {
     .ur-dash-user__avatar { width: 32px; height: 32px; }
     .ur-dash-user__caret { display: none; }
 }
+
+/* ---------------------------------------------------------- */
+/* Team sidebar — "AI Partner Portal" look (bigger nav rows,    */
+/* outline SVG icons, bordered profile card, gold active bar).  */
+/* Scoped to .ur-dash-sidebar--team so member/admin are as-was. */
+/* ---------------------------------------------------------- */
+.ur-dash-sidebar--team { background: #0B3B2E; font-family: 'Manrope', system-ui, sans-serif; }
+.ur-dash-sidebar--team .ur-dash-sidebar__brand-row { gap: 14px; padding: 22px 22px 20px; border-bottom: 1px solid rgba(255,255,255,.07); }
+.ur-dash-sidebar--team .ur-dash-sidebar__brand-icon { width: 46px; height: 46px; border-radius: 14px; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); font-size: 18px; }
+.ur-dash-sidebar--team .ur-dash-sidebar__brand img { display: none; }
+.ur-dash-sidebar--team .ur-dash-sidebar__brand span { display: block; font-family: 'Manrope', system-ui, sans-serif; font-size: 17px; font-weight: 800; line-height: 1.2 !important; color: #fff; letter-spacing: 0; padding: 0 !important; }
+.ur-dash-sidebar--team .ur-dash-sidebar__brand small { font-size: 10.5px; font-weight: 800; letter-spacing: .12em; line-height: 1.3 !important; color: #D9A85A; margin-top: 3px; }
+
+.ur-dash-sidebar--team .ur-dash-sidebar__profile { gap: 12px; margin: 22px 18px 6px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); }
+.ur-dash-sidebar--team .ur-dash-sidebar__profile-avatar { width: 44px; height: 44px; border-radius: 12px; background: #D9A85A; color: #0B3B2E; font-size: 15px; font-weight: 800; }
+.ur-dash-sidebar--team .ur-dash-sidebar__profile-name { font-size: 14.5px; font-weight: 800; line-height: 1.3 !important; color: #fff; }
+.ur-dash-sidebar--team .ur-dash-sidebar__profile-meta { font-size: 12px; line-height: 1.6 !important; color: rgba(255,255,255,.62); margin-top: 2px; }
+
+.ur-dash-sidebar--team .ur-dash-nav { padding: 6px 14px 14px; }
+.ur-dash-sidebar--team .ur-dash-nav__section-label { font-size: 10.5px; font-weight: 800; letter-spacing: .16em; color: rgba(255,255,255,.42); padding: 22px 12px 10px; }
+.ur-dash-sidebar--team .ur-dash-nav li { margin-bottom: 4px; }
+.ur-dash-sidebar--team .ur-dash-nav a { position: relative; gap: 12px; padding: 12px 12px; border-radius: 12px; font-size: 14.5px; font-weight: 700; line-height: 1.2 !important; color: rgba(255,255,255,.86); white-space: nowrap; }
+.ur-dash-sidebar--team .ur-dash-nav a svg { width: 19px; height: 19px; flex: 0 0 19px; stroke: rgba(255,255,255,.62); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: stroke .15s ease; }
+.ur-dash-sidebar--team .ur-dash-nav a:hover { background: rgba(255,255,255,.06); color: #fff; }
+.ur-dash-sidebar--team .ur-dash-nav a:hover svg { stroke: #D9A85A; }
+.ur-dash-sidebar--team .ur-dash-nav a.is-active { background: rgba(255,255,255,.1); color: #fff; box-shadow: inset 3px 0 0 #D9A85A; }
+.ur-dash-sidebar--team .ur-dash-nav a.is-active svg { stroke: #fff; }
+.ur-dash-sidebar--team .ur-dash-nav .ur-dash-nav__badge { min-width: 26px; text-align: center; background: #D9A85A; color: #0B3B2E; font-size: 12px; font-weight: 800; line-height: 1.2 !important; padding: 3px 8px; border-radius: 999px; }
+.ur-dash-sidebar--team .ur-dash-nav__link { font-size: 15px; font-weight: 700; }
+.ur-dash-sidebar--team .ur-dash-nav__link svg { width: 19px; height: 19px; flex: 0 0 19px; stroke: rgba(255,255,255,.62); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

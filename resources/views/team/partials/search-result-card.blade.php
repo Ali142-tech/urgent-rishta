@@ -20,7 +20,7 @@
 @endphp
 <div class="ur-search-card">
     <a class="ur-search-card__photo" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">
-        <img src="{{ $member->getProfileImage(true) }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
+        <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
         @if($isNew)
             <span class="ur-search-card__ribbon ur-search-card__ribbon--new">New</span>
         @elseif($isUpdated)
