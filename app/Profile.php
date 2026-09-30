@@ -61,7 +61,16 @@ class Profile extends Model {
     }
 
     private function showBlur() {
-        return Auth::guest() || $this->photo_visibility === 'blurred';
+        if (Auth::guest()) {
+            return true;
+        }
+        // Logged-in team members / admins see sharp photos inside the team
+        // dashboard (/team/*); the public site and member area still honour
+        // the per-profile 'blurred' setting.
+        if (request()->is('team/*')) {
+            return false;
+        }
+        return $this->photo_visibility === 'blurred';
     }
 
     private function getBlurName($name) {

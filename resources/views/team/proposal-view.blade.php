@@ -199,15 +199,55 @@
 </div>
 @endif
 
-@php $galleryImages = $member->getCardImages(null, false); @endphp
-@if(count($galleryImages) > 1)
+@php
+    // Full-size sources for the lightbox (thumbnails only for the strip).
+    $galleryFull = json_decode($member->getLightGalleryImages(false), true) ?: [];
+    $galleryFull = array_values(array_filter($galleryFull, fn ($g) => file_exists(public_path($g['src']))));
+@endphp
+@if(count($galleryFull) > 0)
 <div class="ur-pv-section">
     <h2>Photos</h2>
     <div class="ur-pv-gallery">
-        @foreach($galleryImages as $image)
-            <img src="{{ $image }}" alt="" loading="lazy">
+        @foreach($galleryFull as $gi => $g)
+            <img src="{{ file_exists(public_path($g['thumb'])) ? $g['thumb'] : $g['src'] }}" alt="" loading="lazy" data-full="{{ $g['src'] }}" data-index="{{ $gi }}" style="cursor:zoom-in;">
         @endforeach
     </div>
 </div>
 @endif
+
+<div id="urPvLightbox" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.88); align-items:center; justify-content:center;">
+    <button type="button" id="urPvLbClose" aria-label="Close" style="position:absolute; top:16px; right:22px; background:none; border:0; color:#fff; font-size:34px; line-height:1; cursor:pointer;">&times;</button>
+    <button type="button" id="urPvLbPrev" aria-label="Previous" style="position:absolute; left:18px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.15); border:0; color:#fff; font-size:26px; width:44px; height:44px; border-radius:50%; cursor:pointer;">&#8249;</button>
+    <img id="urPvLbImg" src="" alt="" style="max-width:92vw; max-height:90vh; object-fit:contain; border-radius:8px;">
+    <button type="button" id="urPvLbNext" aria-label="Next" style="position:absolute; right:18px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,.15); border:0; color:#fff; font-size:26px; width:44px; height:44px; border-radius:50%; cursor:pointer;">&#8250;</button>
+</div>
+<script>
+(function () {
+    var box = document.getElementById('urPvLightbox');
+    var img = document.getElementById('urPvLbImg');
+    var srcs = [];
+    document.querySelectorAll('.ur-pv-gallery img').forEach(function (el) { srcs.push(el.getAttribute('data-full')); });
+    var head = document.querySelector('.ur-pv-head__photo img');
+    var cur = 0;
+    function show(i) {
+        if (!srcs.length) return;
+        cur = (i + srcs.length) % srcs.length;
+        img.src = srcs[cur];
+        box.style.display = 'flex';
+    }
+    function hide() { box.style.display = 'none'; }
+    document.querySelectorAll('.ur-pv-gallery img').forEach(function (el, i) { el.addEventListener('click', function () { show(i); }); });
+    if (head && srcs.length) { head.style.cursor = 'zoom-in'; head.addEventListener('click', function () { show(0); }); }
+    document.getElementById('urPvLbClose').onclick = hide;
+    document.getElementById('urPvLbPrev').onclick = function (e) { e.stopPropagation(); show(cur - 1); };
+    document.getElementById('urPvLbNext').onclick = function (e) { e.stopPropagation(); show(cur + 1); };
+    box.addEventListener('click', function (e) { if (e.target === box) hide(); });
+    document.addEventListener('keydown', function (e) {
+        if (box.style.display === 'none') return;
+        if (e.key === 'Escape') hide();
+        if (e.key === 'ArrowLeft') show(cur - 1);
+        if (e.key === 'ArrowRight') show(cur + 1);
+    });
+})();
+</script>
 @endsection
