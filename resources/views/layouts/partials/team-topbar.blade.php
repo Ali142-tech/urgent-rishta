@@ -18,7 +18,7 @@
     </div>
 
     <div class="ur-dash-topbar__right">
-        <a href="{{ route('team.proposals.create') }}" class="ur-dash-topbar__add-btn"><i class="fa fa-plus"></i> <span class="ur-dash-topbar__add-btn-label">Add profile</span></a>
+        <a href="{{ route('team.proposals.create') }}" class="ur-dash-topbar__add-btn"><i class="fa fa-plus"></i> <span class="ur-dash-topbar__add-btn-label text-white">Add profile</span></a>
         <div class="dropdown dropdown--style-2 dropdown--animated">
             <button type="button" class="ur-dash-bell" id="notifications" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Notifications">
                 <i class="fa fa-bell-o"></i>

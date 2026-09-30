@@ -27,10 +27,10 @@
     @media (max-width: 480px) { .ur-ov-stats { grid-template-columns: 1fr; } }
     .ur-ov-stat { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 18px; }
     .ur-ov-stat__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .ur-ov-stat__icon { width: 38px; height: 38px; border-radius: 10px; background: #F6F4EF; color: #C9974D; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .ur-ov-stat__icon { width: 48px; height: 48px; border-radius: 10px; background: #F6F4EF; color: #C9974D; display: flex; align-items: center; justify-content: center; font-size: 16px; }
     .ur-ov-stat__badge { font-size: 10.5px; font-weight: 700; color: #2E7D5B; background: #EAF6EF; padding: 3px 9px; border-radius: 999px; }
     .ur-ov-stat__label { display: block; font-size: 12.5px; color: #6B7570; }
-    .ur-ov-stat__value { display: block; font-size: 26px; font-weight: 700; color: #123A2E; font-family: 'Playfair Display', serif; }
+    .ur-ov-stat__value { display: block; font-size: 36px; font-weight: 900; color: #123A2E; font-family: 'Playfair Display', serif; }
     .ur-ov-stat__delta { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; color: #C9974D; text-decoration: none; }
 
     .ur-ov-section { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 20px; margin-bottom: 24px; }
@@ -69,7 +69,7 @@
     @media (max-width: 560px) { .ur-ov-tiles { grid-template-columns: repeat(2, 1fr); } }
     .ur-ov-tile { background: #fff; border: 1px solid #E7E2D6; border-radius: 12px; padding: 14px; text-decoration: none; display: block; }
     .ur-ov-tile:hover { border-color: #C9974D; text-decoration: none; }
-    .ur-ov-tile i { color: #C9974D; font-size: 17px; margin-bottom: 8px; display: block; }
+    .ur-ov-tile i { color: #C9974D; font-size: 25px; margin-bottom: 8px; display: block; }
     .ur-ov-tile__label { display: block; font-size: 12.5px; font-weight: 700; color: #123A2E; }
     .ur-ov-tile__sub { display: block; font-size: 10.5px; color: #9AA5A0; margin-top: 2px; }
 
@@ -77,9 +77,21 @@
     .ur-ov-mtable th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: #9AA5A0; padding: 0 0 10px; font-weight: 700; }
     .ur-ov-mtable td { padding: 10px 0; border-top: 1px solid #F0EEE7; font-size: 13px; color: #1C2321; vertical-align: middle; }
     .ur-ov-mtable__score { font-weight: 700; color: #123A2E; }
+    .ur-ov-mtable th, .ur-ov-mtable td { padding-left: 10px; padding-right: 10px; }
+    .ur-ov-mtable td { padding-top: 10px; padding-bottom: 10px; }
+    .ur-ov-mtable span, .ur-ov-mtable img { margin: 0; padding: 0; box-sizing: border-box; min-height: 0; }
+    .ur-ov-mtable .ur-ov-client { display: flex; align-items: center; gap: 12px; }
+    .ur-ov-mtable .ur-ov-client__photo { display: block; width: 40px; height: 40px; max-width: none; border-radius: 10px; object-fit: cover; flex: 0 0 40px; background: #F6F4EF; }
+    .ur-ov-mtable .ur-ov-client__text { display: block; }
+    .ur-ov-mtable .ur-ov-client__id { display: block; font-size: 13.5px; font-weight: 700; color: #1C2321; line-height: 18px; }
+    .ur-ov-mtable .ur-ov-client__sub { display: block; font-size: 11.5px; font-weight: 400; color: #6B7570; line-height: 16px; text-transform: capitalize; }
+    .ur-ov-mtable .ur-ov-score { display: block; width: 110px; }
+    .ur-ov-mtable .ur-ov-score__pct { display: block; font-size: 13.5px; font-weight: 700; color: #123A2E; line-height: 18px; margin-bottom: 4px; }
+    .ur-ov-mtable .ur-ov-score__bar { display: block; width: 100%; height: 5px; border-radius: 999px; background: #EFEBE0; overflow: hidden; }
+    .ur-ov-mtable .ur-ov-score__fill { display: block; height: 5px; border-radius: 999px; background: linear-gradient(90deg, #123A2E, #3E8E6B); }
 </style>
 
-<div class="ur-ov-hero">
+<div class="ur-ov-hero mt-5">
     <div>
         <h1>Good {{ now()->hour < 12 ? 'morning' : (now()->hour < 17 ? 'afternoon' : 'evening') }}, {{ auth()->user()->first_name }}.</h1>
         <p>Your team has {{ number_format($teamProposalsCount) }} proposals ready for AI matching and direct owner WhatsApp sharing.</p>
@@ -97,7 +109,7 @@
             <div class="ur-ov-stat__icon"><i class="fa fa-users"></i></div>
         </div>
         <span class="ur-ov-stat__label">Team Proposals</span>
-        <span class="ur-ov-stat__value">{{ number_format($teamProposalsCount) }}</span>
+        <span class="ur-ov-stat__value fw-bold">{{ number_format($teamProposalsCount) }}</span>
         <a href="{{ route('team.proposals.search') }}" class="ur-ov-stat__delta">View all &rarr;</a>
     </div>
     <div class="ur-ov-stat">
@@ -143,7 +155,7 @@
     <div>
         <div class="ur-ov-section">
             <div class="ur-ov-section__head">
-                <h2><i class="fa fa-magic" style="color:#C9974D;"></i> Recent AI Matches</h2>
+                <h2>Recent AI Matches</h2>
                 <a href="{{ route('team.matches') }}">View All &rarr;</a>
             </div>
             @if($previewMatches->isEmpty())
@@ -156,11 +168,37 @@
                 <tbody>
                     @foreach($previewMatches as $match)
                         @php $compat = $match->compatibilityWith($match->viewer_preference_for_card, [], $match->for_proposal_profile); @endphp
-                        <tr>
-                            <td>{{ $match->for_proposal_dataid }}</td>
-                            <td>{{ $match->first_name }} {{ $match->last_name }} &bull; {{ $match->lbl_city }}</td>
-                            <td class="ur-ov-mtable__score">{{ $compat ? $compat['percent'].'%' : '—' }}</td>
-                            <td><span style="background:#F6F4EF; color:#123A2E; font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;">New</span></td>
+                    
+                        @php
+                            $clientProfile = $match->for_proposal_profile;
+                            $clientGender = $clientProfile->gender ?? '';
+                            $matchCity = $match->lbl_city ?: ($match->city ?? '');
+                            $scorePct = $compat ? (int) $compat['percent'] : null;
+                        @endphp
+                        <tr style="cursor:pointer;" onclick="window.location.href='{{ route('team.matches.show', $match->for_proposal_dataid) }}#match-{{ $match->dataid }}'">
+                            <td style="line-height:1.2 !important; height:auto !important;">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <img src="{{ $clientProfile->getProfileImage(true) }}" alt="" style="width:40px !important; height:40px !important; border-radius:10px; object-fit:cover; flex:0 0 40px; padding:0 !important; margin:0 !important;" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($clientGender) }}';">
+                                    <div style="line-height:1.2 !important; margin:0 !important; padding:0 !important;">
+                                        <div style="font-size:13.5px; font-weight:700; color:#1C2321; line-height:1.2 !important; margin:0 !important; padding:0 !important;">{{ $match->for_proposal_dataid }}</div>
+                                        <div style="font-size:11.5px; font-weight:400; color:#6B7570; line-height:1.2 !important; margin:2px 0 0 !important; padding:0 !important; text-transform:capitalize;">{{ collect([$clientGender, $clientProfile->age ?? null, $clientProfile->lbl_city ?? null])->filter()->implode(' • ') }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="line-height:1.2 !important;">{{ $match->first_name }} {{ $match->last_name }}@if($matchCity) &bull; {{ $matchCity }}@endif</td>
+                            <td style="line-height:1.2 !important;">
+                                @if($scorePct !== null)
+                                    <div style="width:110px; margin:0 !important; padding:0 !important;">
+                                        <div style="font-size:13.5px; font-weight:700; color:#123A2E; line-height:1.2 !important; margin:0 0 5px !important; padding:0 !important;">{{ $scorePct }}%</div>
+                                        <div style="width:100%; height:5px !important; min-height:0 !important; border-radius:999px; background:#EFEBE0; overflow:hidden; margin:0 !important; padding:0 !important; line-height:0 !important; font-size:0;">
+                                            <div style="width:{{ min(100, $scorePct) }}%; height:5px !important; min-height:0 !important; border-radius:999px; background:linear-gradient(90deg,#123A2E,#3E8E6B); margin:0 !important; padding:0 !important;"></div>
+                                        </div>
+                                    </div>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td style="line-height:1.2 !important;"><span style="display:inline-block; background:#F6F4EF; color:#123A2E; font-size:11px; font-weight:700; line-height:1.2 !important; padding:5px 12px; border-radius:999px;">New</span></td>
                         </tr>
                     @endforeach
                 </tbody>

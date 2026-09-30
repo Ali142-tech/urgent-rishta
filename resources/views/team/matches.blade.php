@@ -75,6 +75,7 @@
     .ur-am-pair__side--match { background: #F1F7F3; }
     .ur-am-pair__label { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; margin-bottom: 8px; opacity: .7; }
     .ur-am-pair__head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .ur-am-match-card:target { border-color: #C9974D; box-shadow: 0 0 0 3px rgba(201,151,77,.35); scroll-margin-top: 90px; }
     .ur-am-pair__photo { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
     .ur-am-pair__id { font-weight: 700; font-size: 13px; }
     .ur-am-pair__meta { font-size: 11px; opacity: .8; margin-bottom: 6px; }
@@ -250,7 +251,7 @@
             $matchName = $nameOf($match);
             $bothAbroad = strtolower($proposalProfile->looking_from ?? '') === 'abroad' && strtolower($match->looking_from ?? '') === 'abroad';
         @endphp
-        <div class="ur-am-match-card">
+        <div class="ur-am-match-card" id="match-{{ $match->dataid }}">
             <div class="ur-am-match-card__head">
                 <div>
                     <span class="ur-am-match-card__num">MATCH {{ sprintf('%02d', $i + 1) }}</span>
