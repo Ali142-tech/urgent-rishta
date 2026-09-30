@@ -12,43 +12,44 @@
 @section('main-content')
 <style>
     .ur-mm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
-    .ur-mm-head h1 { font-family: 'Playfair Display', serif; color: #123A2E; font-weight: 700; font-size: 24px; margin: 0 0 6px; }
-    .ur-mm-head p { color: #6B7570; font-size: 13.5px; margin: 0; max-width: 640px; }
-    .ur-mm-live { background: #E7F3EC; color: #2E7D5B; font-size: 11.5px; font-weight: 700; padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
+    .ur-mm-head h1 { font-family: 'Manrope', system-ui, sans-serif; color: #123A2E; font-weight: 800; font-size: 26px; line-height: 1.2 !important; margin: 0 0 8px; }
+    .ur-mm-head p { color: #4B5651; font-size: 14.5px; line-height: 1.6 !important; margin: 0; max-width: 700px; }
+    .ur-mm-live { background: #E7F3EC; color: #2E7D5B; font-size: 12px; font-weight: 700; padding: 5px 14px; border-radius: 999px; white-space: nowrap; }
 
-    .ur-mm-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 18px 0 24px; }
-    .ur-mm-stats div { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 16px 18px; }
-    .ur-mm-stats span { display: block; font-size: 12.5px; color: #6B7570; margin-bottom: 6px; }
-    .ur-mm-stats b { display: block; font-family: 'Playfair Display', serif; font-size: 26px; color: #123A2E; }
+    .ur-mm-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0 24px; }
+    .ur-mm-stats div { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px 20px; }
+    .ur-mm-stats span { display: block; font-size: 13px; color: #6B7570; line-height: 1.3 !important; margin: 0 0 10px; }
+    .ur-mm-stats b { display: block; font-family: 'Manrope', system-ui, sans-serif; font-size: 30px; font-weight: 800; line-height: 1 !important; color: #123A2E; }
 
-    .ur-mm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-    .ur-mm-card { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px; }
+    .ur-mm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+    .ur-mm-card { background: #fff; border: 1px solid #E7E2D6; border-radius: 22px; padding: 18px 18px 18px; overflow: hidden; }
 
-    .ur-mm-pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: stretch; margin-bottom: 14px; }
-    .ur-mm-side { background: #F6F4EF; border-radius: 12px; padding: 12px; min-width: 0; }
-    .ur-mm-label { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; color: #9AA5A0; margin-bottom: 6px; }
-    .ur-mm-id { font-weight: 700; color: #123A2E; font-size: 14px; margin-bottom: 3px; }
-    .ur-mm-meta { font-size: 11.5px; color: #6B7570; margin-bottom: 8px; }
-    .ur-badge-pill { display: inline-block; font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin: 0 5px 5px 0; }
-    .ur-badge-pill--premium { background: #FBF0DA; color: #8A6218; }
+    .ur-mm-pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: center; margin-bottom: 16px; }
+    .ur-mm-side { background: #fff; border: 1px solid #ECE8DD; border-radius: 16px; padding: 14px 16px; min-width: 0; }
+    .ur-mm-label { font-size: 10px; font-weight: 800; letter-spacing: .08em; line-height: 1.2 !important; color: #7B8781; margin: 0 0 8px; text-transform: uppercase; }
+    .ur-mm-id { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; color: #123A2E; font-size: 17px; line-height: 1.25 !important; margin: 0 0 6px; }
+    .ur-mm-meta { font-size: 12px; color: #6B7570; line-height: 1.45 !important; margin: 0 0 10px; }
+    .ur-badge-pill { display: inline-block; font-size: 10.5px; font-weight: 700; line-height: 1.2 !important; padding: 4px 10px; border-radius: 999px; margin: 0 6px 6px 0; border: 1px solid transparent; }
+    .ur-badge-pill--premium { background: #FBF0DA; color: #8A6218; border-color: #F0DDB0; }
     .ur-badge-pill--royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); color: #fff; }
-    .ur-badge-pill--abroad { background: #E4EEF7; color: #2C5F8A; }
-    .ur-badge-pill--highlight { background: #FBE4E9; color: #A23B57; }
-    .ur-mm-score { width: 64px; height: 64px; border-radius: 50%; background: #123A2E; color: #fff; display: flex; align-items: center; justify-content: center; align-self: center; flex-shrink: 0; }
-    .ur-mm-score b { font-size: 17px; font-weight: 700; }
+    .ur-badge-pill--abroad { background: #EAF2FB; color: #2C5F8A; border-color: #C9DDF0; }
+    .ur-badge-pill--highlight { background: #FBE4E9; color: #A23B57; border-color: #F3C6D1; }
+    .ur-mm-score { width: 66px; height: 66px; border-radius: 50%; background: linear-gradient(135deg, #1C6B52, #0F3F30); color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 0 5px #fff, 0 0 0 6px #E7E2D6; margin: 0 4px; }
+    .ur-mm-score b { font-family: 'Manrope', system-ui, sans-serif; font-size: 17px; font-weight: 800; line-height: 1 !important; }
 
-    .ur-mm-owner { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; border-top: 1px dashed #E7E2D6; padding-top: 12px; margin-bottom: 14px; }
-    .ur-mm-owner__avatar { width: 34px; height: 34px; border-radius: 50%; background: #123A2E; color: #fff; font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ur-mm-owner { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; background: #F8F7F3; margin: 0 -18px 16px; padding: 14px 18px; }
+    .ur-mm-owner__avatar { width: 42px; height: 42px; border-radius: 12px; background: #0F3F30; color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .ur-mm-owner__body { flex: 1 1 200px; min-width: 0; }
-    .ur-mm-owner__name { font-size: 13px; font-weight: 700; color: #1C2321; }
-    .ur-mm-owner__meta { font-size: 11.5px; color: #6B7570; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ur-mm-owner__verified { margin-left: auto; background: #E7F3EC; color: #2E7D5B; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+    .ur-mm-owner__name { font-size: 14px; font-weight: 800; line-height: 1.3 !important; color: #1C2321; margin: 0 0 2px; }
+    .ur-mm-owner__meta { font-size: 12px; line-height: 1.4 !important; color: #6B7570; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ur-mm-owner__verified { margin-left: auto; background: #E7F3EC; color: #2E7D5B; font-size: 11px; font-weight: 700; line-height: 1.2 !important; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
 
-    .ur-mm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .ur-mm-actions a { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer; text-decoration: none; border: 1px solid #E7E2D6; color: #123A2E; background: #fff; white-space: nowrap; }
+    .ur-mm-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ur-mm-actions a { flex: 1 1 auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 42px; padding: 0 14px; border-radius: 12px; font-size: 12.5px; font-weight: 700; line-height: 1 !important; cursor: pointer; text-decoration: none; border: 1px solid #E7E2D6; color: #123A2E; background: #fff; white-space: nowrap; }
     .ur-mm-actions a:hover { background: #F6F4EF; }
-    .ur-mm-actions a.is-whatsapp { background: #25D366; border-color: #25D366; color: #fff; }
-    .ur-mm-actions a.is-whatsapp:hover { background: #1DA851; color: #fff; }
+    .ur-mm-actions a.is-whatsapp { flex: 1.4 1 auto; background: #16A05A; border-color: #16A05A; color: #fff; }
+    .ur-mm-actions a.is-whatsapp:hover { background: #128A4C; color: #fff; }
+
 
     .ur-mm-empty { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 34px; text-align: center; color: #6B7570; }
 
