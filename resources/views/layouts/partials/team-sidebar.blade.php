@@ -20,9 +20,12 @@
     in AppServiceProvider::boot(), not from each page's own controller —
     so every Team Dashboard page shows live numbers, not just team/dashboard.
 
-    Mapping note: "AI Match" and "My Matches" both point at the same
-    team.matches page/count (no second real dataset exists to split them
-    into); "Requests" uses unread notifications as a real stand-in for the
+    Mapping note: "AI Match" (team.matches — pick any of your own proposals,
+    filter, see every candidate) and "My Matches" (team.my-matches — every
+    client you own, each paired with its single best match, no controls)
+    are now separate pages (client mockup, Sep 2026), sharing only the
+    same sidebarAiMatchesCount badge number; "Requests" uses unread
+    notifications as a real stand-in for the
     mockup's removed Collaboration Request feature (see TeamController::
     dashboard()'s own comment) — flagged to the client, not yet confirmed.
 --}}
@@ -68,7 +71,7 @@
             </a>
         </li>
         <li>
-            <a href="{{ route('team.proposals.search') }}" class="{{ request()->is('team/proposals/search') ? 'is-active' : '' }}">
+            <a href="{{ route('team.proposals.search') }}" class="{{ request()->is('team/proposals/search') && request('view') !== 'all' ? 'is-active' : '' }}">
                 <i class="fa fa-search"></i> Advanced Search
             </a>
         </li>
@@ -79,13 +82,13 @@
             </a>
         </li>
         <li>
-            <a href="{{ route('team.matches') }}" class="{{ request()->is('team/matches') ? 'is-active' : '' }}">
+            <a href="{{ route('team.my-matches') }}" class="{{ request()->is('team/my-matches') ? 'is-active' : '' }}">
                 <i class="fa fa-heart-o"></i> My Matches
                 @isset($sidebarAiMatchesCount)<span class="ur-dash-nav__badge">{{ $sidebarAiMatchesCount }}</span>@endisset
             </a>
         </li>
         <li>
-            <a href="{{ route('team.proposals.search') }}" class="{{ request()->is('team/proposals/search') ? 'is-active' : '' }}">
+            <a href="{{ route('team.proposals.search', ['view' => 'all']) }}" class="{{ request()->is('team/proposals/search') && request('view') === 'all' ? 'is-active' : '' }}">
                 <i class="fa fa-users"></i> Team Proposals
                 @isset($sidebarTeamProposalsCount)<span class="ur-dash-nav__badge">{{ $sidebarTeamProposalsCount }}</span>@endisset
             </a>
@@ -101,12 +104,7 @@
                 <i class="fa fa-file-text-o"></i> My Clients
             </a>
         </li>
-        <li>
-            <a href="{{ route('team.notifications') }}" class="{{ request()->is('team/notifications') ? 'is-active' : '' }}">
-                <i class="fa fa-bell-o"></i> Requests
-                @isset($sidebarRequestsCount)<span class="ur-dash-nav__badge">{{ $sidebarRequestsCount }}</span>@endisset
-            </a>
-        </li>
+       
 
         @if($__sidebarUser->admin == 1)
         <div class="ur-dash-nav__section-label">Management</div>

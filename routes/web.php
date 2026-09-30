@@ -158,11 +158,13 @@ Route::get('team/dashboard', [App\Http\Controllers\TeamController::class, 'dashb
 Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, 'myProposals'])->name('team.proposals.mine');
 Route::get('team/proposals/search', [App\Http\Controllers\TeamController::class, 'searchProposals'])->name('team.proposals.search');
 Route::get('team/matches', [App\Http\Controllers\TeamController::class, 'matches'])->name('team.matches');
+Route::get('team/my-matches', [App\Http\Controllers\TeamController::class, 'myMatches'])->name('team.my-matches');
 Route::get('team/matches/{dataid}', [App\Http\Controllers\TeamController::class, 'matchesForProposal'])->name('team.matches.show');
 Route::get('team/matches/{proposalDataid}/forward/{matchDataid}', [App\Http\Controllers\TeamController::class, 'forwardBothWhatsapp'])->name('team.matches.forward');
 Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
 Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
 Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'matchmakers'])->name('team.matchmakers');
+Route::post('team/my-profile/photo', [App\Http\Controllers\TeamController::class, 'uploadMyPhoto'])->name('team.my-profile.photo');
 Route::get('team/proposals/create', [App\Http\Controllers\TeamController::class, 'create'])->name('team.proposals.create');
 Route::post('team/proposals', [App\Http\Controllers\TeamController::class, 'store'])->name('team.proposals.store');
 Route::get('team/proposals/{dataid}/view', [App\Http\Controllers\TeamController::class, 'viewProposal'])->name('team.proposals.view');

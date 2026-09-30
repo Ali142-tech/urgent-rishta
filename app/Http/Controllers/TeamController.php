@@ -154,14 +154,120 @@ class TeamController extends Controller
     }
 
     /**
-     * "My Proposals" — this team member's own added proposals only.
+     * "My Clients" (client mockup, Sep 2026 — table layout instead of the
+     * shared card grid team.partials.proposal-grid/member-card.blade.php
+     * uses, since only this page needed the redesign; admin/team-proposals
+     * still uses the shared partial as-is) — this team member's own added
+     * proposals only, with a keyword search and a status filter.
      */
     public function myProposals(Request $request)
     {
         $where = "`u`.`added_by` = " . (int) auth()->id();
-        $grid = $this->buildProposalGrid($where, (int) $request->query('page', 1));
+
+        if ($request->filled('search')) {
+            $keyword = addslashes($request->search);
+            $where .= " and (`u`.`dataid` LIKE '%{$keyword}%' or `u`.`profession` LIKE '%{$keyword}%'"
+                . " or `u`.`city` LIKE '%{$keyword}%' or `u`.`current_city` LIKE '%{$keyword}%'"
+                . " or `u`.`first_name` LIKE '%{$keyword}%' or `u`.`last_name` LIKE '%{$keyword}%')";
+        }
+        if ($request->filled('status')) {
+            $where .= " and `u`.`profile_status` = '" . addslashes($request->status) . "'";
+        }
+
+        // 15/page (table rows are far denser than the old card grid).
+        $grid = $this->buildProposalGrid($where, (int) $request->query('page', 1), 15);
+
+        // Match count is null (rendered as "—") for a client with no
+        // Partner Requirements set yet — getProposalMatchesCount() would
+        // just return 0 either way, but null is honest about WHY: nothing
+        // to compute against, not "0 candidates found".
+        $memberIds = collect($grid['members'])->pluck('id');
+        $withPreferenceIds = $memberIds->isEmpty()
+            ? collect()
+            : PartnerPreference::whereIn('user_id', $memberIds)->pluck('user_id')->flip();
+        foreach ($grid['members'] as $member) {
+            $member->matchesCount = $withPreferenceIds->has($member->id)
+                ? User::find($member->id)->getProposalMatchesCount()
+                : null;
+        }
 
         return view('team.proposals-mine', $grid);
+    }
+
+    /**
+     * "My Matches" (client mockup, Sep 2026) — every one of the viewer's
+     * OWN clients, each paired with its single best AI match, all on one
+     * page. Separate from AI Match Center (team.matches — pick any one of
+     * your own proposals from a dropdown, filter, see every candidate);
+     * this page has no controls at all, just a live-updating summary of
+     * where each client currently stands.
+     */
+    public function myMatches()
+    {
+        $viewerId = auth()->id();
+        $myProposals = User::where('added_by', $viewerId)->get();
+
+        $pairs = collect();
+        foreach ($myProposals as $proposal) {
+            $preference = $proposal->partnerPreference;
+            if (!$preference) {
+                continue;
+            }
+
+            $proposalProfile = $proposal->profile();
+            [$best, $bestCompat] = $this->bestMatchFor($proposal, $preference, $proposalProfile);
+            if (!$best) {
+                continue;
+            }
+
+            $owner = User::find($best->added_by);
+            $ownerProfile = $owner ? $owner->profile() : null;
+
+            $pairs->push([
+                'client' => $proposalProfile,
+                'match' => $best,
+                'compat' => $bestCompat,
+                'ownerName' => $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown',
+                'ownerLocation' => $ownerProfile ? ($ownerProfile->lbl_city ?: $ownerProfile->lbl_con_of_residence) : null,
+                'ownerPhone' => $owner->contact_mobile_number ?? null,
+                'ownerExperience' => $owner->experience ?? null,
+                // "Verified owner" = an admin-approved, active team member
+                // account (see AdminController::approveMatchmakerApplication())
+                // — not to be confused with a CLIENT's photo_verification_status.
+                'ownerVerified' => $owner && (int) $owner->is_team_member === 1 && $owner->team_member_status === 'active',
+            ]);
+        }
+
+        $pairs = $pairs->sortByDesc(fn ($p) => $p['compat']['percent'] ?? 0)->values();
+
+        return view('team.my-matches', [
+            'pairs' => $pairs,
+            'activeClientProfiles' => $myProposals->count(),
+            'bestMatchesReady' => $pairs->count(),
+            'highestCompatibility' => $pairs->isNotEmpty() ? ($pairs->first()['compat']['percent'] ?? 0) : 0,
+        ]);
+    }
+
+    /**
+     * Shared by myMatches() and matchmakers() — the single highest-scoring
+     * candidate for one proposal, out of its (already gender/active/
+     * preference-filtered) candidate pool. Returns [null, null] if it has
+     * no Partner Requirements or no candidates score at all.
+     */
+    private function bestMatchFor(User $proposal, PartnerPreference $preference, $proposalProfile): array
+    {
+        $best = null;
+        $bestCompat = null;
+        foreach ($proposal->getProposalMatches(20) as $candidate) {
+            $compat = $candidate->compatibilityWith($preference, [], $proposalProfile);
+            $percent = $compat['percent'] ?? 0;
+            if ($best === null || $percent > ($bestCompat['percent'] ?? -1)) {
+                $best = $candidate;
+                $bestCompat = $compat;
+            }
+        }
+
+        return [$best, $bestCompat];
     }
 
     /**
@@ -178,9 +284,16 @@ class TeamController extends Controller
         // "Clear filters" (a plain link back to this same route with no
         // query string) lands here too, so it resets to this same default
         // rather than an empty results-head/photo-less page.
-        $filterKeys = ['keyword', 'profession', 'country', 'gender', 'aged_from', 'aged_to', 'religion', 'caste', 'marital_status', 'mother_tongue', 'education', 'city', 'current_city'];
+        //
+        // ?view=all opts out of that default — the sidebar's "Team
+        // Proposals" link uses it (client request, Sep 2026: that entry
+        // point should show every team member's proposals, not just
+        // whatever "Doctor" happens to match) while "Advanced Search"
+        // keeps linking here with no params, still landing on the Doctor
+        // demo default.
+        $filterKeys = ['keyword', 'profession', 'country', 'gender', 'aged_from', 'aged_to', 'religion', 'caste', 'marital_status', 'mother_tongue', 'education', 'city', 'current_city', 'matchmaker'];
         $hasAnyFilter = collect($filterKeys)->contains(fn ($key) => $request->filled($key));
-        if (!$hasAnyFilter) {
+        if (!$hasAnyFilter && $request->query('view') !== 'all') {
             $request->merge(['keyword' => 'Doctor']);
         }
 
@@ -218,6 +331,12 @@ class TeamController extends Controller
         }
         if (!empty($request->current_city)) {
             $where .= " and `u`.`current_city` LIKE '%" . addslashes($request->current_city) . "%'";
+        }
+        // Not part of the visible quick-search UI — set by "View proposals"
+        // on the Matchmakers Directory (team.matchmakers) to jump straight
+        // to one matchmaker's own proposals.
+        if (!empty($request->matchmaker)) {
+            $where .= " and `u`.`added_by` = " . (int) $request->matchmaker;
         }
         // "Search by keyword" quick-search tab (Advanced Search redesign, Sep
         // 2026) — a loose OR across the handful of free-text fields, rather
@@ -439,6 +558,7 @@ class TeamController extends Controller
      */
     public function matchmakers()
     {
+        $viewerId = auth()->id();
         $members = User::where('is_team_member', 1)
             ->where('team_member_status', 'active')
             ->orderBy('first_name')
@@ -452,9 +572,77 @@ class TeamController extends Controller
             $member->successfulMatchesCount = \App\SuccessfulMatch::where('partner_a_id', $member->id)
                 ->orWhere('partner_b_id', $member->id)
                 ->count();
+            // "Senior Partner" ribbon (client mockup, Sep 2026) — experience
+            // is a single free-text field (e.g. "Senior Matchmaker • 6
+            // years", set on the matchmaker application form), there's no
+            // separate structured seniority level to read instead.
+            $member->isSenior = stripos((string) $member->experience, 'senior') !== false;
+            $member->hasRealPhoto = Images::where('user_id', $member->id)->exists();
         }
 
-        return view('team.matchmakers', ['members' => $members]);
+        // "Recommended for your clients" (client mockup, Sep 2026) — for
+        // each of MY clients with Partner Requirements set, every OTHER
+        // matchmaker's candidate that scores above 0, ranked highest
+        // first, capped to the top 3 shown. "Add match in one click"
+        // reuses the same real WhatsApp forward action as AI Match
+        // Center's "Forward Both" (team.matches.forward); "Added to My
+        // Matches" just means this candidate is ALREADY that client's
+        // single best match on the My Matches page (bestMatchFor()) —
+        // there's nothing left to add, it's already surfaced there.
+        $myClients = User::where('added_by', $viewerId)->get();
+        $recommendations = collect();
+        foreach ($myClients as $client) {
+            $preference = $client->partnerPreference;
+            if (!$preference) {
+                continue;
+            }
+            $clientProfile = $client->profile();
+            [$overallBest] = $this->bestMatchFor($client, $preference, $clientProfile);
+
+            foreach ($client->getProposalMatches(10) as $candidate) {
+                if ($candidate->added_by == $viewerId) {
+                    continue;
+                }
+                $compat = $candidate->compatibilityWith($preference, [], $clientProfile);
+                $percent = $compat['percent'] ?? 0;
+                if ($percent <= 0) {
+                    continue;
+                }
+                $owner = User::find($candidate->added_by);
+                $reasons = collect($compat['checks'] ?? [])->filter(fn ($c) => $c['matched'])->pluck('label')->take(3)->implode(' • ');
+                $recommendations->push([
+                    'client' => $clientProfile,
+                    'candidate' => $candidate,
+                    'percent' => $percent,
+                    'reasons' => $reasons,
+                    'ownerName' => $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown',
+                    'isTopMatch' => $overallBest && $overallBest->id === $candidate->id,
+                ]);
+            }
+        }
+        $recommendations = $recommendations->sortByDesc('percent')->take(3)->values();
+
+        return view('team.matchmakers', compact('members', 'recommendations'));
+    }
+
+    /**
+     * "Upload my photo" / "Add photo" (Matchmakers Directory, client
+     * mockup, Sep 2026) — reuses storeProposalPhoto() as-is (it only ever
+     * keys off whatever User instance is passed in, proposal or not) so a
+     * team member can set their OWN profile photo without touching
+     * member/profile/pictures at all (see EnsureTeamMembersUseTeamDashboard,
+     * which still blocks team members from every member/* page except the
+     * one dataid-view exemption).
+     */
+    public function uploadMyPhoto(Request $request)
+    {
+        if (!$this->storeProposalPhoto(auth()->user(), $request->file('image'))) {
+            Session::flash('message', 'danger|Please upload a valid image (jpeg, png, webp or gif, max 5MB).');
+            return redirect()->back();
+        }
+
+        Session::flash('message', 'success|Photo uploaded.');
+        return redirect()->back();
     }
 
     public function create()
