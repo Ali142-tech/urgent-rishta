@@ -16,6 +16,7 @@ class Appointment extends Model
         'subject',
         'notes',
         'status',
+        'calendar_invite_sent_at',
     ];
 
     protected $casts = [

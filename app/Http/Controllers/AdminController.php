@@ -1242,9 +1242,47 @@ class AdminController extends Controller
 
         Log::info("Admin updated appointment #{$id} to status '{$request->status}'");
 
-        return ['code' => '200', 'message' => 'Appointment updated.'];
+        // Calendar invite (.ics email): a confirmed (scheduled) appointment
+        // is emailed to the client + this admin; a cancelled/reopened one is
+        // withdrawn. Never blocks the save itself.
+        $calendarNote = $this->sendAppointmentCalendarInvite($appointment);
+
+        return ['code' => '200', 'message' => 'Appointment updated.' . $calendarNote];
     }
 
+    /**
+     * Calendar hand-off after an appointment's status/date/time changes.
+     *  - confirmed: an .ics invitation is emailed to the client and the
+     *    scheduling admin (Gmail/Outlook/Apple offer Yes / Add-to-calendar).
+     *    A reschedule re-sends it with the same event ID so calendars update
+     *    the existing event instead of adding a second one.
+     *  - cancelled / reopened (pending): the invite is withdrawn (only if one
+     *    was actually sent).
+     * Never blocks the save itself — failures come back as a note.
+     */
+    private function sendAppointmentCalendarInvite(Appointment $appointment): string
+    {
+        $invites = app(\App\Services\AppointmentInviteService::class);
+        $adminEmail = auth()->user()->email ?? null;
+
+        try {
+            if ($appointment->status === 'confirmed') {
+                $sent = $invites->sendInvite($appointment, $adminEmail);
+                if (!$sent) {
+                    return ' (No calendar invite sent — the request has no valid client email and your account has none.)';
+                }
+                return ' Calendar invite emailed to ' . implode(' and ', $sent) . '.';
+            }
+            if (in_array($appointment->status, ['cancelled', 'pending'], true)) {
+                $sent = $invites->sendCancel($appointment, $adminEmail);
+                return $sent ? ' Cancellation emailed to ' . implode(' and ', $sent) . '.' : '';
+            }
+        } catch (\Throwable $e) {
+            Log::error("Calendar invite failed for appointment #{$appointment->id}: " . $e->getMessage());
+            return ' (Saved, but the calendar invite failed: ' . $e->getMessage() . ')';
+        }
+        return '';
+    }
     /**
      * List users who have any package: admin-assigned (offline) or online subscription.
      * Admin only. Filters: search (name/email/dataid), package type (all / admin_only / online_only), specific package.

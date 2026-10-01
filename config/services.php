@@ -57,4 +57,10 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    // Calendar invites (.ics) emailed when an admin schedules an appointment.
+    'appointment_calendar' => [
+        'timezone' => env('APPOINTMENT_TIMEZONE', 'Asia/Karachi'),
+        'duration_minutes' => env('APPOINTMENT_DURATION_MINUTES', 30),
+    ],
+
 ];

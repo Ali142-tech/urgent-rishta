@@ -47,6 +47,12 @@
                     @else
                         <span class="ur-admin-badge ur-admin-badge--neutral">Unassigned</span>
                     @endif
+                    @if(!empty(trim((string) $member->contact_mobile_number)))
+                        <a href="{{ \App\User::whatsappLinkForNumber($member->contact_mobile_number) }}" target="_blank" rel="noopener" title="Chat with {{ $member->first_name }} on WhatsApp" aria-label="Chat on WhatsApp"
+                           style="display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; background:#25D366; color:#fff !important; font-size:15px; line-height:1 !important; padding:0 !important; vertical-align:middle; text-decoration:none;">
+                            <i class="fa fa-whatsapp" style="color:#fff;"></i>
+                        </a>
+                    @endif
                     @if($member->is_team_member == 1)
                         <span id="team_member_label_{{ $member->dataid }}" class="ur-admin-badge ur-admin-badge--neutral">Team Member</span>
                         <span id="team_member_status_label_{{ $member->dataid }}" class="ur-admin-badge {{ $member->team_member_status === 'active' ? 'ur-admin-badge--success' : 'ur-admin-badge--warning' }}">{{ ucfirst($member->team_member_status ?? 'active') }}</span>

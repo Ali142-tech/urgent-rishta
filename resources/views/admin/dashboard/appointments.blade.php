@@ -140,7 +140,8 @@
             data: $.extend({ _token: "{{ csrf_token() }}" }, data),
             success: function (result) {
                 if (result.code == '200') {
-                    showAlert('success', successMessage || result.message, 3000);
+                    var extra = (result.message || '').replace('Appointment updated.', '').trim();
+                    showAlert('success', (successMessage || result.message) + (extra ? ' ' + extra : ''), extra ? 7000 : 3000);
                     loadAppointmentDetail(id);
                     refreshAppointments(false);
                 } else {
