@@ -278,6 +278,79 @@
         // supported (most mobile browsers, Edge/Chrome on Windows) — every
         // other browser falls back to the existing WhatsApp text+link
         // redirect, same as before.
+        // Step two of a long share: the photos are already in WhatsApp, now offer
+        // the client form text as its own share (needs a fresh tap, so a bar).
+        // Step two of a photo share: the photos are already in WhatsApp, now offer
+        // the client form (the pasted original) as its own share. The pending form is
+        // also kept in sessionStorage because, after WhatsApp opens, a phone with
+        // little memory often reloads this tab on return and a plain in-page bar
+        // would be lost. The text is copied to the clipboard as well, so it can
+        // simply be pasted into the chat.
+        var UR_PENDING_KEY = 'ur_pending_form_share';
+        function rememberPendingFormShare(p) {
+            try { sessionStorage.setItem(UR_PENDING_KEY, JSON.stringify({ title: p.title || '', text: p.text || '', fallback: p.fallback || '', ts: Date.now() })); } catch (e) {}
+        }
+        function clearPendingFormShare() {
+            try { sessionStorage.removeItem(UR_PENDING_KEY); } catch (e) {}
+        }
+        function copyFormText(text) {
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(function () {});
+            } catch (e) {}
+        }
+        function offerFormTextShare(p) {
+            var old = document.getElementById('ur_share_text_bar');
+            if (old) old.remove();
+            var bar = document.createElement('div');
+            bar.id = 'ur_share_text_bar';
+            bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:14px;z-index:100001;background:#123A2E;color:#fff;border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 12px 32px rgba(0,0,0,.35);font-size:13px;';
+            bar.innerHTML = '<span style="flex:1;line-height:1.35;"><b>Photos shared.</b> Now send the client form (' + (p.title || 'profile') + ') &mdash; it is also copied, so you can paste it in the chat.</span>'
+                + '<button type="button" id="ur_share_text_go" style="background:#25D366;color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:700;">Send form</button>'
+                + '<button type="button" id="ur_share_text_x" aria-label="Dismiss" style="background:transparent;color:#fff;border:0;font-size:20px;line-height:1;">&times;</button>';
+            document.body.appendChild(bar);
+            document.getElementById('ur_share_text_x').onclick = function () { bar.remove(); clearPendingFormShare(); };
+            document.getElementById('ur_share_text_go').onclick = function () {
+                var payload = { title: p.title || '', text: p.text || '' };
+                bar.remove();
+                clearPendingFormShare();
+                if (navigator.share && (!navigator.canShare || navigator.canShare(payload))) {
+                    navigator.share(payload).catch(function (err) {
+                        if (!err || err.name !== 'AbortError') window.open(p.fallback, '_blank');
+                    });
+                } else {
+                    window.open(p.fallback, '_blank');
+                }
+            };
+        }
+        // Back from WhatsApp after a reload? Put the "Send form" bar back (15 min window).
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                var raw = sessionStorage.getItem(UR_PENDING_KEY);
+                if (!raw) return;
+                var p = JSON.parse(raw);
+                if (!p || !p.text || Date.now() - (p.ts || 0) > 15 * 60 * 1000) { clearPendingFormShare(); return; }
+                offerFormTextShare(p);
+            } catch (e) {}
+        });
+        // Does this device need photos and form sent as two shares?
+        // Default: no (single share). Yes for Samsung Galaxy A0x (Chrome hides the
+        // model in the user-agent, so ask userAgentData). Per-browser override for
+        // support: localStorage.ur_share_two_step = '1' (force) or '0' (never).
+        function shareNeedsTwoStep() {
+            try {
+                var o = localStorage.getItem('ur_share_two_step');
+                if (o === '1') return Promise.resolve(true);
+                if (o === '0') return Promise.resolve(false);
+            } catch (e) {}
+            var A0X = /SM-A0\d{2}/i;
+            if (A0X.test(navigator.userAgent || '')) return Promise.resolve(true);
+            if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+                return navigator.userAgentData.getHighEntropyValues(['model'])
+                    .then(function (v) { return A0X.test((v && v.model) || ''); })
+                    .catch(function () { return false; });
+            }
+            return Promise.resolve(false);
+        }
         // WhatsApp shows "N items could not be sent" for originals that are too
         // large or whose real format doesn't match the extension. Re-draw every
         // photo into a plain JPEG (longest side <= 1600px) so what we hand to
@@ -352,12 +425,27 @@
                             return shareNormalizeImage(blob, i, extFromUrl(url));
                         });
                     })).then(function (files) {
-                        var data = { files: files, title: p.title || '', text: p.text || '' };
-                        if (!navigator.canShare(data)) { openLink(p.fallback || a.href); return; }
-                        return navigator.share(data).catch(function (err) {
-                            if (err && err.name !== 'AbortError') openLink(p.fallback || a.href);
+                        // ONE share by default: photos + client form together (title + text).
+                        // The only exception is a phone known to make WhatsApp reject
+                        // "photos + text" in a single share (Samsung Galaxy A0x, e.g. A07:
+                        // "N items couldn't be sent"); there the photos go first and the
+                        // form follows via the bar. See shareNeedsTwoStep().
+                        return shareNeedsTwoStep().then(function (twoStep) {
+                            var data = twoStep ? { files: files } : { files: files, title: p.title || '', text: p.text || '' };
+                            if (!navigator.canShare(data)) { openLink(p.fallback || a.href); return; }
+                            if (twoStep) { rememberPendingFormShare(p); copyFormText(p.text || ''); }
+                            return navigator.share(data).then(function () {
+                                if (twoStep) offerFormTextShare(p);
+                            }).catch(function (err) {
+                                if (err && err.name === 'AbortError') { clearPendingFormShare(); return; }          // user closed the sheet
+                                if (typeof showAlert === 'function') showAlert('danger', 'Could not share the photos (' + (err && err.name || 'error') + '). Opening WhatsApp with the text instead.', 5000);
+                                openLink(p.fallback || a.href);
+                            });
                         });
-                    }).catch(function () { openLink(p.fallback || a.href); });
+                    }).catch(function (err) {
+                        if (typeof showAlert === 'function') showAlert('danger', 'Could not prepare the photos: ' + (err && err.message || 'unknown error'), 5000);
+                        openLink(p.fallback || a.href);
+                    });
                 })
                 .catch(function () { openLink(a.href); })
                 .finally(done);

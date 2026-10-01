@@ -1458,7 +1458,7 @@ TEMPLATE;
             'photos' => array_values($photos),
             // wa.me link used when the browser can't attach files.
             'fallback' => route('team.proposals.share.whatsapp', ['dataid' => $proposal->dataid, 'with_photos' => $photos ? 1 : 0]),
-        ]);
+        ], 200, [], JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
     }
 
     /**
