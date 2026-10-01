@@ -736,7 +736,7 @@ TEMPLATE;
             'gender' => 'required|string',
             // The raw pasted text, preserved verbatim (mockup, Sep 2026 —
             // see add_raw_intake_text_to_users_table's docblock).
-            'raw_intake_text' => 'nullable|string|max:5000',
+            'raw_intake_text' => 'required|string|min:100|max:5000',
             // Optional (client's WhatsApp intake template doesn't collect
             // these) — checked directly against the DB (SHOW INDEX): no
             // real unique constraint on either column, so a blank one is
@@ -773,7 +773,7 @@ TEMPLATE;
             'con_of_citizenship' => 'required|string',
             'country' => 'required|string',
             'current_city' => 'required|string|max:150',
-            'income' => 'required|string|max:50',
+            'income' => 'nullable|string|max:50',
             'father_occupation' => 'nullable|string|max:255',
             'mother_occupation' => 'nullable|string|max:255',
             'siblings_brothers' => 'nullable|string|max:2000',
@@ -797,8 +797,8 @@ TEMPLATE;
             'pref_age_max' => 'required|integer|min:18|max:99',
             'pref_height' => 'required|string|max:100',
             'pref_city' => 'required|string|max:150',
-            'pref_caste_note' => 'required|string|max:255',
-            'pref_qualification_note' => 'required|string|max:2000',
+            'pref_caste_note' => 'nullable|string|max:255',
+            'pref_qualification_note' => 'nullable|string|max:2000',
             'pref_profession' => 'required|string|max:150',
             'pref_religion' => 'required|string',
             'partner_requirements' => 'nullable|string|max:2000',

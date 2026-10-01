@@ -147,14 +147,35 @@
     .ur-team-form .ur-pp-photos-head .ur-opt { font-size: 12px; color: #6B7570; }
     .ur-pp-photo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .ur-pp-photo-slot { position: relative; }
-    .ur-pp-photo-slot__drop { height: 150px; border-radius: 14px; border: 1.5px dashed #D8D2C2; background: #F3F0E8; overflow: hidden; }
-    .ur-pp-photo-slot__drop img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; }
+    .ur-pp-photo-slot__drop { height: 230px; border-radius: 14px; border: 1.5px dashed #D8D2C2; background: #F3F0E8; overflow: hidden; }
+    .ur-pp-photo-slot__drop { position: relative; }
+    .ur-pp-photo-slot__drop.is-reference::after { content: 'Sample photo'; position: absolute; top: 8px; left: 8px; padding: 3px 9px; border-radius: 999px; background: rgba(15,63,48,.85); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .03em; }
+    .ur-pp-photo-slot__drop img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; }
     .ur-team-form label.ur-pp-photo-slot__btn { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 36px; margin: 0; border-radius: 10px; background: rgba(15,63,48,.92); color: #fff; font-size: 12px; font-weight: 800; line-height: 1 !important; cursor: pointer; text-align: center; }
     .ur-team-form label.ur-pp-photo-slot__btn:hover { background: #0B3B2E; }
     .ur-team-form .ur-pp-meta-row { margin-top: 16px; font-size: 13px; color: #6B7570; }
     .ur-team-form .ur-paste-box__fill-btn { border-radius: 14px; padding: 0 22px; height: 46px; font-size: 14.5px; font-weight: 800; box-shadow: 0 8px 20px rgba(15,46,36,.18); }
     .ur-team-form .ur-pp-protect-box { border-radius: 14px; padding: 14px 16px; font-size: 13px; line-height: 1.5 !important; }
     @media (max-width: 560px) { .ur-pp-photo-grid { grid-template-columns: 1fr; } }
+
+    .ur-pp-paste-meta { display: flex; justify-content: space-between; gap: 10px; margin: -8px 0 16px; font-size: 12px; }
+    .ur-pp-paste-meta #paste_char_count { font-weight: 800; color: #6B7570; }
+    .ur-pp-paste-meta #paste_error { color: #B5674A; font-weight: 700; }
+    .ur-pp-textarea.is-invalid { border-color: #E6968C; background: #FCF5F3; }
+    .ur-pp-saving { position: fixed; inset: 0; z-index: 100000; background: rgba(15,46,36,.55); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+    .ur-pp-saving__box { display: flex; flex-direction: column; align-items: center; gap: 10px; background: #fff; border-radius: 18px; padding: 28px 34px; box-shadow: 0 24px 60px rgba(0,0,0,.28); text-align: center; max-width: 320px; }
+    .ur-pp-saving__box b { font-size: 16px; color: #123A2E; }
+    .ur-pp-saving__box small { font-size: 12px; color: #6B7570; line-height: 1.4; }
+    .ur-pp-saving__spinner { width: 38px; height: 38px; border-radius: 50%; border: 4px solid #E7E2D6; border-top-color: #123A2E; animation: urPpSpin .8s linear infinite; }
+    #pp_submit_btn.is-loading { opacity: .85; pointer-events: none; }
+    #pp_submit_btn .ur-btn-spinner { display: inline-block; width: 15px; height: 15px; border-radius: 50%; border: 2px solid rgba(255,255,255,.45); border-top-color: #fff; animation: urPpSpin .8s linear infinite; }
+    @keyframes urPpSpin { to { transform: rotate(360deg); } }
+    .ur-pp-manual { border-top: 1px solid #E7E2D6; margin: 18px 0 8px; padding-top: 14px; }
+    .ur-pp-manual__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+    .ur-pp-manual__head b { font-size: 13px; color: #1C2321; }
+    .ur-pp-manual__head span { font-size: 11px; color: #9AA5A0; }
+    .ur-pp-manual__tag { display: inline-block; margin-left: 4px; padding: 2px 8px; border-radius: 999px; background: #FBF0DA; color: #8A6218; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+    .ur-pp-manual__note { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #FCF6EA; border: 1px solid #F0DDB0; font-size: 11.5px; line-height: 1.5; color: #6B5A33; }
 </style>
 
 <div class="ur-team-form">
@@ -207,7 +228,9 @@
                     {{ $__owner->first_name }} {{ $__owner->last_name }}{{ $__owner->experience ? ' — '.$__owner->experience : '' }} — {{ $__owner->dataid }}
                 </div>
 
-                <textarea id="paste_box" class="ur-pp-textarea" placeholder="Paste the client's filled-in reply here — PERSONAL INFORMATION&#10;Gender: ...&#10;Age: ...&#10;Marital Status: ...&#10;..."></textarea>
+                <label for="paste_box">Client details <span class="ur-pp-manual__tag" style="background:#FCEBE8;color:#B5674A;">Required</span> <span class="ur-opt">minimum 100 characters &mdash; include what the client is looking for in a partner</span></label>
+                <textarea id="paste_box" class="ur-pp-textarea" required minlength="100" placeholder="Paste the client's filled-in reply here — PERSONAL INFORMATION&#10;Gender: ...&#10;Age: ...&#10;Marital Status: ...&#10;..."></textarea>
+                <div class="ur-pp-paste-meta" id="paste_meta"><span id="paste_char_count">0 / 100 minimum</span><span id="paste_error" style="display:none;">Please enter at least 100 characters.</span></div>
 
                 <div class="ur-pp-photos-head">
                     <label>Client photos</label>
@@ -219,14 +242,14 @@
                         {{-- Default male/female placeholder (Profile::defaultImage()) until a
                              file is picked; the "Upload/Replace photo" label sits over the
                              preview and is the only visible file control (input is hidden). --}}
-                        <div class="ur-pp-photo-slot__drop" id="photo_preview_{{ $__n }}"><img id="photo_default_{{ $__n }}" src="{{ \App\Profile::defaultImage($__n === 1 ? 'male' : 'female') }}" alt=""></div>
+                        <div class="ur-pp-photo-slot__drop is-reference" id="photo_preview_{{ $__n }}" data-default-src="{{ asset('images/reference/reference-photo-'.$__n.'.jpg') }}"><img id="photo_default_{{ $__n }}" data-reference="1" src="{{ asset('images/reference/reference-photo-'.$__n.'.jpg') }}" alt="Sample photo {{ $__n }}"></div>
                         <label class="ur-pp-photo-slot__btn" id="photo_label_{{ $__n }}" for="photo_input_{{ $__n }}" data-upload="Upload photo {{ $__n }}" data-replace="Replace photo {{ $__n }}"><i class="fa fa-camera"></i> Upload photo {{ $__n }}</label>
                         <input type="file" id="photo_input_{{ $__n }}" name="image{{ $__n }}" form="af_form" accept="image/*" hidden onchange="urPreviewProposalPhoto(this, 'photo_preview_{{ $__n }}', 'photo_label_{{ $__n }}', 'Photo {{ $__n }}')">
                     </div>
                     @endforeach
                 </div>
                 <div class="ur-pp-meta-row">
-                    <span id="paste_char_count">0 characters</span> • Original text is preserved
+                    Original text is preserved
                     <button type="button" class="ur-paste-box__fill-btn" id="paste_fill_btn"><i class="fa fa-magic"></i> Extract with AI</button>
                 </div>
                 <p class="ur-step-note">Currently matches known section headers/labels in the pasted text — full AI extraction is a planned upgrade, not live yet.</p>
@@ -249,7 +272,6 @@
                     <div class="ur-pp-result-empty__icon"><i class="fa fa-magic"></i></div>
                     <h4>Ready to organize</h4>
                     <p>Click "Extract with AI" to convert the pasted text into searchable profile fields.</p>
-                    <p style="margin-top:10px;"><a href="#" id="pp_skip_to_manual" style="font-size:11.5px; color:#9AA5A0;">Nothing to paste? Fill in the form manually &rarr;</a></p>
                 </div>
 
                 <div id="pp_review_compact" style="display:none;">
@@ -365,16 +387,8 @@
                             <input type="text" name="height" form="af_form" class="form-control" placeholder="e.g. 5'8" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_income">
-                            <label>Income</label>
-                            <input type="text" name="income" form="af_form" class="form-control" required>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
+                       
                     </div>
-
-                    <label style="margin-top:16px;">Partner Requirements <span class="ur-opt">Optional</span></label>
-                    <textarea id="pref_requirements_text" name="partner_requirements" form="af_form" class="form-control" rows="3" placeholder="What is the client looking for in a partner? e.g. Well-educated professional, age 30-36, preferably UK-based, height 5'10 or above. Caste flexible.">{{ old('partner_requirements') }}</textarea>
-                    <p class="ur-step-note">Describe it above and we'll try to pull the fields below out of it automatically — anything not recognized, just fill in directly.</p>
 
                     <div class="ur-pp-review__grid" style="margin-top:10px;">
                         <div class="ur-pp-review__field" id="pp_field_pref_profession">
@@ -390,11 +404,6 @@
                                     <option value="{{ $religion->dataid }}" {{ old('pref_religion') == $religion->dataid ? 'selected' : '' }}>{{ $religion->name }}</option>
                                 @endforeach
                             </select>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_caste">
-                            <label>Partner's Caste</label>
-                            <input type="text" name="pref_caste_note" form="af_form" class="form-control" placeholder="e.g. Any caste but not Mughal" value="{{ old('pref_caste_note') }}" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_city">
@@ -416,14 +425,49 @@
                             <input type="text" name="pref_height" form="af_form" class="form-control" placeholder="e.g. Same or close to similar height" value="{{ old('pref_height') }}" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_qualification" style="grid-column: 1 / -1;">
-                            <label>Qualification</label>
-                            <textarea name="pref_qualification_note" form="af_form" class="form-control" rows="2" placeholder="e.g. Seeking a well-educated individual (preferably a doctor)..." required>{{ old('pref_qualification_note') }}</textarea>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
+                       
                     </div>
 
-                    <button type="submit" class="ur-submit-btn" style="margin-top:14px; width:100%; justify-content:center;"><i class="fa fa-check"></i> Confirm &amp; Save</button>
+                    {{-- Classification fields that are never auto-filled by the
+                         paste parser — the team member picks them by hand. (Profile
+                         category was dropped from this form on purpose.) --}}
+                    <div class="ur-pp-manual">
+                        <div class="ur-pp-manual__head">
+                            <b>Complete manually</b>
+                            <span>AI will not select these fields.</span>
+                        </div>
+                        <div class="ur-pp-review__grid">
+                            <div class="ur-pp-review__field" id="pp_field_family_status">
+                                <label>Family status <span class="ur-pp-manual__tag">Manual</span></label>
+                                <select name="family_status" form="af_form" class="form-control">
+                                    <option value="">Select family status</option>
+                                    @foreach(['Middle Class', 'Upper Middle Class', 'Royal Class'] as $__opt)
+                                        <option value="{{ $__opt }}" {{ old('family_status') === $__opt ? 'selected' : '' }}>{{ $__opt }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="ur-pp-review__field" id="pp_field_looking_from">
+                                <label>Looking from Pak/Abroad <span class="ur-pp-manual__tag">Manual</span></label>
+                                <select name="looking_from" form="af_form" class="form-control">
+                                    <option value="">Select Pakistan / Abroad</option>
+                                    @foreach(['Pakistan', 'Abroad'] as $__opt)
+                                        <option value="{{ $__opt }}" {{ old('looking_from') === $__opt ? 'selected' : '' }}>{{ $__opt }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="ur-pp-review__field" id="pp_field_presentation_highlight" style="grid-column: 1 / -1;">
+                                <label>Presentation highlight <span class="ur-pp-manual__tag">Manual</span></label>
+                                <select name="presentation_highlight" form="af_form" class="form-control">
+                                    <option value="">Select presentation</option>
+                                    <option value="Standard" {{ old('presentation_highlight') === 'Standard' ? 'selected' : '' }}>Standard Presentation</option>
+                                    <option value="Highly Attractive" {{ old('presentation_highlight') === 'Highly Attractive' ? 'selected' : '' }}>Highly Attractive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p class="ur-pp-manual__note"><b>Fair premium tagging:</b> &ldquo;Highly Attractive&rdquo; is only ever chosen by a team member after looking at the client's photo &mdash; AI never selects it.</p>
+                    </div>
+
+                    <button type="submit" id="pp_submit_btn" class="ur-submit-btn" style="margin-top:14px; width:100%; justify-content:center;"><i class="fa fa-check"></i> <span id="pp_submit_label">Confirm &amp; Save</span></button>
                 </div>
             </div>
         </div>
@@ -449,6 +493,13 @@
     </form><!-- /.ur-pp-wrap -->
 </div><!-- /.ur-team-form -->
 
+<div id="pp_saving_overlay" class="ur-pp-saving" style="display:none;" role="status" aria-live="polite">
+    <div class="ur-pp-saving__box">
+        <span class="ur-pp-saving__spinner"></span>
+        <b>Saving proposal&hellip;</b>
+        <small>Uploading photos and finding matches &mdash; please don't close this page.</small>
+    </div>
+</div>
 <script>
 var UR_DEFAULT_IMAGES = {
     male: @json(\App\Profile::defaultImage('male')),
@@ -460,15 +511,21 @@ function urPreviewProposalPhoto(input, previewId, labelId, baseLabel) {
     var label = labelId ? document.getElementById(labelId) : null;
     if (input.files && input.files[0]) {
         var reader = new FileReader();
-        reader.onload = function (e) { preview.innerHTML = '<img src="' + e.target.result + '">'; };
+        reader.onload = function (e) { preview.classList.remove('is-reference'); preview.innerHTML = '<img src="' + e.target.result + '">'; };
         reader.readAsDataURL(input.files[0]);
         if (label) label.innerHTML = label.dataset.replace ? '<i class="fa fa-camera"></i> ' + label.dataset.replace : baseLabel + ' <span class="ur-opt">Replace</span>';
     } else {
         // Back to the gender-appropriate default placeholder, not a bare
         // text label — same convention used everywhere else in this app.
-        var genderEl = document.querySelector('[name="gender"]');
-        var g = (genderEl && genderEl.value === 'female') ? 'female' : 'male';
-        preview.innerHTML = '<img src="' + UR_DEFAULT_IMAGES[g] + '">';
+        if (preview.dataset.defaultSrc) {
+            // Back to the sample reference photo for this slot.
+            preview.classList.add('is-reference');
+            preview.innerHTML = '<img data-reference="1" src="' + preview.dataset.defaultSrc + '">';
+        } else {
+            var genderEl = document.querySelector('[name="gender"]');
+            var g = (genderEl && genderEl.value === 'female') ? 'female' : 'male';
+            preview.innerHTML = '<img src="' + UR_DEFAULT_IMAGES[g] + '">';
+        }
         if (label) label.innerHTML = label.dataset.upload ? '<i class="fa fa-camera"></i> ' + label.dataset.upload : baseLabel + ' <span class="ur-opt">Optional</span>';
     }
 }
@@ -640,7 +697,12 @@ function urCopyTemplate(event) {
             'height': function (v) { setVal('pref_height', v); },
             'city': function (v) { setVal('pref_city', v); },
             'caste': function (v) { setVal('pref_caste_note', v); },
-            'qualification': function (v) { setVal('pref_qualification_note', v); },
+            'qualification': function (v) {
+                setVal('pref_qualification_note', v);
+                // "Well-educated professional, preferably a doctor" also tells us
+                // the partner's profession (and religion, if it is named).
+                parsePartnerRequirementsText(v);
+            },
         }},
     ];
 
@@ -816,16 +878,56 @@ function urCopyTemplate(event) {
         var casteLabel = findMatchingOptionLabel('caste', rawText);
         if (casteLabel) setVal('pref_caste_note', casteLabel);
 
-        var cityMatch = rawText.match(/\b(?:in|from|based in|near)\s+([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)\b/);
+        // City / country: "Lahore based", "UK-based", "preferably in London",
+        // "from Dubai", "near Karachi".
+        var cityMatch = rawText.match(/\b(?:in|from|based in|near|preferably)\s+([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)?)\b/)
+            || rawText.match(/\b([A-Z][a-zA-Z]+)[-\s]based\b/);
         if (cityMatch) setVal('pref_city', cityMatch[1]);
-    }
-    var prefRequirementsText = document.getElementById('pref_requirements_text');
-    if (prefRequirementsText) {
-        prefRequirementsText.addEventListener('blur', function () {
-            parsePartnerRequirementsText(prefRequirementsText.value);
-        });
+
+        // An explicit "City: Lahore" / "Location: Lahore" line wins over the guess above.
+        var cityLabel = rawText.match(/^\s*(?:preferred\s+)?(?:city|location)\s*[:\-]\s*([^\n,\/;]+)/im);
+        if (cityLabel && cityLabel[1].trim()) {
+            setVal('pref_city', cityLabel[1].trim().replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
+        }
+
+        // "5 ft 10", "5.10", "5'10" -> 5'10
+        if (!heightMatch) {
+            var ftMatch = rawText.match(/\b(\d)\s*(?:ft|feet|foot)\s*(\d{1,2})?\b/i);
+            if (ftMatch) setVal('pref_height', ftMatch[1] + "'" + (ftMatch[2] || '0'));
+        }
     }
 
+    // Partner requirements come from the SAME pasted text as everything else
+    // (there is no separate box): pick out the "looking for / seeking /
+    // partner requirements" passage and detect age range, height, city,
+    // profession, religion from it. Labelled lines such as "Partner Age: 30-36"
+    // are already handled by parseAndFill(); this covers free-flowing text.
+    var PARTNER_PASSAGE_RE = /\b(?:looking for|seeking|searching for|requirements?|partner (?:preferences?|requirements?)|expect(?:ing|s)?)\b[:\s-]*([\s\S]{8,600}?)(?:\n\s*\n|\n[A-Z ]{6,}\n|$)/i;
+
+    function detectPartnerRequirementsFromPaste(text) {
+        var m = text.match(PARTNER_PASSAGE_RE);
+        if (!m) return;
+        var passage = m[1].replace(/[ \t]+/g, ' ').replace(/\n\s*\n/g, '\n').trim();
+        if (!passage) return;
+        parsePartnerRequirementsText(passage);
+
+        // Partner qualification: when the passage talks about education,
+        // keep the client's own words (trimmed) rather than leaving it blank.
+        var q = document.querySelector('[name="pref_qualification_note"]');
+        if (q && !String(q.value || '').trim() && /educat|qualif|graduat|degree|master|mba|mbbs|phd|bachelor/i.test(passage)) {
+            // A labelled "Qualification: Well educated" line wins; otherwise keep
+            // the passage in the client's own words.
+            var qLine = passage.match(/^\s*(?:partner\s+)?(?:qualification|education)\s*[:\-]\s*(.+)$/im);
+            q.value = (qLine ? qLine[1].trim() : passage.replace(/\s*\n\s*/g, ', ')).slice(0, 250);
+        }
+    }
+
+    // The client's OWN fields must not be guessed from the partner passage
+    // (e.g. "…preferably a doctor" must not make the client a doctor).
+    function withoutPartnerPassage(text) {
+        var m = text.match(PARTNER_PASSAGE_RE);
+        return m ? text.replace(m[0], ' ') : text;
+    }
     var pasteBox = document.getElementById('paste_box');
     var charCount = document.getElementById('paste_char_count');
     var rawTextHidden = document.getElementById('raw_intake_text_hidden');
@@ -857,19 +959,16 @@ function urCopyTemplate(event) {
         { wrapper: 'pp_field_marital_status', getEl: function () { return document.querySelector('[name="marital_status"]'); }, required: true },
         { wrapper: 'pp_field_caste', getEl: function () { return document.querySelector('[name="caste"]'); }, required: true },
         { wrapper: 'pp_field_height', getEl: function () { return document.querySelector('[name="height"]'); }, required: true },
-        { wrapper: 'pp_field_income', getEl: function () { return document.querySelector('[name="income"]'); }, required: true },
         // "Partner Requirements" structured fields (client request, Sep
         // 2026 — required same as everything else in this panel). The two
         // age-range inputs share one wrapper for highlighting purposes;
         // marking/clearing "is-missing" on the same element twice is harmless.
         { wrapper: 'pp_field_pref_profession', getEl: function () { return document.querySelector('[name="pref_profession"]'); }, required: true },
         { wrapper: 'pp_field_pref_religion', getEl: function () { return document.querySelector('[name="pref_religion"]'); }, required: true },
-        { wrapper: 'pp_field_pref_caste', getEl: function () { return document.querySelector('[name="pref_caste_note"]'); }, required: true },
         { wrapper: 'pp_field_pref_city', getEl: function () { return document.querySelector('[name="pref_city"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_min"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_max"]'); }, required: true },
         { wrapper: 'pp_field_pref_height', getEl: function () { return document.querySelector('[name="pref_height"]'); }, required: true },
-        { wrapper: 'pp_field_pref_qualification', getEl: function () { return document.querySelector('[name="pref_qualification_note"]'); }, required: true },
     ];
 
     function refreshExtractionSummary() {
@@ -923,7 +1022,7 @@ function urCopyTemplate(event) {
             [1, 2].forEach(function (n) {
                 var fileInput = document.querySelector('input[name="image' + n + '"]');
                 var img = document.getElementById('photo_default_' + n);
-                if (fileInput && (!fileInput.files || !fileInput.files.length) && img) {
+                if (fileInput && (!fileInput.files || !fileInput.files.length) && img && !img.dataset.reference) {
                     img.src = UR_DEFAULT_IMAGES[g];
                 }
             });
@@ -932,7 +1031,10 @@ function urCopyTemplate(event) {
 
     if (pasteBox && charCount) {
         pasteBox.addEventListener('input', function () {
-            charCount.textContent = pasteBox.value.length + ' characters';
+            var n = pasteBox.value.trim().length;
+            charCount.textContent = n + ' / 100 minimum';
+            charCount.style.color = n >= 100 ? '#2E7D5B' : '';
+            if (n >= 100) { pasteBox.classList.remove('is-invalid'); var pe = document.getElementById('paste_error'); if (pe) pe.style.display = 'none'; }
             if (pasteBox.value.trim() && step1 && step2) {
                 step1.classList.add('is-done');
                 step2.classList.add('is-active');
@@ -998,13 +1100,22 @@ function urCopyTemplate(event) {
 
     document.getElementById('paste_fill_btn').addEventListener('click', function () {
         var text = pasteBox.value;
-        if (!text.trim()) return;
+        if (text.trim().length < 100) {
+            pasteBox.classList.add('is-invalid');
+            var pe2 = document.getElementById('paste_error'); if (pe2) pe2.style.display = '';
+            pasteBox.focus();
+            if (typeof showAlert === 'function') showAlert('danger', 'Paste at least 100 characters of client details first (including what they are looking for).', 4500);
+            return;
+        }
+        // Free-text detection of the partner fields first, so any explicit
+        // "Label: value" lines from the template (parseAndFill below) win.
+        detectPartnerRequirementsFromPaste(text);
         var count = parseAndFill(text);
         if (count === 0) {
             // No recognized "SECTION / Label: value" structure at all —
             // likely a free-flowing paragraph instead. Fall back to the
             // heuristic extractor rather than reporting a flat zero.
-            count = parseFreeTextFallback(text);
+            count = parseFreeTextFallback(withoutPartnerPassage(text));
         }
 
         if (rawTextHidden) rawTextHidden.value = text;
@@ -1016,18 +1127,6 @@ function urCopyTemplate(event) {
         revealReviewCompact();
     });
 
-    // Escape hatch — a team member with no text to paste (already knows
-    // the details) can still reach the compact fields directly.
-    var skipLink = document.getElementById('pp_skip_to_manual');
-    if (skipLink) {
-        skipLink.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (step1) step1.classList.add('is-done');
-            if (step2) step2.classList.add('is-done');
-            revealReviewCompact();
-        });
-    }
-
     // Safety net — covers a submit with the owner/paste values never
     // having changed (defaults still apply) or changed without firing
     // the listeners above for any reason. Also where "All fields
@@ -1037,26 +1136,76 @@ function urCopyTemplate(event) {
     // else on this page rather than relying only on the browser's default
     // validation bubble (which can be easy to miss if it points at a
     // field currently scrolled out of view).
+    window.addEventListener('pageshow', function () {
+        var ov = document.getElementById('pp_saving_overlay');
+        if (ov) ov.style.display = 'none';
+        if (form) form.dataset.submitting = '';
+    });
+
     if (form) {
         form.addEventListener('submit', function (e) {
+            // Already on its way to the server (Enter pressed twice, etc.).
+            if (form.dataset.submitting === '1') { e.preventDefault(); return; }
             if (rawTextHidden && pasteBox) rawTextHidden.value = pasteBox.value;
 
-            var missingRequired = CORE_FIELDS.some(function (f) {
-                if (f.optional) return false;
+            if (pasteBox && pasteBox.value.trim().length < 100) {
+                e.preventDefault();
+                pasteBox.classList.add('is-invalid');
+                var pe = document.getElementById('paste_error'); if (pe) pe.style.display = '';
+                pasteBox.focus();
+                pasteBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (typeof showAlert === 'function') showAlert('danger', 'The client details box is required (at least 100 characters).', 4500);
+                return;
+            }
+
+            // Collect every required field that is still empty, by label, so the
+            // message can say exactly what is missing (and where to find it).
+            var missingWrappers = [];
+            CORE_FIELDS.forEach(function (f) {
+                if (f.optional) return;
                 var el = f.getEl();
-                return !el || String(el.value || '').trim() === '';
+                if (!el || String(el.value || '').trim() === '') {
+                    var w = document.getElementById(f.wrapper);
+                    if (w && missingWrappers.indexOf(w) === -1) missingWrappers.push(w);
+                }
             });
-            if (missingRequired) {
+            if (missingWrappers.length) {
                 e.preventDefault();
                 if (resultEmpty) resultEmpty.style.display = 'none';
                 if (reviewCompact) reviewCompact.style.display = '';
                 refreshExtractionSummary();
-                if (reviewCompact) reviewCompact.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                var names = missingWrappers.map(function (w) {
+                    var lab = w.querySelector('label');
+                    return lab ? lab.firstChild.textContent.trim() || lab.textContent.trim() : w.id;
+                });
+                // "Height"/"Location" appear for both the client and the partner —
+                // say which section when the plain label is ambiguous.
+                names = names.map(function (n, i) {
+                    return /^pp_field_pref_/.test(missingWrappers[i].id) ? "Partner's " + n.replace(/^Partner's\s*/i, '') : n;
+                });
+
+                missingWrappers[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                var firstInput = missingWrappers[0].querySelector('input, select, textarea');
+                if (firstInput) setTimeout(function () { firstInput.focus(); }, 350);
+
                 if (typeof showAlert === 'function') {
-                    showAlert('danger', 'Please fill in every highlighted field before saving.', 4000);
+                    showAlert('danger', 'Please fill in: ' + names.join(', ') + '.', 7000);
                 }
-            }
-        });
+            } else {
+                // Everything valid -> the form is really going to the server.
+                var btn = document.getElementById('pp_submit_btn');
+                var lbl = document.getElementById('pp_submit_label');
+                if (btn) {
+                    btn.classList.add('is-loading');
+                    var ico = btn.querySelector('i');
+                    if (ico) ico.outerHTML = '<span class="ur-btn-spinner"></span>';
+                }
+                if (lbl) lbl.textContent = 'Saving...';
+                var ov = document.getElementById('pp_saving_overlay');
+                if (ov) ov.style.display = 'flex';
+                form.dataset.submitting = '1';
+            }        });
     }
 })();
 </script>
