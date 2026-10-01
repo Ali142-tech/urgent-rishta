@@ -34,14 +34,31 @@
             @if($member->photo_verification_status === 'verified')
                 <span class="ur-search-card__verified"><i class="fa fa-check-circle"></i> Verified</span>
             @endif
+            @if(!empty($member->lbl_con_of_residence))
+                <span class="ur-search-card__country" title="Country of residence">
+                    @if(!empty($member->con_of_residence_code))
+                        <img src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code, 80) }}" alt="" loading="lazy" onerror="this.style.display='none';">
+                    @else
+                        <i class="fa fa-globe"></i>
+                    @endif
+                    {{ $member->lbl_con_of_residence }}
+                </span>
+            @endif
+        </div>
+
+          <div class="ur-search-card__owner " style="font-weight: bolder">
+            <i class="fa fa-user-circle"></i> Owner: {{ $member->added_by_name }}
+            @if($member->added_by_dataid) &bull; {{ $member->added_by_dataid }} @endif
+            @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
         </div>
 
         <div class="ur-search-card__meta">
             {{ ucfirst($member->gender) }}
             @if(!empty($member->birthday)) &bull; {{ date_diff(date_create($member->birthday), date_create('now'))->y }} yrs @endif
             @if(!empty($member->lbl_marital_status)) &bull; {{ $member->lbl_marital_status }} @endif
-            @if(!empty($member->lbl_city) || !empty($member->lbl_con_of_residence)) &bull; {{ $member->lbl_city ?: $member->lbl_con_of_residence }} @endif
+            @if(!empty($member->lbl_city)) &bull; {{ $member->lbl_city }} @endif
         </div>
+
 
         @if($category === 'premium' || $category === 'royal' || $isAbroad || $highlight === 'highly attractive')
         <div class="ur-search-card__badges">
@@ -63,11 +80,7 @@
             <div class="ur-search-card__profession"><i class="fa fa-briefcase"></i> {{ $member->profession }}</div>
         @endif
 
-        <div class="ur-search-card__owner">
-            <i class="fa fa-user-circle"></i> Owner: {{ $member->added_by_name }}
-            @if($member->added_by_dataid) &bull; {{ $member->added_by_dataid }} @endif
-            @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
-        </div>
+      
 
         <div class="ur-search-card__actions">
             <a class="ur-search-card__btn" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">

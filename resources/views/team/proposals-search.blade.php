@@ -56,6 +56,9 @@
     .ur-search-card { display: flex; gap: 16px; background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 14px; transition: box-shadow .2s ease; }
     .ur-search-card:hover { box-shadow: 0 10px 26px rgba(15, 46, 36, .1); }
     .ur-search-card__photo { position: relative; flex: 0 0 120px; width: 120px; height: 120px; border-radius: 10px; overflow: hidden; background: #F6F4EF; display: block; }
+    .ur-search-card__country { margin-left: auto; display: inline-flex; align-items: center; gap: 9px; padding: 6px 14px 6px 8px; border-radius: 10px; background: #fff; border: 1px solid #E7E2D6; box-shadow: 0 1px 2px rgba(15,46,36,.06); color: #123A2E; font-size: 12px; font-weight: 700; line-height: 1.2 !important; white-space: nowrap; }
+    .ur-search-card__country img { display: block; width: 28px !important; height: auto !important; max-width: none; aspect-ratio: 3 / 2; object-fit: contain; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.18); margin: 0 !important; padding: 0 !important; flex: 0 0 28px; }
+    .ur-search-card__country i { width: 28px; text-align: center; color: #9AA5A0; font-size: 15px; }
     .ur-search-card__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .ur-search-card__ribbon { position: absolute; top: 8px; left: -28px; transform: rotate(-45deg); width: 110px; padding: 2px 0; text-align: center; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.15); }
     .ur-search-card__ribbon--new { background: #C9974D; color: #0F2E24; }
