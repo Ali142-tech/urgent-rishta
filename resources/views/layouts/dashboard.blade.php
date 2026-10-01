@@ -3,7 +3,7 @@
 
 <head>
     @include('layouts.partials.head-assets')
-    <link rel="stylesheet" href="/css/ur-dashboard.css?2">
+    <link rel="stylesheet" href="/css/ur-dashboard.css?v={{ filemtime(public_path('css/ur-dashboard.css')) }}">
     @stack('styles')
 </head>
 

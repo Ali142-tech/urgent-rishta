@@ -1409,6 +1409,59 @@ TEMPLATE;
     }
 
     /**
+     * JSON behind the Share button on Advanced Search / Team Proposals cards:
+     * the same "Form + photos" content the Complete Client File modal shares
+     * (the client profile text + the real photo files), so the browser can
+     * hand the actual images — not just a link — to WhatsApp via the native
+     * share sheet. Built here, on click, rather than embedded in every card
+     * (the intake text can be thousands of characters per profile).
+     */
+    public function sharePayload($dataid)
+    {
+        $loggedInUser = auth()->user();
+        $proposal = User::where('dataid', $dataid)->first();
+        if (!$proposal || empty($proposal->added_by)) {
+            return response()->json(['code' => '404', 'message' => 'Proposal was not found.'], 404);
+        }
+
+        AuditLog::record($loggedInUser, 'profile.shared', $proposal);
+        Log::info('Team member (' . $loggedInUser->dataid . ') shared proposal ' . $proposal->dataid . ' (native share)');
+
+        $quoted = "'" . addslashes($dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+
+        $intakeText = !empty(trim((string) ($member->raw_intake_text ?? '')))
+            ? $member->raw_intake_text
+            : $this->buildSyntheticIntakeText($member);
+        $link = route('share.proposal', $proposal->dataid);
+        $text = "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . $link;
+
+        // Full-size originals when they exist (sharper in WhatsApp); fall back
+        // to the card thumbnails otherwise. Only REAL photos — never the
+        // gender placeholder image.
+        $photos = [];
+        if (!empty($member->images)) {
+            foreach (json_decode($member->getLightGalleryImages(false), true) ?: [] as $g) {
+                if (!empty($g['src']) && file_exists(public_path($g['src']))) {
+                    $photos[] = $g['src'];
+                }
+            }
+            if (!$photos) {
+                $photos = $member->getCardImages(null, false);
+            }
+        }
+
+        return response()->json([
+            'code' => '200',
+            'title' => $proposal->dataid,
+            'text' => $text,
+            'photos' => array_values($photos),
+            // wa.me link used when the browser can't attach files.
+            'fallback' => route('team.proposals.share.whatsapp', ['dataid' => $proposal->dataid, 'with_photos' => $photos ? 1 : 0]),
+        ]);
+    }
+
+    /**
      * Set only by the proposal's own team member or an admin. Direct
      * property assignment (not mass-assignment) — same reasoning as
      * is_team_member/added_by in User::$fillable's exclusion comment.

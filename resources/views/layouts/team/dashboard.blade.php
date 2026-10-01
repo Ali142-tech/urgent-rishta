@@ -3,7 +3,7 @@
 
 <head>
     @include('layouts.partials.head-assets')
-    <link rel="stylesheet" href="/css/ur-dashboard.css?2">
+    <link rel="stylesheet" href="/css/ur-dashboard.css?v={{ filemtime(public_path('css/ur-dashboard.css')) }}">
     @stack('styles')
 </head>
 
@@ -278,6 +278,90 @@
         // supported (most mobile browsers, Edge/Chrome on Windows) — every
         // other browser falls back to the existing WhatsApp text+link
         // redirect, same as before.
+        // WhatsApp shows "N items could not be sent" for originals that are too
+        // large or whose real format doesn't match the extension. Re-draw every
+        // photo into a plain JPEG (longest side <= 1600px) so what we hand to
+        // the share sheet is always a valid, small image. If the browser can't
+        // decode it, send the original bytes with a type taken from the response.
+        function shareNormalizeImage(blob, i, ext) {
+            var MAX = 1600;
+            function asRaw() {
+                // Not an image at all (e.g. an HTML error/login page served with 200)? Don't
+                // dress it up as a .jpg — fail so the caller falls back to the text share.
+                if (!blob.type || blob.type.indexOf('image/') !== 0) throw new Error('not an image: ' + blob.type);
+                var type = blob.type;
+                var outExt = type === 'image/png' ? 'png' : (type === 'image/webp' ? 'webp' : (type === 'image/gif' ? 'gif' : 'jpg'));
+                return new File([blob], 'photo-' + (i + 1) + '.' + outExt, { type: type });
+            }
+            if (!window.createImageBitmap) return new Promise(function (resolve) { resolve(asRaw()); });
+            return createImageBitmap(blob).then(function (bmp) {
+                var scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+                var w = Math.max(1, Math.round(bmp.width * scale));
+                var h = Math.max(1, Math.round(bmp.height * scale));
+                var canvas = document.createElement('canvas');
+                canvas.width = w; canvas.height = h;
+                var ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#fff';            // JPEG has no alpha
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(bmp, 0, 0, w, h);
+                if (bmp.close) bmp.close();
+                return new Promise(function (resolve) {
+                    canvas.toBlob(function (out) {
+                        resolve(out ? new File([out], 'photo-' + (i + 1) + '.jpg', { type: 'image/jpeg' }) : asRaw());
+                    }, 'image/jpeg', 0.88);
+                });
+            }).catch(function () { return asRaw(); });
+        }
+        // Share button on search/Team Proposals cards: fetch the same "form +
+        // photos" payload as the Complete Client File modal and open the
+        // native share sheet with the real image FILES attached. Browsers
+        // without file sharing (or a profile with no photos) fall back to the
+        // card link's normal WhatsApp text share.
+        document.addEventListener('click', function (e) {
+            var a = e.target.closest('a.js-share-proposal');
+            if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+            e.preventDefault();
+            if (a.dataset.busy === '1') return;
+            a.dataset.busy = '1';
+            var original = a.innerHTML;
+            a.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Preparing…';
+
+            function done() { a.dataset.busy = ''; a.innerHTML = original; }
+            function openLink(url) {
+                var w = window.open(url, '_blank');
+                if (!w) window.location.href = url;   // popup blocked after the async work
+            }
+            var MIME_BY_EXT = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif' };
+            function extFromUrl(url) {
+                var m = url.split(/[?#]/)[0].match(/\.([a-zA-Z0-9]+)$/);
+                return m ? m[1].toLowerCase() : 'jpg';
+            }
+
+            fetch(a.dataset.payloadUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                .then(function (r) { if (!r.ok) throw new Error('payload ' + r.status); return r.json(); })
+                .then(function (p) {
+                    if (!p.photos || !p.photos.length || !navigator.share || !navigator.canShare) {
+                        openLink(p.fallback || a.href);
+                        return;
+                    }
+                    return Promise.all(p.photos.map(function (url, i) {
+                        return fetch(url).then(function (r) {
+                            if (!r.ok) throw new Error('photo ' + r.status);
+                            return r.blob();
+                        }).then(function (blob) {
+                            return shareNormalizeImage(blob, i, extFromUrl(url));
+                        });
+                    })).then(function (files) {
+                        var data = { files: files, title: p.title || '', text: p.text || '' };
+                        if (!navigator.canShare(data)) { openLink(p.fallback || a.href); return; }
+                        return navigator.share(data).catch(function (err) {
+                            if (err && err.name !== 'AbortError') openLink(p.fallback || a.href);
+                        });
+                    }).catch(function () { openLink(p.fallback || a.href); });
+                })
+                .catch(function () { openLink(a.href); })
+                .finally(done);
+        });
         function shareTeamProposalPhotos(btn) {
             var label = document.getElementById('cf_share_photos_label');
             var originalLabel = label ? label.textContent : '';
