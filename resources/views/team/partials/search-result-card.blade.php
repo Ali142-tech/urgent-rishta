@@ -15,6 +15,10 @@
     $category = strtolower($member->profile_category ?? '');
     $highlight = strtolower($member->presentation_highlight ?? '');
     $isAbroad = strtolower($member->looking_from ?? '') === 'abroad';
+    $countryName = $member->lbl_con_of_residence ?: ($member->lbl_con_of_citizenship ?? null) ?: ($member->lbl_con_of_birth ?? null);
+    $countryCode = !empty($member->lbl_con_of_residence) ? ($member->con_of_residence_code ?? null)
+        : (!empty($member->lbl_con_of_citizenship) ? ($member->con_of_citizenship_code ?? null)
+        : ($member->con_of_birth_code ?? null));
     $isNew = round((time() - strtotime($member->created_at)) / 604800) <= config('app.new_profile_duration');
     $isUpdated = !$isNew && round((time() - strtotime($member->updated_at)) / 604800) <= config('app.updated_profile_duration');
 @endphp
@@ -34,14 +38,14 @@
             @if($member->photo_verification_status === 'verified')
                 <span class="ur-search-card__verified"><i class="fa fa-check-circle"></i> Verified</span>
             @endif
-            @if(!empty($member->lbl_con_of_residence))
-                <span class="ur-search-card__country" title="Country of residence">
-                    @if(!empty($member->con_of_residence_code))
-                        <img src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code, 80) }}" alt="" loading="lazy" onerror="this.style.display='none';">
+            @if(!empty($countryName))
+                <span class="ur-search-card__country" title="{{ $countryName }}">
+                    @if(!empty($countryCode))
+                        <img src="{{ \App\Profile::countryFlagUrl($countryCode, 80) }}" alt="" loading="lazy" onerror="this.style.display='none';">
                     @else
                         <i class="fa fa-globe"></i>
                     @endif
-                    {{ $member->lbl_con_of_residence }}
+                    {{ $countryName }}
                 </span>
             @endif
         </div>
