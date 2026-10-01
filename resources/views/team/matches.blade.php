@@ -331,7 +331,7 @@
                         <button type="button" class="ur-am-btn--dark" style="width:100%;" onclick="swalConfirm('Mark as Successful Match', 'Mark {{ $proposalName }} and {{ $matchName }} as a successful match?', () => this.closest('form').submit());"><i class="fa fa-trophy"></i> Mark Successful</button>
                     </form>
                 @endif
-                <a href="{{ route('team.matches.forward', [$proposal->dataid, $match->dataid]) }}" target="_blank" rel="noopener" class="ur-am-btn--whatsapp"><i class="fa fa-whatsapp"></i> Forward Both</a>
+                <a href="{{ route('team.matches.forward', [$proposal->dataid, $match->dataid]) }}" data-payload-url="{{ route('team.matches.forward.payload', [$proposal->dataid, $match->dataid]) }}" target="_blank" rel="noopener" class="ur-am-btn--whatsapp js-share-proposal"><i class="fa fa-whatsapp"></i> Forward Both</a>
             </div>
         </div>
     @endforeach

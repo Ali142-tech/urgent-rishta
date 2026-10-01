@@ -161,6 +161,7 @@ Route::get('team/matches', [App\Http\Controllers\TeamController::class, 'matches
 Route::get('team/my-matches', [App\Http\Controllers\TeamController::class, 'myMatches'])->name('team.my-matches');
 Route::get('team/matches/{dataid}', [App\Http\Controllers\TeamController::class, 'matchesForProposal'])->name('team.matches.show');
 Route::get('team/matches/{proposalDataid}/forward/{matchDataid}', [App\Http\Controllers\TeamController::class, 'forwardBothWhatsapp'])->name('team.matches.forward');
+Route::get('team/matches/{proposalDataid}/forward/{matchDataid}/payload', [App\Http\Controllers\TeamController::class, 'forwardPayload'])->name('team.matches.forward.payload');
 Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
 Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
 Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'matchmakers'])->name('team.matchmakers');

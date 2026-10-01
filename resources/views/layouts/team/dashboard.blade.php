@@ -77,20 +77,16 @@
              instead of being squeezed into this row's right column (which
              left a tall empty gap once the photos ended, well before the
              much taller field grid did). --}}
-        .ur-cf-top { display: grid; grid-template-columns: minmax(220px, 330px) 1fr; align-items: start; gap: 0; }
-        .ur-cf-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: #E7E2D6; }
-        .ur-cf-photo-slot { position: relative; height: 320px; overflow: hidden; background: #F6F4EF; }
-        .ur-cf-photo-slot img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
-        .ur-cf-photo-slot__footer { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 11px; font-weight: 700; padding: 8px 10px; text-align: center; }
-        .ur-cf-photo-slot--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; color: #fff; gap: 4px; }
-        .ur-cf-photo-slot--a { background: linear-gradient(160deg, #17493A, #0F2E24); }
-        .ur-cf-photo-slot--b { background: linear-gradient(160deg, #C9974D, #A97B36); }
-        .ur-cf-photo-slot__letter { font-family: 'Playfair Display', serif; font-size: 46px; font-weight: 700; opacity: .9; }
-        .ur-cf-photo-slot__id { font-weight: 700; font-size: 14px; margin-top: 6px; }
-        .ur-cf-photo-slot__caption { font-size: 12px; opacity: .85; margin-top: 2px; }
-        .ur-cf-photo-slot__tags { font-size: 10.5px; opacity: .75; margin-top: 10px; }
-
-        .ur-cf-info { padding: 22px 24px; min-width: 0; }
+        .ur-cf-top { display: grid; grid-template-columns: minmax(240px, 380px) 1fr; align-items: start; gap: 0; }
+        .ur-cf-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 22px 0 22px 24px; }
+        .ur-cf-photo-slot { position: relative; height: 270px; overflow: hidden; background: #F3F0E8; border-radius: 14px; border: 1px solid #E7E2D6; }
+        .ur-cf-photo-slot img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; position: absolute; inset: 0; }
+        .ur-cf-photo-slot__footer { position: absolute; left: 8px; right: 8px; bottom: 8px; background: rgba(15,46,36,.82); color: #fff; font-size: 11px; font-weight: 700; line-height: 1.2 !important; padding: 7px 10px; text-align: center; border-radius: 9px; }
+        .ur-cf-photo-slot--empty { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px 10px 44px; gap: 6px; border: 1.5px dashed #D8D2C2; background: #F7F5EF; color: #6B7570; }
+        .ur-cf-photo-slot--empty > i { width: 44px; height: 44px; line-height: 44px; border-radius: 50%; background: #fff; color: #9AA5A0; font-size: 18px; box-shadow: 0 1px 3px rgba(15,46,36,.12); }
+        .ur-cf-photo-slot__caption { font-size: 12.5px; font-weight: 700; color: #4B5651; line-height: 1.3 !important; }
+        .ur-cf-photo-slot__id { font-size: 11px; color: #9AA5A0; line-height: 1.3 !important; }
+        .ur-cf-info { padding: 24px 24px 22px; min-width: 0; }
         .ur-cf-verified { display: inline-flex; align-items: center; gap: 6px; background: #E7F3EC; color: #205C3F; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; margin-bottom: 10px; }
         .ur-cf-badges { margin-bottom: 8px; }
         .ur-cf-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; margin: 0 6px 6px 0; }
@@ -98,28 +94,30 @@
         .ur-cf-badge--royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); color: #fff; }
         .ur-cf-badge--abroad { background: #E4EEF7; color: #2C5F8A; }
         .ur-cf-badge--highlight { background: #FBE4E9; color: #A23B57; }
-        .ur-cf-info h3 { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; color: #123A2E; margin: 0 0 4px; }
+        .ur-cf-info h3 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; font-size: 21px; line-height: 1.25 !important; color: #123A2E; margin: 0 0 6px; }
         .ur-cf-summary { font-size: 13.5px; color: #1C2321; margin: 0 0 4px; }
         .ur-cf-owner { font-size: 12.5px; color: #6B7570; margin: 0 0 16px; }
         .ur-cf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
-        .ur-cf-stats div { background: #F6F4EF; border-radius: 10px; padding: 10px 12px; }
+        .ur-cf-stats div { background: #fff; border: 1px solid #E7E2D6; border-radius: 12px; padding: 10px 12px; }
         .ur-cf-stats span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .04em; color: #9AA5A0; text-transform: uppercase; }
         .ur-cf-stats b { display: block; font-size: 13.5px; color: #1C2321; margin-top: 3px; }
         .ur-cf-notice { position: relative; background: #F6F4EF; border-radius: 12px; padding: 14px 40px 14px 14px; margin-bottom: 18px; }
         .ur-cf-notice p { margin: 0; font-size: 12.5px; color: #6B7570; line-height: 1.5; }
         .ur-cf-notice i { position: absolute; right: 14px; top: 14px; color: #2E7D5B; }
 
-        .ur-cf-tabbed { padding: 4px 24px 22px; }
+        .ur-cf-tabbed { padding: 18px 24px 22px; border-top: 1px solid #EFEBE0; }
         .ur-cf-tabs { display: flex; gap: 4px; background: #F6F4EF; border-radius: 999px; padding: 4px; margin-bottom: 16px; flex-wrap: wrap; width: fit-content; }
         .ur-cf-tabs button { border: none; background: transparent; padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: #6B7570; cursor: pointer; white-space: nowrap; }
         .ur-cf-tabs button.is-active { background: #123A2E; color: #fff; }
         .ur-cf-panel { display: none; }
         .ur-cf-panel.is-active { display: block; }
-        .ur-cf-fields-head { font-size: 13.5px; font-weight: 700; color: #123A2E; margin-bottom: 12px; }
-        .ur-cf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-        .ur-cf-grid div { background: #F6F4EF; border-radius: 10px; padding: 10px 12px; }
-        .ur-cf-grid div span { display: block; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #9AA5A0; margin-bottom: 2px; }
-        .ur-cf-grid div b { color: #1C2321; font-size: 13px; font-weight: 600; }
+        .ur-cf-fields-head { font-size: 15px; font-weight: 800; color: #123A2E; margin: 0 0 12px; line-height: 1.3 !important; }
+        .ur-cf-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .ur-cf-grid div { background: #fff; border: 1px solid #E7E2D6; border-radius: 12px; padding: 12px 14px; min-width: 0; }
+        .ur-cf-grid div span { display: block; font-size: 11.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: #6B7570; margin: 0 0 4px; line-height: 1.3 !important; }
+        .ur-cf-grid div b { display: block; color: #1C2321; font-size: 14.5px; font-weight: 700; line-height: 1.35 !important; overflow-wrap: anywhere; }
+        @media (max-width: 760px) { .ur-cf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 440px) { .ur-cf-grid { grid-template-columns: 1fr; } }
         .ur-cf-description { font-size: 13px; color: #1C2321; line-height: 1.6; margin: 14px 0 0; }
         .ur-cf-raw-text-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
         .ur-cf-raw-text { white-space: pre-wrap; font-family: inherit; font-size: 12.5px; color: #1C2321; background: #F6F4EF; border-radius: 10px; padding: 16px; max-height: 420px; overflow: auto; margin: 0; }
@@ -141,7 +139,8 @@
 
         @media (max-width: 767px) {
             .ur-cf-top { grid-template-columns: 1fr; }
-            .ur-cf-photo-slot { height: 200px; }
+            .ur-cf-photos { padding: 16px 16px 4px; }
+            .ur-cf-photo-slot { height: 220px; }
             .ur-cf-tabbed { padding-left: 16px; padding-right: 16px; }
         }
     </style>
@@ -430,7 +429,8 @@
                         // "photos + text" in a single share (Samsung Galaxy A0x, e.g. A07:
                         // "N items couldn't be sent"); there the photos go first and the
                         // form follows via the bar. See shareNeedsTwoStep().
-                        return shareNeedsTwoStep().then(function (twoStep) {
+                        return shareNeedsTwoStep().then(function (deviceTwoStep) {
+                            var twoStep = deviceTwoStep || !!p.two_step;   // p.two_step: long payloads (e.g. both forms)
                             var data = twoStep ? { files: files } : { files: files, title: p.title || '', text: p.text || '' };
                             if (!navigator.canShare(data)) { openLink(p.fallback || a.href); return; }
                             if (twoStep) { rememberPendingFormShare(p); copyFormText(p.text || ''); }

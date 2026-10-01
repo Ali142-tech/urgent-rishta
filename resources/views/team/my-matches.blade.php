@@ -138,7 +138,7 @@
             <div class="ur-mm-actions">
                 <a onclick="openClientFile('{{ $client->dataid }}')"><i class="fa fa-eye"></i> Your file</a>
                 <a onclick="openClientFile('{{ $match->dataid }}')"><i class="fa fa-eye"></i> Match file</a>
-                <a class="is-whatsapp" href="{{ route('team.matches.forward', [$client->dataid, $match->dataid]) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Forward both forms</a>
+                <a class="is-whatsapp js-share-proposal" data-payload-url="{{ route('team.matches.forward.payload', [$client->dataid, $match->dataid]) }}" href="{{ route('team.matches.forward', [$client->dataid, $match->dataid]) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Forward both forms</a>
             </div>
         </div>
     @endforeach

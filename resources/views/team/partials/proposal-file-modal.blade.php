@@ -34,15 +34,14 @@
             @if($hasRealPhotos && isset($photos[$i]))
                 <div class="ur-cf-photo-slot">
                     <img src="{{ $photos[$i] }}" alt="Client photo {{ $i + 1 }}">
-                    <div class="ur-cf-photo-slot__footer">Photo slot {{ $i + 1 }}</div>
+                    <div class="ur-cf-photo-slot__footer">Photo {{ $i + 1 }}</div>
                 </div>
             @else
-                <div class="ur-cf-photo-slot ur-cf-photo-slot--empty ur-cf-photo-slot--{{ $i == 0 ? 'a' : 'b' }}">
-                    <div class="ur-cf-photo-slot__letter">{{ strtoupper(substr($member->gender ?: 'm', 0, 1)) }}</div>
+                <div class="ur-cf-photo-slot ur-cf-photo-slot--empty">
+                    <i class="fa fa-camera"></i>
+                    <div class="ur-cf-photo-slot__caption">No photo uploaded</div>
                     <div class="ur-cf-photo-slot__id">{{ $member->dataid }}</div>
-                    <div class="ur-cf-photo-slot__caption">Client photo slot {{ $i + 1 }}</div>
-                    <div class="ur-cf-photo-slot__tags">Private &bull; Verified &bull; Professional</div>
-                    <div class="ur-cf-photo-slot__footer">Photo slot {{ $i + 1 }} &mdash; awaiting upload</div>
+                    <div class="ur-cf-photo-slot__footer">Photo {{ $i + 1 }}</div>
                 </div>
             @endif
         @endfor
@@ -86,40 +85,11 @@
      empty gap under the (much shorter) photo panel. --}}
 <div class="ur-cf-tabbed">
     <div class="ur-cf-tabs" id="cf_tabs">
-        <button type="button" data-tab="details" class="is-active">Profile details</button>
-        <button type="button" data-tab="original">Original pasted form</button>
+        <button type="button" data-tab="original" class="is-active">Original pasted form</button>
+        <button type="button" data-tab="details">Profile details</button>
     </div>
 
-    <div class="ur-cf-panel is-active" data-panel="details">
-        <div class="ur-cf-fields-head">AI-organized profile fields</div>
-        <div class="ur-cf-grid">
-            <div><span>Gender</span><b>{{ $member->gender ? ucfirst($member->gender) : $notProvided }}</b></div>
-            <div><span>Age</span><b>{{ $age ? $age.' years' : $notProvided }}</b></div>
-            <div><span>Marital Status</span><b>{{ $member->lbl_marital_status ?: $notProvided }}</b></div>
-            <div><span>Height</span><b>{{ $member->height ?: $notProvided }}</b></div>
-            <div><span>Religion</span><b>{{ $member->lbl_religion ?: $notProvided }}</b></div>
-            <div><span>Sect</span><b>{{ $member->sect ?: $notProvided }}</b></div>
-            <div><span>Caste</span><b>{{ $member->lbl_caste ?: $notProvided }}</b></div>
-            <div><span>Mother Tongue</span><b>{{ $member->lbl_mother_tongue ?: $notProvided }}</b></div>
-            <div><span>Nationality</span><b>{{ $nationality ?: $notProvided }}</b></div>
-            <div><span>Current City</span><b>{{ $member->current_city ?: $notProvided }}</b></div>
-            <div><span>Country</span><b>{{ $member->lbl_con_of_residence ?: $notProvided }}</b></div>
-            <div><span>Education</span><b>{{ $member->lbl_education ?: $notProvided }}</b></div>
-            <div><span>Profession</span><b>{{ $member->profession ?: $notProvided }}</b></div>
-            <div><span>Income</span><b>{{ $member->income ?: $notProvided }}</b></div>
-            <div><span>Family Status</span><b>{{ $member->family_status ?: $notProvided }}</b></div>
-            <div><span>Looking From</span><b>{{ $member->looking_from ?: $notProvided }}</b></div>
-            <div><span>Profile Category</span><b>{{ $member->profile_category ?: $notProvided }}</b></div>
-            <div><span>Presentation Highlight</span><b>{{ $member->presentation_highlight ?: $notProvided }}</b></div>
-            <div><span>Profile Owner</span><b>{{ $member->added_by_name }}</b></div>
-            <div><span>Owner Login ID</span><b>{{ $member->added_by_dataid ?: $notProvided }}</b></div>
-        </div>
-        @if(!empty($member->profile_description))
-            <p class="ur-cf-description">{{ $member->profile_description }}</p>
-        @endif
-    </div>
-
-    <div class="ur-cf-panel" data-panel="original">
+    <div class="ur-cf-panel is-active" data-panel="original">
         @if($intakeIsSynthesized)
             <p class="ur-cf-synthesized-note"><i class="fa fa-info-circle"></i> No original pasted text was recorded for this proposal — reconstructed below from every field on file, so it can still be copied and shared as one block of text.</p>
         @endif
@@ -130,6 +100,37 @@
                 <button type="button" class="ur-cf-copy-btn" id="cf_copy_btn" data-text="{{ $intakeText }}"><i class="fa fa-copy"></i> Copy</button>
             </div>
             <pre class="ur-cf-raw-text" id="cf_raw_text">{{ $intakeText }}</pre>
+        @endif
+    </div>
+
+    <div class="ur-cf-panel" data-panel="details">
+        <div class="ur-cf-fields-head">AI-organized profile fields</div>
+        <div class="ur-cf-grid">
+            <div><span>Gender</span><b>{{ $member->gender ? ucfirst($member->gender) : $notProvided }}</b></div>
+            <div><span>Age</span><b>{{ $age ? $age.' years' : $notProvided }}</b></div>
+            <div><span>Marital status</span><b>{{ $member->lbl_marital_status ?: $notProvided }}</b></div>
+            <div><span>Height</span><b>{{ $member->height ?: $notProvided }}</b></div>
+            <div><span>Religion</span><b>{{ $member->lbl_religion ?: $notProvided }}</b></div>
+            <div><span>Sect</span><b>{{ $member->sect ?: $notProvided }}</b></div>
+            <div><span>Caste</span><b>{{ $member->lbl_caste ?: $notProvided }}</b></div>
+            <div><span>Nationality</span><b>{{ $nationality ?: $notProvided }}</b></div>
+            <div><span>Hometown</span><b>{{ collect([$member->lbl_city ?: $member->city, $member->lbl_con_of_birth])->filter()->unique()->implode(', ') ?: $notProvided }}</b></div>
+            <div><span>Current city</span><b>{{ $member->current_city ?: $notProvided }}</b></div>
+            <div><span>Country</span><b>{{ $member->lbl_con_of_residence ?: $notProvided }}</b></div>
+            <div><span>Education</span><b>{{ $member->lbl_education ?: $notProvided }}</b></div>
+            <div><span>Profession</span><b>{{ $member->profession ?: $notProvided }}</b></div>
+            <div><span>Income</span><b>{{ $member->income ?: $notProvided }}</b></div>
+            <div><span>Mother tongue</span><b>{{ $member->lbl_mother_tongue ?: $notProvided }}</b></div>
+            <div><span>Family status</span><b>{{ $member->family_status ?: $notProvided }}</b></div>
+            <div><span>Looking from</span><b>{{ $member->looking_from ?: $notProvided }}</b></div>
+            <div><span>Profile category</span><b>{{ $member->profile_category ?: $notProvided }}</b></div>
+            <div><span>Presentation highlight</span><b>{{ $member->presentation_highlight ?: $notProvided }}</b></div>
+            <div><span>Father</span><b>{{ $member->father_occupation ?: $notProvided }}</b></div>
+            <div><span>Profile owner</span><b>{{ $member->added_by_name }}</b></div>
+            <div><span>Owner login ID</span><b>{{ $member->added_by_dataid ?: $notProvided }}</b></div>
+        </div>
+        @if(!empty($member->profile_description))
+            <p class="ur-cf-description">{{ $member->profile_description }}</p>
         @endif
     </div>
 </div>

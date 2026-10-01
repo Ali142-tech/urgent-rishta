@@ -1409,6 +1409,75 @@ TEMPLATE;
     }
 
     /**
+     * One profile's shareable content: the client form text (the real pasted
+     * form when there is one, otherwise rebuilt from the fields) plus its
+     * portal link, and the paths of its REAL photos (full-size when the file
+     * exists, card thumbnails otherwise; never the gender placeholder).
+     * Shared by the single-profile Share and the "Forward both" payloads.
+     */
+    private function shareContentFor(User $proposal): array
+    {
+        $quoted = "'" . addslashes($proposal->dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+
+        $intakeText = !empty(trim((string) ($member->raw_intake_text ?? '')))
+            ? $member->raw_intake_text
+            : $this->buildSyntheticIntakeText($member);
+        $link = route('share.proposal', $proposal->dataid);
+
+        $photos = [];
+        if (!empty($member->images)) {
+            foreach (json_decode($member->getLightGalleryImages(false), true) ?: [] as $g) {
+                if (!empty($g['src']) && file_exists(public_path($g['src']))) {
+                    $photos[] = $g['src'];
+                }
+            }
+            if (!$photos) {
+                $photos = $member->getCardImages(null, false);
+            }
+        }
+
+        return ['intake' => $intakeText, 'link' => $link, 'text' => "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . $link, 'photos' => array_values($photos)];
+    }
+
+    /**
+     * JSON behind "Forward Both" (AI Match / My Matches): BOTH profiles' forms
+     * and photos in one share, instead of just two links. Same JSON shape as
+     * sharePayload(), so the same click handler (js-share-proposal) drives it.
+     * `fallback` is the original forward route (links to the match owner's chat).
+     */
+    public function forwardPayload($proposalDataid, $matchDataid)
+    {
+        $loggedInUser = auth()->user();
+        $proposal = User::where('dataid', $proposalDataid)->whereNotNull('added_by')->first();
+        $match = User::where('dataid', $matchDataid)->whereNotNull('added_by')->first();
+        if (!$proposal || !$match) {
+            return response()->json(['code' => '404', 'message' => 'Proposal was not found.'], 404);
+        }
+
+        AuditLog::record($loggedInUser, 'profile.shared', $match);
+        Log::info('Team member (' . $loggedInUser->dataid . ') forwarded proposals ' . $proposal->dataid . ' + ' . $match->dataid . ' (native share)');
+
+        $a = $this->shareContentFor($proposal);
+        $b = $this->shareContentFor($match);
+
+        $text = "*POTENTIAL MATCH*\n\n"
+            . "*CLIENT — " . $proposal->dataid . "*\n\n" . $a['intake'] . "\n\n" . $a['link']
+            . "\n\n━━━━━━━━━━━━━━━\n\n"
+            . "*MATCHED PROFILE — " . $match->dataid . "*\n\n" . $b['intake'] . "\n\n" . $b['link'];
+
+        return response()->json([
+            'code' => '200',
+            'title' => $proposal->dataid . ' + ' . $match->dataid,
+            'text' => $text,
+            'photos' => array_values(array_merge($a['photos'], $b['photos'])),
+            // Two long forms don't fit comfortably as a photo caption: send the
+            // photos first and the forms as a second step.
+            'two_step' => mb_strlen($text) > 3000,
+            'fallback' => route('team.matches.forward', [$proposal->dataid, $match->dataid]),
+        ], 200, [], JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+    }
+    /**
      * JSON behind the Share button on Advanced Search / Team Proposals cards:
      * the same "Form + photos" content the Complete Client File modal shares
      * (the client profile text + the real photo files), so the browser can
@@ -1427,29 +1496,9 @@ TEMPLATE;
         AuditLog::record($loggedInUser, 'profile.shared', $proposal);
         Log::info('Team member (' . $loggedInUser->dataid . ') shared proposal ' . $proposal->dataid . ' (native share)');
 
-        $quoted = "'" . addslashes($dataid) . "'";
-        $member = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
-
-        $intakeText = !empty(trim((string) ($member->raw_intake_text ?? '')))
-            ? $member->raw_intake_text
-            : $this->buildSyntheticIntakeText($member);
-        $link = route('share.proposal', $proposal->dataid);
-        $text = "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . $link;
-
-        // Full-size originals when they exist (sharper in WhatsApp); fall back
-        // to the card thumbnails otherwise. Only REAL photos — never the
-        // gender placeholder image.
-        $photos = [];
-        if (!empty($member->images)) {
-            foreach (json_decode($member->getLightGalleryImages(false), true) ?: [] as $g) {
-                if (!empty($g['src']) && file_exists(public_path($g['src']))) {
-                    $photos[] = $g['src'];
-                }
-            }
-            if (!$photos) {
-                $photos = $member->getCardImages(null, false);
-            }
-        }
+        $pieces = $this->shareContentFor($proposal);
+        $text = $pieces['text'];
+        $photos = $pieces['photos'];
 
         return response()->json([
             'code' => '200',
