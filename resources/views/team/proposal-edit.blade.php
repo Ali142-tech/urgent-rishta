@@ -50,7 +50,7 @@
             <div class="col-md-4">
                 <label>Gender</label>
                 <select name="gender" class="form-control" required>
-                    <option value="" disabled>Select</option>
+                    <option value="" disabled selected>Select</option>
                     <option value="male" {{ old('gender', $proposal->gender) == 'male' ? 'selected' : '' }}>Male</option>
                     <option value="female" {{ old('gender', $proposal->gender) == 'female' ? 'selected' : '' }}>Female</option>
                 </select>

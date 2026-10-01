@@ -149,7 +149,12 @@
     .ur-pp-photo-slot { position: relative; }
     .ur-pp-photo-slot__drop { height: 230px; border-radius: 14px; border: 1.5px dashed #D8D2C2; background: #F3F0E8; overflow: hidden; }
     .ur-pp-photo-slot__drop { position: relative; }
-    .ur-pp-photo-slot__drop.is-reference::after { content: 'Sample photo'; position: absolute; top: 8px; left: 8px; padding: 3px 9px; border-radius: 999px; background: rgba(15,63,48,.85); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .03em; }
+    .ur-pp-photo-slot__drop.is-empty { display: flex; align-items: center; justify-content: center; cursor: pointer; transition: border-color .15s ease, background .15s ease; }
+    .ur-pp-photo-slot__drop.is-empty:hover, .ur-pp-photo-slot__drop.is-empty:focus { border-color: #123A2E; background: #EEF3EF; outline: none; }
+    .ur-pp-photo-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 10px; }
+    .ur-pp-photo-empty i { width: 46px; height: 46px; line-height: 46px; border-radius: 50%; background: #fff; color: #123A2E; font-size: 19px; box-shadow: 0 1px 3px rgba(15,46,36,.15); }
+    .ur-pp-photo-empty b { font-size: 14px; color: #123A2E; line-height: 1.2 !important; }
+    .ur-pp-photo-empty small { font-size: 11px; color: #9AA5A0; line-height: 1.2 !important; }
     .ur-pp-photo-slot__drop img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; }
     .ur-team-form label.ur-pp-photo-slot__btn { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 36px; margin: 0; border-radius: 10px; background: rgba(15,63,48,.92); color: #fff; font-size: 12px; font-weight: 800; line-height: 1 !important; cursor: pointer; text-align: center; }
     .ur-team-form label.ur-pp-photo-slot__btn:hover { background: #0B3B2E; }
@@ -239,12 +244,21 @@
                 <div class="ur-pp-photo-grid">
                     @foreach([1, 2] as $__n)
                     <div class="ur-pp-photo-slot">
-                        {{-- Default male/female placeholder (Profile::defaultImage()) until a
-                             file is picked; the "Upload/Replace photo" label sits over the
-                             preview and is the only visible file control (input is hidden). --}}
-                        <div class="ur-pp-photo-slot__drop is-reference" id="photo_preview_{{ $__n }}" data-default-src="{{ asset('images/reference/reference-photo-'.$__n.'.jpg') }}"><img id="photo_default_{{ $__n }}" data-reference="1" src="{{ asset('images/reference/reference-photo-'.$__n.'.jpg') }}" alt="Sample photo {{ $__n }}"></div>
-                        <label class="ur-pp-photo-slot__btn" id="photo_label_{{ $__n }}" for="photo_input_{{ $__n }}" data-upload="Upload photo {{ $__n }}" data-replace="Replace photo {{ $__n }}"><i class="fa fa-camera"></i> Upload photo {{ $__n }}</label>
-                        <input type="file" id="photo_input_{{ $__n }}" name="image{{ $__n }}" form="af_form" accept="image/*" hidden onchange="urPreviewProposalPhoto(this, 'photo_preview_{{ $__n }}', 'photo_label_{{ $__n }}', 'Photo {{ $__n }}')">
+                        {{-- Empty "Upload image N" box (nothing looks pre-uploaded). Clicking
+                             anywhere on it opens the file picker; once a file is chosen the
+                             preview fills the box and the bar below switches to "Replace image N".
+                             The real <input type="file"> is hidden and still named image1/image2. --}}
+                        <div class="ur-pp-photo-slot__drop is-empty" id="photo_preview_{{ $__n }}" data-empty-n="{{ $__n }}" role="button" tabindex="0"
+                             onclick="document.getElementById('photo_input_{{ $__n }}').click()"
+                             onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+                            <div class="ur-pp-photo-empty">
+                                <i class="fa fa-camera"></i>
+                                <b>Upload image {{ $__n }}</b>
+                                <small>JPG or PNG &middot; up to 5 MB</small>
+                            </div>
+                        </div>
+                        <label class="ur-pp-photo-slot__btn" id="photo_label_{{ $__n }}" for="photo_input_{{ $__n }}" style="display:none;"><i class="fa fa-camera"></i> Replace image {{ $__n }}</label>
+                        <input type="file" id="photo_input_{{ $__n }}" name="image{{ $__n }}" form="af_form" accept="image/*" hidden onchange="urPreviewProposalPhoto(this, 'photo_preview_{{ $__n }}', 'photo_label_{{ $__n }}', 'Image {{ $__n }}')">
                     </div>
                     @endforeach
                 </div>
@@ -289,18 +303,22 @@
                     </div>
 
                     <div class="ur-pp-review__grid">
-                        <div class="ur-pp-review__field" id="pp_field_name">
-                            <label>Name <span class="ur-opt">Optional</span></label>
-                            <input type="text" id="pp_name_input" class="form-control" placeholder="e.g. Ayesha Khan">
-                            <input type="hidden" name="first_name" id="pp_first_name" form="af_form" value="{{ old('first_name') }}">
-                            <input type="hidden" name="last_name" id="pp_last_name" form="af_form" value="{{ old('last_name') }}">
-                        </div>
                         <div class="ur-pp-review__field" id="pp_field_gender">
                             <label>Gender</label>
                             <select name="gender" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
+                                <option value="" disabled selected>Select</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>
+                            </select>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
+                        <div class="ur-pp-review__field" id="pp_field_marital_status">
+                            <label>Marital Status</label>
+                            <select name="marital_status" form="af_form" class="form-control" required>
+                                <option value="" disabled selected>Select</option>
+                                @foreach($maritalstatuses as $maritalstatus)
+                                    <option value="{{ $maritalstatus->dataid }}">{{ $maritalstatus->name }}</option>
+                                @endforeach
                             </select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
@@ -312,10 +330,15 @@
                             <input type="hidden" name="year" id="dob_year" form="af_form">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
+                        <div class="ur-pp-review__field" id="pp_field_height">
+                            <label>Height</label>
+                            <input type="text" name="height" form="af_form" class="form-control" placeholder="e.g. 5'8" required>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
                         <div class="ur-pp-review__field" id="pp_field_education">
                             <label>Education</label>
                             <select name="education" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
+                                <option value="" disabled selected>Select</option>
                                 @foreach($education as $degree)
                                     <option value="{{ $degree->dataid }}">{{ $degree->name }}</option>
                                 @endforeach
@@ -327,25 +350,25 @@
                             <input type="text" name="profession" form="af_form" class="form-control" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
+                        <div class="ur-pp-review__field" id="pp_field_caste">
+                            <label>Caste</label>
+                            <select name="caste" form="af_form" class="form-control" required>
+                                <option value="" disabled selected>Select</option>
+                                @foreach($caste as $cst)
+                                    <option value="{{ $cst->dataid }}">{{ $cst->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
                         <div class="ur-pp-review__field" id="pp_field_sect">
                             <label>Sect</label>
                             <input type="text" name="sect" form="af_form" class="form-control" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_nationality">
-                            <label>Nationality</label>
-                            <select name="con_of_citizenship" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country->dataid }}">{{ $country->name }}</option>
-                                @endforeach
-                            </select>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
                         <div class="ur-pp-review__field" id="pp_field_country">
                             <label>Country</label>
                             <select name="country" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
+                                <option value="" disabled selected>Select</option>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->dataid }}">{{ $country->name }}</option>
                                 @endforeach
@@ -357,53 +380,28 @@
                             <input type="text" name="current_city" form="af_form" class="form-control" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
+                        <div class="ur-pp-review__field" id="pp_field_nationality">
+                            <label>Nationality</label>
+                            <select name="con_of_citizenship" form="af_form" class="form-control" required>
+                                <option value="" disabled selected>Select</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->dataid }}">{{ $country->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
                         <div class="ur-pp-review__field" id="pp_field_city">
                             <label>Hometown</label>
                             <input type="text" name="city" form="af_form" class="form-control" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_marital_status">
-                            <label>Marital Status</label>
-                            <select name="marital_status" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
-                                @foreach($maritalstatuses as $maritalstatus)
-                                    <option value="{{ $maritalstatus->dataid }}">{{ $maritalstatus->name }}</option>
-                                @endforeach
-                            </select>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
-                        <div class="ur-pp-review__field" id="pp_field_caste">
-                            <label>Caste</label>
-                            <select name="caste" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
-                                @foreach($caste as $cst)
-                                    <option value="{{ $cst->dataid }}">{{ $cst->name }}</option>
-                                @endforeach
-                            </select>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
-                        <div class="ur-pp-review__field" id="pp_field_height">
-                            <label>Height</label>
-                            <input type="text" name="height" form="af_form" class="form-control" placeholder="e.g. 5'8" required>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
-                       
+
                     </div>
 
                     <div class="ur-pp-review__grid" style="margin-top:10px;">
                         <div class="ur-pp-review__field" id="pp_field_pref_profession">
                             <label>Partner's Profession</label>
                             <input type="text" name="pref_profession" form="af_form" class="form-control" value="{{ old('pref_profession') }}" required>
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_religion">
-                            <label>Partner's Religion</label>
-                            <select name="pref_religion" form="af_form" class="form-control" required>
-                                <option value="" disabled>Select</option>
-                                @foreach($religions as $religion)
-                                    <option value="{{ $religion->dataid }}" {{ old('pref_religion') == $religion->dataid ? 'selected' : '' }}>{{ $religion->name }}</option>
-                                @endforeach
-                            </select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_city">
@@ -501,32 +499,27 @@
     </div>
 </div>
 <script>
-var UR_DEFAULT_IMAGES = {
-    male: @json(\App\Profile::defaultImage('male')),
-    female: @json(\App\Profile::defaultImage('female')),
-};
-
 function urPreviewProposalPhoto(input, previewId, labelId, baseLabel) {
     var preview = document.getElementById(previewId);
     var label = labelId ? document.getElementById(labelId) : null;
     if (input.files && input.files[0]) {
         var reader = new FileReader();
-        reader.onload = function (e) { preview.classList.remove('is-reference'); preview.innerHTML = '<img src="' + e.target.result + '">'; };
+        reader.onload = function (e) {
+            preview.classList.remove('is-empty');
+            preview.removeAttribute('onclick');
+            preview.style.cursor = 'default';
+            preview.innerHTML = '<img src="' + e.target.result + '" alt="">';
+        };
         reader.readAsDataURL(input.files[0]);
-        if (label) label.innerHTML = label.dataset.replace ? '<i class="fa fa-camera"></i> ' + label.dataset.replace : baseLabel + ' <span class="ur-opt">Replace</span>';
+        if (label) { label.style.display = ''; label.innerHTML = '<i class="fa fa-camera"></i> Replace ' + baseLabel.toLowerCase(); }
     } else {
-        // Back to the gender-appropriate default placeholder, not a bare
-        // text label — same convention used everywhere else in this app.
-        if (preview.dataset.defaultSrc) {
-            // Back to the sample reference photo for this slot.
-            preview.classList.add('is-reference');
-            preview.innerHTML = '<img data-reference="1" src="' + preview.dataset.defaultSrc + '">';
-        } else {
-            var genderEl = document.querySelector('[name="gender"]');
-            var g = (genderEl && genderEl.value === 'female') ? 'female' : 'male';
-            preview.innerHTML = '<img src="' + UR_DEFAULT_IMAGES[g] + '">';
-        }
-        if (label) label.innerHTML = label.dataset.upload ? '<i class="fa fa-camera"></i> ' + label.dataset.upload : baseLabel + ' <span class="ur-opt">Optional</span>';
+        // File cleared -> back to the empty "Upload image N" box.
+        var n = preview.getAttribute('data-empty-n') || '';
+        preview.classList.add('is-empty');
+        preview.style.cursor = '';
+        preview.setAttribute('onclick', "document.getElementById('photo_input_" + n + "').click()");
+        preview.innerHTML = '<div class="ur-pp-photo-empty"><i class="fa fa-camera"></i><b>Upload image ' + n + '</b><small>JPG or PNG &middot; up to 5 MB</small></div>';
+        if (label) label.style.display = 'none';
     }
 }
 
@@ -946,25 +939,23 @@ function urCopyTemplate(event) {
     // 2026 — "All fields required", matching the mockup's own badge) and
     // block Confirm & Save until filled (see the submit handler below).
     var CORE_FIELDS = [
-        { wrapper: 'pp_field_name', getEl: function () { return nameInput; }, optional: true },
-        { wrapper: 'pp_field_gender', getEl: function () { return document.querySelector('[name="gender"]'); }, required: true },
-        { wrapper: 'pp_field_age', getEl: function () { return ageInput; }, required: true },
-        { wrapper: 'pp_field_education', getEl: function () { return document.querySelector('[name="education"]'); }, required: true },
-        { wrapper: 'pp_field_profession', getEl: function () { return document.querySelector('[name="profession"]'); }, required: true },
-        { wrapper: 'pp_field_sect', getEl: function () { return document.querySelector('[name="sect"]'); }, required: true },
-        { wrapper: 'pp_field_nationality', getEl: function () { return document.querySelector('[name="con_of_citizenship"]'); }, required: true },
-        { wrapper: 'pp_field_country', getEl: function () { return document.querySelector('[name="country"]'); }, required: true },
-        { wrapper: 'pp_field_current_city', getEl: function () { return document.querySelector('[name="current_city"]'); }, required: true },
-        { wrapper: 'pp_field_city', getEl: function () { return document.querySelector('[name="city"]'); }, required: true },
-        { wrapper: 'pp_field_marital_status', getEl: function () { return document.querySelector('[name="marital_status"]'); }, required: true },
-        { wrapper: 'pp_field_caste', getEl: function () { return document.querySelector('[name="caste"]'); }, required: true },
-        { wrapper: 'pp_field_height', getEl: function () { return document.querySelector('[name="height"]'); }, required: true },
         // "Partner Requirements" structured fields (client request, Sep
         // 2026 — required same as everything else in this panel). The two
         // age-range inputs share one wrapper for highlighting purposes;
         // marking/clearing "is-missing" on the same element twice is harmless.
+        { wrapper: 'pp_field_gender', getEl: function () { return document.querySelector('[name="gender"]'); }, required: true },
+        { wrapper: 'pp_field_marital_status', getEl: function () { return document.querySelector('[name="marital_status"]'); }, required: true },
+        { wrapper: 'pp_field_age', getEl: function () { return ageInput; }, required: true },
+        { wrapper: 'pp_field_height', getEl: function () { return document.querySelector('[name="height"]'); }, required: true },
+        { wrapper: 'pp_field_education', getEl: function () { return document.querySelector('[name="education"]'); }, required: true },
+        { wrapper: 'pp_field_profession', getEl: function () { return document.querySelector('[name="profession"]'); }, required: true },
+        { wrapper: 'pp_field_caste', getEl: function () { return document.querySelector('[name="caste"]'); }, required: true },
+        { wrapper: 'pp_field_sect', getEl: function () { return document.querySelector('[name="sect"]'); }, required: true },
+        { wrapper: 'pp_field_country', getEl: function () { return document.querySelector('[name="country"]'); }, required: true },
+        { wrapper: 'pp_field_current_city', getEl: function () { return document.querySelector('[name="current_city"]'); }, required: true },
+        { wrapper: 'pp_field_nationality', getEl: function () { return document.querySelector('[name="con_of_citizenship"]'); }, required: true },
+        { wrapper: 'pp_field_city', getEl: function () { return document.querySelector('[name="city"]'); }, required: true },
         { wrapper: 'pp_field_pref_profession', getEl: function () { return document.querySelector('[name="pref_profession"]'); }, required: true },
-        { wrapper: 'pp_field_pref_religion', getEl: function () { return document.querySelector('[name="pref_religion"]'); }, required: true },
         { wrapper: 'pp_field_pref_city', getEl: function () { return document.querySelector('[name="pref_city"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_min"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_max"]'); }, required: true },
@@ -1011,23 +1002,6 @@ function urCopyTemplate(event) {
         if (el) el.addEventListener('input', refreshExtractionSummary);
         if (el && el.tagName === 'SELECT') el.addEventListener('change', refreshExtractionSummary);
     });
-
-    // Swap both photo placeholders to match the picked gender — only
-    // while that slot still shows a default (a real uploaded photo is
-    // never overwritten by switching Gender).
-    var genderSelect = document.querySelector('[name="gender"]');
-    if (genderSelect) {
-        genderSelect.addEventListener('change', function () {
-            var g = genderSelect.value === 'female' ? 'female' : 'male';
-            [1, 2].forEach(function (n) {
-                var fileInput = document.querySelector('input[name="image' + n + '"]');
-                var img = document.getElementById('photo_default_' + n);
-                if (fileInput && (!fileInput.files || !fileInput.files.length) && img && !img.dataset.reference) {
-                    img.src = UR_DEFAULT_IMAGES[g];
-                }
-            });
-        });
-    }
 
     if (pasteBox && charCount) {
         pasteBox.addEventListener('input', function () {

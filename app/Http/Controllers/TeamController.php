@@ -800,7 +800,7 @@ TEMPLATE;
             'pref_caste_note' => 'nullable|string|max:255',
             'pref_qualification_note' => 'nullable|string|max:2000',
             'pref_profession' => 'required|string|max:150',
-            'pref_religion' => 'required|string',
+            'pref_religion' => 'nullable|string',
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
