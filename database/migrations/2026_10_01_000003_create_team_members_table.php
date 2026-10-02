@@ -45,10 +45,13 @@ return new class extends Migration
         });
 
         if (Schema::hasColumn('users', 'is_team_member')) {
+            // Admins are never touched, even if they were also flagged as team members: they get their
+            // own team account automatically (TeamMember::provisionForAdmin()).
             DB::table('users')
                 ->where(function ($q) {
                     $q->where('is_team_member', 1)->orWhereNotNull('matchmaker_status');
                 })
+                ->where('admin', 0)
                 ->whereNull('deleted_at')
                 ->update(['deleted_at' => now()]);
 
