@@ -58,6 +58,9 @@
         @if(!empty($preference->pref_height))<div><span>Height</span><b>{{ $preference->pref_height }}</b></div>@endif
         @if(!empty($preference->pref_city))<div><span>City</span><b>{{ $preference->pref_city }}</b></div>@endif
         @if(!empty($preference->profession))<div><span>Profession</span><b>{{ $preference->profession }}</b></div>@endif
+        @if(!empty($preference->castes))<div><span>Caste</span><b>{{ implode(', ', $preference->castes) }}</b></div>@endif
+        @if(!empty($preference->educations))<div><span>Education</span><b>{{ implode(', ', $preference->educations) }}</b></div>@endif
+        @if(!empty($preference->marital_statuses))<div><span>Marital status</span><b>{{ implode(', ', $preference->marital_statuses) }}</b></div>@endif
     </div>
     @if(!empty($preference->general_requirement))
         <p class="ur-pv-description" style="margin-top:14px;">{{ $preference->general_requirement }}</p>

@@ -613,6 +613,13 @@ TEMPLATE;
      * Saves a new proposal: one row in `proposals` (reference P-001, P-002 ...),
      * its partner requirements, and up to two photos.
      */
+    /** A multi-select's picked values as a clean list, or null when nothing was picked. */
+    private function multiValues(Request $request, string $field): ?array
+    {
+        $values = array_values(array_unique(array_filter((array) $request->input($field, []), fn ($v) => $v !== null && $v !== '')));
+        return $values ? $values : null;
+    }
+
     /** "Not in the list" caste: the typed name is reused if it already exists, otherwise added, and the request then carries its id. */
     private function resolveManualCaste(Request $request): void
     {
@@ -659,6 +666,9 @@ TEMPLATE;
             'pref_height' => 'required|string|max:100',
             'pref_city' => 'required|string|max:150',
             'pref_profession' => 'required|string|max:150',
+            'pref_castes' => 'required|array|min:1', 'pref_castes.*' => 'exists:proposal_castes,id',
+            'pref_educations' => 'required|array|min:1', 'pref_educations.*' => 'string|max:50',
+            'pref_marital_statuses' => 'required|array|min:1', 'pref_marital_statuses.*' => 'string|max:50',
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
@@ -689,6 +699,9 @@ TEMPLATE;
             'pref_height' => $request->pref_height,
             'pref_city' => $request->pref_city,
             'pref_profession' => $request->pref_profession,
+            'pref_castes' => $this->multiValues($request, 'pref_castes'),
+            'pref_educations' => $this->multiValues($request, 'pref_educations'),
+            'pref_marital_statuses' => $this->multiValues($request, 'pref_marital_statuses'),
             'pref_note' => $request->partner_requirements,
         ]);
         $proposal = $proposal->fresh();   // picks up the generated reference
@@ -937,12 +950,17 @@ TEMPLATE;
             'pref_city' => $proposal->pref_city,
             'pref_profession' => $proposal->pref_profession,
         ];
+        $editMulti = [
+            'pref_castes[]' => array_map('strval', $proposal->pref_castes ?: []),
+            'pref_educations[]' => array_map('strval', $proposal->pref_educations ?: []),
+            'pref_marital_statuses[]' => array_map('strval', $proposal->pref_marital_statuses ?: []),
+        ];
 
         // Current real photos (never the gender placeholder) for the two photo boxes.
         $existingPhotos = $proposal->photos->isNotEmpty() ? $proposal->getCardImages(null, false) : [];
 
         return view('team.proposal-create', compact(
-            'proposal', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate',
+            'proposal', 'editMulti', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate',
             'editValues', 'editAge', 'existingPhotos'
         ));
     }
@@ -979,6 +997,9 @@ TEMPLATE;
             'pref_height' => 'nullable|string|max:100',
             'pref_city' => 'nullable|string|max:150',
             'pref_profession' => 'nullable|string|max:150',
+            'pref_castes' => 'nullable|array', 'pref_castes.*' => 'exists:proposal_castes,id',
+            'pref_educations' => 'nullable|array', 'pref_educations.*' => 'string|max:50',
+            'pref_marital_statuses' => 'nullable|array', 'pref_marital_statuses.*' => 'string|max:50',
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
@@ -1002,6 +1023,10 @@ TEMPLATE;
             if ($request->has($inputKey)) {
                 $changes[$column] = $request->input($inputKey);
             }
+        }
+        // Multi-selects send nothing when emptied, so they are always written (the edit page always has them).
+        foreach (['pref_castes', 'pref_educations', 'pref_marital_statuses'] as $multi) {
+            $changes[$multi] = $this->multiValues($request, $multi);
         }
         $changes['birthday'] = $request->year . '-' . $request->month . '-' . $request->day;
         // The pasted original form: replaced only when text was actually provided.

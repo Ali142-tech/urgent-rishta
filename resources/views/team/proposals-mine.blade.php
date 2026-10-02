@@ -155,6 +155,7 @@
                                                 <a href="{{ route('team.matches.show', $member->dataid) }}"><i class="fa fa-magic"></i> AI Match</a>
                                             @endif
                                             <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Share via WhatsApp</a>
+                                            <a href="#" onclick="return deleteProposal('{{ $member->dataid }}');" style="color:#B5674A;"><i class="fa fa-trash"></i> Delete proposal</a>
                                         </div>
                                     </div>
                                 </div>

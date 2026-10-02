@@ -34,11 +34,15 @@ class Proposal extends Model
         'family_status', 'looking_from', 'presentation_highlight',
         'profile_status', 'active', 'raw_intake_text',
         'pref_age_min', 'pref_age_max', 'pref_height', 'pref_city', 'pref_profession', 'pref_note',
+        'pref_castes', 'pref_educations', 'pref_marital_statuses',
     ];
 
     protected $casts = [
         'birthday' => 'date',
         'active' => 'boolean',
+        'pref_castes' => 'array',
+        'pref_educations' => 'array',
+        'pref_marital_statuses' => 'array',
     ];
 
     /** Per-request lookup caches (masterdata names are read many times per page). */
@@ -169,7 +173,7 @@ class Proposal extends Model
      */
     public function getPreferenceAttribute()
     {
-        if (!$this->hasPartnerPreferences() && empty($this->pref_note)) {
+        if (!$this->hasPartnerPreferences() && empty($this->pref_note) && !$this->prefCasteNames() && !$this->prefEducationNames() && !$this->prefMaritalNames()) {
             return null;
         }
         return (object) [
@@ -180,7 +184,26 @@ class Proposal extends Model
             'pref_city' => $this->pref_city,
             'profession' => $this->pref_profession,
             'general_requirement' => $this->pref_note,
+            'castes' => $this->prefCasteNames(),
+            'educations' => $this->prefEducationNames(),
+            'marital_statuses' => $this->prefMaritalNames(),
         ];
+    }
+
+    /** Names of the partner castes / educations / marital statuses the client accepts (empty = no preference). */
+    public function prefCasteNames(): array
+    {
+        return $this->pref_castes ? ProposalCaste::whereIn('id', $this->pref_castes)->orderBy('name')->pluck('name')->all() : [];
+    }
+
+    public function prefEducationNames(): array
+    {
+        return array_values(array_filter(array_map(fn ($id) => self::masterName('EDUCATION', $id), $this->pref_educations ?: [])));
+    }
+
+    public function prefMaritalNames(): array
+    {
+        return array_values(array_filter(array_map(fn ($id) => self::masterName('MARITAL_STATUS', $id), $this->pref_marital_statuses ?: [])));
     }
 
     /** Proposals that have at least one partner requirement filled in (usable for AI matching). */

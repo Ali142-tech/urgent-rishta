@@ -439,6 +439,33 @@
                             </div>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
+                        <div class="ur-pp-review__field" id="pp_field_pref_castes">
+                            <label>Caste <small style="font-weight:400;">(select one or more)</small></label>
+                            <select name="pref_castes[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any caste">
+                                @foreach($caste as $cst)
+                                    <option value="{{ $cst->dataid }}" {{ in_array($cst->dataid, array_map('strval', (array) old('pref_castes', []))) ? 'selected' : '' }}>{{ $cst->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
+                        <div class="ur-pp-review__field" id="pp_field_pref_educations">
+                            <label>Education <small style="font-weight:400;">(select one or more)</small></label>
+                            <select name="pref_educations[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any education">
+                                @foreach($education as $degree)
+                                    <option value="{{ $degree->dataid }}" {{ in_array($degree->dataid, (array) old('pref_educations', [])) ? 'selected' : '' }}>{{ $degree->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
+                        <div class="ur-pp-review__field" id="pp_field_pref_marital_statuses">
+                            <label>Marital Status <small style="font-weight:400;">(select one or more)</small></label>
+                            <select name="pref_marital_statuses[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any marital status">
+                                @foreach($maritalstatuses as $maritalstatus)
+                                    <option value="{{ $maritalstatus->dataid }}" {{ in_array($maritalstatus->dataid, (array) old('pref_marital_statuses', [])) ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_height">
                             <label>Height</label>
                             <input type="text" name="pref_height" form="af_form" class="form-control" placeholder="e.g. Same or close to similar height" value="{{ old('pref_height') }}" required>
@@ -948,6 +975,9 @@ function urCopyTemplate(event) {
         function sync() { var on = sel.value === '__new'; other.style.display = on ? '' : 'none'; other.required = on; if (on) other.focus(); }
         sel.addEventListener('change', sync); sync();
     })();
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery('.ur-multi').each(function () { jQuery(this).select2({ width: '100%', placeholder: this.getAttribute('data-placeholder'), closeOnSelect: false }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); }); });
+    }
     var EDIT_MODE = @json(isset($proposal));
     var pasteBox = document.getElementById('paste_box');
     var charCount = document.getElementById('paste_char_count');
@@ -987,6 +1017,9 @@ function urCopyTemplate(event) {
         { wrapper: 'pp_field_pref_city', getEl: function () { return document.querySelector('[name="pref_city"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_min"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_max"]'); }, required: true },
+        { wrapper: 'pp_field_pref_castes', getEl: function () { return document.querySelector('[name="pref_castes[]"]'); }, required: true },
+        { wrapper: 'pp_field_pref_educations', getEl: function () { return document.querySelector('[name="pref_educations[]"]'); }, required: true },
+        { wrapper: 'pp_field_pref_marital_statuses', getEl: function () { return document.querySelector('[name="pref_marital_statuses[]"]'); }, required: true },
         { wrapper: 'pp_field_pref_height', getEl: function () { return document.querySelector('[name="pref_height"]'); }, required: true },
     ];
 
@@ -1217,6 +1250,13 @@ function urCopyTemplate(event) {
             var el = document.querySelector('[name="' + name + '"]');
             var v = EDIT_VALUES[name];
             if (el && v !== null && v !== '') el.value = v;
+        });
+        var EDIT_MULTI = @json($editMulti ?? []);
+        Object.keys(EDIT_MULTI).forEach(function (name) {
+            var el = document.querySelector('[name="' + name + '"]');
+            if (!el) return;
+            if (window.jQuery) { jQuery(el).val(EDIT_MULTI[name]).trigger('change'); }
+            else { Array.prototype.forEach.call(el.options, function (o) { o.selected = EDIT_MULTI[name].indexOf(o.value) !== -1; }); }
         });
         if (ageInput) ageInput.value = @json($editAge ?? null) || '';
 
