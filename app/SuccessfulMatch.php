@@ -18,21 +18,21 @@ class SuccessfulMatch extends Model
 
     public function proposal()
     {
-        return $this->belongsTo(User::class, 'proposal_id');
+        return $this->belongsTo(Proposal::class, 'proposal_id');
     }
 
     public function counterpartProposal()
     {
-        return $this->belongsTo(User::class, 'counterpart_proposal_id');
+        return $this->belongsTo(Proposal::class, 'counterpart_proposal_id');
     }
 
     public function partnerA()
     {
-        return $this->belongsTo(User::class, 'partner_a_id');
+        return $this->belongsTo(TeamMember::class, 'partner_a_id');
     }
 
     public function partnerB()
     {
-        return $this->belongsTo(User::class, 'partner_b_id');
+        return $this->belongsTo(TeamMember::class, 'partner_b_id');
     }
 }

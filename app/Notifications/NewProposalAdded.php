@@ -25,7 +25,7 @@ class NewProposalAdded extends Notification implements ShouldQueue {
             'addedbyid' => $this->addedBy->dataid,
             'proposalid' => $this->proposal->dataid,
             'addedby' => $this->addedBy->first_name,
-            'proposal' => $this->proposal->first_name,
+            'proposal' => $this->proposal->dataid,
             'status' => 'New Proposal',
         ];
     }

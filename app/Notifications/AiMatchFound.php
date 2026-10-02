@@ -25,7 +25,7 @@ class AiMatchFound extends Notification implements ShouldQueue {
         return [
             'proposalid' => $this->proposal->dataid,
             'matchid' => $this->match->dataid,
-            'proposal' => $this->proposal->first_name,
+            'proposal' => $this->proposal->dataid,
             'percent' => $this->percent,
             'status' => 'New ' . $this->percent . '% AI Match Found',
         ];

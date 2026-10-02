@@ -21,6 +21,10 @@ class Authenticate extends Middleware
             session(['pending_search' => $request->except(['_token'])]);
         }
 
+        if ($request->is('team') || $request->is('team/*')) {
+            return $request->expectsJson() ? null : route('team.login');
+        }
+
         return $request->expectsJson() ? null : route('login');
     }
 }

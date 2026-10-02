@@ -11,7 +11,8 @@
 <div class="mk-thanks">
     <div class="mk-thanks__icon"><i class="fa fa-check"></i></div>
     <h1>Application Received</h1>
-    <p>Thank you for applying to become a partner with Urgent Rishta. Our team will review your application and be in touch soon. You can already log in to your account below.</p>
-    <a href="{{ url('/') }}">Back to Home</a>
+    <p>Thank you for applying to become a partner with Urgent Rishta. Our team will review your application and be in touch soon. You can sign in at the Partner Sign In page once it is approved.</p>
+    <a href="{{ route('team.login') }}">Partner Sign In</a>
+    <a href="{{ url('/') }}" style="margin-left:8px; background:transparent; border:1px solid #C9974D;">Back to Home</a>
 </div>
 @endsection

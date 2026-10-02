@@ -42,7 +42,7 @@
                 @if($location) &bull; {{ $location }} @endif
             </p>
             @auth
-                <a class="card__btn" href="{{ url('member/profile/'.$member->dataid) }}">View Full Profile</a>
+                <a class="card__btn" href="{{ route('team.proposals.view', $member->dataid) }}">View Full Profile</a>
             @else
                 <a class="card__btn" href="{{ route('login') }}">Log In to View Full Profile</a>
             @endauth

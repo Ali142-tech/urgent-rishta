@@ -1,4 +1,3 @@
-<?php use App\User; ?>
 {{--
     Team Dashboard topbar. Mirrors layouts/partials/dashboard-topbar.blade.php
     (bell markup copied verbatim — same ids/classes public/app.js already
@@ -34,20 +33,17 @@
 
         <div class="dropdown dropdown--style-2 dropdown--animated">
             <button type="button" class="ur-dash-user" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <div class="ur-dash-user__avatar" id="top_nav_img" style="background-image:url('{{ User::retrieveUserObject()->getProfileImage(true) }}')"></div>
-                <span class="ur-dash-user__name">{{ User::retrieveUserObject()->first_name }} {{ User::retrieveUserObject()->last_name }}<br><small style="font-weight:400; color:#6B7570;">Verified Partner</small></span>
+                <div class="ur-dash-user__avatar" id="top_nav_img" style="background-image:url('{{ auth()->user()->getProfileImage(true) }}')"></div>
+                <span class="ur-dash-user__name">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}<br><small style="font-weight:400; color:#6B7570;">Verified Partner</small></span>
                 <i class="fa fa-chevron-down ur-dash-user__caret"></i>
             </button>
             <div class="dropdown-menu dropdown-menu-right ur-dash-user-menu">
                 <div class="ur-dash-user-menu__head">
-                    <div class="name">{{ User::retrieveUserObject()->first_name }} {{ User::retrieveUserObject()->last_name }}</div>
-                    <div class="id">Member ID: {{ User::retrieveUserObject()->dataid }}</div>
+                    <div class="name">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</div>
+                    <div class="id">Partner ID: {{ auth()->user()->dataid }}</div>
                 </div>
-                <a href="{{ url('member/profile') }}"><i class="fa fa-user"></i> My Profile</a>
-                <a href="{{ url('member/profile/password/update') }}"><i class="fa fa-key"></i> Change Password</a>
-                @if(User::retrieveUserObject()->admin == 1)
-                <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
-                @endif
+                <a href="{{ route('team.matchmakers') }}"><i class="fa fa-user"></i> My Profile</a>
+                <a href="{{ route('team.password') }}"><i class="fa fa-key"></i> Change Password</a>
                 <button type="button" class="is-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fa fa-power-off"></i> Log Out
                 </button>
@@ -55,6 +51,6 @@
         </div>
     </div>
 </header>
-<form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+<form id="logout-form" action="{{ route('team.logout') }}" method="POST" style="display: none;">
     @csrf
 </form>

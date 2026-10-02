@@ -188,9 +188,17 @@ $packageIcon = match ($packageSlug) {
                      Team Dashboard shell), not member/profile/{dataid} (the
                      Member Dashboard shell) — see TeamController::
                      viewProposal(). --}}
+                @if($member->team_card_role === 'admin')
+                {{-- Admin's read-only Team Proposals list: team screens need a
+                     team login, so the admin opens the public share card. --}}
+                <a href="{{ route('share.proposal', $member->dataid) }}" target="_blank" rel="noopener">
+                    <i class="fa fa-eye"></i> View
+                </a>
+                @else
                 <a onclick="javascript:window.open('{{ route('team.proposals.view', $member->dataid) }}');">
                     <i class="fa fa-eye"></i> View Full Profile
                 </a>
+                @endif
                 @if($member->team_card_role === 'own')
                     <a class="is-interest" href="{{ route('team.proposals.edit', $member->dataid) }}">
                         <i class="fa fa-pencil"></i> <span>Edit</span>

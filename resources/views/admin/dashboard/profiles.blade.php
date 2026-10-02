@@ -223,28 +223,6 @@
         })
     }
 
-    function updateTeamMemberStatus(elem, action, id) {
-        var oldHtml = elem.html();
-        elem.html("<i class='fa fa-refresh fa-spin'></i> Processing..");
-        elem.prop('disabled', true);
-
-        $.ajax({
-            type: "post",
-            url: "{{url('admin/profile/team-member-status')}}" + "/" + action + "/" + id,
-            data: { '_token': '{{ csrf_token() }}' },
-            success: function(result) {
-                if (result.code == "200") {
-                    showAlert('success', result.message, 3000);
-                    loadMemberDetail(id); // button set changes shape (suspend/deactivate <-> reactivate) — simplest to re-render the whole panel
-                } else {
-                    elem.html(oldHtml);
-                    elem.prop('disabled', false);
-                    showAlert('danger', result.message, 5000);
-                }
-            }
-        })
-    }
-
     function deleteProfile(elem, id) {
         swalConfirm("Delete Profile?", "Are you sure you want to delete this profile? You will not be able to revert this!", () => {
             var oldHtml = elem.html();

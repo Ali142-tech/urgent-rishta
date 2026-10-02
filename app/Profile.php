@@ -825,6 +825,7 @@ class Profile extends Model {
         $hasJoinedTableRefs = !empty($where) && preg_match('/`(mr|mc|mmt|mms|me|mcor|mcob|mcoc|mcgu|ms|mcst|rmms|rmcor|rmc|rmr|rmcst|rme|rmmt|rmcp|mp|ml|dp|i)`\./', $where);
         
         $orderByClause = !empty($orderBy) ? $orderBy : "`u`.`updated_at` DESC";
+        $limit = $limit === null ? null : (int) $limit; $offset = $offset === null ? null : max(0, (int) $offset);
         $limitClause = !empty($limit) ? (empty($offset) ? $limit : $offset . ", " . $limit) : "";
 
         // Optimized query: First get limited user IDs, then join (only if WHERE doesn't reference joined tables)

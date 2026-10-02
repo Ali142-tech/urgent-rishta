@@ -29,7 +29,6 @@
     mockup's removed Collaboration Request feature (see TeamController::
     dashboard()'s own comment) — flagged to the client, not yet confirmed.
 --}}
-<?php use App\User; ?>
 <aside class="ur-dash-sidebar ur-dash-sidebar--team" id="ur_dash_sidebar">
     <button type="button" class="ur-dash-sidebar__close" id="ur_dash_sidebar_close" aria-label="Close menu">
         <i class="fa fa-times"></i>
@@ -46,7 +45,7 @@
         </a>
     </div>
 
-    @php($__sidebarUser = User::retrieveUserObject())
+    @php($__sidebarUser = auth()->user())
     @php($__sidebarInitials = strtoupper(substr($__sidebarUser->first_name ?: '', 0, 1) . substr($__sidebarUser->last_name ?: '', 0, 1)))
     <div class="ur-dash-sidebar__profile">
         <div class="ur-dash-sidebar__profile-avatar">{{ $__sidebarInitials }}</div>
@@ -106,16 +105,34 @@
         </li>
        
 
-        @if($__sidebarUser->admin == 1)
-        <div class="ur-dash-nav__section-label">Management</div>
-        <li>
-            <a href="{{ url('admin/dashboard') }}">
-                <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg> Admin Panel
-            </a>
-        </li>
-        @endif
     </ul>
 
+    @if($__sidebarUser->isAdmin())
+    <div class="ur-dash-nav__section-label">Team Management</div>
+    <ul class="ur-dash-nav">
+        <li>
+            <a href="{{ route('team.manage.members') }}" class="{{ request()->is('team/manage/members') ? 'is-active' : '' }}">
+                <i class="fa fa-users"></i> Team Members
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('team.manage.applications') }}" class="{{ request()->is('team/manage/applications') ? 'is-active' : '' }}">
+                <i class="fa fa-user-plus"></i> Applications
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('team.manage.proposals') }}" class="{{ request()->is('team/manage/proposals') ? 'is-active' : '' }}">
+                <i class="fa fa-clipboard"></i> All Proposals
+            </a>
+        </li>
+        <li>
+            <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
+        </li>
+        <li>
+            <a href="{{ url('member/profile') }}"><i class="fa fa-user"></i> Member Dashboard</a>
+        </li>
+    </ul>
+    @endif
     <div class="ur-dash-sidebar__status">
         <span class="ur-dash-sidebar__status-dot"></span> AI matching online
         <div>Last updated: just now</div>

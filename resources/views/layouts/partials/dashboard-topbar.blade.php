@@ -45,8 +45,6 @@
                 <a href="{{ url('member/profile/password/update') }}"><i class="fa fa-key"></i> Change Password</a>
                 @if(User::retrieveUserObject()->admin == 1)
                 <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
-                @endif
-                @if(User::retrieveUserObject()->is_team_member == 1 || User::retrieveUserObject()->admin == 1)
                 <a href="{{ route('team.dashboard') }}"><i class="fa fa-briefcase"></i> Team Dashboard</a>
                 @endif
                 <button type="button" class="is-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">

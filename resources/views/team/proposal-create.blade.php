@@ -18,7 +18,7 @@
     get AI-matched by age range now (client's explicit call).
 --}}
 @extends('layouts.team.dashboard')
-@section('dashboard-title', 'Add Proposal')
+@section('dashboard-title', isset($proposal) ? 'Edit Proposal' : 'Add Proposal')
 @section('main-content')
 <style>
     .ur-team-form { max-width: 100%; }
@@ -196,13 +196,18 @@
     </div>
     @endif
 
-    <form method="POST" action="{{ route('team.proposals.store') }}" enctype="multipart/form-data" id="af_form" class="ur-pp-wrap">
+    <form method="POST" action="{{ isset($proposal) ? route('team.proposals.update', $proposal->dataid) : route('team.proposals.store') }}" enctype="multipart/form-data" id="af_form" class="ur-pp-wrap">
         @csrf
-        <input type="hidden" name="raw_intake_text" id="raw_intake_text_hidden" value="{{ old('raw_intake_text') }}">
+        <input type="hidden" name="raw_intake_text" id="raw_intake_text_hidden" value="{{ old('raw_intake_text', $proposal->raw_intake_text ?? '') }}">
         <div class="ur-pp-head">
             <div>
-                <h1 style="margin:0 0 4px;">Paste Profile</h1>
-                <p>Paste a WhatsApp message, old profile, notes or any formatted text. This structures it without changing the original submission.</p>
+                @if(isset($proposal))
+                    <h1 style="margin:0 0 4px;">Edit Proposal <span style="font-size:12px; font-weight:800; background:#F3F0E8; color:#123A2E; padding:4px 11px; border-radius:999px; vertical-align:middle; margin-left:6px;">{{ $proposal->dataid }}</span></h1>
+                    <p>Update the original pasted form or any field below, then save. Click <b>Extract with AI</b> after changing the pasted text to refresh the fields from it.</p>
+                @else
+                    <h1 style="margin:0 0 4px;">Paste Profile</h1>
+                    <p>Paste a WhatsApp message, old profile, notes or any formatted text. This structures it without changing the original submission.</p>
+                @endif
             </div>
           
         </div>
@@ -227,14 +232,20 @@
 
                 
 
-                @php($__owner = auth()->user())
+                @php($__owner = isset($proposal) ? (\App\TeamMember::find($proposal->added_by) ?: auth()->user()) : auth()->user())
                 <label>Profile owner / teammate</label>
                 <div class="ur-pp-owner-display" style="margin-bottom:14px;">
                     {{ $__owner->first_name }} {{ $__owner->last_name }}{{ $__owner->experience ? ' — '.$__owner->experience : '' }} — {{ $__owner->dataid }}
                 </div>
 
-                <label for="paste_box">Client details <span class="ur-pp-manual__tag" style="background:#FCEBE8;color:#B5674A;">Required</span> <span class="ur-opt">minimum 100 characters &mdash; include what the client is looking for in a partner</span></label>
-                <textarea id="paste_box" class="ur-pp-textarea" required minlength="100" placeholder="Paste the client's filled-in reply here — PERSONAL INFORMATION&#10;Gender: ...&#10;Age: ...&#10;Marital Status: ...&#10;..."></textarea>
+                <label for="paste_box">Client details
+                    @if(isset($proposal))
+                        <span class="ur-pp-manual__tag" style="background:#E7F3EC;color:#2E7D5B;">Original form</span> <span class="ur-opt">edit it if the client sent an update</span>
+                    @else
+                        <span class="ur-pp-manual__tag" style="background:#FCEBE8;color:#B5674A;">Required</span> <span class="ur-opt">minimum 100 characters &mdash; include what the client is looking for in a partner</span>
+                    @endif
+                </label>
+                <textarea id="paste_box" class="ur-pp-textarea" @if(!isset($proposal)) required minlength="100" @endif placeholder="Paste the client's filled-in reply here — PERSONAL INFORMATION&#10;Gender: ...&#10;Age: ...&#10;Marital Status: ...&#10;...">{{ old('raw_intake_text', $proposal->raw_intake_text ?? '') }}</textarea>
                 <div class="ur-pp-paste-meta" id="paste_meta"><span id="paste_char_count">0 / 100 minimum</span><span id="paste_error" style="display:none;">Please enter at least 100 characters.</span></div>
 
                 <div class="ur-pp-photos-head">
@@ -243,11 +254,15 @@
                 </div>
                 <div class="ur-pp-photo-grid">
                     @foreach([1, 2] as $__n)
+                    @php($__ex = isset($existingPhotos) ? ($existingPhotos[$__n - 1] ?? null) : null)
                     <div class="ur-pp-photo-slot">
                         {{-- Empty "Upload image N" box (nothing looks pre-uploaded). Clicking
                              anywhere on it opens the file picker; once a file is chosen the
                              preview fills the box and the bar below switches to "Replace image N".
                              The real <input type="file"> is hidden and still named image1/image2. --}}
+                        @if($__ex)
+                        <div class="ur-pp-photo-slot__drop" id="photo_preview_{{ $__n }}" data-empty-n="{{ $__n }}"><img src="{{ $__ex }}" alt="Current photo {{ $__n }}"></div>
+                        @else
                         <div class="ur-pp-photo-slot__drop is-empty" id="photo_preview_{{ $__n }}" data-empty-n="{{ $__n }}" role="button" tabindex="0"
                              onclick="document.getElementById('photo_input_{{ $__n }}').click()"
                              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
@@ -257,11 +272,15 @@
                                 <small>JPG or PNG &middot; up to 5 MB</small>
                             </div>
                         </div>
-                        <label class="ur-pp-photo-slot__btn" id="photo_label_{{ $__n }}" for="photo_input_{{ $__n }}" style="display:none;"><i class="fa fa-camera"></i> Replace image {{ $__n }}</label>
+                        @endif
+                        <label class="ur-pp-photo-slot__btn" id="photo_label_{{ $__n }}" for="photo_input_{{ $__n }}" data-after="{{ isset($proposal) ? 'Add image '.$__n : '' }}" style="{{ $__ex ? '' : 'display:none;' }}"><i class="fa fa-camera"></i> {{ $__ex ? 'Add another image' : 'Replace image '.$__n }}</label>
                         <input type="file" id="photo_input_{{ $__n }}" name="image{{ $__n }}" form="af_form" accept="image/*" hidden onchange="urPreviewProposalPhoto(this, 'photo_preview_{{ $__n }}', 'photo_label_{{ $__n }}', 'Image {{ $__n }}')">
                     </div>
                     @endforeach
                 </div>
+                @if(isset($proposal))
+                    <p class="ur-step-note" style="margin:8px 0 0;">New images are added to the existing ones. Delete or reorder photos on the <a href="{{ route('team.proposals.photos', $proposal->dataid) }}">Manage photos</a> page.</p>
+                @endif
                 <div class="ur-pp-meta-row">
                     Original text is preserved
                     <button type="button" class="ur-paste-box__fill-btn" id="paste_fill_btn"><i class="fa fa-magic"></i> Extract with AI</button>
@@ -465,7 +484,7 @@
                         <p class="ur-pp-manual__note"><b>Fair premium tagging:</b> &ldquo;Highly Attractive&rdquo; is only ever chosen by a team member after looking at the client's photo &mdash; AI never selects it.</p>
                     </div>
 
-                    <button type="submit" id="pp_submit_btn" class="ur-submit-btn" style="margin-top:14px; width:100%; justify-content:center;"><i class="fa fa-check"></i> <span id="pp_submit_label">Confirm &amp; Save</span></button>
+                    <button type="submit" id="pp_submit_btn" class="ur-submit-btn" style="margin-top:14px; width:100%; justify-content:center;"><i class="fa fa-check"></i> <span id="pp_submit_label">{{ isset($proposal) ? 'Save changes' : 'Confirm & Save' }}</span></button>
                 </div>
             </div>
         </div>
@@ -511,7 +530,7 @@ function urPreviewProposalPhoto(input, previewId, labelId, baseLabel) {
             preview.innerHTML = '<img src="' + e.target.result + '" alt="">';
         };
         reader.readAsDataURL(input.files[0]);
-        if (label) { label.style.display = ''; label.innerHTML = '<i class="fa fa-camera"></i> Replace ' + baseLabel.toLowerCase(); }
+        if (label) { label.style.display = ''; label.innerHTML = '<i class="fa fa-camera"></i> ' + (label.dataset.after || ('Replace ' + baseLabel.toLowerCase())); }
     } else {
         // File cleared -> back to the empty "Upload image N" box.
         var n = preview.getAttribute('data-empty-n') || '';
@@ -921,6 +940,7 @@ function urCopyTemplate(event) {
         var m = text.match(PARTNER_PASSAGE_RE);
         return m ? text.replace(m[0], ' ') : text;
     }
+    var EDIT_MODE = @json(isset($proposal));
     var pasteBox = document.getElementById('paste_box');
     var charCount = document.getElementById('paste_char_count');
     var rawTextHidden = document.getElementById('raw_intake_text_hidden');
@@ -1122,7 +1142,7 @@ function urCopyTemplate(event) {
             if (form.dataset.submitting === '1') { e.preventDefault(); return; }
             if (rawTextHidden && pasteBox) rawTextHidden.value = pasteBox.value;
 
-            if (pasteBox && pasteBox.value.trim().length < 100) {
+            if (!EDIT_MODE && pasteBox && pasteBox.value.trim().length < 100) {
                 e.preventDefault();
                 pasteBox.classList.add('is-invalid');
                 var pe = document.getElementById('paste_error'); if (pe) pe.style.display = '';
@@ -1143,7 +1163,7 @@ function urCopyTemplate(event) {
                     if (w && missingWrappers.indexOf(w) === -1) missingWrappers.push(w);
                 }
             });
-            if (missingWrappers.length) {
+            if (missingWrappers.length && !EDIT_MODE) {
                 e.preventDefault();
                 if (resultEmpty) resultEmpty.style.display = 'none';
                 if (reviewCompact) reviewCompact.style.display = '';
@@ -1180,6 +1200,36 @@ function urCopyTemplate(event) {
                 if (ov) ov.style.display = 'flex';
                 form.dataset.submitting = '1';
             }        });
+    }
+
+    // ---------- Edit mode: load the saved proposal into the same fields ----------
+    if (EDIT_MODE) {
+        var EDIT_VALUES = @json($editValues ?? []);
+        Object.keys(EDIT_VALUES).forEach(function (name) {
+            var el = document.querySelector('[name="' + name + '"]');
+            var v = EDIT_VALUES[name];
+            if (el && v !== null && v !== '') el.value = v;
+        });
+        if (ageInput) ageInput.value = @json($editAge ?? null) || '';
+
+        // An older proposal may lack some fields; only gender and date of birth
+        // stay mandatory while editing (the server enforces the same).
+        document.querySelectorAll('#af_form [required], [form="af_form"][required]').forEach(function (el) {
+            var n = el.getAttribute('name');
+            if (n === 'gender' || el.id === 'pp_age_input') return;
+            el.removeAttribute('required');
+            el.removeAttribute('minlength');
+        });
+
+        // Go straight to the review panel: pasted form + fields, ready to edit.
+        if (step1) { step1.classList.remove('is-active'); step1.classList.add('is-done'); }
+        if (step2) step2.classList.add('is-done');
+        if (step3) step3.classList.add('is-active');
+        if (resultEmpty) resultEmpty.style.display = 'none';
+        if (reviewCompact) reviewCompact.style.display = '';
+        if (originalText && pasteBox) originalText.textContent = pasteBox.value;
+        if (pasteBox) pasteBox.dispatchEvent(new Event('input'));
+        refreshExtractionSummary();
     }
 })();
 </script>

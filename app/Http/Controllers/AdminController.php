@@ -354,41 +354,43 @@ class AdminController extends Controller
     function teamProposals(Request $request)
     {
         $pageSize = 12;
-        $where = "`u`.`admin` = 0 and `u`.`added_by` IS NOT NULL";
+        $query = \App\Proposal::query()->with('photos');
 
         if (!empty($request->keyword)) {
-            $keyword = addslashes($request->keyword);
-            $where .= " and (`u`.`first_name` LIKE '%{$keyword}%' or `u`.`last_name` LIKE '%{$keyword}%'"
-                . " or `u`.`profession` LIKE '%{$keyword}%' or `u`.`city` LIKE '%{$keyword}%'"
-                . " or `u`.`current_city` LIKE '%{$keyword}%' or `u`.`dataid` LIKE '%{$keyword}%')";
+            $keyword = '%' . $request->keyword . '%';
+            $query->where(function ($q) use ($keyword) {
+                $q->where('reference', 'like', $keyword)->orWhere('profession', 'like', $keyword)
+                    ->orWhere('city', 'like', $keyword)->orWhere('current_city', 'like', $keyword);
+            });
         }
         if (!empty($request->matchmaker)) {
-            $where .= " and `u`.`added_by` = " . (int) $request->matchmaker;
+            $query->where('added_by', (int) $request->matchmaker);
         }
 
-        $resultCount = (int) Profile::profiles($where, null, null, null, null, true);
+        $resultCount = (int) (clone $query)->count();
         $numPages = max(1, (int) ceil($resultCount / $pageSize));
         $currentPage = (int) $request->query('page', 1);
         if ($currentPage < 1) $currentPage = 1;
         if ($currentPage > $numPages) $currentPage = $numPages;
 
-        $members = Profile::profiles($where, null, "`u`.`created_at` DESC", $pageSize, $pageSize * ($currentPage - 1));
+        $members = $query->orderByDesc('created_at')->skip($pageSize * ($currentPage - 1))->take($pageSize)->get();
 
-        $addedByIds = collect($members)->pluck('added_by')->filter()->unique()->values();
+        $addedByIds = $members->pluck('added_by')->filter()->unique()->values();
         $addedByUsers = $addedByIds->isEmpty()
             ? collect()
-            : User::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name'])->keyBy('id');
+            : \App\TeamMember::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name', 'dataid', 'experience'])->keyBy('id');
         foreach ($members as $member) {
             $addedByUser = $addedByUsers->get($member->added_by);
             $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
-            // Grants member-card.blade.php's "team card" Edit action to the
-            // admin regardless of who actually added the proposal — same
-            // pass-through TeamController::authorizeProposalOwner() already
-            // gives admins on the Team Dashboard side.
-            $member->team_card_role = 'own';
+            $member->added_by_dataid = $addedByUser->dataid ?? null;
+            $member->added_by_experience = $addedByUser->experience ?? null;
+            $member->has_partner_preference = $member->hasPartnerPreferences();
+            // Grants the card's Edit action to the admin regardless of who added the
+            // proposal — same pass-through TeamController::authorizeProposalOwner() gives admins.
+            $member->team_card_role = 'admin';
         }
 
-        $matchmakers = User::where('is_team_member', 1)->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+        $matchmakers = \App\TeamMember::approved()->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
 
         return view('admin.team-proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers'));
     }
@@ -911,7 +913,7 @@ class AdminController extends Controller
     {
         $search = trim((string) request()->query('search', ''));
 
-        $query = User::where('is_team_member', 1);
+        $query = \App\TeamMember::approved();
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', '%' . $search . '%')
@@ -934,9 +936,9 @@ class AdminController extends Controller
         ]);
 
         if ($request->recipient === 'all') {
-            $recipients = User::where('is_team_member', 1)->get();
+            $recipients = \App\TeamMember::approved()->get();
         } else {
-            $recipients = User::where('dataid', $request->recipient)->where('is_team_member', 1)->get();
+            $recipients = \App\TeamMember::approved()->where('dataid', $request->recipient)->get();
         }
 
         foreach ($recipients as $recipient) {
@@ -1734,11 +1736,7 @@ class AdminController extends Controller
         }
     }
 
-    /**
-     * Suspend/deactivate/reactivate an ALREADY-approved partner without
-     * touching is_team_member — mirrors approvePhotoVerification/
-     * rejectPhotoVerification/reopenPhotoVerification's shape exactly.
-     */
+    /** Suspend / deactivate / reactivate an already-approved team member. */
     function updateTeamMemberStatus($action, $dataid)
     {
         $loggedInUser = User::retrieveUserObject();
@@ -1748,79 +1746,66 @@ class AdminController extends Controller
             return ['code' => '404', 'message' => 'Action not permitted!!!'];
         }
 
-        $user = User::retrieveUserObject($dataid);
-        if (!$user || (int) $user->is_team_member !== 1) {
+        $teamMember = \App\TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$teamMember) {
             return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
         }
 
-        $user->team_member_status = $statusMap[$action];
-        $user->save();
+        $teamMember->status = $statusMap[$action];
+        $teamMember->save();
 
-        $displayName = $user->first_name . ' ' . $user->last_name;
-        Log::info("Admin (" . $loggedInUser->dataid . ") set team member status of " . $displayName . " (" . $user->email . ") to " . $statusMap[$action]);
-        User::retrieveUserObject($dataid, true);
+        $displayName = $teamMember->first_name . ' ' . $teamMember->last_name;
+        Log::info("Admin (" . $loggedInUser->dataid . ") set team member status of " . $displayName . " (" . $teamMember->email . ") to " . $statusMap[$action]);
 
         return [
             'code' => '200',
             'message' => $displayName . ' is now ' . $statusMap[$action] . '.',
-            'team_member_status' => $user->team_member_status
+            'team_member_status' => $teamMember->status
         ];
     }
 
-    /**
-     * Public "Become a Partner" applications awaiting review — see
-     * MatchmakerApplicationController. Separate from the "Team Members"
-     * page (that one lists already-approved is_team_member=1 accounts;
-     * this one lists matchmaker_status='pending' applicants who aren't
-     * team members yet).
-     */
+    /** Public "Become a Partner" applications awaiting review (see MatchmakerApplicationController). */
     function matchmakerApplications()
     {
-        $applications = User::where('matchmaker_status', 'pending')->orderBy('created_at')->get();
+        $applications = \App\TeamMember::pending()->orderBy('created_at')->get();
         return view('admin.dashboard.matchmaker-applications', ['applications' => $applications]);
     }
 
-    /**
-     * The only way to become a team member now (client requirement, Sep
-     * 2026) — flips is_team_member/team_member_status the same way the
-     * now-removed admin/profiles "Make Team Member" toggle used to for any
-     * regular member. An approved applicant is simply a normal team member
-     * from this point on.
-     */
+    /** Approving lets the applicant sign in at /team/login and use the Team Dashboard. */
     function approveMatchmakerApplication($dataid)
     {
         $loggedInUser = User::retrieveUserObject();
-        $user = User::where('dataid', $dataid)->where('matchmaker_status', 'pending')->first();
-        if (!$user) {
+        $member = \App\TeamMember::pending()->where('dataid', $dataid)->first();
+        if (!$member) {
             return ['code' => '404', 'message' => 'Application was not found or already reviewed.'];
         }
 
-        $user->matchmaker_status = 'approved';
-        $user->is_team_member = 1;
-        $user->team_member_status = 'active';
-        $user->save();
+        $member->update([
+            'application_status' => 'approved',
+            'is_approved' => true,
+            'status' => 'active',
+            'approved_at' => now(),
+        ]);
 
-        Log::info("Admin (" . $loggedInUser->dataid . ") approved matchmaker application " . $user->dataid . " (" . $user->email . ")");
+        Log::info("Admin (" . $loggedInUser->dataid . ") approved matchmaker application " . $member->dataid . " (" . $member->email . ")");
 
-        return ['code' => '200', 'message' => $user->first_name . ' ' . $user->last_name . ' has been approved as a team member.'];
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ' has been approved as a team member.'];
     }
 
     function rejectMatchmakerApplication($dataid)
     {
         $loggedInUser = User::retrieveUserObject();
-        $user = User::where('dataid', $dataid)->where('matchmaker_status', 'pending')->first();
-        if (!$user) {
+        $member = \App\TeamMember::pending()->where('dataid', $dataid)->first();
+        if (!$member) {
             return ['code' => '404', 'message' => 'Application was not found or already reviewed.'];
         }
 
-        $user->matchmaker_status = 'rejected';
-        $user->save();
+        $member->update(['application_status' => 'rejected']);
 
-        Log::info("Admin (" . $loggedInUser->dataid . ") rejected matchmaker application " . $user->dataid . " (" . $user->email . ")");
+        Log::info("Admin (" . $loggedInUser->dataid . ") rejected matchmaker application " . $member->dataid . " (" . $member->email . ")");
 
-        return ['code' => '200', 'message' => $user->first_name . ' ' . $user->last_name . '\'s application has been rejected.'];
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . '\'s application has been rejected.'];
     }
-
     function deleteProfile($dataid)
     {
         $loggedInUser = User::retrieveUserObject();

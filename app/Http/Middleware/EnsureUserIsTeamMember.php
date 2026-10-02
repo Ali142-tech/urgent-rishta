@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,31 +9,37 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Gates the Team Dashboard / manual proposal-entry routes to users an admin
- * has approved via AdminController::approveMatchmakerApplication() — the
- * only way to become a team member now (client requirement, Sep 2026;
- * admin can no longer promote an arbitrary regular member). Structural
- * mirror of EnsureUserIsAdmin — same "run after 'auth' so a guest hits
- * login, not a raw 403" reasoning applies here too.
- *
- * Admins also pass through unconditionally: TeamController's per-proposal
- * authorization (authorizeProposalOwner(), etc.) already treats admins as
- * allowed on every proposal regardless of who added it, so admins get full
- * Team Dashboard access too, without needing to also be flagged as a team
- * member.
+ * Guards the Team Dashboard. Team members sign in on their own guard
+ * (`team`, /team/login); this makes that the default guard for the request
+ * (so auth()->user() is the TeamMember everywhere in the team screens) and
+ * turns away anyone who is not an approved, active team member — including
+ * one an admin has suspended since they signed in.
  */
 class EnsureUserIsTeamMember
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = Auth::user();
-        $isTeamMember = $user && (int) $user->is_team_member === 1 && $user->team_member_status === 'active';
-        $isAdmin = $user && $user->isAdmin();
+        Auth::shouldUse('team');
+        $member = Auth::guard('team')->user();
 
-        if (!$isTeamMember && !$isAdmin) {
-            Log::warning('Blocked non-team-member access attempt to ' . $request->path() . ' by ' .
-                ($user ? $user->dataid . ' (' . $user->email . ')' : 'a guest'));
-            abort(403, 'Team member access required.');
+        // A signed-in admin has a team account too (created on demand) — no second login needed.
+        if (!$member) {
+            $admin = Auth::guard('web')->user();
+            if ($admin && ($admin->admin ?? 0) == 1) {
+                $member = \App\TeamMember::provisionForAdmin($admin);
+                Auth::guard('team')->login($member);
+            }
+        }
+
+        if (!$member) {
+            return redirect()->guest(route('team.login'));
+        }
+
+        if (!$member->isActiveMember()) {
+            Log::warning('Blocked inactive team member ' . $member->dataid . ' from ' . $request->path());
+            Auth::guard('team')->logout();
+            session()->flash('message', 'warning|Your account is not active. Please contact support at 0304-0227000.');
+            return redirect()->route('team.login');
         }
 
         return $next($request);

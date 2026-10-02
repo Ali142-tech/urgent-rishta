@@ -74,8 +74,6 @@ class User extends Authenticatable implements MustVerifyEmail {
         'siblings_brothers',
         'siblings_sisters',
         'siblings_married_note',
-        'experience',
-        'about_me',
         'password',
     ];
 
@@ -88,16 +86,14 @@ class User extends Authenticatable implements MustVerifyEmail {
      * package via a crafted request) for any future code that isn't as
      * careful: 'package', 'package_started_at', 'package_expires_at',
      * 'online_package', 'online_package_started_at', 'online_package_expires_at'.
-     * Same reasoning covers 'is_team_member' (set only via AdminController::
-     * approveMatchmakerApplication()/rejectMatchmakerApplication()) and
+     * Same reasoning covers the team-member state (now the team_members table, written only via
+     * AdminController::approveMatchmakerApplication()/rejectMatchmakerApplication()) and
      * 'added_by' (set only via TeamController::store()
      * to Auth::id() of the acting team member) — neither should ever be
-     * settable from a mass-assigned request body. 'matchmaker_status' joins
-     * this list for the same reason — a signup form submitter must never be
-     * able to set their own application straight to 'approved' by including
-     * that field in a crafted request; only MatchmakerApplicationController::
-     * store() (hardcoded to 'pending') and AdminController's approve/reject
-     * actions ever write it.
+     * settable from a mass-assigned request body. The matchmaker application status
+     * follows the same rule — a signup form submitter must never be able to set their own
+     * application straight to 'approved'; only MatchmakerApplicationController::store()
+     * (hardcoded to 'pending') and AdminController's approve/reject actions ever write it.
      */
 
     /**
@@ -450,112 +446,6 @@ class User extends Authenticatable implements MustVerifyEmail {
     }
 
     /**
-     * Parallel to recommendedMatchesWhere() — NOT a modification of it,
-     * kept fully separate so self-registered members' behavior is
-     * untouched. $this is expected to be a PROPOSAL (a `users` row with
-     * `added_by` set — see TeamController::store()), not a logged-in
-     * viewer. Deliberate difference from recommendedMatchesWhere(): skips
-     * the isActive()/canSearchSoulMates() package gate — a proposal has
-     * no package, that gate would always return null for one. Candidate
-     * pool is restricted to OTHER team-added proposals only
-     * (`added_by IS NOT NULL`) — client confirmed 2026-09-23 the Team
-     * Dashboard's AI Matches must only ever surface manually-added
-     * proposals, never the regular self-registered pool (matches how
-     * every other Team Dashboard page already works).
-     */
-    private function proposalMatchesWhere(): ?string
-    {
-        $ownGender = strtolower($this->gender ?? '');
-        $oppositeGender = $ownGender === 'male' ? 'female' : ($ownGender === 'female' ? 'male' : null);
-        if (empty($oppositeGender)) {
-            return null;
-        }
-
-        if (!$this->hasPartnerPreferences()) {
-            return null;
-        }
-
-        $where = "`u`.`gender`='" . $oppositeGender . "' and `u`.`active`=1 and `u`.`id`!=" . (int) $this->id . " and `u`.`added_by` IS NOT NULL";
-
-        $pref = $this->partnerPreference;
-        if (!empty($pref->age_min) || !empty($pref->age_max)) {
-            $min = !empty($pref->age_min) ? (int) $pref->age_min : 18;
-            $max = !empty($pref->age_max) ? (int) $pref->age_max : 99;
-            $where .= " and FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/365.25) between " . $min . " and " . $max;
-        }
-        if (!empty($pref->marital_status)) {
-            $where .= " and `u`.`marital_status`='" . addslashes($pref->marital_status) . "'";
-        }
-        if ($pref->with_children === 'No') {
-            $where .= " and (`u`.`children` is null or `u`.`children`='' or CAST(`u`.`children` AS UNSIGNED)=0)";
-        } elseif ($pref->with_children === 'Yes') {
-            $where .= " and CAST(`u`.`children` AS UNSIGNED) > 0";
-        }
-        if (!empty($pref->country_id)) {
-            $where .= " and `u`.`con_of_residence`='" . addslashes($pref->country_id) . "'";
-        }
-        if (!empty($pref->state_id)) {
-            $where .= " and `u`.`state`='" . addslashes($pref->state_id) . "'";
-        }
-        if (!empty($pref->religion_id)) {
-            $where .= " and `u`.`religion`='" . addslashes($pref->religion_id) . "'";
-        }
-        if (!empty($pref->profession)) {
-            $where .= " and `u`.`profession` LIKE '%" . addslashes($pref->profession) . "%'";
-        }
-
-        return $where;
-    }
-
-    /**
-     * AI Matches Found for a proposal — same shape as
-     * getRecommendedMatches() but drawing from proposalMatchesWhere().
-     */
-    public function getProposalMatches($limit = 3, $offset = 0)
-    {
-        $where = $this->proposalMatchesWhere();
-        if ($where === null) {
-            return collect();
-        }
-
-        $orderParts = [];
-        if (!empty($this->city)) {
-            $orderParts[] = "(`u`.`city`='" . addslashes($this->city) . "') DESC";
-        }
-        if (!empty($this->con_of_residence)) {
-            $orderParts[] = "(`u`.`con_of_residence`='" . addslashes($this->con_of_residence) . "') DESC";
-        }
-        $orderParts[] = "`u`.`updated_at` DESC";
-        $orderBy = implode(', ', $orderParts);
-
-        return Profile::profiles($where, "", $orderBy, $limit, $offset);
-    }
-
-    public function getProposalMatchesCount(): int
-    {
-        $where = $this->proposalMatchesWhere();
-        if ($where === null) {
-            return 0;
-        }
-
-        return (int) Profile::profiles($where, "", null, null, null, true);
-    }
-
-    /**
-     * Sum of getProposalMatchesCount() across every proposal THIS team
-     * member owns (`added_by` = this user) — the same aggregate
-     * TeamController::dashboard() computed inline before this was
-     * extracted, now also reused by the sidebar's badge composer (see
-     * AppServiceProvider::boot()) so both stay in sync automatically.
-     */
-    public function ownedProposalsAiMatchesCount(): int
-    {
-        return self::where('added_by', $this->id)
-            ->get()
-            ->sum(fn (User $proposal) => $proposal->getProposalMatchesCount());
-    }
-
-    /**
      * Activate an ONLINE package (sets online_package columns only; does not change admin package).
      * If the user already has an active (non-expired) online subscription, does nothing:
      * they must wait until expiry before subscribing again.
@@ -648,9 +538,7 @@ class User extends Authenticatable implements MustVerifyEmail {
     public function canViewContactInfoOf(User $proposalOwner): bool {
         if ($this->id === $proposalOwner->id) return true;
         if ($this->isAdmin()) return true;
-        if (empty($proposalOwner->added_by)) return false;
-
-        return (int) $this->is_team_member === 1 && $this->team_member_status === 'active';
+        return false;
     }
 
     public function getTotalCount() {
@@ -764,43 +652,5 @@ class User extends Authenticatable implements MustVerifyEmail {
             return 'danger|Your account was not approved' . (!empty($reason) ? ': ' . $reason : '') . '. Please contact support.';
         }
         return null;
-    }
-
-    /**
-     * Matchmaker signup (see MatchmakerApplicationController::store())
-     * creates a real `users` row with a real password specifically so it
-     * CAN log in — but unlike a normal member, login itself must stay
-     * gated on admin review here, not just Team Dashboard access. Unlike
-     * photoVerificationBlockMessage()'s 'pending'/'resubmit' states (which
-     * deliberately let login through because there's a self-service gate
-     * to send them to), there's no self-service path for an unreviewed
-     * matchmaker application, so both 'pending' and 'rejected' block login
-     * entirely until an admin acts (AdminController::approve/reject
-     * MatchmakerApplication()).
-     */
-    public function matchmakerLoginBlockMessage(): ?string {
-        if ($this->matchmaker_status === 'pending') {
-            return 'warning|Your matchmaker application is still under review. We\'ll notify you once it\'s approved.';
-        }
-        if ($this->matchmaker_status === 'rejected') {
-            return 'danger|Your matchmaker application was not approved. Please contact support at 0304-0227000.';
-        }
-        return null;
-    }
-
-    /**
-     * True for a matchmaker-signup account (see MatchmakerApplicationController::
-     * store()) — one with no real dating profile (no gender/DOB ever
-     * collected). Used by the nav/sidebar "Switch Dashboard" links to hide
-     * Member Dashboard for these accounts, since there's nothing there for
-     * them to see. Approving a matchmaker application is the only way to
-     * become a team member now (client requirement, Sep 2026 — admin can no
-     * longer promote an arbitrary regular member; see the now-removed
-     * AdminController::toggleTeamMember()), so in practice this is
-     * equivalent to is_team_member==1 going forward — kept as its own
-     * check anyway for any pre-existing account promoted the old way.
-     */
-    public function isMatchmakerOnly(): bool {
-        return !empty($this->matchmaker_status);
     }
 }

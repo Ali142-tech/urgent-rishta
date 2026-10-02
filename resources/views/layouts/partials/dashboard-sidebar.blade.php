@@ -61,14 +61,12 @@
     </ul>
 
     <div class="ur-dash-sidebar__footer">
-        @if(User::retrieveUserObject()->admin == 1 || User::retrieveUserObject()->is_team_member == 1)
+        @if(User::retrieveUserObject()->admin == 1)
         <div class="ur-dash-nav__section-label" style="padding-top:0;">Switch Dashboard</div>
         @if(User::retrieveUserObject()->admin == 1)
         <a href="{{ url('admin/dashboard') }}" class="ur-dash-nav__link">
             <i class="fa fa-cogs"></i> Admin Dashboard
         </a>
-        @endif
-        @if(User::retrieveUserObject()->is_team_member == 1 || User::retrieveUserObject()->admin == 1)
         <a href="{{ route('team.dashboard') }}" class="ur-dash-nav__link">
             <i class="fa fa-briefcase"></i> Team Dashboard
         </a>

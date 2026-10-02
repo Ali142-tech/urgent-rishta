@@ -1222,20 +1222,13 @@
                             @else
                             <p class="ur-mp-detail-card__locked-note"><i class="fa fa-lock"></i> Contact info is hidden.</p>
                             @endif
-                            @if(!empty(auth()->user()) && auth()->user()->is_team_member == 1)
-                            {{-- Never sends phone/email/address — see User::whatsappShareLink()
-                                 and TeamController::shareWhatsapp(). --}}
-                            <a class="ur-btn ur-btn--outline" style="margin-top:10px;" href="{{ route('team.proposals.share.whatsapp', $profile->dataid) }}" target="_blank" rel="noopener">
-                                <i class="fa fa-whatsapp"></i> Share via WhatsApp
-                            </a>
-                            @endif
                         </div>
 
                         <div class="ur-mp-detail-card">
                             <h3 class="ur-mp-detail-card__title"><i class="fa fa-flag"></i> Profile Status</h3>
                             @php
                                 $statusLabels = ['active' => 'Active', 'on_hold' => 'On Hold', 'matched' => 'Matched', 'engaged' => 'Engaged', 'married' => 'Married', 'closed' => 'Closed'];
-                                $canEditStatus = !empty(auth()->user()) && ($profile->added_by == auth()->id() || auth()->user()->isAdmin());
+                                $canEditStatus = false;   // proposals (and their status) live in the Team Dashboard now
                             @endphp
                             @if($canEditStatus)
                             <form method="POST" action="{{ route('team.proposals.status', $profile->dataid) }}" style="display:flex; gap:10px; align-items:center;">

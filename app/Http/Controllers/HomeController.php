@@ -468,12 +468,12 @@ class HomeController extends Controller {
      * homepage slider already exposes to guests.
      */
     public function sharePreview($dataid) {
-        $member = Profile::profiles("`u`.`dataid` = '" . addslashes($dataid) . "' and `u`.`added_by` IS NOT NULL", null, null, null, null, null, true)->first();
+        $member = \App\Proposal::with('photos')->where('reference', $dataid)->first();
         if (!$member) {
             abort(404);
         }
 
-        $age = !empty($member->birthday) ? date_diff(date_create($member->birthday), date_create('now'))->y : null;
+        $age = $member->age;
         $photoUrl = url($member->getCardImages(null, false)[0] ?? Profile::defaultImage($member->gender));
         $location = $member->lbl_city ?: $member->lbl_con_of_residence;
 

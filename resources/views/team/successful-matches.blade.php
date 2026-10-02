@@ -22,8 +22,8 @@
     <tbody>
         @forelse($matches as $match)
         <tr>
-            <td>{{ optional($match->proposal)->dataid }} ({{ optional($match->proposal)->first_name }})</td>
-            <td>{{ optional($match->counterpartProposal)->dataid }} ({{ optional($match->counterpartProposal)->first_name }})</td>
+            <td>{{ optional($match->proposal)->dataid }}</td>
+            <td>{{ optional($match->counterpartProposal)->dataid }}</td>
             <td>{{ optional($match->partnerA)->first_name }} {{ optional($match->partnerA)->last_name }} &harr; {{ optional($match->partnerB)->first_name }} {{ optional($match->partnerB)->last_name }}</td>
             <td>{{ \Carbon\Carbon::parse($match->matched_at)->format('d/m/Y') }}</td>
             <td>{{ $match->share_partner_a !== null ? $match->share_partner_a.'% / '.$match->share_partner_b.'%' : '—' }}</td>

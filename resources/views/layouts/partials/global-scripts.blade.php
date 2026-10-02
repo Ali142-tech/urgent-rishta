@@ -5,6 +5,9 @@
     window.Laravel = {'token': '{{ csrf_token() }}', 'root': '{{ url('/') }}'};
     @auth
     window.Laravel.userId='{{ Auth::user()->id }}';
+    @if(Auth::user() instanceof \App\TeamMember)
+    window.Laravel.notificationsUrl='{{ url('team/notifications/refresh') }}';
+    @endif
     @endauth
 
     window.onscroll = function() {
@@ -569,11 +572,9 @@
         $(".selectpicker").select2();
 
         @auth
-        {{-- Team members (Team Dashboard only, see EnsureTeamMembersUseTeamDashboard)
-             have no dating profile to complete and can't even reach
-             member/profile this links to — skip the nag entirely for them,
-             not just admins. --}}
-        @if(!Auth::user()->isAdmin() && (int) Auth::user()->is_team_member !== 1)
+        {{-- Team members (own guard) have no dating profile to complete —
+             skip the nag entirely for them, not just admins. --}}
+        @if(!Auth::user()->isAdmin() && !(Auth::user() instanceof \App\TeamMember))
         @php
             $__profile = Auth::user()->profile();
             $__completenessPercent = $__profile ? $__profile->profileCompleteness()['percent'] : 100;

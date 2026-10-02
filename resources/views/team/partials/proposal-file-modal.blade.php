@@ -13,6 +13,7 @@
     client's actual original paste.
 --}}
 @php
+    $asPage = $asPage ?? false;   // true when rendered as the full proposal page, not the popup
     $age = !empty($member->birthday) ? date_diff(date_create($member->birthday), date_create('now'))->y : null;
     $location = $member->lbl_city ?: ($member->lbl_con_of_residence ?: 'Location not provided');
     $nationality = $member->lbl_con_of_citizenship ?: $member->lbl_con_of_residence;
@@ -25,7 +26,9 @@
         <p>Profile ID {{ $member->dataid }} &bull; Original and AI-organized data</p>
     </div>
     @if($matchCount > 0)<span class="ur-cf-matches-pill">{{ $matchCount }} top AI match{{ $matchCount == 1 ? '' : 'es' }}</span>@endif
+    @unless($asPage)
     <button type="button" class="ur-cf-close" onclick="closeClientFile()" aria-label="Close"><i class="fa fa-times"></i></button>
+    @endunless
 </div>
 
 <div class="ur-cf-top">
@@ -138,7 +141,13 @@
 <div class="ur-cf-footer">
     <p>Every client file keeps the original form unchanged. Matched forms can be sent directly to the profile owner.</p>
     <div class="ur-cf-footer__actions">
+        @unless($asPage)
         <button type="button" onclick="closeClientFile()">Close</button>
+        @endunless
+        @if($asPage && $member->team_card_role === 'own')
+            <a href="{{ route('team.proposals.edit', $member->dataid) }}"><i class="fa fa-pencil"></i> Edit</a>
+            <a href="{{ route('team.proposals.photos', $member->dataid) }}"><i class="fa fa-camera"></i> Manage photos</a>
+        @endif
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>
         @if($hasRealPhotos)
             {{-- Tries the OS/browser native share sheet first (real photo

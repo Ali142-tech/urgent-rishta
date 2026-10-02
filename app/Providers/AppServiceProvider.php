@@ -58,17 +58,17 @@ class AppServiceProvider extends ServiceProvider
         // numbers no matter which team page is loaded. Guarded to only run
         // for an actual authenticated team member — every other dashboard
         // (member/admin) either doesn't render this partial at all or
-        // would have no is_team_member row to compute against.
+        // has no team member to compute against.
         View::composer('layouts.partials.team-sidebar', function ($view) {
-            $user = Auth::user();
-            if (!$user || (int) $user->is_team_member !== 1) {
+            $user = Auth::guard('team')->user();
+            if (!$user) {
                 return;
             }
 
             $view->with([
-                'sidebarTeamProposalsCount' => User::whereNotNull('added_by')->count(),
+                'sidebarTeamProposalsCount' => \App\Proposal::count(),
                 'sidebarAiMatchesCount' => $user->ownedProposalsAiMatchesCount(),
-                'sidebarMatchmakersCount' => User::where('is_team_member', 1)->where('team_member_status', 'active')->count(),
+                'sidebarMatchmakersCount' => \App\TeamMember::active()->count(),
                 'sidebarRequestsCount' => $user->unreadNotifications()->count(),
             ]);
         });

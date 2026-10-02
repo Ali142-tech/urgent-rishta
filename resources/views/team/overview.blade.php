@@ -167,7 +167,7 @@
                 </thead>
                 <tbody>
                     @foreach($previewMatches as $match)
-                        @php $compat = $match->compatibilityWith($match->viewer_preference_for_card, [], $match->for_proposal_profile); @endphp
+                        @php $compat = $match->compatibilityWith($match->for_proposal_profile); @endphp
                     
                         @php
                             $clientProfile = $match->for_proposal_profile;
@@ -185,7 +185,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td style="line-height:1.2 !important;">{{ $match->first_name }} {{ $match->last_name }}@if($matchCity) &bull; {{ $matchCity }}@endif</td>
+                            <td style="line-height:1.2 !important;">{{ $match->dataid }}@if($matchCity) &bull; {{ $matchCity }}@endif</td>
                             <td style="line-height:1.2 !important;">
                                 @if($scorePct !== null)
                                     <div style="width:110px; margin:0 !important; padding:0 !important;">

@@ -422,10 +422,23 @@ a.appointment-btn::before{
                                                 <a class="nav-link " href="{{url('become-a-partner')}}" aria-haspopup="true" aria-expanded="false">
                                                     Become a Partner</a>
                                             </li>
+                                            @if(!Auth::check() && !Auth::guard('team')->check())
+                                            <li class="custom-nav">
+                                                <a class="nav-link " href="{{ route('team.login') }}" aria-haspopup="true" aria-expanded="false">
+                                                    Partner Login</a>
+                                            </li>
+                                            @endif
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">
                                                     Contact</a>
                                             </li>
+                                            @if(Auth::guard('team')->check())
+                                            <li class="custom-nav d-lg-none">
+                                                <a class="nav-link" href="{{ route('team.dashboard') }}" aria-haspopup="true" aria-expanded="false">
+                                                    <i class="fa fa-briefcase mr-2"></i> Team Dashboard
+                                                </a>
+                                            </li>
+                                            @endif
                                             @guest
                                             <li class="custom-nav d-lg-none">
                                                 <a class="nav-link" href="{{ route('login') }}" aria-haspopup="true" aria-expanded="false">
@@ -434,24 +447,15 @@ a.appointment-btn::before{
                                             </li>
                                             @endguest
                                             @auth
-                                            @unless(User::retrieveUserObject()->isMatchmakerOnly())
                                             <li class="custom-nav d-lg-none">
                                                 <a class="nav-link" href="{{ url('member/profile') }}" aria-haspopup="true" aria-expanded="false">
                                                     <i class="fa fa-user-circle mr-2"></i> Profile
                                                 </a>
                                             </li>
-                                            @endunless
                                             @if(User::retrieveUserObject()->admin==1)
                                             <li class="custom-nav d-lg-none">
                                                 <a class="nav-link" href="{{ url('admin/dashboard') }}" aria-haspopup="true" aria-expanded="false">
                                                     <i class="fa fa-cogs mr-2"></i> Dashboard
-                                                </a>
-                                            </li>
-                                            @endif
-                                            @if(User::retrieveUserObject()->is_team_member==1)
-                                            <li class="custom-nav d-lg-none">
-                                                <a class="nav-link" href="{{ route('team.dashboard') }}" aria-haspopup="true" aria-expanded="false">
-                                                    <i class="fa fa-briefcase mr-2"></i> Team Dashboard
                                                 </a>
                                             </li>
                                             @endif
@@ -505,7 +509,7 @@ a.appointment-btn::before{
                                                 </div>
                                             </li>
                                             <li class="dropdown dropdown--style-2 dropdown--animated ur-account-dropdown">
-                                                <a class="dropdown-toggle has-badge c-base-1" href="{{ User::retrieveUserObject()->isMatchmakerOnly() ? route('team.dashboard') : url('member/profile') }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+                                                <a class="dropdown-toggle has-badge c-base-1" href="{{ url('member/profile') }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
                                                     <div id="top_nav_img" class="top_nav_img" style="background-image: url( '{{ User::retrieveUserObject()->getProfileImage(true) }}')"></div>
                                                 </a>
                                                 {{-- Clicking the avatar opens this instead of navigating straight to
@@ -513,22 +517,33 @@ a.appointment-btn::before{
                                                      dashboards, so the old separate "Dashboard" pill button next to
                                                      the avatar was folded into this menu instead of sitting beside it. --}}
                                                 <div class="dropdown-menu dropdown-menu-right ur-account-menu">
-                                                    @unless(User::retrieveUserObject()->isMatchmakerOnly())
                                                     <a class="dropdown-item" href="{{ url('member/profile') }}"><i class="fa fa-user mr-2"></i> Member Dashboard</a>
-                                                    @endunless
                                                     @if(User::retrieveUserObject()->admin==1)
                                                     <a class="dropdown-item" href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs mr-2"></i> Admin Dashboard</a>
                                                     @endif
-                                                    @if(User::retrieveUserObject()->is_team_member==1 || User::retrieveUserObject()->admin==1)
+                                                    @if(Auth::guard('team')->check() || User::retrieveUserObject()->admin==1)
                                                     <a class="dropdown-item" href="{{ route('team.dashboard') }}"><i class="fa fa-briefcase mr-2"></i> Team Dashboard</a>
                                                     @endif
                                                 </div>
                                             </li>
                                             @endauth
                                             @guest
+                                            @if(Auth::guard('team')->check())
+                                            <li class="dropdown dropdown--style-2 dropdown--animated ur-account-dropdown">
+                                                <a class="dropdown-toggle has-badge c-base-1" href="{{ route('team.dashboard') }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Account menu">
+                                                    <div class="top_nav_img" style="background-image: url( '{{ Auth::guard('team')->user()->getProfileImage(true) }}')"></div>
+                                                </a>
+                                                <div class="dropdown-menu dropdown-menu-right ur-account-menu">
+                                                    <a class="dropdown-item" href="{{ route('team.dashboard') }}"><i class="fa fa-briefcase mr-2"></i> Team Dashboard</a>
+                                                    <a class="dropdown-item" href="#" onclick="event.preventDefault(); document.getElementById('team-logout-form').submit();"><i class="fa fa-power-off mr-2"></i> Log Out</a>
+                                                </div>
+                                                <form id="team-logout-form" action="{{ route('team.logout') }}" method="POST" style="display: none;">@csrf</form>
+                                            </li>
+                                            @else
                                             <li>
                                                 <a href="{{ route('login') }}" class="btn btn-styled btn-xs btn-base-1 btn-shadow" aria-label="Log In"><i class="fa fa-power-off"></i> Log In</a>
                                             </li>
+                                            @endif
                                             @endguest
                                             @auth
                                             {{-- Interests/Log Out buttons removed here — the avatar above already

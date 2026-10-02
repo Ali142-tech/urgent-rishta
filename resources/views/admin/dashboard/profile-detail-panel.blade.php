@@ -53,10 +53,6 @@
                             <i class="fa fa-whatsapp" style="color:#fff;"></i>
                         </a>
                     @endif
-                    @if($member->is_team_member == 1)
-                        <span id="team_member_label_{{ $member->dataid }}" class="ur-admin-badge ur-admin-badge--neutral">Team Member</span>
-                        <span id="team_member_status_label_{{ $member->dataid }}" class="ur-admin-badge {{ $member->team_member_status === 'active' ? 'ur-admin-badge--success' : 'ur-admin-badge--warning' }}">{{ ucfirst($member->team_member_status ?? 'active') }}</span>
-                    @endif
                     @if(!empty($member->added_by))
                         <span class="ur-admin-badge ur-admin-badge--neutral">{{ ucfirst(str_replace('_', ' ', $member->profile_status ?? 'active')) }}</span>
                     @endif
@@ -66,8 +62,8 @@
         </div>
 
         <div class="ur-detail-panel__grid">
-            <div><label>Gender</label><span>{{ ucfirst($member->gender) }}</span></div>
-            <div><label>Age</label><span>{{ date_diff(date_create($member->birthday), date_create('now'))->y }}</span></div>
+            <div><label>Gender</label><span>{{ $member->gender ? ucfirst($member->gender) : '—' }}</span></div>
+            <div><label>Age</label><span>{{ !empty($member->birthday) ? date_diff(date_create($member->birthday), date_create('now'))->y : '—' }}</span></div>
             <div><label>Height</label><span>{{ $member->height ?: '—' }}</span></div>
 
             <div><label>Religion</label><span>{{ $member->lbl_religion ?: '—' }}</span></div>
@@ -88,14 +84,6 @@
             <a href="{{ url('admin/profile/package/'.$member->dataid) }}?page={{ request()->query('page', 1) }}" class="ur-btn ur-btn--outline"><i class="fa fa-archive"></i> Change Package</a>
             <a class="ur-btn ur-btn--outline" onclick="return resendVerificationEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-envelope"></i> Resend Verification Email</a>
             <a class="ur-btn ur-btn--outline" onclick="return sendPasswordResetEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-unlock"></i> Password Reset</a>
-            @if($member->is_team_member == 1)
-                @if(($member->team_member_status ?? 'active') === 'active')
-                    <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatus($(this), 'suspend', '{{ $member->dataid }}');"><i class="fa fa-pause"></i> Suspend</a>
-                    <a class="ur-btn ur-btn--danger-outline" onclick="return updateTeamMemberStatus($(this), 'deactivate', '{{ $member->dataid }}');"><i class="fa fa-ban"></i> Deactivate</a>
-                @else
-                    <a class="ur-btn ur-btn--outline" onclick="return updateTeamMemberStatus($(this), 'reactivate', '{{ $member->dataid }}');"><i class="fa fa-play"></i> Reactivate</a>
-                @endif
-            @endif
             <a class="ur-btn ur-btn--danger-outline" onclick="return deleteProfile($(this), '{{ $member->dataid }}');"><i class="fa fa-trash"></i> Delete Profile</a>
         </div>
     </div>

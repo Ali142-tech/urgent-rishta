@@ -65,7 +65,7 @@ class ProfileController extends Controller
             // must never reach a team-exclusive proposal just by
             // guessing/sharing its dataid.
             $loggedInUser = User::retrieveUserObject();
-            if (!empty($ownerUser->added_by) && (!$loggedInUser || (!$loggedInUser->isAdmin() && !$loggedInUser->is_team_member))) {
+            if (!empty($ownerUser->added_by) && (!$loggedInUser || !$loggedInUser->isAdmin())) {
                 abort(404);
             }
             if ($loggedInUser && $loggedInUser->id !== $ownerUser->id) {

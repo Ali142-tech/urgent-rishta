@@ -108,7 +108,7 @@
 
     @php
         $activeTab = request('country') ? 'country' : (request('profession') ? 'profession' : 'keyword');
-        $hasMoreFilters = collect(['gender', 'aged_from', 'aged_to', 'religion', 'caste', 'marital_status', 'mother_tongue', 'education', 'city', 'current_city'])
+        $hasMoreFilters = collect(['gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city'])
             ->contains(fn ($f) => request()->filled($f));
         $selectedCountry = request('country') ? $countries->firstWhere('dataid', request('country')) : null;
     @endphp
@@ -166,15 +166,6 @@
                 <input type="text" class="form-control" name="city" value="{{ request('city') }}">
             </div>
             <div>
-                <label>Religion</label>
-                <select name="religion" class="form-control">
-                    <option value="">Any</option>
-                    @foreach($religions as $religion)
-                        <option value="{{ $religion->dataid }}" {{ request('religion') == $religion->dataid ? 'selected' : '' }}>{{ $religion->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
                 <label>Caste</label>
                 <select name="caste" class="form-control">
                     <option value="">Any</option>
@@ -189,15 +180,6 @@
                     <option value="">Any</option>
                     @foreach($maritalstatuses as $maritalstatus)
                         <option value="{{ $maritalstatus->dataid }}" {{ request('marital_status') == $maritalstatus->dataid ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label>Mother Tongue</label>
-                <select name="mother_tongue" class="form-control">
-                    <option value="">Any</option>
-                    @foreach($mothertongues as $mothertongue)
-                        <option value="{{ $mothertongue->dataid }}" {{ request('mother_tongue') == $mothertongue->dataid ? 'selected' : '' }}>{{ $mothertongue->name }}</option>
                     @endforeach
                 </select>
             </div>
