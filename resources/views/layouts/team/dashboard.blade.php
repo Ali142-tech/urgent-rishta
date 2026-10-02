@@ -514,6 +514,17 @@
         }
     </script>
 
+    <form id="delete-proposal-form" method="POST" style="display:none;">@csrf @method('DELETE')</form>
+    <script>
+        function deleteProposal(ref) {
+            swalConfirm('Delete proposal ' + ref + '?', 'This removes the proposal from every list. This cannot be undone from the dashboard.', function () {
+                var f = document.getElementById('delete-proposal-form');
+                f.action = '{{ url('team/proposals') }}/' + ref;
+                f.submit();
+            });
+            return false;
+        }
+    </script>
     @include('layouts.partials.global-scripts')
     @include('layouts.partials.app-scripts')
 </body>

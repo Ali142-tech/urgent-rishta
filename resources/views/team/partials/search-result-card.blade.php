@@ -99,6 +99,9 @@
                 <a class="ur-search-card__btn" href="{{ route('team.proposals.edit', $member->dataid) }}">
                     <i class="fa fa-pencil"></i> Edit
                 </a>
+                <a class="ur-search-card__btn" href="#" onclick="return deleteProposal('{{ $member->dataid }}');">
+                    <i class="fa fa-trash"></i> Delete
+                </a>
             @endif
             <a class="ur-search-card__btn ur-search-card__btn--whatsapp js-share-proposal" data-payload-url="{{ route('team.proposals.share.payload', $member->dataid) }}" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
                 <i class="fa fa-whatsapp"></i> Share

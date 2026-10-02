@@ -147,6 +147,7 @@
         @if($asPage && $member->team_card_role === 'own')
             <a href="{{ route('team.proposals.edit', $member->dataid) }}"><i class="fa fa-pencil"></i> Edit</a>
             <a href="{{ route('team.proposals.photos', $member->dataid) }}"><i class="fa fa-camera"></i> Manage photos</a>
+            <a href="#" onclick="return deleteProposal('{{ $member->dataid }}');" style="color:#B5674A;"><i class="fa fa-trash"></i> Delete</a>
         @endif
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>
         @if($hasRealPhotos)

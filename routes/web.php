@@ -182,6 +182,7 @@ Route::delete('team/proposals/{dataid}/photos/{imageId}', [App\Http\Controllers\
 Route::post('team/successful-matches', [App\Http\Controllers\TeamController::class, 'markSuccessfulMatch'])->name('team.successful-matches.store');
 Route::get('team/proposals/{dataid}/share/whatsapp', [App\Http\Controllers\TeamController::class, 'shareWhatsapp'])->name('team.proposals.share.whatsapp');
 Route::get('team/proposals/{dataid}/share/payload', [App\Http\Controllers\TeamController::class, 'sharePayload'])->name('team.proposals.share.payload');
+Route::delete('team/proposals/{dataid}', [App\Http\Controllers\TeamController::class, 'destroy'])->name('team.proposals.destroy');
 Route::post('team/proposals/{dataid}/status', [App\Http\Controllers\TeamController::class, 'updateProfileStatus'])->name('team.proposals.status');
 
 // profile routes

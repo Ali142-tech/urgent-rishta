@@ -613,8 +613,22 @@ TEMPLATE;
      * Saves a new proposal: one row in `proposals` (reference P-001, P-002 ...),
      * its partner requirements, and up to two photos.
      */
+    /** "Not in the list" caste: the typed name is reused if it already exists, otherwise added, and the request then carries its id. */
+    private function resolveManualCaste(Request $request): void
+    {
+        if ($request->caste !== '__new') {
+            return;
+        }
+        $request->validate(['caste_other' => 'required|string|max:80'], ['caste_other.required' => 'Please type the caste name.']);
+        $name = trim(preg_replace('/\s+/', ' ', $request->caste_other));
+        $caste = ProposalCaste::whereRaw('lower(name) = ?', [mb_strtolower($name)])->first()
+            ?: ProposalCaste::create(['name' => $name, 'sort_order' => 0, 'is_active' => true]);
+        $request->merge(['caste' => (string) $caste->id]);
+    }
+
     public function store(Request $request)
     {
+        $this->resolveManualCaste($request);
         $request->validate([
             'gender' => 'required|string|in:male,female',
             // The raw pasted text, preserved verbatim.
@@ -937,6 +951,7 @@ TEMPLATE;
     {
         $loggedInUser = auth()->user();
         $proposal = $this->authorizeProposalOwner($dataid);
+        $this->resolveManualCaste($request);
 
         $request->validate([
             'gender' => 'required|string|in:male,female',
@@ -1032,6 +1047,18 @@ TEMPLATE;
 
         Session::flash('message', 'success|Photo uploaded.');
         return redirect()->route('team.proposals.photos', $proposal->reference);
+    }
+
+    /** Deletes a proposal (owner or admin). Soft delete: the row and photo files stay recoverable; it disappears from every list. */
+    public function destroy($dataid)
+    {
+        $proposal = $this->authorizeProposalOwner($dataid);
+        $reference = $proposal->reference;
+        $proposal->delete();
+
+        Log::info('Team account (' . auth()->user()->dataid . ') deleted proposal ' . $reference);
+        Session::flash('message', 'success|Proposal ' . $reference . ' deleted.');
+        return redirect()->route('team.proposals.mine');
     }
 
     public function deletePhoto($dataid, $imageId)

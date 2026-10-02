@@ -376,7 +376,9 @@
                                 @foreach($caste as $cst)
                                     <option value="{{ $cst->dataid }}">{{ $cst->name }}</option>
                                 @endforeach
+                                <option value="__new">Not in the list — add manually…</option>
                             </select>
+                            <input type="text" name="caste_other" form="af_form" id="caste_other" class="form-control" maxlength="80" placeholder="Type the caste name" style="display:none; margin-top:8px;" value="{{ old('caste_other') }}">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_sect">
@@ -940,6 +942,12 @@ function urCopyTemplate(event) {
         var m = text.match(PARTNER_PASSAGE_RE);
         return m ? text.replace(m[0], ' ') : text;
     }
+    (function () {
+        var sel = document.querySelector('select[name="caste"]'), other = document.getElementById('caste_other');
+        if (!sel || !other) return;
+        function sync() { var on = sel.value === '__new'; other.style.display = on ? '' : 'none'; other.required = on; if (on) other.focus(); }
+        sel.addEventListener('change', sync); sync();
+    })();
     var EDIT_MODE = @json(isset($proposal));
     var pasteBox = document.getElementById('paste_box');
     var charCount = document.getElementById('paste_char_count');

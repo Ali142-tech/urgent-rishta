@@ -203,6 +203,9 @@ $packageIcon = match ($packageSlug) {
                     <a class="is-interest" href="{{ route('team.proposals.edit', $member->dataid) }}">
                         <i class="fa fa-pencil"></i> <span>Edit</span>
                     </a>
+                    <a class="is-interest" href="#" onclick="return deleteProposal('{{ $member->dataid }}');">
+                        <i class="fa fa-trash"></i> <span>Delete</span>
+                    </a>
                 @endif
                 <a class="is-interest" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
                     <i class="fa fa-whatsapp"></i> <span>Share</span>
