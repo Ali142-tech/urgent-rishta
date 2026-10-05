@@ -161,6 +161,23 @@ class TeamAdminController extends Controller
         return ['code' => '200', 'message' => $name . ' is now ' . $statusMap[$action] . '.', 'team_member_status' => $member->status];
     }
 
+    /** E-mails a member a password-reset link (the admin never sees or sets their password). */
+    public function sendResetLink($dataid)
+    {
+        $member = TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $status = \Illuminate\Support\Facades\Password::broker('team_members')->sendResetLink(['email' => $member->email]);
+        if ($status !== \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
+            return ['code' => '404', 'message' => 'Could not send the link right now (' . __($status) . ').'];
+        }
+
+        Log::info('Admin team account (' . Auth::guard('team')->user()->dataid . ') sent a password reset link to ' . $member->dataid);
+        return ['code' => '200', 'message' => 'Reset link sent to ' . $member->email . '.'];
+    }
+
     /** "Become a Partner" applications awaiting a decision. */
     public function applications()
     {

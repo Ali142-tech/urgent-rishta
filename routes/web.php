@@ -141,6 +141,10 @@ Route::post('eiu', [App\Http\Controllers\Auth\RegisterController::class, 'emailI
 // Team member sign-in — its own guard and page, separate from the member login.
 Route::get('team/login', [App\Http\Controllers\Auth\TeamLoginController::class, 'showLogin'])->name('team.login');
 Route::post('team/login', [App\Http\Controllers\Auth\TeamLoginController::class, 'login'])->name('team.login.submit');
+Route::get('team/forgot-password', [App\Http\Controllers\Auth\TeamPasswordController::class, 'forgotForm'])->name('team.password.forgot');
+Route::post('team/forgot-password', [App\Http\Controllers\Auth\TeamPasswordController::class, 'sendLink'])->middleware('throttle:5,1')->name('team.password.email');
+Route::get('team/reset-password/{token}', [App\Http\Controllers\Auth\TeamPasswordController::class, 'resetForm'])->name('team.password.reset');
+Route::post('team/reset-password', [App\Http\Controllers\Auth\TeamPasswordController::class, 'reset'])->name('team.password.update.reset');
 Route::post('team/logout', [App\Http\Controllers\Auth\TeamLoginController::class, 'logout'])->name('team.logout');
 
 // Team Dashboard — team_member-only routes (see EnsureUserIsTeamMember,
@@ -150,6 +154,7 @@ Route::post('team/logout', [App\Http\Controllers\Auth\TeamLoginController::class
 // Team management — an admin's own team account only (TeamAdminController checks team_members.is_admin).
 Route::get('team/manage/members', [App\Http\Controllers\TeamAdminController::class, 'members'])->name('team.manage.members');
 Route::post('team/manage/members/message', [App\Http\Controllers\TeamAdminController::class, 'sendMessage'])->name('team.manage.members.message');
+Route::post('team/manage/members/{dataid}/reset-link', [App\Http\Controllers\TeamAdminController::class, 'sendResetLink'])->middleware('throttle:10,1')->name('team.manage.members.reset-link');
 Route::post('team/manage/members/{action}/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'updateStatus'])->whereIn('action', ['suspend', 'deactivate', 'reactivate'])->name('team.manage.members.status');
 Route::get('team/manage/applications', [App\Http\Controllers\TeamAdminController::class, 'applications'])->name('team.manage.applications');
 Route::post('team/manage/applications/{dataid}/approve', [App\Http\Controllers\TeamAdminController::class, 'approve'])->name('team.manage.applications.approve');
@@ -164,6 +169,8 @@ Route::get('team/matches/{dataid}', [App\Http\Controllers\TeamController::class,
 Route::get('team/matches/{proposalDataid}/forward/{matchDataid}', [App\Http\Controllers\TeamController::class, 'forwardBothWhatsapp'])->name('team.matches.forward');
 Route::get('team/matches/{proposalDataid}/forward/{matchDataid}/payload', [App\Http\Controllers\TeamController::class, 'forwardPayload'])->name('team.matches.forward.payload');
 Route::get('team/notifications/refresh', [App\Http\Controllers\TeamController::class, 'notificationsRefresh'])->name('team.notifications.refresh');
+Route::get('team/profile', [App\Http\Controllers\TeamController::class, 'profile'])->name('team.profile');
+Route::post('team/profile', [App\Http\Controllers\TeamController::class, 'profileUpdate'])->name('team.profile.update');
 Route::get('team/password', [App\Http\Controllers\TeamController::class, 'passwordForm'])->name('team.password');
 Route::post('team/password', [App\Http\Controllers\TeamController::class, 'passwordUpdate'])->name('team.password.update');
 Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');

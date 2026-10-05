@@ -410,24 +410,24 @@ a.appointment-btn::before{
                                                 <a class="nav-link " href="{{url('team')}}" aria-haspopup="true" aria-expanded="false">
                                                     Our Team</a>
                                             </li>
-                                            <li class="custom-nav">
-                                                <a class="nav-link " href="{{url('stories')}}" aria-haspopup="true" aria-expanded="false">
-                                                    Success Stories</a>
+                                            <li class="custom-nav dropdown ur-plans-dropdown">
+                                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="return false;">
+                                                    Stories</a>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="{{ url('stories') }}"><i class="fa fa-heart"></i><span>Success Stories</span></a>
+                                                    <a class="dropdown-item" href="{{ url('photo-gallery') }}"><i class="fa fa-picture-o"></i><span>Gallery</span></a>
+                                                </div>
                                             </li>
-                                            <li class="custom-nav">
-                                                <a class="nav-link " href="{{url('photo-gallery')}}" aria-haspopup="true" aria-expanded="false">
-                                                    Gallery</a>
+                                            <li class="custom-nav dropdown ur-plans-dropdown">
+                                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="return false;">
+                                                    Partners</a>
+                                                <div class="dropdown-menu">
+                                                    <a class="dropdown-item" href="{{ url('become-a-partner') }}"><i class="fa fa-handshake-o"></i><span>Become a Partner</span></a>
+                                                    @if(!Auth::check() && !Auth::guard('team')->check())
+                                                    <a class="dropdown-item" href="{{ route('team.login') }}"><i class="fa fa-sign-in"></i><span>Partner Login</span></a>
+                                                    @endif
+                                                </div>
                                             </li>
-                                            <li class="custom-nav">
-                                                <a class="nav-link " href="{{url('become-a-partner')}}" aria-haspopup="true" aria-expanded="false">
-                                                    Become a Partner</a>
-                                            </li>
-                                            @if(!Auth::check() && !Auth::guard('team')->check())
-                                            <li class="custom-nav">
-                                                <a class="nav-link " href="{{ route('team.login') }}" aria-haspopup="true" aria-expanded="false">
-                                                    Partner Login</a>
-                                            </li>
-                                            @endif
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">
                                                     Contact</a>

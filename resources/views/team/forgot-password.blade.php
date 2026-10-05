@@ -25,30 +25,24 @@
 <div class="mk-page">
     <div class="mk-wrap">
         <span class="mk-eyebrow">Partner Portal</span>
-        <h1 class="mk-title">Partner Sign In</h1>
-        <p class="mk-sub">For matchmakers working in the Partner Dashboard. Looking for your member account? Use the normal sign in instead.</p>
+        <h1 class="mk-title">Forgot Password</h1>
+        <p class="mk-sub">Enter the e-mail you use for the Partner Dashboard and we'll send you a link to set a new password.</p>
 
         @if($errors->any())
         <div class="mk-errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
         @endif
 
         <div class="mk-card">
-            <form method="POST" action="{{ route('team.login.submit') }}">
+            <form method="POST" action="{{ route('team.password.email') }}">
                 @csrf
                 <div class="mk-field">
-                    <label for="login">Email or mobile number</label>
-                    <input type="text" id="login" name="login" value="{{ old('login') }}" required autofocus autocomplete="username">
+                    <label for="email">Email</label>
+                    <input type="text" id="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email">
                 </div>
-                <div class="mk-field">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
-                </div>
-                <label class="mk-remember"><input type="checkbox" name="remember" value="1"> Keep me signed in</label>
-                <button type="submit" class="mk-submit">Sign In</button>
-                <p style="text-align:center; margin:14px 0 0; font-size:13.5px;"><a href="{{ route('team.password.forgot') }}" style="color:#123A2E; font-weight:700;">Forgot your password?</a></p>
+                <button type="submit" class="mk-submit">Send Reset Link</button>
             </form>
         </div>
-        <p class="mk-foot">New here? <a href="{{ route('matchmaker.apply') }}">Become a Partner</a> &nbsp;&bull;&nbsp; <a href="{{ route('login') }}">Member sign in</a></p>
+        <p class="mk-foot"><a href="{{ route('team.login') }}">Back to Partner Sign In</a></p>
     </div>
 </div>
 @endsection

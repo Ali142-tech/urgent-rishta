@@ -432,6 +432,33 @@ class TeamController extends Controller
         return auth()->user()->unreadNotifications()->limit(5)->get()->toArray();
     }
 
+    public function profile()
+    {
+        return view('team.profile', ['member' => auth()->user()]);
+    }
+
+    public function profileUpdate(Request $request)
+    {
+        $member = auth()->user();
+        $data = $request->validate([
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'contact_mobile_number' => 'required|string|max:30|unique:team_members,contact_mobile_number,' . $member->id,
+            'city' => 'nullable|string|max:100',
+            'experience' => 'nullable|string|max:255',
+            'about_me' => 'nullable|string|max:2000',
+            'image' => 'nullable|image|max:5120',
+        ]);
+
+        $member->fill(collect($data)->except('image')->all())->save();
+        if ($request->hasFile('image')) {
+            (new \App\Services\TeamMemberPhotoService())->store($member, $request->file('image'));
+        }
+
+        Session::flash('message', 'success|Profile updated.');
+        return redirect()->route('team.profile');
+    }
+
     public function passwordForm()
     {
         return view('team.password');

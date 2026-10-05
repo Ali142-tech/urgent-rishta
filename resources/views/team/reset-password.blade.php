@@ -25,30 +25,32 @@
 <div class="mk-page">
     <div class="mk-wrap">
         <span class="mk-eyebrow">Partner Portal</span>
-        <h1 class="mk-title">Partner Sign In</h1>
-        <p class="mk-sub">For matchmakers working in the Partner Dashboard. Looking for your member account? Use the normal sign in instead.</p>
+        <h1 class="mk-title">Set a New Password</h1>
+        <p class="mk-sub">Choose a password of at least 8 characters.</p>
 
         @if($errors->any())
         <div class="mk-errors"><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
         @endif
 
         <div class="mk-card">
-            <form method="POST" action="{{ route('team.login.submit') }}">
+            <form method="POST" action="{{ route('team.password.update.reset') }}">
                 @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
                 <div class="mk-field">
-                    <label for="login">Email or mobile number</label>
-                    <input type="text" id="login" name="login" value="{{ old('login') }}" required autofocus autocomplete="username">
+                    <label for="email">Email</label>
+                    <input type="text" id="email" name="email" value="{{ old('email', $email) }}" required autocomplete="email">
                 </div>
                 <div class="mk-field">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <label for="password">New password</label>
+                    <input type="password" id="password" name="password" required minlength="8" autocomplete="new-password">
                 </div>
-                <label class="mk-remember"><input type="checkbox" name="remember" value="1"> Keep me signed in</label>
-                <button type="submit" class="mk-submit">Sign In</button>
-                <p style="text-align:center; margin:14px 0 0; font-size:13.5px;"><a href="{{ route('team.password.forgot') }}" style="color:#123A2E; font-weight:700;">Forgot your password?</a></p>
+                <div class="mk-field">
+                    <label for="password_confirmation">Confirm new password</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" required minlength="8" autocomplete="new-password">
+                </div>
+                <button type="submit" class="mk-submit">Update Password</button>
             </form>
         </div>
-        <p class="mk-foot">New here? <a href="{{ route('matchmaker.apply') }}">Become a Partner</a> &nbsp;&bull;&nbsp; <a href="{{ route('login') }}">Member sign in</a></p>
     </div>
 </div>
 @endsection

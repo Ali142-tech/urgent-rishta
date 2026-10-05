@@ -102,6 +102,12 @@ return [
     */
 
     'passwords' => [
+        'team_members' => [
+            'provider' => 'team_members',
+            'table' => 'team_password_resets',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
         'users' => [
             'provider' => 'users',
             'table' => 'password_resets',

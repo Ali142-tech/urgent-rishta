@@ -3,6 +3,8 @@
 namespace App;
 
 use Illuminate\Auth\Authenticatable;
+use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -16,9 +18,9 @@ use Illuminate\Notifications\Notifiable;
  * It answers the few User methods the Team Dashboard views call (dataid,
  * getProfileImage(), isAdmin() ...) so those views work for either.
  */
-class TeamMember extends Model implements AuthenticatableContract
+class TeamMember extends Model implements AuthenticatableContract, CanResetPasswordContract
 {
-    use Authenticatable, Notifiable;
+    use Authenticatable, CanResetPassword, Notifiable;
 
     public const PHOTO_PATH = 'team-members';
 
@@ -70,6 +72,11 @@ class TeamMember extends Model implements AuthenticatableContract
         $member->save();
 
         return $member;
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\TeamPasswordReset($token));
     }
 
     /** Approved by an admin (whatever their current status). */

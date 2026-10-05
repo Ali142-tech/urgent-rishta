@@ -64,6 +64,7 @@
                 </form>
             </td>
             <td style="white-space:nowrap;">
+                <button type="button" class="ur-tm-send" style="background:#123A2E;" onclick="return sendResetLink(this, '{{ $member->dataid }}');">Reset password</button>
                 @if($member->id === auth()->id())
                     <small style="color:#6B7570;">This is you</small>
                 @elseif(($member->status ?? 'active') === 'active')
@@ -81,6 +82,21 @@
 </table>
 
 <script>
+    // E-mails the member a link to set a new password.
+    function sendResetLink(elem, id) {
+        swalConfirm('Send reset link?', 'The member will get an e-mail with a link to set a new password.', () => {
+            elem.disabled = true;
+            $.ajax({
+                type: 'post',
+                url: "{{ url('team/manage/members') }}/" + id + '/reset-link',
+                data: { '_token': '{{ csrf_token() }}' },
+                success: function (result) { elem.disabled = false; swalAlert(result.code == '200' ? 'success' : 'error', result.code == '200' ? 'Sent' : 'Error', result.message, () => {}); },
+                error: function () { elem.disabled = false; swalAlert('error', 'Error', 'Something went wrong. Please try again.', () => {}); }
+            });
+        });
+        return false;
+    }
+
     // Suspend / deactivate / reactivate — TeamAdminController::updateStatus().
     function setTeamMemberStatus(elem, action, id) {
         var labels = {suspend: 'Suspend', deactivate: 'Deactivate', reactivate: 'Reactivate'};
