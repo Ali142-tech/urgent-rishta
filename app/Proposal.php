@@ -126,7 +126,8 @@ class Proposal extends Model
     }
 
     public function getLblMaritalStatusAttribute() { return self::masterName('MARITAL_STATUS', $this->marital_status); }
-    public function getLblEducationAttribute() { return self::masterName('EDUCATION', $this->education); }
+    // Stored as text now (pick-list or typed); older rows may still hold a masterdata id.
+    public function getLblEducationAttribute() { return $this->education === null || $this->education === '' ? null : (self::masterName('EDUCATION', $this->education) ?? $this->education); }
     public function getLblConOfResidenceAttribute() { return self::masterName('COUNTRY', $this->con_of_residence); }
     public function getConOfResidenceCodeAttribute() { return self::masterAbbreviation('COUNTRY', $this->con_of_residence); }
     public function getLblConOfCitizenshipAttribute() { return self::masterName('COUNTRY', $this->con_of_citizenship); }
@@ -198,7 +199,7 @@ class Proposal extends Model
 
     public function prefEducationNames(): array
     {
-        return array_values(array_filter(array_map(fn ($id) => self::masterName('EDUCATION', $id), $this->pref_educations ?: [])));
+        return array_values(array_filter(array_map(fn ($id) => self::masterName('EDUCATION', $id) ?? $id, $this->pref_educations ?: [])));
     }
 
     public function prefMaritalNames(): array

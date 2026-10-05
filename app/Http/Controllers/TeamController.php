@@ -284,7 +284,7 @@ class TeamController extends Controller
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = ProposalCaste::options();
-        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $education = $this->educationOptions();
 
         // "X profiles in the shared network" badge — the whole pool, unfiltered.
         $totalNetworkCount = Proposal::count();
@@ -544,13 +544,15 @@ class TeamController extends Controller
     public function create()
     {
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
-        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $education = $this->educationOptions();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = ProposalCaste::options();      // the short proposal caste list
         $religions = collect();                  // proposals no longer carry a religion
         $sendTemplate = $this->clientIntakeTemplate();
 
-        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate'));
+        $professionOptions = $this->professionOptions();
+
+        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions'));
     }
 
     /**
@@ -613,6 +615,38 @@ TEMPLATE;
      * Saves a new proposal: one row in `proposals` (reference P-001, P-002 ...),
      * its partner requirements, and up to two photos.
      */
+    /** The client's education pick-list as objects (dataid = name) so the form and filter loops need no change. */
+    private function educationOptions()
+    {
+        return collect(config('proposal_options.education'))->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
+    }
+
+    private function professionOptions()
+    {
+        return collect(config('proposal_options.profession'))->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
+    }
+
+    /**
+     * "Other — add manually" for education, profession and the partner profession / educations:
+     * the typed text replaces the '__other' marker before validation and saving.
+     */
+    private function resolveManualOptions(Request $request): void
+    {
+        foreach (['education' => 'education_other', 'profession' => 'profession_other', 'pref_profession' => 'pref_profession_other'] as $field => $otherField) {
+            if ($request->input($field) === '__other') {
+                $request->validate([$otherField => 'required|string|max:150'], [$otherField . '.required' => 'Please type the ' . str_replace('_', ' ', $field) . '.']);
+                $request->merge([$field => trim(preg_replace('/\s+/', ' ', $request->input($otherField)))]);
+            }
+        }
+
+        $educations = (array) $request->input('pref_educations', []);
+        if (in_array('__other', $educations, true)) {
+            $request->validate(['pref_education_other' => 'required|string|max:200'], ['pref_education_other.required' => 'Please type the partner education.']);
+            $typed = array_filter(array_map('trim', explode(',', $request->input('pref_education_other'))));
+            $request->merge(['pref_educations' => array_values(array_unique(array_merge(array_diff($educations, ['__other']), $typed)))]);
+        }
+    }
+
     /** A multi-select's picked values as a clean list, or null when nothing was picked. */
     private function multiValues(Request $request, string $field): ?array
     {
@@ -636,6 +670,7 @@ TEMPLATE;
     public function store(Request $request)
     {
         $this->resolveManualCaste($request);
+        $this->resolveManualOptions($request);
         $request->validate([
             'gender' => 'required|string|in:male,female',
             // The raw pasted text, preserved verbatim.
@@ -920,11 +955,12 @@ TEMPLATE;
         // saved values, so the pasted original form and every field can be updated there.
         $religions = collect();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
-        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $education = $this->educationOptions();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = ProposalCaste::options();
         $sendTemplate = $this->clientIntakeTemplate();
 
+        $professionOptions = $this->professionOptions();
         $editAge = $proposal->birthday ? $proposal->birthday->age : null;
         $editValues = [
             'gender' => $proposal->gender,
@@ -950,9 +986,14 @@ TEMPLATE;
             'pref_city' => $proposal->pref_city,
             'pref_profession' => $proposal->pref_profession,
         ];
+        // Partner educations that are not in the pick-list were typed in: show them under "Other".
+        $knownEducation = config('proposal_options.education');
+        $savedEducations = array_map('strval', $proposal->pref_educations ?: []);
+        $typedEducations = array_values(array_diff($savedEducations, $knownEducation));
+        $editExtra = ['pref_education_other' => implode(', ', $typedEducations)];
         $editMulti = [
             'pref_castes[]' => array_map('strval', $proposal->pref_castes ?: []),
-            'pref_educations[]' => array_map('strval', $proposal->pref_educations ?: []),
+            'pref_educations[]' => $typedEducations ? array_values(array_merge(array_intersect($savedEducations, $knownEducation), ['__other'])) : $savedEducations,
             'pref_marital_statuses[]' => array_map('strval', $proposal->pref_marital_statuses ?: []),
         ];
 
@@ -960,7 +1001,7 @@ TEMPLATE;
         $existingPhotos = $proposal->photos->isNotEmpty() ? $proposal->getCardImages(null, false) : [];
 
         return view('team.proposal-create', compact(
-            'proposal', 'editMulti', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate',
+            'proposal', 'editMulti', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions', 'editExtra',
             'editValues', 'editAge', 'existingPhotos'
         ));
     }
@@ -970,6 +1011,7 @@ TEMPLATE;
         $loggedInUser = auth()->user();
         $proposal = $this->authorizeProposalOwner($dataid);
         $this->resolveManualCaste($request);
+        $this->resolveManualOptions($request);
 
         $request->validate([
             'gender' => 'required|string|in:male,female',

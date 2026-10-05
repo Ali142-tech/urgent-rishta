@@ -356,17 +356,26 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_education">
                             <label>Education</label>
-                            <select name="education" form="af_form" class="form-control" required>
+                            <select name="education" form="af_form" class="form-control ur-search-select" data-other="education_other" required>
                                 <option value="" disabled selected>Select</option>
                                 @foreach($education as $degree)
                                     <option value="{{ $degree->dataid }}">{{ $degree->name }}</option>
                                 @endforeach
+                                <option value="__other">Other — Add Manually</option>
                             </select>
+                            <input type="text" name="education_other" form="af_form" class="form-control ur-other-input" maxlength="150" placeholder="Type the qualification" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_profession">
                             <label>Profession</label>
-                            <input type="text" name="profession" form="af_form" class="form-control" required>
+                            <select name="profession" form="af_form" class="form-control ur-search-select" data-other="profession_other" required>
+                                <option value="" disabled selected>Select</option>
+                                @foreach($professionOptions as $job)
+                                    <option value="{{ $job->dataid }}">{{ $job->name }}</option>
+                                @endforeach
+                                <option value="__other">Other — Add Manually</option>
+                            </select>
+                            <input type="text" name="profession_other" form="af_form" class="form-control ur-other-input" maxlength="150" placeholder="Type the profession" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_caste">
@@ -422,7 +431,14 @@
                     <div class="ur-pp-review__grid" style="margin-top:10px;">
                         <div class="ur-pp-review__field" id="pp_field_pref_profession">
                             <label>Partner's Profession</label>
-                            <input type="text" name="pref_profession" form="af_form" class="form-control" value="{{ old('pref_profession') }}" required>
+                            <select name="pref_profession" form="af_form" class="form-control ur-search-select" data-other="pref_profession_other" required>
+                                <option value="" disabled selected>Select</option>
+                                @foreach($professionOptions as $job)
+                                    <option value="{{ $job->dataid }}" {{ old('pref_profession') === $job->dataid ? 'selected' : '' }}>{{ $job->name }}</option>
+                                @endforeach
+                                <option value="__other">Other — Add Manually</option>
+                            </select>
+                            <input type="text" name="pref_profession_other" form="af_form" class="form-control ur-other-input" maxlength="150" placeholder="Type the profession" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_city">
@@ -454,7 +470,9 @@
                                 @foreach($education as $degree)
                                     <option value="{{ $degree->dataid }}" {{ in_array($degree->dataid, (array) old('pref_educations', [])) ? 'selected' : '' }}>{{ $degree->name }}</option>
                                 @endforeach
+                                <option value="__other">Other — Add Manually</option>
                             </select>
+                            <input type="text" name="pref_education_other" form="af_form" id="pref_education_other" class="form-control" maxlength="200" placeholder="Type the education (separate several with commas)" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_marital_statuses">
@@ -596,9 +614,27 @@ function urCopyTemplate(event) {
     // this page is unique, so document.querySelector() is a safe, simpler
     // choice than tracking exactly which fields are form descendants vs.
     // form="af_form"-associated.
+    // Picks an option in a searchable select, or "Other — Add Manually" + the typed text when nothing matches.
+    function pickOrOther(el, text) {
+        var target = norm(text);
+        var options = Array.from(el.options).filter(function (o) { return o.value !== '' && o.value !== '__other'; });
+        var match = options.find(function (o) { return norm(o.textContent) === target; })
+            || options.find(function (o) { return target.length > 2 && norm(o.textContent).indexOf(target) !== -1; })
+            || options.find(function (o) { return norm(o.textContent).length > 3 && target.indexOf(norm(o.textContent)) !== -1; });
+        var other = el.dataset.other ? document.querySelector('[name="' + el.dataset.other + '"]') : null;
+        if (match) { el.value = match.value; if (other) other.value = ''; }
+        else if (other) { el.value = '__other'; other.value = String(text).trim(); }
+        else return false;
+        refreshSelect(el);
+        return true;
+    }
+    function refreshSelect(el) {
+        if (window.jQuery) { jQuery(el).trigger('change'); } else { el.dispatchEvent(new Event('change')); }
+    }
     function setVal(name, value) {
         var el = document.querySelector('[name="' + name + '"]');
         if (el && value !== undefined && value !== null && String(value).trim() !== '') {
+            if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, value); return; }
             el.value = value;
         }
     }
@@ -616,7 +652,8 @@ function urCopyTemplate(event) {
         var match = options.find(function (o) { return norm(o.textContent) === target; })
             || options.find(function (o) { return target.indexOf(norm(o.textContent)) !== -1 && norm(o.textContent).length > 2; })
             || options.find(function (o) { return norm(o.textContent).indexOf(target) !== -1 && target.length > 2; });
-        if (match) { el.value = match.value; return true; }
+        if (match) { el.value = match.value; if (el.dataset.other) refreshSelect(el); return true; }
+        if (el.dataset.other) return pickOrOther(el, text);
         return false;
     }
     // Age <-> DOB bridge — the compact panel shows one editable "Age"
@@ -978,6 +1015,22 @@ function urCopyTemplate(event) {
     if (window.jQuery && jQuery.fn.select2) {
         jQuery('.ur-multi').each(function () { jQuery(this).select2({ width: '100%', placeholder: this.getAttribute('data-placeholder'), closeOnSelect: false }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); }); });
     }
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery('.ur-search-select').each(function () {
+            var sel = this;
+            jQuery(sel).select2({ width: '100%', placeholder: 'Select' })
+                .on('change', function () {
+                    var other = sel.dataset.other ? document.querySelector('[name="' + sel.dataset.other + '"]') : null;
+                    if (other) { var on = sel.value === '__other'; other.style.display = on ? '' : 'none'; other.required = on && !EDIT_MODE; }
+                    if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary();
+                });
+        });
+        jQuery('select[name="pref_educations[]"]').on('change', function () {
+            var box = document.getElementById('pref_education_other');
+            var on = (jQuery(this).val() || []).indexOf('__other') !== -1;
+            if (box) { box.style.display = on ? '' : 'none'; box.required = on; }
+        });
+    }
     var EDIT_MODE = @json(isset($proposal));
     var pasteBox = document.getElementById('paste_box');
     var charCount = document.getElementById('paste_char_count');
@@ -1249,8 +1302,12 @@ function urCopyTemplate(event) {
         Object.keys(EDIT_VALUES).forEach(function (name) {
             var el = document.querySelector('[name="' + name + '"]');
             var v = EDIT_VALUES[name];
-            if (el && v !== null && v !== '') el.value = v;
+            if (el && v !== null && v !== '') {
+                if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, v); } else { el.value = v; }
+            }
         });
+        var EDIT_EXTRA = @json($editExtra ?? []);
+        Object.keys(EDIT_EXTRA).forEach(function (name) { var el = document.querySelector('[name="' + name + '"]'); if (el && EDIT_EXTRA[name]) el.value = EDIT_EXTRA[name]; });
         var EDIT_MULTI = @json($editMulti ?? []);
         Object.keys(EDIT_MULTI).forEach(function (name) {
             var el = document.querySelector('[name="' + name + '"]');
