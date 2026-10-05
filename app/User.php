@@ -300,6 +300,20 @@ class User extends Authenticatable implements MustVerifyEmail {
      * interest request to a Royal+ profile: the sender must also be Royal+
      * (see ProfileController::sendInterest()) — client request Sep 2026.
      */
+    /**
+     * Client request (Oct 2026): a Royal+ profile's photos show blurred to a member who is not on
+     * Royal or higher themselves (that member can't send it an interest request either — see
+     * ProfileController::sendInterest()). Admins, the owner and team accounts are never affected.
+     * $this is the viewer; $member is the profile being looked at (anything with ->package / ->id).
+     */
+    public function photosBlurredFor($member): bool
+    {
+        if ((int) ($this->admin ?? 0) === 1 || $this->id === ($member->id ?? null) || !empty($member->added_by)) {
+            return false;
+        }
+        return self::packageIsRoyalOrHigher($member->package ?? null) && !self::packageIsRoyalOrHigher($this->package);
+    }
+
     public static function packageIsRoyalOrHigher(?string $packageDataid): bool
     {
         if (empty($packageDataid)) {

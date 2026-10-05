@@ -37,6 +37,7 @@ $hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // Guests on the homepage slider only ever get the single pre-blurred
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.
+$royalBlur = !$hideImage && auth()->check() && User::retrieveUserObject()->photosBlurredFor($member);
 $cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages(null, !empty($watermarked));
 $compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
 $compatTier = null;
@@ -66,8 +67,8 @@ $packageIcon = match ($packageSlug) {
     <div class="member-card__photo">
         @foreach($cardImages as $i => $cardImage)
             <a class="member-card__slide {{ $i === 0 ? 'is-active' : '' }}" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
-                <span class="member-card__photo-bg" style="background-image:url('{{ $cardImage }}')"></span>
-                <img src="{{ $cardImage }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
+                <span class="member-card__photo-bg" style="background-image:url('{{ $cardImage }}')@if($royalBlur); filter: blur(9px); transform: scale(1.15);@endif"></span>
+                <img @if($royalBlur) style="filter: blur(7px); transform: scale(1.06);" draggable="false" oncontextmenu="return false;" @endif src="{{ $cardImage }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
             </a>
         @endforeach
         @if(count($cardImages) > 1)

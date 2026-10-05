@@ -8,7 +8,8 @@
 <?php use App\User; ?>
 @php
     $isVerified = $profile->photo_verification_status === 'verified';
-    $galleryImages = json_decode($profile->getLightGalleryImages(!empty($profile->added_by) && empty($canViewContactInfo)), true) ?: [];
+    $royalBlur = auth()->check() && !empty($profile->dataid) && App\User::retrieveUserObject()->photosBlurredFor($profile);
+    $galleryImages = $royalBlur ? [] : (json_decode($profile->getLightGalleryImages(!empty($profile->added_by) && empty($canViewContactInfo)), true) ?: []);
     $imageCount = $profile->getImageCount();
     $age = $profile->birthday ? date_diff(date_create($profile->birthday), date_create('now'))->y : null;
     $pronounTitle = $profile->gender === 'female' ? 'Her' : ($profile->gender === 'male' ? 'Him' : ($profile->first_name ?: 'Them'));
@@ -1024,8 +1025,8 @@
                 <div class="ur-mp-gallery">
                     <div class="ur-mp-gallery__main">
                         @php $mainPhotoWatermarked = !empty($profile->added_by) && empty($canViewContactInfo); @endphp
-                        <span class="ur-mp-gallery__bg" style="background-image:url('{{ $profile->getProfileImage(null, $mainPhotoWatermarked) }}')"></span>
-                        <img id="mp_main_photo" src="{{ $profile->getProfileImage(null, $mainPhotoWatermarked) }}" alt="{{ $profile->first_name }}" />
+                        <span class="ur-mp-gallery__bg" style="background-image:url('{{ $profile->getProfileImage(null, $mainPhotoWatermarked) }}')@if($royalBlur); filter: blur(9px); transform: scale(1.15);@endif"></span>
+                        <img id="mp_main_photo" @if($royalBlur) style="filter: blur(8px); transform: scale(1.06);" draggable="false" oncontextmenu="return false;" @endif src="{{ $profile->getProfileImage(null, $mainPhotoWatermarked) }}" alt="{{ $profile->first_name }}" />
                         @if($isVerified)
                             <span class="ur-mp-badge ur-mp-badge--verified"><i class="fa fa-check-circle"></i> Verified Profile</span>
                         @endif
