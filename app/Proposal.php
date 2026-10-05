@@ -5,6 +5,7 @@ namespace App;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * A client proposal curated by a matchmaker (team member). Lives in its own
@@ -34,7 +35,7 @@ class Proposal extends Model
         'family_status', 'looking_from', 'presentation_highlight',
         'profile_status', 'active', 'raw_intake_text',
         'pref_age_min', 'pref_age_max', 'pref_height', 'pref_city', 'pref_profession', 'pref_note',
-        'pref_castes', 'pref_educations', 'pref_marital_statuses',
+        'pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities',
     ];
 
     protected $casts = [
@@ -43,15 +44,23 @@ class Proposal extends Model
         'pref_castes' => 'array',
         'pref_educations' => 'array',
         'pref_marital_statuses' => 'array',
+        'pref_professions' => 'array',
+        'pref_nationalities' => 'array',
     ];
 
     /** Per-request lookup caches (masterdata names are read many times per page). */
     private static array $nameCache = [];
+    private static ?array $weights = null;
     private static ?array $casteCache = null;
 
     protected static function booted()
     {
         // P-001, P-002 ... derived from the row id: unique, readable, never reused.
+        // A deleted / restored proposal changes who can match: drop the cached match lists right away.
+        foreach (['deleted', 'restored'] as $event) {
+            static::$event(fn () => self::bumpMatchVersion());
+        }
+
         static::created(function (Proposal $proposal) {
             if (empty($proposal->reference)) {
                 $proposal->forceFill(['reference' => self::formatReference($proposal->id)])->saveQuietly();
@@ -164,7 +173,7 @@ class Proposal extends Model
     public function hasPartnerPreferences(): bool
     {
         return $this->pref_age_min || $this->pref_age_max
-            || !empty($this->pref_height) || !empty($this->pref_city) || !empty($this->pref_profession);
+            || !empty($this->pref_height) || !empty($this->pref_city) || !empty($this->prefProfessionList());
     }
 
     /**
@@ -183,7 +192,9 @@ class Proposal extends Model
             'height' => $this->pref_height,
             'pref_height' => $this->pref_height,
             'pref_city' => $this->pref_city,
-            'profession' => $this->pref_profession,
+            'profession' => implode(', ', $this->prefProfessionList()),
+            'professions' => $this->prefIsAny('pref_professions') ? ['Any'] : $this->prefProfessionList(),
+            'nationalities' => $this->prefNationalityNames(),
             'general_requirement' => $this->pref_note,
             'castes' => $this->prefCasteNames(),
             'educations' => $this->prefEducationNames(),
@@ -191,19 +202,43 @@ class Proposal extends Model
         ];
     }
 
+    /** The professions the client would accept in a partner (falls back to the older single text value). */
+    public function prefProfessionList(): array
+    {
+        if (!empty($this->pref_professions)) {
+            return array_values(array_diff($this->pref_professions, ['__any']));
+        }
+        return !empty($this->pref_profession) ? [$this->pref_profession] : [];
+    }
+
+    public function prefNationalityNames(): array
+    {
+        if ($this->prefIsAny('pref_nationalities')) return ['Any'];
+        return array_values(array_filter(array_map(fn ($id) => self::masterName('COUNTRY', $id) ?? $id, $this->pref_nationalities ?: [])));
+    }
+
     /** Names of the partner castes / educations / marital statuses the client accepts (empty = no preference). */
     public function prefCasteNames(): array
     {
+        if ($this->prefIsAny('pref_castes')) return ['Any'];
         return $this->pref_castes ? ProposalCaste::whereIn('id', $this->pref_castes)->orderBy('name')->pluck('name')->all() : [];
+    }
+
+    /** True when the client chose "Any" (no preference) for a multi-select requirement. */
+    public function prefIsAny(string $column): bool
+    {
+        return in_array('__any', (array) $this->{$column}, true);
     }
 
     public function prefEducationNames(): array
     {
+        if ($this->prefIsAny('pref_educations')) return ['Any'];
         return array_values(array_filter(array_map(fn ($id) => self::masterName('EDUCATION', $id) ?? $id, $this->pref_educations ?: [])));
     }
 
     public function prefMaritalNames(): array
     {
+        if ($this->prefIsAny('pref_marital_statuses')) return ['Any'];
         return array_values(array_filter(array_map(fn ($id) => self::masterName('MARITAL_STATUS', $id), $this->pref_marital_statuses ?: [])));
     }
 
@@ -212,7 +247,7 @@ class Proposal extends Model
     {
         return $query->where(function ($q) {
             $q->whereNotNull('pref_age_min')->orWhereNotNull('pref_age_max')
-                ->orWhereNotNull('pref_height')->orWhereNotNull('pref_city')->orWhereNotNull('pref_profession');
+                ->orWhereNotNull('pref_height')->orWhereNotNull('pref_city')->orWhereNotNull('pref_profession')->orWhereNotNull('pref_professions');
         });
     }
     // ------------------------------------------------------------------
@@ -300,19 +335,52 @@ class Proposal extends Model
         return $query->orderByDesc('updated_at');
     }
 
+    /** An "AI Match" is a candidate that scores at least this much (client request, Oct 2026). */
+    public const MIN_MATCH_SCORE = 70;
+
+    public static function bumpMatchVersion(): void
+    {
+        Cache::forever('proposal_match_version', microtime(true));
+    }
+
+    /**
+     * Candidates scoring at least MIN_MATCH_SCORE for this proposal: [candidate id => percent], best first.
+     * Cached for 5 minutes (the scoring runs over every candidate), and dropped at once when a proposal is deleted/restored or the match weights change. A proposal's own list is always fresh the first time it is built.
+     */
+    public function strongMatchScores(): array
+    {
+        $key = 'pm:' . $this->id . ':' . Cache::get('proposal_match_version', 0);
+        return Cache::remember($key, 300, function () {
+            $query = $this->candidatesQuery();
+            if ($query === null) {
+                return [];
+            }
+            $scores = [];
+            foreach ($query->setEagerLoads([])->get() as $candidate) {
+                $percent = $candidate->compatibilityWith($this)['percent'] ?? 0;
+                if ($percent >= self::MIN_MATCH_SCORE) {
+                    $scores[$candidate->id] = $percent;
+                }
+            }
+            arsort($scores);
+            return $scores;
+        });
+    }
+
+    /** The best AI matches (score >= 70), best first. */
     public function getProposalMatches($limit = 3, $offset = 0)
     {
-        $query = $this->candidatesQuery();
-        if ($query === null) {
+        $ids = array_slice(array_keys($this->strongMatchScores()), (int) $offset, (int) $limit);
+        if (!$ids) {
             return collect();
         }
-        return $query->skip((int) $offset)->take((int) $limit)->get();
+        $models = static::with('photos')->whereIn('id', $ids)->get()->keyBy('id');
+        return collect($ids)->map(fn ($id) => $models->get($id))->filter()->values();
     }
 
     public function getProposalMatchesCount(): int
     {
-        $query = $this->candidatesQuery();
-        return $query === null ? 0 : (int) $query->count();
+        return count($this->strongMatchScores());
     }
 
     /** "5'6", "5.6", "5 ft 6", "5-3" -> total inches; null when it can't be read. */
@@ -380,8 +448,11 @@ class Proposal extends Model
         }
 
         // Profession — the preferred profession (substring) when set, else the client's own.
-        if (!empty($client->pref_profession)) {
-            $matched = !empty($this->profession) && stripos($this->profession, $client->pref_profession) !== false;
+        if (!empty($client->prefProfessionList())) {
+            $matched = false;
+            foreach ($client->prefProfessionList() as $wanted) {
+                if (!empty($this->profession) && stripos($this->profession, $wanted) !== false) { $matched = true; break; }
+            }
             $checks[] = ['factor' => 'Profession', 'label' => 'Preferred profession matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         } elseif (!empty($client->profession) && !empty($this->profession)) {
             $matched = strcasecmp(trim($this->profession), trim($client->profession)) === 0;
@@ -397,8 +468,13 @@ class Proposal extends Model
             $checks[] = ['factor' => 'Height', 'label' => 'Preferred height matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
 
-        // Nationality — same citizenship as the client.
-        if (!empty($client->con_of_citizenship)) {
+        // Nationality — one of the partner nationalities the client asked for, else the client's own.
+        if ($client->prefIsAny('pref_nationalities')) {
+            // no nationality preference
+        } elseif (!empty($client->pref_nationalities)) {
+            $matched = in_array((string) $this->con_of_citizenship, array_map('strval', $client->pref_nationalities), true);
+            $checks[] = ['factor' => 'Nationality', 'label' => 'Preferred nationality', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        } elseif (!empty($client->con_of_citizenship)) {
             $matched = $this->con_of_citizenship == $client->con_of_citizenship;
             $checks[] = ['factor' => 'Nationality', 'label' => 'Same nationality', 'matched' => $matched, 'score' => $matched ? 100 : 0];
         }
@@ -407,7 +483,7 @@ class Proposal extends Model
             return null;
         }
 
-        $weights = \App\MatchWeightSetting::current();
+        $weights = self::$weights ??= \App\MatchWeightSetting::current();
         $weightedSum = 0;
         $weightTotal = 0;
         foreach ($checks as $check) {

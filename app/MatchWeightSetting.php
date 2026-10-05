@@ -13,6 +13,12 @@ class MatchWeightSetting extends Model
 {
     protected $table = 'match_weight_settings';
 
+    protected static function booted()
+    {
+        // New weights change every match score: drop the cached match lists.
+        static::saved(fn () => Proposal::bumpMatchVersion());
+    }
+
     protected $fillable = [
         'age_weight', 'location_weight', 'religion_weight', 'caste_weight',
         'marital_status_weight', 'education_weight', 'mother_tongue_weight', 'children_weight',

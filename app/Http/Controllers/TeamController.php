@@ -592,9 +592,10 @@ class TeamController extends Controller
     private function clientIntakeTemplate(): string
     {
         return <<<'TEMPLATE'
-Hi! To create your profile, please fill in the details below and send it back exactly in this format:
+Assalam o Alaikum! To create your profile, please fill in the details after each colon (:) and send this form back as it is. Please do not change the headings.
 
 1. PERSONAL INFORMATION:
+Name:
 Gender:
 Age:
 Marital Status:
@@ -602,39 +603,33 @@ Height:
 
 2. EDUCATION DETAILS:
 Qualification:
-College/University:
 
 3. OCCUPATION DETAIL:
 Job/Business:
-Income:
 
 4. RELIGION DETAILS:
-Religion:
 Sect:
 Caste:
 
 5. RESIDENCE DETAILS:
-Home Own/On Rent:
-Size:
+Country:
 City:
-Nationality:
 Current City:
+Nationality:
 
-6. FAMILY DETAILS:
-Father's Occupation:
-Mother's Occupation:
-Brothers:
-Sisters:
-Married:
-
-7. YOUR REQUIREMENTS:
+6. YOUR REQUIREMENTS:
+Marital Status:
 Age Limit:
 Height:
-City:
-Caste:
 Qualification:
+Profession:
+Caste:
+City:
+Nationality:
+Other Requirements:
 
-Please also send 1-2 recent photos along with this.
+Please also send 1-2 recent photos along with this form.
+(You may write more than one answer for the requirements, for example: Caste: Rajput, Arain)
 TEMPLATE;
     }
 
@@ -659,11 +654,18 @@ TEMPLATE;
      */
     private function resolveManualOptions(Request $request): void
     {
-        foreach (['education' => 'education_other', 'profession' => 'profession_other', 'pref_profession' => 'pref_profession_other'] as $field => $otherField) {
+        foreach (['education' => 'education_other', 'profession' => 'profession_other'] as $field => $otherField) {
             if ($request->input($field) === '__other') {
                 $request->validate([$otherField => 'required|string|max:150'], [$otherField . '.required' => 'Please type the ' . str_replace('_', ' ', $field) . '.']);
                 $request->merge([$field => trim(preg_replace('/\s+/', ' ', $request->input($otherField)))]);
             }
+        }
+
+        $professions = (array) $request->input('pref_professions', []);
+        if (in_array('__other', $professions, true)) {
+            $request->validate(['pref_profession_other' => 'required|string|max:200'], ['pref_profession_other.required' => 'Please type the partner profession.']);
+            $typed = array_filter(array_map('trim', explode(',', $request->input('pref_profession_other'))));
+            $request->merge(['pref_professions' => array_values(array_unique(array_merge(array_diff($professions, ['__other']), $typed)))]);
         }
 
         $educations = (array) $request->input('pref_educations', []);
@@ -678,6 +680,10 @@ TEMPLATE;
     private function multiValues(Request $request, string $field): ?array
     {
         $values = array_values(array_unique(array_filter((array) $request->input($field, []), fn ($v) => $v !== null && $v !== '')));
+        // "Any" means no preference and replaces every other pick.
+        if (in_array('__any', $values, true)) {
+            return ['__any'];
+        }
         return $values ? $values : null;
     }
 
@@ -727,8 +733,9 @@ TEMPLATE;
             'pref_age_max' => 'required|integer|min:18|max:99',
             'pref_height' => 'required|string|max:100',
             'pref_city' => 'required|string|max:150',
-            'pref_profession' => 'required|string|max:150',
-            'pref_castes' => 'required|array|min:1', 'pref_castes.*' => 'exists:proposal_castes,id',
+            'pref_professions' => 'required|array|min:1', 'pref_professions.*' => 'string|max:150',
+            'pref_nationalities' => 'nullable|array', 'pref_nationalities.*' => 'string|max:20',
+            'pref_castes' => 'required|array|min:1', 'pref_castes.*' => ['string', fn ($attr, $value, $fail) => ($value === '__any' || ProposalCaste::whereKey($value)->exists()) ?: $fail('Please pick a valid caste.')],
             'pref_educations' => 'required|array|min:1', 'pref_educations.*' => 'string|max:50',
             'pref_marital_statuses' => 'required|array|min:1', 'pref_marital_statuses.*' => 'string|max:50',
             'partner_requirements' => 'nullable|string|max:2000',
@@ -760,7 +767,9 @@ TEMPLATE;
             'pref_age_max' => $request->pref_age_max,
             'pref_height' => $request->pref_height,
             'pref_city' => $request->pref_city,
-            'pref_profession' => $request->pref_profession,
+            'pref_profession' => implode(', ', array_diff($this->multiValues($request, 'pref_professions') ?? [], ['__any'])) ?: null,
+            'pref_professions' => $this->multiValues($request, 'pref_professions'),
+            'pref_nationalities' => $this->multiValues($request, 'pref_nationalities'),
             'pref_castes' => $this->multiValues($request, 'pref_castes'),
             'pref_educations' => $this->multiValues($request, 'pref_educations'),
             'pref_marital_statuses' => $this->multiValues($request, 'pref_marital_statuses'),
@@ -1011,14 +1020,19 @@ TEMPLATE;
             'pref_age_max' => $proposal->pref_age_max,
             'pref_height' => $proposal->pref_height,
             'pref_city' => $proposal->pref_city,
-            'pref_profession' => $proposal->pref_profession,
+            'partner_requirements' => $proposal->pref_note,
         ];
         // Partner educations that are not in the pick-list were typed in: show them under "Other".
         $knownEducation = config('proposal_options.education');
         $savedEducations = array_map('strval', $proposal->pref_educations ?: []);
-        $typedEducations = array_values(array_diff($savedEducations, $knownEducation));
-        $editExtra = ['pref_education_other' => implode(', ', $typedEducations)];
+        $typedEducations = array_values(array_diff($savedEducations, $knownEducation, ['__any']));
+        $savedProfessions = $proposal->prefProfessionList();
+        $savedProfessions = array_map('strval', $proposal->pref_professions ?: $proposal->prefProfessionList());
+        $typedProfessions = array_values(array_diff($savedProfessions, config('proposal_options.profession'), ['__any']));
+        $editExtra = ['pref_education_other' => implode(', ', $typedEducations), 'pref_profession_other' => implode(', ', $typedProfessions)];
         $editMulti = [
+            'pref_nationalities[]' => array_map('strval', $proposal->pref_nationalities ?: []),
+            'pref_professions[]' => $typedProfessions ? array_values(array_merge(array_intersect($savedProfessions, config('proposal_options.profession')), ['__other'])) : $savedProfessions,
             'pref_castes[]' => array_map('strval', $proposal->pref_castes ?: []),
             'pref_educations[]' => $typedEducations ? array_values(array_merge(array_intersect($savedEducations, $knownEducation), ['__other'])) : $savedEducations,
             'pref_marital_statuses[]' => array_map('strval', $proposal->pref_marital_statuses ?: []),
@@ -1065,8 +1079,9 @@ TEMPLATE;
             'pref_age_max' => 'nullable|integer|min:18|max:99',
             'pref_height' => 'nullable|string|max:100',
             'pref_city' => 'nullable|string|max:150',
-            'pref_profession' => 'nullable|string|max:150',
-            'pref_castes' => 'nullable|array', 'pref_castes.*' => 'exists:proposal_castes,id',
+            'pref_professions' => 'nullable|array', 'pref_professions.*' => 'string|max:150',
+            'pref_nationalities' => 'nullable|array', 'pref_nationalities.*' => 'string|max:20',
+            'pref_castes' => 'nullable|array', 'pref_castes.*' => ['string', fn ($attr, $value, $fail) => ($value === '__any' || ProposalCaste::whereKey($value)->exists()) ?: $fail('Please pick a valid caste.')],
             'pref_educations' => 'nullable|array', 'pref_educations.*' => 'string|max:50',
             'pref_marital_statuses' => 'nullable|array', 'pref_marital_statuses.*' => 'string|max:50',
             'partner_requirements' => 'nullable|string|max:2000',
@@ -1085,7 +1100,7 @@ TEMPLATE;
             'family_status' => 'family_status', 'looking_from' => 'looking_from',
             'presentation_highlight' => 'presentation_highlight',
             'pref_age_min' => 'pref_age_min', 'pref_age_max' => 'pref_age_max', 'pref_height' => 'pref_height',
-            'pref_city' => 'pref_city', 'pref_profession' => 'pref_profession', 'pref_note' => 'partner_requirements',
+            'pref_city' => 'pref_city', 'pref_note' => 'partner_requirements',
         ];
         $changes = [];
         foreach ($columnFromInput as $column => $inputKey) {
@@ -1094,9 +1109,10 @@ TEMPLATE;
             }
         }
         // Multi-selects send nothing when emptied, so they are always written (the edit page always has them).
-        foreach (['pref_castes', 'pref_educations', 'pref_marital_statuses'] as $multi) {
+        foreach (['pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities'] as $multi) {
             $changes[$multi] = $this->multiValues($request, $multi);
         }
+        $changes['pref_profession'] = implode(', ', array_diff($changes['pref_professions'] ?? [], ['__any'])) ?: null;
         $changes['birthday'] = $request->year . '-' . $request->month . '-' . $request->day;
         // The pasted original form: replaced only when text was actually provided.
         if ($request->filled('raw_intake_text')) {

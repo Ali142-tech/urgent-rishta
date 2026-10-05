@@ -212,6 +212,58 @@
           
         </div>
 
+        @if(!isset($proposal) && !empty($sendTemplate))
+        <style>
+            .ur-cft { background: #fff; border: 1px solid #E7E2D6; border-radius: 18px; padding: 20px; margin-bottom: 18px; box-shadow: 0 10px 28px rgba(15,46,36,.05); }
+            .ur-cft__top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+            .ur-cft__icon { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; background: #123A2E; color: #C9974D !important; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+            .ur-cft__title { margin: 0 !important; font-size: 17px !important; font-weight: 800 !important; line-height: 1.25 !important; color: #123A2E !important; }
+            .ur-cft__sub { margin: 3px 0 0 !important; font-size: 13px !important; line-height: 1.45 !important; color: #5B6560 !important; }
+            .ur-cft__box { position: relative; }
+            .ur-cft__text { width: 100%; height: 150px; resize: vertical; border: 1px solid #E7E2D6; border-radius: 12px; background: #FBF9F3; padding: 12px 14px; font-size: 13px; line-height: 1.55; color: #1C2321; font-family: inherit; }
+            .ur-cft__fade { position: absolute; left: 1px; right: 16px; bottom: 1px; height: 34px; border-radius: 0 0 12px 12px; background: linear-gradient(to top, #FBF9F3, rgba(251,249,243,0)); pointer-events: none; }
+            .ur-cft__actions { display: flex; gap: 10px; margin-top: 12px; }
+            .ur-cft__btn { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; border-radius: 999px; border: none; font-size: 14px; font-weight: 700; text-decoration: none !important; cursor: pointer; padding: 0 14px; line-height: 1 !important; }
+            .ur-cft__btn i, .ur-cft__btn span { color: inherit !important; font-size: inherit; }
+            .ur-cft__btn i { font-size: 16px; }
+            .ur-cft__btn--copy { background: #123A2E; color: #fff !important; }
+            .ur-cft__btn--wa { background: #25D366; color: #fff !important; }
+            .ur-cft__hint { margin: 10px 0 0 !important; font-size: 12px !important; color: #6B7570 !important; text-align: center; }
+            @media (max-width: 480px) {
+                .ur-cft { padding: 16px; border-radius: 16px; }
+                .ur-cft__actions { flex-direction: column; }
+                .ur-cft__btn { flex: none; width: 100%; }
+            }
+        </style>
+        <div class="ur-cft">
+            <div class="ur-cft__top">
+                <span class="ur-cft__icon"><i class="fa fa-whatsapp"></i></span>
+                <div>
+                    <h3 class="ur-cft__title">Client form to send</h3>
+                    <p class="ur-cft__sub">Send this form to your client. When they send it back, paste it below and the fields fill in automatically.</p>
+                </div>
+            </div>
+            <div class="ur-cft__box">
+                <textarea id="client_form_template" class="ur-cft__text" readonly>{{ $sendTemplate }}</textarea>
+                <span class="ur-cft__fade"></span>
+            </div>
+            <div class="ur-cft__actions">
+                <button type="button" class="ur-cft__btn ur-cft__btn--copy" id="copy_client_form"><i class="fa fa-copy"></i> <span>Copy form</span></button>
+                <a class="ur-cft__btn ur-cft__btn--wa" id="wa_client_form" href="https://wa.me/?text={{ rawurlencode($sendTemplate) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> <span>Send on WhatsApp</span></a>
+            </div>
+        </div>
+        <script>
+            (function () {
+                var btn = document.getElementById('copy_client_form'), box = document.getElementById('client_form_template');
+                if (!btn || !box) return;
+                btn.addEventListener('click', function () {
+                    var done = function () { var t = btn.querySelector('span'); t.textContent = 'Copied!'; setTimeout(function () { t.textContent = 'Copy form'; }, 2000); };
+                    if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(box.value).then(done, function () { box.select(); document.execCommand('copy'); done(); }); }
+                    else { box.select(); document.execCommand('copy'); done(); }
+                });
+            })();
+        </script>
+        @endif
         <div class="ur-pp-stepper">
             <div class="ur-pp-step is-active" id="pp_step_1"><span class="ur-pp-step__num">1</span> Paste data</div>
             <div class="ur-pp-step__line"></div>
@@ -429,21 +481,14 @@
                     </div>
 
                     <div class="ur-pp-review__grid" style="margin-top:10px;">
-                        <div class="ur-pp-review__field" id="pp_field_pref_profession">
-                            <label>Partner's Profession</label>
-                            <select name="pref_profession" form="af_form" class="form-control ur-search-select" data-other="pref_profession_other" required>
-                                <option value="" disabled selected>Select</option>
-                                @foreach($professionOptions as $job)
-                                    <option value="{{ $job->dataid }}" {{ old('pref_profession') === $job->dataid ? 'selected' : '' }}>{{ $job->name }}</option>
+                        <div class="ur-pp-review__field" id="pp_field_pref_marital_statuses">
+                            <label>Marital Status <small style="font-weight:400;">(select one or more)</small></label>
+                            <select name="pref_marital_statuses[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any marital status">
+                                <option value="__any" {{ in_array('__any', (array) old('pref_marital_statuses', [])) ? 'selected' : '' }}>Any</option>
+                                @foreach($maritalstatuses as $maritalstatus)
+                                    <option value="{{ $maritalstatus->dataid }}" {{ in_array($maritalstatus->dataid, (array) old('pref_marital_statuses', [])) ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
                                 @endforeach
-                                <option value="__other">Other — Add Manually</option>
                             </select>
-                            <input type="text" name="pref_profession_other" form="af_form" class="form-control ur-other-input" maxlength="150" placeholder="Type the profession" style="display:none; margin-top:8px;">
-                            <p class="ur-pp-review__err">Not detected — please fill.</p>
-                        </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_city">
-                            <label>Location</label>
-                            <input type="text" name="pref_city" form="af_form" class="form-control" placeholder="e.g. Preferred city Lahore" value="{{ old('pref_city') }}" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_age">
@@ -455,18 +500,15 @@
                             </div>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_castes">
-                            <label>Caste <small style="font-weight:400;">(select one or more)</small></label>
-                            <select name="pref_castes[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any caste">
-                                @foreach($caste as $cst)
-                                    <option value="{{ $cst->dataid }}" {{ in_array($cst->dataid, array_map('strval', (array) old('pref_castes', []))) ? 'selected' : '' }}>{{ $cst->name }}</option>
-                                @endforeach
-                            </select>
+                        <div class="ur-pp-review__field" id="pp_field_pref_height">
+                            <label>Height</label>
+                            <input type="text" name="pref_height" form="af_form" class="form-control" placeholder="e.g. Same or close to similar height" value="{{ old('pref_height') }}" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_educations">
                             <label>Education <small style="font-weight:400;">(select one or more)</small></label>
                             <select name="pref_educations[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any education">
+                                <option value="__any" {{ in_array('__any', (array) old('pref_educations', [])) ? 'selected' : '' }}>Any</option>
                                 @foreach($education as $degree)
                                     <option value="{{ $degree->dataid }}" {{ in_array($degree->dataid, (array) old('pref_educations', [])) ? 'selected' : '' }}>{{ $degree->name }}</option>
                                 @endforeach
@@ -475,21 +517,46 @@
                             <input type="text" name="pref_education_other" form="af_form" id="pref_education_other" class="form-control" maxlength="200" placeholder="Type the education (separate several with commas)" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_marital_statuses">
-                            <label>Marital Status <small style="font-weight:400;">(select one or more)</small></label>
-                            <select name="pref_marital_statuses[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any marital status">
-                                @foreach($maritalstatuses as $maritalstatus)
-                                    <option value="{{ $maritalstatus->dataid }}" {{ in_array($maritalstatus->dataid, (array) old('pref_marital_statuses', [])) ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
+                        <div class="ur-pp-review__field" id="pp_field_pref_professions">
+                            <label>Profession <small style="font-weight:400;">(select one or more)</small></label>
+                            <select name="pref_professions[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any profession">
+                                <option value="__any" {{ in_array('__any', (array) old('pref_professions', [])) ? 'selected' : '' }}>Any</option>
+                                @foreach($professionOptions as $job)
+                                    <option value="{{ $job->dataid }}" {{ in_array($job->dataid, (array) old('pref_professions', [])) ? 'selected' : '' }}>{{ $job->name }}</option>
+                                @endforeach
+                                <option value="__other">Other — Add Manually</option>
+                            </select>
+                            <input type="text" name="pref_profession_other" form="af_form" id="pref_profession_other" class="form-control" maxlength="200" placeholder="Type the profession (separate several with commas)" style="display:none; margin-top:8px;">
+                            <p class="ur-pp-review__err">Not detected — please fill.</p>
+                        </div>
+                        <div class="ur-pp-review__field" id="pp_field_pref_castes">
+                            <label>Caste <small style="font-weight:400;">(select one or more)</small></label>
+                            <select name="pref_castes[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any caste">
+                                <option value="__any" {{ in_array('__any', (array) old('pref_castes', [])) ? 'selected' : '' }}>Any</option>
+                                @foreach($caste as $cst)
+                                    <option value="{{ $cst->dataid }}" {{ in_array($cst->dataid, array_map('strval', (array) old('pref_castes', []))) ? 'selected' : '' }}>{{ $cst->name }}</option>
                                 @endforeach
                             </select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                        <div class="ur-pp-review__field" id="pp_field_pref_height">
-                            <label>Height</label>
-                            <input type="text" name="pref_height" form="af_form" class="form-control" placeholder="e.g. Same or close to similar height" value="{{ old('pref_height') }}" required>
+                        <div class="ur-pp-review__field" id="pp_field_pref_city">
+                            <label>City</label>
+                            <input type="text" name="pref_city" form="af_form" class="form-control" placeholder="e.g. Preferred city Lahore" value="{{ old('pref_city') }}" required>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
-                       
+                        <div class="ur-pp-review__field" id="pp_field_pref_nationalities">
+                            <label>Nationality <small style="font-weight:400;">(optional &mdash; select one or more)</small></label>
+                            <select name="pref_nationalities[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any nationality">
+                                <option value="__any" {{ in_array('__any', (array) old('pref_nationalities', [])) ? 'selected' : '' }}>Any</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->dataid }}" {{ in_array($country->dataid, (array) old('pref_nationalities', [])) ? 'selected' : '' }}>{{ $country->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="ur-pp-review__field" id="pp_field_pref_note" style="grid-column: 1 / -1;">
+                            <label>Other requirements <small style="font-weight:400;">(optional)</small></label>
+                            <textarea name="partner_requirements" form="af_form" class="form-control" rows="2" maxlength="2000" placeholder="Anything else the client wants in a partner">{{ old('partner_requirements') }}</textarea>
+                        </div>
                     </div>
 
                     {{-- Classification fields that are never auto-filled by the
@@ -628,6 +695,39 @@ function urCopyTemplate(event) {
         refreshSelect(el);
         return true;
     }
+    // Adds a value to a multi-select: the matching option, or "Other" plus the typed text.
+    function addToMulti(selectName, otherName, text) {
+        var el = document.querySelector('select[name="' + selectName + '"]');
+        if (!el || !text) return;
+        var target = norm(text);
+        var real = Array.from(el.options).filter(function (o) { return o.value !== '__other' && o.value !== ''; });
+        var opt = real.find(function (o) { return norm(o.textContent) === target; })
+            || real.find(function (o) { return target.length > 2 && norm(o.textContent).indexOf(target) !== -1; });
+        if (opt) { opt.selected = true; }
+        else {
+            var other = Array.from(el.options).find(function (o) { return o.value === '__other'; });
+            var box = document.querySelector('[name="' + otherName + '"]');
+            if (other && box) { other.selected = true; box.value = box.value ? box.value + ', ' + text : text; }
+        }
+        refreshSelect(el);
+    }
+    // "Rajput, Arain or Jutt" -> one pick per answer. "Any" / "no preference" adds nothing.
+    var NATIONALITY_WORDS = { 'british': 'united kingdom', 'english': 'united kingdom', 'american': 'united states', 'emirati': 'united arab emirates', 'saudi': 'saudi arabia', 'pakistani': 'pakistan', 'indian': 'india', 'canadian': 'canada', 'australian': 'australia', 'german': 'germany', 'french': 'france', 'turkish': 'turkey', 'omani': 'oman', 'qatari': 'qatar', 'kuwaiti': 'kuwait', 'bangladeshi': 'bangladesh', 'afghan': 'afghanistan', 'chinese': 'china', 'norwegian': 'norway', 'swedish': 'sweden', 'italian': 'italy', 'spanish': 'spain', 'dutch': 'netherlands' };
+    var MARITAL_SYNONYMS = { 'single': 'never married', 'unmarried': 'never married', 'divorcee': 'divorced', 'widowed': 'widow' };
+    function addManyToMulti(selectName, otherName, text, synonyms) {
+        String(text || '').split(/\s*(?:,|;|\/|&|\band\b|\bor\b)\s*/i).forEach(function (part) {
+            part = part.trim();
+            if (!part) return;
+            if (/^(any|none|no preference|no restriction|open|all|not specified|n\/a)$/i.test(part)) {
+                var sel = document.querySelector('select[name="' + selectName + '"]');
+                var anyOpt = sel && Array.from(sel.options).find(function (o) { return o.value === '__any'; });
+                if (anyOpt) { Array.from(sel.options).forEach(function (o) { o.selected = (o === anyOpt); }); refreshSelect(sel); }
+                return;
+            }
+            if (synonyms && synonyms[part.toLowerCase()]) part = synonyms[part.toLowerCase()];
+            addToMulti(selectName, otherName, part);
+        });
+    }
     function refreshSelect(el) {
         if (window.jQuery) { jQuery(el).trigger('change'); } else { el.dispatchEvent(new Event('change')); }
     }
@@ -728,7 +828,7 @@ function urCopyTemplate(event) {
             'gender': function (v) { setVal('gender', /female/i.test(v) ? 'female' : 'male'); },
             'name': fillName,
             'age': fillAgeFromYears,
-            'marital status': function (v) { selectFuzzy('marital_status', v); },
+            'marital status': function (v) { selectFuzzy('marital_status', MARITAL_SYNONYMS[String(v).trim().toLowerCase()] || v); },
             'height': function (v) { setVal('height', v); },
         }},
         { test: /education\s*details?/i, fields: {
@@ -758,8 +858,11 @@ function urCopyTemplate(event) {
             'city': function (v) { setVal('city', v); },
             'address': function (v) { setVal('address', v); },
             'adress': function (v) { setVal('address', v); },
-            'nationality': function (v) { selectFuzzy('con_of_citizenship', v.replace(/i$/i, '').replace(/ian$/i, '')) || selectFuzzy('con_of_citizenship', v); },
+            'nationality': function (v) { var w = String(v).trim().toLowerCase(); selectFuzzy('con_of_citizenship', NATIONALITY_WORDS[w] || v.replace(/i$/i, '').replace(/ian$/i, '')) || selectFuzzy('con_of_citizenship', v); },
             'current city': function (v) { setVal('current_city', v); },
+            'country': function (v) { selectFuzzy('country', v); },
+            'country of residence': function (v) { selectFuzzy('country', v); },
+            'living in': function (v) { selectFuzzy('country', v); },
         }},
         { test: /family\s*details?/i, fields: {
             "father's occupation": function (v) { setVal('father_occupation', v); },
@@ -770,17 +873,26 @@ function urCopyTemplate(event) {
             'sisters': function (v) { setVal('siblings_sisters', v); },
             'married': function (v) { setVal('siblings_married_note', v); },
         }},
-        { test: /your\s*requirements?/i, fields: {
+        { test: /(your|partner)\s*requirements?/i, fields: {
+            'marital status': function (v) { addManyToMulti('pref_marital_statuses[]', null, v, MARITAL_SYNONYMS); },
             'age limit': fillAgeLimit,
+            'age': fillAgeLimit,
             'height': function (v) { setVal('pref_height', v); },
-            'city': function (v) { setVal('pref_city', v); },
-            'caste': function (v) { setVal('pref_caste_note', v); },
             'qualification': function (v) {
+                addManyToMulti('pref_educations[]', 'pref_education_other', v);
                 setVal('pref_qualification_note', v);
                 // "Well-educated professional, preferably a doctor" also tells us
                 // the partner's profession (and religion, if it is named).
                 parsePartnerRequirementsText(v);
             },
+            'education': function (v) { addManyToMulti('pref_educations[]', 'pref_education_other', v); },
+            'profession': function (v) { addManyToMulti('pref_professions[]', 'pref_profession_other', v); },
+            'job/business': function (v) { addManyToMulti('pref_professions[]', 'pref_profession_other', v); },
+            'caste': function (v) { addManyToMulti('pref_castes[]', null, v); setVal('pref_caste_note', v); },
+            'city': function (v) { setVal('pref_city', v); },
+            'nationality': function (v) { addManyToMulti('pref_nationalities[]', null, v, NATIONALITY_WORDS); },
+            'other requirements': function (v) { setVal('partner_requirements', v); },
+            'requirements': function (v) { setVal('partner_requirements', v); },
         }},
     ];
 
@@ -943,7 +1055,7 @@ function urCopyTemplate(event) {
 
         for (var p = 0; p < PROFESSION_KEYWORDS.length; p++) {
             if (new RegExp('\\b' + PROFESSION_KEYWORDS[p] + '\\b', 'i').test(rawText)) {
-                setVal('pref_profession', PROFESSION_KEYWORDS[p].charAt(0).toUpperCase() + PROFESSION_KEYWORDS[p].slice(1));
+                addToMulti('pref_professions[]', 'pref_profession_other', PROFESSION_KEYWORDS[p].charAt(0).toUpperCase() + PROFESSION_KEYWORDS[p].slice(1));
                 break;
             }
         }
@@ -1025,10 +1137,22 @@ function urCopyTemplate(event) {
                     if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary();
                 });
         });
+        jQuery('select[name="pref_professions[]"]').on('change', function () {
+            var box = document.getElementById('pref_profession_other');
+            var on = (jQuery(this).val() || []).indexOf('__other') !== -1;
+            if (box) { box.style.display = on ? '' : 'none'; box.required = on; }
+        });
         jQuery('select[name="pref_educations[]"]').on('change', function () {
             var box = document.getElementById('pref_education_other');
             var on = (jQuery(this).val() || []).indexOf('__other') !== -1;
             if (box) { box.style.display = on ? '' : 'none'; box.required = on; }
+        });
+    }
+    if (window.jQuery) {
+        jQuery('.ur-multi').on('select2:select', function (e) {
+            var $el = jQuery(this), picked = e.params.data.id, vals = $el.val() || [];
+            if (picked === '__any') { $el.val(['__any']).trigger('change'); }
+            else if (vals.indexOf('__any') !== -1) { $el.val(vals.filter(function (v) { return v !== '__any'; })).trigger('change'); }
         });
     }
     var EDIT_MODE = @json(isset($proposal));
@@ -1066,7 +1190,7 @@ function urCopyTemplate(event) {
         { wrapper: 'pp_field_current_city', getEl: function () { return document.querySelector('[name="current_city"]'); }, required: true },
         { wrapper: 'pp_field_nationality', getEl: function () { return document.querySelector('[name="con_of_citizenship"]'); }, required: true },
         { wrapper: 'pp_field_city', getEl: function () { return document.querySelector('[name="city"]'); }, required: true },
-        { wrapper: 'pp_field_pref_profession', getEl: function () { return document.querySelector('[name="pref_profession"]'); }, required: true },
+        { wrapper: 'pp_field_pref_professions', getEl: function () { return document.querySelector('[name="pref_professions[]"]'); }, required: true },
         { wrapper: 'pp_field_pref_city', getEl: function () { return document.querySelector('[name="pref_city"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_min"]'); }, required: true },
         { wrapper: 'pp_field_pref_age', getEl: function () { return document.querySelector('[name="pref_age_max"]'); }, required: true },
