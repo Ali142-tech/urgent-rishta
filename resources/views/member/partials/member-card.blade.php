@@ -38,7 +38,7 @@ $hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.
 $royalBlur = !$hideImage && auth()->check() && User::retrieveUserObject()->photosBlurredFor($member);
-$cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages(null, !empty($watermarked));
+$cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages(null, !empty($member->team_card_role) ? true : !empty($watermarked));
 $compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
 $compatTier = null;
 if ($compatibility) {
@@ -159,8 +159,14 @@ $packageIcon = match ($packageSlug) {
             <div class="member-card__designation"><i class="fa fa-briefcase"></i> {{$member->profession}}</div>
         @endif
         <ul class="member-card__details">
+            @if(!empty($member->team_card_role))
+                {{-- Team proposals carry no religion: lead with the caste. --}}
+                <li><span>Caste</span><b>{{ $member->lbl_caste ?: '—' }}</b></li>
+                <li><span>Sect</span><b>{{ $member->sect ?: '—' }}</b></li>
+            @else
             <li><span>Religion</span><b>{{$member->lbl_religion}}</b></li>
             <li><span>Caste / Sect</span><b>{{$member->lbl_caste}} / {{$member->sect}}</b></li>
+            @endif
             <li><span>Marital Status</span><b>{{$member->lbl_marital_status}}</b></li>
         </ul>
         @if(!empty($addedByName ?? null))

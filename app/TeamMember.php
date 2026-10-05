@@ -27,7 +27,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     protected $table = 'team_members';
 
     protected $fillable = [
-        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo',
+        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style',
         'is_admin', 'is_approved', 'status', 'application_status', 'experience', 'about_me', 'approved_at',
     ];
 

@@ -274,28 +274,49 @@ class Proposal extends Model
         return $paths;
     }
 
-    public function getProfileImage($tiny = null, $watermarked = false)
+    private static array $ownerCache = [];
+
+    /**
+     * The owner's watermark stamped on a stored photo path (/proposals/<file>), or the path itself
+     * when it can't be made. The very small 100px thumbnails are left alone (nothing would be readable).
+     */
+    private function branded(string $path): string
     {
-        $paths = $this->photoThumbsOrNull((bool) $tiny);
-        return $paths[0] ?? Profile::defaultImage($this->gender);
+        $file = basename($path);
+        $owner = self::$ownerCache[$this->added_by] ??= TeamMember::find($this->added_by);
+        return (new \App\Services\PhotoBrandingService())->brandedPath($owner, $file, $this->reference) ?: $path;
     }
 
-    public function getCardImages($tiny = null, $watermarked = false)
+    /** Dashboard photos carry the owner's watermark by default; the edit / photos pages pass false to see the originals. */
+    public function getProfileImage($tiny = null, $watermarked = true)
     {
         $paths = $this->photoThumbsOrNull((bool) $tiny);
-        return $paths ?: [Profile::defaultImage($this->gender)];
+        if (!isset($paths[0])) {
+            return Profile::defaultImage($this->gender);
+        }
+        return $watermarked ? $this->branded($paths[0]) : $paths[0];
+    }
+
+    public function getCardImages($tiny = null, $watermarked = true)
+    {
+        $paths = $this->photoThumbsOrNull((bool) $tiny);
+        if (!$paths) {
+            return [Profile::defaultImage($this->gender)];
+        }
+        return $watermarked ? array_map(fn ($p) => $this->branded($p), $paths) : $paths;
     }
 
     /** JSON string of ['src','thumb','mobileSrc'] for each photo (same shape Profile gave). */
     public function getLightGalleryImages($watermarked = false)
     {
         $out = [];
+        $mark = fn (string $p) => $watermarked ? $this->branded($p) : $p;
         foreach ($this->photos as $photo) {
             if (!file_exists(public_path($photo->path))) {
                 continue;
             }
             $thumb = file_exists(public_path($photo->thumb_path)) ? $photo->thumb_path : $photo->path;
-            $out[] = ['src' => $photo->path, 'thumb' => $thumb, 'mobileSrc' => $photo->path];
+            $out[] = ['src' => $mark($photo->path), 'thumb' => $mark($thumb), 'mobileSrc' => $mark($photo->path)];
         }
         return json_encode($out);
     }
@@ -316,7 +337,9 @@ class Proposal extends Model
         $query = static::query()->with('photos')
             ->where('gender', $opposite)
             ->where('active', true)
-            ->where('id', '!=', $this->id);
+            ->where('id', '!=', $this->id)
+            // Matches are other matchmakers' clients (Forward sends both forms to the other owner): a team member's own proposals never count as matches for each other.
+            ->where('added_by', '!=', $this->added_by);
 
         if ($this->pref_age_min || $this->pref_age_max) {
             $min = $this->pref_age_min ?: 18;
@@ -349,7 +372,7 @@ class Proposal extends Model
      */
     public function strongMatchScores(): array
     {
-        $key = 'pm:' . $this->id . ':' . Cache::get('proposal_match_version', 0);
+        $key = 'pm2:' . $this->id . ':' . Cache::get('proposal_match_version', 0);
         return Cache::remember($key, 300, function () {
             $query = $this->candidatesQuery();
             if ($query === null) {

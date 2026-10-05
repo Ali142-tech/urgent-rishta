@@ -83,6 +83,9 @@
         @if(!empty($member->profession))
             <div class="ur-search-card__profession"><i class="fa fa-briefcase"></i> {{ $member->profession }}</div>
         @endif
+        @if(!empty($member->lbl_caste))
+            <div class="ur-search-card__profession"><i class="fa fa-users"></i> {{ $member->lbl_caste }}{{ !empty($member->sect) ? ' · ' . $member->sect : '' }}</div>
+        @endif
 
       
 

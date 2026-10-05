@@ -474,7 +474,12 @@ class HomeController extends Controller {
         }
 
         $age = $member->age;
-        $photoUrl = url($member->getCardImages(null, false)[0] ?? Profile::defaultImage($member->gender));
+        $photoPath = $member->getCardImages(null, false)[0] ?? null;
+        // The link preview carries the owner's watermark too.
+        if ($photoPath && $member->photos->isNotEmpty()) {
+            $photoPath = (new \App\Services\PhotoBrandingService())->brandedPath(\App\TeamMember::find($member->added_by), basename(parse_url($photoPath, PHP_URL_PATH)), $member->reference) ?: $photoPath;
+        }
+        $photoUrl = url($photoPath ?: Profile::defaultImage($member->gender));
         $location = $member->lbl_city ?: $member->lbl_con_of_residence;
 
         return view('share.proposal-preview', compact('member', 'age', 'photoUrl', 'location'));

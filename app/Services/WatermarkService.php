@@ -26,6 +26,8 @@ class WatermarkService
      * these paths.
      */
     const FONT_CANDIDATES = [
+        // Ships with the project (dompdf), so it exists on every server that has run composer install.
+        __DIR__ . '/../../vendor/dompdf/dompdf/lib/fonts/DejaVuSans-Bold.ttf',
         'C:\\Windows\\Fonts\\arial.ttf',
         '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',

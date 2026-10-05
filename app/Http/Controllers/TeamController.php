@@ -228,7 +228,7 @@ class TeamController extends Controller
         // Default landing state: with no filters submitted at all, show a
         // "Doctor" keyword search rather than the whole unfiltered pool.
         // ?view=all (the sidebar's "Team Proposals" link) opts out of that.
-        $filterKeys = ['keyword', 'profession', 'country', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city', 'matchmaker'];
+        $filterKeys = ['keyword', 'height_from', 'height_to', 'profession', 'country', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city', 'matchmaker'];
         $hasAnyFilter = collect($filterKeys)->contains(fn ($key) => $request->filled($key));
         if (!$hasAnyFilter && $request->query('view') !== 'all') {
             $request->merge(['keyword' => 'Doctor']);
@@ -265,6 +265,20 @@ class TeamController extends Controller
         }
         if (!empty($request->current_city)) {
             $query->where('current_city', 'like', '%' . $request->current_city . '%');
+        }
+        // Height is free text ("5'6", "5.6", ...), so the range is checked in PHP on the already-filtered rows.
+        if ($request->filled('height_from') || $request->filled('height_to')) {
+            $from = $request->filled('height_from') ? (int) $request->height_from : 0;
+            $to = $request->filled('height_to') ? (int) $request->height_to : 999;
+            if ($from > $to) {
+                [$from, $to] = [$to, $from];
+            }
+            $ids = (clone $query)->whereNotNull('height')->pluck('height', 'id')
+                ->filter(function ($height) use ($from, $to) {
+                    $inches = Proposal::heightToInches($height);
+                    return $inches !== null && $inches >= $from && $inches <= $to;
+                })->keys();
+            $query->whereIn('id', $ids);
         }
         // Set by "View proposals" on the Matchmakers Directory.
         if (!empty($request->matchmaker)) {
@@ -448,9 +462,30 @@ class TeamController extends Controller
             'experience' => 'nullable|string|max:255',
             'about_me' => 'nullable|string|max:2000',
             'image' => 'nullable|image|max:5120',
+            'watermark_text' => 'nullable|string|max:100',
+            'watermark_style' => 'nullable|in:diagonal,corner',
+            'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
         ]);
 
-        $member->fill(collect($data)->except('image')->all())->save();
+        $member->fill(collect($data)->except(['image', 'logo'])->all());
+        $member->watermark_text = trim((string) $request->input('watermark_text')) ?: null;
+        $member->watermark_style = $request->input('watermark_style') ?: 'diagonal';
+
+        $logoDir = public_path(\App\TeamMember::PHOTO_PATH . '/logos');
+        if ($request->boolean('remove_logo') && $member->logo) {
+            @unlink($logoDir . '/' . $member->logo);
+            $member->logo = null;
+        }
+        if ($request->hasFile('logo')) {
+            \Illuminate\Support\Facades\File::ensureDirectoryExists($logoDir);
+            if ($member->logo) {
+                @unlink($logoDir . '/' . $member->logo);
+            }
+            $logoName = time() . '_' . $member->id . '.' . $request->file('logo')->getClientOriginalExtension();
+            $request->file('logo')->move($logoDir, $logoName);
+            $member->logo = $logoName;
+        }
+        $member->save();
         if ($request->hasFile('image')) {
             (new \App\Services\TeamMemberPhotoService())->store($member, $request->file('image'));
         }
@@ -853,7 +888,7 @@ TEMPLATE;
         $matchCount = $member->getProposalMatchesCount();
         $canRunAiMatch = $member->added_by == $viewer->id || $viewer->isAdmin();
         $hasRealPhotos = $member->photos->isNotEmpty();
-        $photos = $hasRealPhotos ? $member->getCardImages(null, false) : [];
+        $photos = $hasRealPhotos ? $member->getCardImages(null, true) : [];
 
         // "Original pasted form": the real text when there is one, otherwise
         // rebuilt from the saved fields (labelled honestly in the view).
@@ -1239,9 +1274,13 @@ TEMPLATE;
         $link = route('share.proposal', $proposal->reference);
 
         $photos = [];
+        $branding = new \App\Services\PhotoBrandingService();
+        $owner = TeamMember::find($proposal->added_by);   // the proposal's owner: their branding stays on the picture wherever it is shared
         foreach (json_decode($proposal->getLightGalleryImages(false), true) ?: [] as $g) {
             if (!empty($g['src'])) {
-                $photos[] = $g['src'];
+                // The owner's logo / watermark / name + ID go on the copy that leaves; the stored photo stays clean.
+                $branded = $branding->brandedPath($owner, basename(parse_url($g['src'], PHP_URL_PATH)), $proposal->reference);
+                $photos[] = $branded ?: $g['src'];
             }
         }
 

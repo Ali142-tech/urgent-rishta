@@ -119,6 +119,7 @@
                         <th>Profile</th>
                         <th>Location</th>
                         <th>Profession</th>
+                        <th>Caste</th>
                         <th>Added</th>
                         <th>Status</th>
                         <th>Matches</th>
@@ -140,6 +141,7 @@
                             </td>
                             <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->lbl_city ?: ($member->lbl_con_of_residence ?: '—') }}</td>
                             <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->profession ?: '—' }}</td>
+                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->lbl_caste ?: '—' }}</td>
                             <td>{{ \Carbon\Carbon::parse($member->created_at)->format('d M Y') }}</td>
                             <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;"><span class="ur-mc-status ur-mc-status--{{ $member->profile_status ?: 'active' }}">{{ $statusOptions[$member->profile_status] ?? 'Active' }}</span></td>
                             <td class="ur-mc-matches" style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->matchesCount ?? '—' }}</td>

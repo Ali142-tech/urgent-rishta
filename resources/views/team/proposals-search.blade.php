@@ -41,7 +41,7 @@
     .ur-adv-search__hint { font-size: 12px; color: #9AA5A0; margin: 12px 0 0; }
     .ur-adv-search__network { font-size: 12px; color: #2E7D5B; font-weight: 700; text-align: right; margin: -4px 0 12px; }
 
-    .ur-adv-search__filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed #E7E2D6; }
+    .ur-adv-search__filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 0 0 16px; padding-bottom: 16px; border-bottom: 1px dashed #E7E2D6; }
     .ur-adv-search__filters label { font-size: 12px; font-weight: 600; color: #1C2321; margin-bottom: 4px; display: block; }
     .ur-adv-search__filters .form-control, .ur-adv-search__filters select { border: 1px solid #E7E2D6; border-radius: 8px; height: 38px; padding: 0 10px; width: 100%; font-size: 13px; }
 
@@ -108,7 +108,7 @@
 
     @php
         $activeTab = request('country') ? 'country' : (request('profession') ? 'profession' : 'keyword');
-        $hasMoreFilters = collect(['gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city'])
+        $hasMoreFilters = collect(['height_from', 'height_to', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city'])
             ->contains(fn ($f) => request()->filled($f));
         $selectedCountry = request('country') ? $countries->firstWhere('dataid', request('country')) : null;
     @endphp
@@ -116,35 +116,30 @@
     <p class="ur-adv-search__network">{{ number_format($totalNetworkCount) }} profile{{ $totalNetworkCount == 1 ? '' : 's' }} in the shared network</p>
 
     <form method="GET" action="{{ route('team.proposals.search') }}" class="ur-adv-search" id="search_form">
-        <div class="ur-adv-search__tabs">
-            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'keyword' ? 'is-active' : '' }}" data-tab="keyword">Search by keyword</button>
-            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'profession' ? 'is-active' : '' }}" data-tab="profession">Search by profession</button>
-            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'country' ? 'is-active' : '' }}" data-tab="country">Search by country</button>
-            <button type="button" class="ur-adv-search__more-btn {{ $hasMoreFilters ? 'is-active' : '' }}" id="more_filters_toggle"><i class="fa fa-sliders"></i> More filters</button>
-        </div>
-
-        <div class="ur-adv-search__row">
-            <div class="ur-adv-search__field" data-panel="keyword" style="{{ $activeTab == 'keyword' ? '' : 'display:none;' }}">
-                <input type="text" class="form-control" name="keyword" placeholder="Search by name, profession or city…" value="{{ request('keyword') }}">
-            </div>
-            <div class="ur-adv-search__field" data-panel="profession" style="{{ $activeTab == 'profession' ? '' : 'display:none;' }}">
-                <input type="text" class="form-control" name="profession" placeholder="e.g. Doctor, Engineer, Teacher…" value="{{ request('profession') }}">
-            </div>
-            <div class="ur-adv-search__field" data-panel="country" style="{{ $activeTab == 'country' ? '' : 'display:none;' }}">
-                <select name="country" class="form-control">
-                    <option value="">Any country</option>
-                    @foreach($countries as $country)
-                        <option value="{{ $country->dataid }}" {{ request('country') == $country->dataid ? 'selected' : '' }}>{{ $country->name }}</option>
+        <div class="ur-adv-search__filters" id="more_filters_panel" style="{{ $hasMoreFilters ? '' : 'display:none;' }}">
+            @php
+                $heightChoices = [];
+                for ($ft = 4; $ft <= 6; $ft++) { for ($in = 0; $in <= 11; $in++) { $heightChoices[$ft . "'" . $in . '"'] = $ft * 12 + $in; } }
+                $heightChoices["7'0\""] = 84;
+            @endphp
+            <div>
+                <label>Height From</label>
+                <select name="height_from" class="form-control">
+                    <option value="">Any</option>
+                    @foreach($heightChoices as $label => $inches)
+                        <option value="{{ $inches }}" {{ (string) request('height_from') === (string) $inches ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="ur-adv-search__submit"><i class="fa fa-search"></i> Search</button>
-            <a href="{{ route('team.proposals.search') }}" class="ur-adv-search__clear"><i class="fa fa-times"></i> Clear filters</a>
-        </div>
-
-        <p class="ur-adv-search__hint">Search runs against the standardized fields pulled from each pasted profile — every client's original pasted form stays unchanged in their private file.</p>
-
-        <div class="ur-adv-search__filters" id="more_filters_panel" style="{{ $hasMoreFilters ? '' : 'display:none;' }}">
+            <div>
+                <label>Height To</label>
+                <select name="height_to" class="form-control">
+                    <option value="">Any</option>
+                    @foreach($heightChoices as $label => $inches)
+                        <option value="{{ $inches }}" {{ (string) request('height_to') === (string) $inches ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
             <div>
                 <label>Gender</label>
                 <select name="gender" class="form-control">
@@ -197,6 +192,35 @@
                 <input type="text" class="form-control" name="current_city" value="{{ request('current_city') }}">
             </div>
         </div>
+
+        <div class="ur-adv-search__tabs">
+            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'keyword' ? 'is-active' : '' }}" data-tab="keyword">Search by keyword</button>
+            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'profession' ? 'is-active' : '' }}" data-tab="profession">Search by profession</button>
+            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'country' ? 'is-active' : '' }}" data-tab="country">Search by country</button>
+            <button type="button" class="ur-adv-search__more-btn {{ $hasMoreFilters ? 'is-active' : '' }}" id="more_filters_toggle"><i class="fa fa-sliders"></i> More filters</button>
+        </div>
+
+        <div class="ur-adv-search__row">
+            <div class="ur-adv-search__field" data-panel="keyword" style="{{ $activeTab == 'keyword' ? '' : 'display:none;' }}">
+                <input type="text" class="form-control" name="keyword" placeholder="Search by name, profession or city…" value="{{ request('keyword') }}">
+            </div>
+            <div class="ur-adv-search__field" data-panel="profession" style="{{ $activeTab == 'profession' ? '' : 'display:none;' }}">
+                <input type="text" class="form-control" name="profession" placeholder="e.g. Doctor, Engineer, Teacher…" value="{{ request('profession') }}">
+            </div>
+            <div class="ur-adv-search__field" data-panel="country" style="{{ $activeTab == 'country' ? '' : 'display:none;' }}">
+                <select name="country" class="form-control">
+                    <option value="">Any country</option>
+                    @foreach($countries as $country)
+                        <option value="{{ $country->dataid }}" {{ request('country') == $country->dataid ? 'selected' : '' }}>{{ $country->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <button type="submit" class="ur-adv-search__submit"><i class="fa fa-search"></i> Search</button>
+            <a href="{{ route('team.proposals.search') }}" class="ur-adv-search__clear"><i class="fa fa-times"></i> Clear filters</a>
+        </div>
+
+        <p class="ur-adv-search__hint">Search runs against the standardized fields pulled from each pasted profile — every client's original pasted form stays unchanged in their private file.</p>
+
     </form>
 
     <div class="ur-adv-search__results-head">
