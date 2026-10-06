@@ -907,14 +907,16 @@ TEMPLATE;
         $matchCount = $member->getProposalMatchesCount();
         $canRunAiMatch = $member->added_by == $viewer->id || $viewer->isAdmin();
         $hasRealPhotos = $member->photos->isNotEmpty();
-        $photos = $hasRealPhotos ? $member->getCardImages(null, true) : [];
+        $photos = $hasRealPhotos ? $member->getCardImages(null, true) : [];   // small thumbnails, for display only
+        // What the "Form + photos" button sends: the full-size photos with the owner's watermark (same as the Share buttons).
+        $sharePhotos = $hasRealPhotos ? $this->shareContentFor($member)['photos'] : [];
 
         // "Original pasted form": the real text when there is one, otherwise
         // rebuilt from the saved fields (labelled honestly in the view).
         $intakeIsSynthesized = empty(trim((string) ($member->raw_intake_text ?? '')));
         $intakeText = $intakeIsSynthesized ? $this->buildSyntheticIntakeText($member) : $member->raw_intake_text;
 
-        return compact('matchCount', 'canRunAiMatch', 'hasRealPhotos', 'photos', 'intakeText', 'intakeIsSynthesized');
+        return compact('matchCount', 'canRunAiMatch', 'hasRealPhotos', 'photos', 'sharePhotos', 'intakeText', 'intakeIsSynthesized');
     }
 
     /**

@@ -159,7 +159,7 @@
                  sharing files (see the delegated click handler in
                  layouts/team/dashboard.blade.php). --}}
             <button type="button" id="cf_share_photos_btn" class="is-gold"
-                data-photos="{{ json_encode($photos) }}"
+                data-photos="{{ json_encode($sharePhotos ?? $photos) }}"
                 data-title="{{ $member->dataid }}"
                 data-text="{{ $intakeText }}"
                 data-fallback="{{ route('team.proposals.share.whatsapp', ['dataid' => $member->dataid, 'with_photos' => 1]) }}">
