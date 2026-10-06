@@ -99,6 +99,13 @@
                 @if(!empty($member->profession))
                     <div class="member-card__designation"><i class="fa fa-briefcase"></i> {{ $member->profession }}</div>
                 @endif
+                @if(!empty(trim((string) $member->contact_mobile_number)))
+                    <div class="member-card__designation" style="margin-top:6px;">
+                        <a href="{{ \App\User::whatsappLinkForNumber($member->contact_mobile_number) }}" target="_blank" rel="noopener" title="Chat on WhatsApp" style="color:#123A2E; font-weight:600; text-decoration:none;">
+                            <i class="fa fa-whatsapp" style="color:#C9974D; font-size:16px;"></i> {{ $member->contact_mobile_number }}
+                        </a>
+                    </div>
+                @endif
                 <ul class="member-card__details">
                     <li><span>Religion</span><b>{{ $member->lbl_religion }}</b></li>
                     <li><span>Caste / Sect</span><b>{{ $member->lbl_caste }} / {{ $member->sect }}</b></li>
