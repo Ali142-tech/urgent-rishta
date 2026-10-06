@@ -117,7 +117,7 @@
             <div class="ur-ov-stat__icon"><i class="fa fa-magic"></i></div>
             <span class="ur-ov-stat__badge" title="Computed live on every page load, not a cached/batched number">Live</span>
         </div>
-        <span class="ur-ov-stat__label">AI Match Combinations</span>
+        <span class="ur-ov-stat__label">AI Matches (70%+)</span>
         <span class="ur-ov-stat__value">{{ number_format($aiMatchesCount) }}</span>
         <a href="{{ route('team.matches') }}" class="ur-ov-stat__delta">View all &rarr;</a>
     </div>

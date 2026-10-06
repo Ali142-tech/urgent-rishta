@@ -91,9 +91,13 @@ class TeamController extends Controller
 
         // AI Matches Found + a short preview — across this team member's own proposals only.
         $aiMatchesCount = 0;
+        $distinctMatchIds = [];
         $previewMatches = collect();
         foreach (Proposal::where('added_by', $viewerId)->with('photos')->get() as $proposal) {
-            $aiMatchesCount += $proposal->getProposalMatchesCount();
+            foreach (array_keys($proposal->strongMatchScores()) as $matchId) {
+                $distinctMatchIds[$matchId] = true;   // a profile that fits several clients counts once
+            }
+            $aiMatchesCount = count($distinctMatchIds);
             if ($previewMatches->count() < 3) {
                 foreach ($proposal->getProposalMatches(3) as $match) {
                     if ($previewMatches->count() >= 3) break;

@@ -152,8 +152,13 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     /** How many AI matches the proposals this member owns have in total (sidebar badge). */
     public function ownedProposalsAiMatchesCount(): int
     {
-        return Proposal::where('added_by', $this->id)
-            ->get()
-            ->sum(fn (Proposal $proposal) => $proposal->getProposalMatchesCount());
+        // Distinct profiles: one that fits several of this member's clients is still one AI match.
+        $ids = [];
+        foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
+            foreach (array_keys($proposal->strongMatchScores()) as $id) {
+                $ids[$id] = true;
+            }
+        }
+        return count($ids);
     }
 }
