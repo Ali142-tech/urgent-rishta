@@ -73,6 +73,11 @@
 
     .ur-pp-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 20px; margin-bottom: 20px; align-items: start; }
     @media (max-width: 991px) { .ur-pp-grid { grid-template-columns: 1fr; } }
+    .ur-pp-section-head { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; padding-top: 22px; border-top: 1px dashed #E7E2D6; }
+    .ur-pp-section-head__icon { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 12px; background: #123A2E; display: flex; align-items: center; justify-content: center; }
+    .ur-pp-section-head__icon i { color: #C9974D !important; font-size: 15px; }
+    .ur-pp-section-head__title { font-size: 16px; font-weight: 800; color: #123A2E !important; line-height: 1.2; }
+    .ur-pp-section-head__sub { font-size: 12.5px; color: #6B7570 !important; margin-top: 2px; }
     .ur-pp-card { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 22px; }
     .ur-pp-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
     .ur-pp-card__head h3 { font-size: 16px; font-weight: 700; color: #123A2E; margin: 0 0 2px; }
@@ -403,7 +408,12 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_height">
                             <label>Height</label>
-                            <input type="text" name="height" form="af_form" class="form-control" placeholder="e.g. 5'8" required>
+                            <select name="height" form="af_form" class="form-control" data-height="1" required>
+                                <option value="" disabled selected>Select height</option>
+                                @for($i = 48; $i <= 84; $i++)
+                                    <option value="{{ intdiv($i, 12) }}'{{ $i % 12 }}&quot;">{{ intdiv($i, 12) }}'{{ $i % 12 }}"</option>
+                                @endfor
+                            </select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_education">
@@ -480,6 +490,13 @@
 
                     </div>
 
+                    <div class="ur-pp-section-head">
+                        <span class="ur-pp-section-head__icon"><i class="fa fa-heart"></i></span>
+                        <div>
+                            <div class="ur-pp-section-head__title">Partner Requirements</div>
+                            <div class="ur-pp-section-head__sub">What the client is looking for in a partner</div>
+                        </div>
+                    </div>
                     <div class="ur-pp-review__grid" style="margin-top:10px;">
                         <div class="ur-pp-review__field" id="pp_field_pref_marital_statuses">
                             <label>Marital Status <small style="font-weight:400;">(select one or more)</small></label>
@@ -501,8 +518,22 @@
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_height">
-                            <label>Height</label>
-                            <input type="text" name="pref_height" form="af_form" class="form-control" placeholder="e.g. Same or close to similar height" value="{{ old('pref_height') }}" required>
+                            <label>Height <small style="font-weight:400;">(min &ndash; max)</small></label>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <select name="pref_height_min" form="af_form" class="form-control" required>
+                                    <option value="any" {{ old('pref_height_min', 'any') === 'any' ? 'selected' : '' }}>Min: Any</option>
+                                    @for($i = 48; $i <= 84; $i++)
+                                        <option value="{{ $i }}" {{ (string) old('pref_height_min') === (string) $i ? 'selected' : '' }}>{{ intdiv($i, 12) }}'{{ $i % 12 }}"</option>
+                                    @endfor
+                                </select>
+                                <span>&ndash;</span>
+                                <select name="pref_height_max" form="af_form" class="form-control" required>
+                                    <option value="any" {{ old('pref_height_max', 'any') === 'any' ? 'selected' : '' }}>Max: Any</option>
+                                    @for($i = 48; $i <= 84; $i++)
+                                        <option value="{{ $i }}" {{ (string) old('pref_height_max') === (string) $i ? 'selected' : '' }}>{{ intdiv($i, 12) }}'{{ $i % 12 }}"</option>
+                                    @endfor
+                                </select>
+                            </div>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_educations">
@@ -731,11 +762,55 @@ function urCopyTemplate(event) {
     function refreshSelect(el) {
         if (window.jQuery) { jQuery(el).trigger('change'); } else { el.dispatchEvent(new Event('change')); }
     }
+    // ---- heights: free text ("5'8", "5.8", "5 ft 8") <-> the height dropdowns (value = 5'8" / inches)
+    function textToInches(t) {
+        var m = String(t).match(/([4-7])\s*(?:'|’|ft|feet|foot|\.|-)\s*(\d{1,2})?/i);
+        if (!m) return null;
+        var inch = m[2] ? parseInt(m[2], 10) : 0;
+        if (inch > 11) inch = 0;
+        return parseInt(m[1], 10) * 12 + inch;
+    }
+    function allInches(t) {
+        var out = [], re = /([4-7])\s*(?:'|’|ft|feet|foot|\.|-)\s*(\d{1,2})?/gi, m;
+        while ((m = re.exec(String(t))) !== null) {
+            var inch = m[2] ? parseInt(m[2], 10) : 0; if (inch > 11) inch = 0;
+            out.push(parseInt(m[1], 10) * 12 + inch);
+        }
+        return out;
+    }
+    function inchesLabel(n) { return Math.floor(n / 12) + "'" + (n % 12) + '"'; }
+    function setHeightSelect(el, text) {
+        var inches = textToInches(text);
+        if (inches === null || inches < 48 || inches > 84) return false;
+        el.value = inchesLabel(inches);
+        refreshSelect(el);
+        return true;
+    }
+    function setPrefHeightSelect(name, inches) {
+        var el = document.querySelector('select[name="' + name + '"]');
+        if (!el) return;
+        el.value = inches ? String(Math.max(48, Math.min(84, inches))) : 'any';
+        refreshSelect(el);
+    }
+    // "5'4 - 5'8", "5'6 or above", "up to 5'10", "around 5'6"
+    function fillPrefHeight(text) {
+        var list = allInches(text);
+        if (!list.length) return;
+        var min = null, max = null;
+        if (list.length >= 2) { min = Math.min.apply(null, list); max = Math.max.apply(null, list); }
+        else if (/above|taller|more|\+|at\s*least|minimum|min/i.test(text)) { min = list[0]; }
+        else if (/below|under|less|up\s*to|maximum|max/i.test(text)) { max = list[0]; }
+        else { min = list[0] - 3; max = list[0] + 3; }
+        setPrefHeightSelect('pref_height_min', min);
+        setPrefHeightSelect('pref_height_max', max);
+    }
     function setVal(name, value) {
         var el = document.querySelector('[name="' + name + '"]');
         if (el && value !== undefined && value !== null && String(value).trim() !== '') {
             if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, value); return; }
+            if (el.tagName === 'SELECT' && el.dataset.height) { setHeightSelect(el, value); return; }
             el.value = value;
+            if (el.tagName === 'SELECT') refreshSelect(el);
         }
     }
     function appendVal(name, value) {
@@ -752,7 +827,7 @@ function urCopyTemplate(event) {
         var match = options.find(function (o) { return norm(o.textContent) === target; })
             || options.find(function (o) { return target.indexOf(norm(o.textContent)) !== -1 && norm(o.textContent).length > 2; })
             || options.find(function (o) { return norm(o.textContent).indexOf(target) !== -1 && target.length > 2; });
-        if (match) { el.value = match.value; if (el.dataset.other) refreshSelect(el); return true; }
+        if (match) { el.value = match.value; refreshSelect(el); return true; }
         if (el.dataset.other) return pickOrOther(el, text);
         return false;
     }
@@ -877,7 +952,7 @@ function urCopyTemplate(event) {
             'marital status': function (v) { addManyToMulti('pref_marital_statuses[]', null, v, MARITAL_SYNONYMS); },
             'age limit': fillAgeLimit,
             'age': fillAgeLimit,
-            'height': function (v) { setVal('pref_height', v); },
+            'height': function (v) { fillPrefHeight(v); },
             'qualification': function (v) {
                 addManyToMulti('pref_educations[]', 'pref_education_other', v);
                 setVal('pref_qualification_note', v);
@@ -1051,7 +1126,7 @@ function urCopyTemplate(event) {
         }
 
         var heightMatch = rawText.match(/\b(\d)\s*'\s*(\d{1,2})\b/);
-        if (heightMatch) { setVal('pref_height', heightMatch[1] + "'" + heightMatch[2]); }
+        if (heightMatch) { fillPrefHeight(heightMatch[0]); }
 
         for (var p = 0; p < PROFESSION_KEYWORDS.length; p++) {
             if (new RegExp('\\b' + PROFESSION_KEYWORDS[p] + '\\b', 'i').test(rawText)) {
@@ -1083,7 +1158,7 @@ function urCopyTemplate(event) {
         // "5 ft 10", "5.10", "5'10" -> 5'10
         if (!heightMatch) {
             var ftMatch = rawText.match(/\b(\d)\s*(?:ft|feet|foot)\s*(\d{1,2})?\b/i);
-            if (ftMatch) setVal('pref_height', ftMatch[1] + "'" + (ftMatch[2] || '0'));
+            if (ftMatch) fillPrefHeight(ftMatch[0]);
         }
     }
 
@@ -1128,9 +1203,15 @@ function urCopyTemplate(event) {
         jQuery('.ur-multi').each(function () { jQuery(this).select2({ width: '100%', placeholder: this.getAttribute('data-placeholder'), closeOnSelect: false }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); }); });
     }
     if (window.jQuery && jQuery.fn.select2) {
+        // every other single-choice dropdown in the form gets the search box too
+        jQuery('#af_form select:not([multiple]), select[form="af_form"]:not([multiple])').not('.ur-search-select').each(function () {
+            var el = this;
+            jQuery(el).select2({ width: '100%', minimumResultsForSearch: 0, placeholder: 'Select' })
+                .on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); });
+        });
         jQuery('.ur-search-select').each(function () {
             var sel = this;
-            jQuery(sel).select2({ width: '100%', placeholder: 'Select' })
+            jQuery(sel).select2({ width: '100%', minimumResultsForSearch: 0, placeholder: 'Select' })
                 .on('change', function () {
                     var other = sel.dataset.other ? document.querySelector('[name="' + sel.dataset.other + '"]') : null;
                     if (other) { var on = sel.value === '__other'; other.style.display = on ? '' : 'none'; other.required = on && !EDIT_MODE; }
@@ -1197,7 +1278,7 @@ function urCopyTemplate(event) {
         { wrapper: 'pp_field_pref_castes', getEl: function () { return document.querySelector('[name="pref_castes[]"]'); }, required: true },
         { wrapper: 'pp_field_pref_educations', getEl: function () { return document.querySelector('[name="pref_educations[]"]'); }, required: true },
         { wrapper: 'pp_field_pref_marital_statuses', getEl: function () { return document.querySelector('[name="pref_marital_statuses[]"]'); }, required: true },
-        { wrapper: 'pp_field_pref_height', getEl: function () { return document.querySelector('[name="pref_height"]'); }, required: true },
+        { wrapper: 'pp_field_pref_height', getEl: function () { return document.querySelector('[name="pref_height_min"]'); }, required: true },
     ];
 
     function refreshExtractionSummary() {
@@ -1427,7 +1508,9 @@ function urCopyTemplate(event) {
             var el = document.querySelector('[name="' + name + '"]');
             var v = EDIT_VALUES[name];
             if (el && v !== null && v !== '') {
-                if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, v); } else { el.value = v; }
+                if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, v); }
+                else if (el.tagName === 'SELECT' && el.dataset.height) { setHeightSelect(el, v); }
+                else { el.value = v; if (el.tagName === 'SELECT') refreshSelect(el); }
             }
         });
         var EDIT_EXTRA = @json($editExtra ?? []);

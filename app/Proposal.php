@@ -35,7 +35,7 @@ class Proposal extends Model
         'family_status', 'looking_from', 'presentation_highlight',
         'profile_status', 'active', 'raw_intake_text',
         'pref_age_min', 'pref_age_max', 'pref_height', 'pref_city', 'pref_profession', 'pref_note',
-        'pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities',
+        'pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities', 'pref_height_min', 'pref_height_max',
     ];
 
     protected $casts = [
@@ -173,7 +173,7 @@ class Proposal extends Model
     public function hasPartnerPreferences(): bool
     {
         return $this->pref_age_min || $this->pref_age_max
-            || !empty($this->pref_height) || !empty($this->pref_city) || !empty($this->prefProfessionList());
+            || !empty($this->pref_height) || $this->pref_height_min || $this->pref_height_max || !empty($this->pref_city) || !empty($this->prefProfessionList());
     }
 
     /**
@@ -247,7 +247,7 @@ class Proposal extends Model
     {
         return $query->where(function ($q) {
             $q->whereNotNull('pref_age_min')->orWhereNotNull('pref_age_max')
-                ->orWhereNotNull('pref_height')->orWhereNotNull('pref_city')->orWhereNotNull('pref_profession')->orWhereNotNull('pref_professions');
+                ->orWhereNotNull('pref_height')->orWhereNotNull('pref_height_min')->orWhereNotNull('pref_height_max')->orWhereNotNull('pref_city')->orWhereNotNull('pref_profession')->orWhereNotNull('pref_professions');
         });
     }
     // ------------------------------------------------------------------
@@ -406,6 +406,24 @@ class Proposal extends Model
         return count($this->strongMatchScores());
     }
 
+    /** 66 -> 5'6" */
+    public static function inchesToLabel(?int $inches): ?string
+    {
+        return $inches ? intdiv($inches, 12) . "'" . ($inches % 12) . '"' : null;
+    }
+
+    /** "5'4\" - 5'10\"", "5'6\" or above", "up to 5'10\"" — null when there is no limit at all. */
+    public static function heightRangeText(?int $min, ?int $max): ?string
+    {
+        if ($min && $max) {
+            return self::inchesToLabel($min) . ' - ' . self::inchesToLabel($max);
+        }
+        if ($min) {
+            return self::inchesToLabel($min) . ' or above';
+        }
+        return $max ? 'up to ' . self::inchesToLabel($max) : null;
+    }
+
     /** "5'6", "5.6", "5 ft 6", "5-3" -> total inches; null when it can't be read. */
     public static function heightToInches($text): ?int
     {
@@ -483,9 +501,15 @@ class Proposal extends Model
         }
 
         // Height — "5'3 or above" means at least that tall; otherwise within 3 inches.
-        $wantedHeight = self::heightToInches($client->pref_height);
         $candidateHeight = self::heightToInches($this->height);
-        if ($wantedHeight !== null && $candidateHeight !== null) {
+        if ($client->pref_height_min || $client->pref_height_max) {
+            if ($candidateHeight !== null) {
+                $matched = (!$client->pref_height_min || $candidateHeight >= $client->pref_height_min)
+                    && (!$client->pref_height_max || $candidateHeight <= $client->pref_height_max);
+                $checks[] = ['factor' => 'Height', 'label' => 'Preferred height matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+            }
+        } elseif (self::heightToInches($client->pref_height) !== null && $candidateHeight !== null) {
+            $wantedHeight = self::heightToInches($client->pref_height);
             $atLeast = (bool) preg_match('/above|taller|more|\+/i', (string) $client->pref_height);
             $matched = $atLeast ? $candidateHeight >= $wantedHeight : abs($candidateHeight - $wantedHeight) <= 3;
             $checks[] = ['factor' => 'Height', 'label' => 'Preferred height matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];

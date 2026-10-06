@@ -715,6 +715,18 @@ TEMPLATE;
         }
     }
 
+    /** [min, max] inches from the partner-height selects; 'any' / empty means no limit on that side. */
+    private function heightRange(Request $request): array
+    {
+        $read = fn ($v) => (is_numeric($v) && (int) $v >= 48 && (int) $v <= 84) ? (int) $v : null;
+        $min = $read($request->input('pref_height_min'));
+        $max = $read($request->input('pref_height_max'));
+        if ($min && $max && $min > $max) {
+            [$min, $max] = [$max, $min];
+        }
+        return [$min, $max];
+    }
+
     /** A multi-select's picked values as a clean list, or null when nothing was picked. */
     private function multiValues(Request $request, string $field): ?array
     {
@@ -770,7 +782,8 @@ TEMPLATE;
             // Partner requirements.
             'pref_age_min' => 'required|integer|min:18|max:99',
             'pref_age_max' => 'required|integer|min:18|max:99',
-            'pref_height' => 'required|string|max:100',
+            'pref_height_min' => ['required', 'regex:/^(any|\d{2})$/'],
+            'pref_height_max' => ['required', 'regex:/^(any|\d{2})$/'],
             'pref_city' => 'required|string|max:150',
             'pref_professions' => 'required|array|min:1', 'pref_professions.*' => 'string|max:150',
             'pref_nationalities' => 'nullable|array', 'pref_nationalities.*' => 'string|max:20',
@@ -804,7 +817,9 @@ TEMPLATE;
             'raw_intake_text' => $request->raw_intake_text,
             'pref_age_min' => $request->pref_age_min,
             'pref_age_max' => $request->pref_age_max,
-            'pref_height' => $request->pref_height,
+            'pref_height' => Proposal::heightRangeText(...$this->heightRange($request)),
+            'pref_height_min' => $this->heightRange($request)[0],
+            'pref_height_max' => $this->heightRange($request)[1],
             'pref_city' => $request->pref_city,
             'pref_profession' => implode(', ', array_diff($this->multiValues($request, 'pref_professions') ?? [], ['__any'])) ?: null,
             'pref_professions' => $this->multiValues($request, 'pref_professions'),
@@ -1037,6 +1052,15 @@ TEMPLATE;
 
         $professionOptions = $this->professionOptions();
         $editAge = $proposal->birthday ? $proposal->birthday->age : null;
+        // Proposals saved before the range existed: derive it from the old text the way matching did.
+        $editHeightMin = $proposal->pref_height_min;
+        $editHeightMax = $proposal->pref_height_max;
+        if (!$editHeightMin && !$editHeightMax && !empty($proposal->pref_height) && ($old = Proposal::heightToInches($proposal->pref_height))) {
+            if (preg_match('/above|taller|more|\+/i', $proposal->pref_height)) { $editHeightMin = $old; }
+            else { $editHeightMin = $old - 3; $editHeightMax = $old + 3; }
+        }
+        $editHeightMin = $editHeightMin ?: 'any';
+        $editHeightMax = $editHeightMax ?: 'any';
         $editValues = [
             'gender' => $proposal->gender,
             'height' => $proposal->height,
@@ -1057,7 +1081,8 @@ TEMPLATE;
             'presentation_highlight' => $proposal->presentation_highlight,
             'pref_age_min' => $proposal->pref_age_min,
             'pref_age_max' => $proposal->pref_age_max,
-            'pref_height' => $proposal->pref_height,
+            'pref_height_min' => $editHeightMin,
+            'pref_height_max' => $editHeightMax,
             'pref_city' => $proposal->pref_city,
             'partner_requirements' => $proposal->pref_note,
         ];
@@ -1116,7 +1141,8 @@ TEMPLATE;
             'image2' => 'nullable|image|max:5120',
             'pref_age_min' => 'nullable|integer|min:18|max:99',
             'pref_age_max' => 'nullable|integer|min:18|max:99',
-            'pref_height' => 'nullable|string|max:100',
+            'pref_height_min' => ['nullable', 'regex:/^(any|\d{2})$/'],
+            'pref_height_max' => ['nullable', 'regex:/^(any|\d{2})$/'],
             'pref_city' => 'nullable|string|max:150',
             'pref_professions' => 'nullable|array', 'pref_professions.*' => 'string|max:150',
             'pref_nationalities' => 'nullable|array', 'pref_nationalities.*' => 'string|max:20',
@@ -1138,7 +1164,7 @@ TEMPLATE;
             'current_city' => 'current_city', 'city' => 'city',
             'family_status' => 'family_status', 'looking_from' => 'looking_from',
             'presentation_highlight' => 'presentation_highlight',
-            'pref_age_min' => 'pref_age_min', 'pref_age_max' => 'pref_age_max', 'pref_height' => 'pref_height',
+            'pref_age_min' => 'pref_age_min', 'pref_age_max' => 'pref_age_max',
             'pref_city' => 'pref_city', 'pref_note' => 'partner_requirements',
         ];
         $changes = [];
@@ -1150,6 +1176,10 @@ TEMPLATE;
         // Multi-selects send nothing when emptied, so they are always written (the edit page always has them).
         foreach (['pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities'] as $multi) {
             $changes[$multi] = $this->multiValues($request, $multi);
+        }
+        if ($request->has('pref_height_min') || $request->has('pref_height_max')) {
+            [$changes['pref_height_min'], $changes['pref_height_max']] = $this->heightRange($request);
+            $changes['pref_height'] = Proposal::heightRangeText($changes['pref_height_min'], $changes['pref_height_max']);
         }
         $changes['pref_profession'] = implode(', ', array_diff($changes['pref_professions'] ?? [], ['__any'])) ?: null;
         $changes['birthday'] = $request->year . '-' . $request->month . '-' . $request->day;
