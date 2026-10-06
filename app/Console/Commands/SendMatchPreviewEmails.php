@@ -7,29 +7,28 @@ use App\Mail\MatchPreview;
 use App\Services\MatchPreviewService;
 use App\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
- * Runs automatically once a week (see App\Console\Kernel::schedule) — sends
- * every active member a preview of a few opposite-gender curated profiles
- * (blurred), reusing the exact list already set up for the homepage.
- *
- *   php artisan matches:send-preview --test=you@example.com   # real send to ONE address only
- *   php artisan matches:send-preview --dry-run                # preview recipient count, nothing sent
- *   php artisan matches:send-preview                           # dispatch for everyone eligible
+ * The weekly e-mail: every active member gets the three newest profiles of the opposite gender.
+ * The command queues one small job per member (SendMatchPreviewEmailJob), spaced under the SES send limit; the
+ * every-minute queue worker in routes/console.php sends them.
+ * Scheduled for Mondays 09:00 in routes/console.php.
  */
 class SendMatchPreviewEmails extends Command
 {
     protected $signature = 'matches:send-preview
-                            {--dry-run : Show recipient count without sending anything}
-                            {--test= : Send one real email to this address only, as a male recipient (no queue, not tied to any real member)}';
+                            {--dry-run : Show recipient count and the three profiles without sending anything}
+                            {--test= : Send one real email to this address only, as a male recipient}';
 
-    protected $description = 'Email active members a preview of a few opposite-gender curated profiles';
+    protected $description = 'Email every active member the three newest profiles of the opposite gender';
 
     private function eligibleUsersQuery()
     {
         return User::where('active', 1)
             ->where('admin', 0)
+            ->whereNull('added_by')
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->whereIn('gender', ['male', 'female']);
@@ -42,26 +41,44 @@ class SendMatchPreviewEmails extends Command
         }
 
         $total = (clone $this->eligibleUsersQuery())->count();
-        $this->info("Eligible for match preview: {$total}");
+        $this->info("Members to e-mail: {$total}");
+
+        // The same three profiles for everyone of a gender: built once per gender.
+        $profilesFor = [
+            'male' => $service->curatedProfilesFor('male'),
+            'female' => $service->curatedProfilesFor('female'),
+        ];
+        foreach ($profilesFor as $gender => $profiles) {
+            $this->line(ucfirst($gender) . ' members get: ' . ($profiles->pluck('dataid')->implode(', ') ?: '(nothing — skipped)'));
+        }
 
         if ($this->option('dry-run')) {
+            $this->line('--- DRY RUN — nothing sent ---');
             return 0;
         }
 
-        if ($total === 0) {
-            $this->info('Nobody currently eligible.');
-            return 0;
+        // Fresh three profiles for this week's send (the jobs read them from the cache).
+        foreach (['male', 'female'] as $gender) {
+            \Illuminate\Support\Facades\Cache::forget('weekly_email_profiles_' . $gender);
         }
 
-        $dispatched = 0;
-        $this->eligibleUsersQuery()->orderBy('users.id')->chunkById(500, function ($users) use (&$dispatched) {
+        // One queued job per member, ~10 a second apart (under the 14/second SES limit): the queue worker sends them
+        // in the background and a failure of one member never stops the rest.
+        $queued = 0;
+        $this->eligibleUsersQuery()->orderBy('users.id')->chunkById(500, function ($users) use (&$queued, $profilesFor) {
             foreach ($users as $user) {
-                SendMatchPreviewEmailJob::dispatch($user->id, $user->email, $user->first_name ?: 'there', $user->gender);
-                $dispatched++;
+                if (($profilesFor[$user->gender] ?? collect())->isEmpty()) {
+                    continue;
+                }
+                SendMatchPreviewEmailJob::dispatch($user->id, $user->email, $user->first_name ?: 'there', $user->gender)
+                    ->delay(now()->addMilliseconds($queued * 100));
+                $queued++;
             }
         }, 'users.id', 'id');
 
-        $this->info("Dispatched {$dispatched} match preview emails.");
+        $minutes = (int) ceil($queued / 600);
+        $this->info("Queued {$queued} weekly e-mails — they send over about {$minutes} minute(s) as the queue worker runs.");
+        Log::info("matches:send-preview — queued {$queued} job(s).");
         return 0;
     }
 

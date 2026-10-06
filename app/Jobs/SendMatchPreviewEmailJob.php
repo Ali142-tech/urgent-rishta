@@ -2,32 +2,27 @@
 
 namespace App\Jobs;
 
-use App\Jobs\Concerns\ClassifiesMailFailures;
 use App\Mail\MatchPreview;
 use App\Services\MatchPreviewService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Throwable;
 
 /**
- * Sends one weekly "match preview" email. Mirrors SendInactivityReminderEmailJob
- * (same rate limiter, "campaigns" queue, failure classification). Takes only
- * the recipient's gender (not the profile list itself) and rebuilds the
- * curated opposite-gender list fresh via MatchPreviewService right before
- * sending — cheap (a handful of rows) and avoids passing Eloquent
- * models/collections through job serialization.
+ * Sends the weekly e-mail (the three newest profiles) to ONE member. The command queues one of these per
+ * member, a few hundred milliseconds apart, so the send rate stays under the SES limit without any rate-limiter
+ * middleware — a rate limiter that puts jobs back on the queue used up their attempts and made thousands fail.
+ * A failure of one member (bad address, SES hiccup) is retried a few times and never affects the others.
  */
 class SendMatchPreviewEmailJob implements ShouldQueue
 {
-    use ClassifiesMailFailures, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 6;
+    public $tries = 3;
 
     public $timeout = 60;
 
@@ -37,42 +32,28 @@ class SendMatchPreviewEmailJob implements ShouldQueue
         public string $firstName,
         public string $recipientGender
     ) {
-        $this->onQueue('campaigns');
     }
 
-    public function middleware(): array
-    {
-        return [new RateLimited('campaign-mail')];
-    }
-
-    /** 2m, 10m, 30m, 1h, 2h — same schedule as the other campaign jobs. */
+    /** Wait 5 minutes, then 30, between retries. */
     public function backoff(): array
     {
-        return [120, 600, 1800, 3600, 7200];
+        return [300, 1800];
     }
 
     public function handle(MatchPreviewService $service): void
     {
-        $profiles = $service->curatedProfilesFor($this->recipientGender);
-
+        // Built once per gender and cached for the run (the same three profiles go to everyone of a gender).
+        $profiles = $service->curatedProfilesCached($this->recipientGender);
         if ($profiles->isEmpty()) {
-            // Nothing of the opposite gender currently curated/active —
-            // skip rather than send an empty-looking email.
             return;
         }
 
-        try {
-            Mail::to($this->email)->send(new MatchPreview($this->firstName, $profiles));
-            Log::info("Match preview sent to user #{$this->userId}");
-        } catch (Throwable $e) {
-            if ($this->isPermanentMailFailure($e)) {
-                Log::warning("Match preview permanently failed for user #{$this->userId}: " . $e->getMessage());
-                $this->fail($e);
-                return;
-            }
+        Mail::to($this->email)->send(new MatchPreview($this->firstName, $profiles));
+        Log::info("Weekly e-mail sent to user #{$this->userId}");
+    }
 
-            Log::info("Match preview temporarily failed for user #{$this->userId}: " . $e->getMessage());
-            throw $e;
-        }
+    public function failed(\Throwable $e): void
+    {
+        Log::warning("Weekly e-mail failed for user #{$this->userId} after retries: " . $e->getMessage());
     }
 }

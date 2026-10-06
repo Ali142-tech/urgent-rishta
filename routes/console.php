@@ -21,27 +21,17 @@ use Illuminate\Support\Facades\Schedule;
 
 /*
 |--------------------------------------------------------------------------
-| Queue worker (piggybacks on the Laravel scheduler)
+| Queue worker
 |--------------------------------------------------------------------------
 |
-| QUEUE_CONNECTION=database, but nothing has ever actually processed that
-| queue — every mail/notification marked ShouldQueue (interest emails,
-| profile verified/rejected, ...) just accumulates in `jobs` forever and is
-| never sent. No persistent worker process (Supervisor/systemd) is assumed
-| to be available on this host, so instead of requiring one, this runs a
-| short-lived worker every minute via the scheduler, which only needs ONE
-| cron line on the server (see README/deployment notes):
+| The queue worker is NOT started from here. On the production server it has its own cron job (every minute):
 |
-|   * * * * * cd /path-to-app && php artisan schedule:run >> /dev/null 2>&1
+|   /usr/bin/php /home/.../public_html/artisan queue:work --queue=campaigns,default --stop-when-empty --max-time=55 --tries=6
 |
-| --stop-when-empty makes it exit as soon as the queue is drained (instead
-| of idling), and --max-time=50 caps a single run so it can't still be
-| going when the next minute's scheduler tick fires.
-| withoutOverlapping() is a second safety net for the same reason.
+| The scheduler below needs its own, separate cron job (every minute):
+|
+|   /usr/bin/php /home/.../public_html/artisan schedule:run
 */
-Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
-    ->everyMinute()
-    ->withoutOverlapping();
 
 /*
 |--------------------------------------------------------------------------
@@ -63,9 +53,8 @@ Schedule::command('queue:work --stop-when-empty --max-time=50 --tries=3')
 Schedule::command('reminders:inactivity')->dailyAt('10:00')->withoutOverlapping();
 
 // Weekly "match preview" email — see App\Console\Commands\SendMatchPreviewEmails.
+// The ONE weekly e-mail: every member gets the three newest profiles. This only queues the jobs (a minute or two);
+// the every-minute queue worker above sends them.
 Schedule::command('matches:send-preview')->weeklyOn(1, '09:00')->withoutOverlapping();
 
-// Daily check for members due their personalized weekly match email (7+
-// days since last sent, or never sent) — see
-// App\Console\Commands\SendWeeklyMatches / App\Services\WeeklyMatchService.
-Schedule::command('matches:send-weekly')->dailyAt('09:30')->withoutOverlapping();
+// (The personalized weekly match e-mail — matches:send-weekly — is no longer scheduled; matches:send-preview replaces it.)
