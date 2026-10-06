@@ -253,7 +253,10 @@ class TeamController extends Controller
             $query->where('profession', 'like', '%' . $request->profession . '%');
         }
         if (!empty($request->city)) {
-            $query->where('city', 'like', '%' . $request->city . '%');
+            $cityLike = '%' . $request->city . '%';
+            $query->where(function ($q) use ($cityLike) {
+                $q->where('city', 'like', $cityLike)->orWhere('current_city', 'like', $cityLike);
+            });
         }
         if (!empty($request->country)) {
             $query->where('con_of_residence', $request->country);

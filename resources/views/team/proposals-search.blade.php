@@ -123,6 +123,31 @@
                 $heightChoices["7'0\""] = 84;
             @endphp
             <div>
+                <label>Gender</label>
+                <select name="gender" class="form-control">
+                    <option value="">Any</option>
+                    <option value="male" {{ request('gender') == 'male' ? 'selected' : '' }}>Male</option>
+                    <option value="female" {{ request('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                </select>
+            </div>
+            <div>
+                <label>Marital Status</label>
+                <select name="marital_status" class="form-control">
+                    <option value="">Any</option>
+                    @foreach($maritalstatuses as $maritalstatus)
+                        <option value="{{ $maritalstatus->dataid }}" {{ request('marital_status') == $maritalstatus->dataid ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label>Age From</label>
+                <input type="number" class="form-control" name="aged_from" value="{{ request('aged_from') }}" min="18" max="99">
+            </div>
+            <div>
+                <label>Age To</label>
+                <input type="number" class="form-control" name="aged_to" value="{{ request('aged_to') }}" min="18" max="99">
+            </div>
+            <div>
                 <label>Height From</label>
                 <select name="height_from" class="form-control">
                     <option value="">Any</option>
@@ -141,24 +166,13 @@
                 </select>
             </div>
             <div>
-                <label>Gender</label>
-                <select name="gender" class="form-control">
+                <label>Education / Qualification</label>
+                <select name="education" class="form-control">
                     <option value="">Any</option>
-                    <option value="male" {{ request('gender') == 'male' ? 'selected' : '' }}>Male</option>
-                    <option value="female" {{ request('gender') == 'female' ? 'selected' : '' }}>Female</option>
+                    @foreach($education as $degree)
+                        <option value="{{ $degree->dataid }}" {{ request('education') == $degree->dataid ? 'selected' : '' }}>{{ $degree->name }}</option>
+                    @endforeach
                 </select>
-            </div>
-            <div>
-                <label>Age From</label>
-                <input type="number" class="form-control" name="aged_from" value="{{ request('aged_from') }}" min="18" max="99">
-            </div>
-            <div>
-                <label>Age To</label>
-                <input type="number" class="form-control" name="aged_to" value="{{ request('aged_to') }}" min="18" max="99">
-            </div>
-            <div>
-                <label>City</label>
-                <input type="text" class="form-control" name="city" value="{{ request('city') }}">
             </div>
             <div>
                 <label>Caste</label>
@@ -170,26 +184,8 @@
                 </select>
             </div>
             <div>
-                <label>Marital Status</label>
-                <select name="marital_status" class="form-control">
-                    <option value="">Any</option>
-                    @foreach($maritalstatuses as $maritalstatus)
-                        <option value="{{ $maritalstatus->dataid }}" {{ request('marital_status') == $maritalstatus->dataid ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label>Qualification</label>
-                <select name="education" class="form-control">
-                    <option value="">Any</option>
-                    @foreach($education as $degree)
-                        <option value="{{ $degree->dataid }}" {{ request('education') == $degree->dataid ? 'selected' : '' }}>{{ $degree->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label>Current City</label>
-                <input type="text" class="form-control" name="current_city" value="{{ request('current_city') }}">
+                <label>City / Location</label>
+                <input type="text" class="form-control" name="city" value="{{ request('city') }}" placeholder="Hometown or current city">
             </div>
         </div>
 
