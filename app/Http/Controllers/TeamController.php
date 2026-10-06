@@ -1349,6 +1349,8 @@ TEMPLATE;
         return response()->json([
             'code' => '200',
             'title' => $proposal->reference . ' + ' . $match->reference,
+            // Forward both goes to the MATCHED profile's owner: open their chat straight away when they are someone else.
+            'direct' => $match->added_by != $loggedInUser->id && !empty(TeamMember::find($match->added_by)->contact_mobile_number ?? null),
             'text' => $text,
             'photos' => array_values(array_merge($a['photos'], $b['photos'])),
             // Two long forms don't fit comfortably as a photo caption: photos first, forms second.
@@ -1379,6 +1381,8 @@ TEMPLATE;
         return response()->json([
             'code' => '200',
             'title' => $proposal->reference,
+            // Someone else's proposal: Share opens a chat with its owner (a wa.me link can't carry files, but its link preview shows the photo).
+            'direct' => $proposal->added_by != $loggedInUser->id && !empty(TeamMember::find($proposal->added_by)->contact_mobile_number ?? null),
             'text' => $pieces['text'],
             'photos' => $pieces['photos'],
             // wa.me link used when the browser can't attach files.

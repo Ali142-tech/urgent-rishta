@@ -412,7 +412,8 @@
             fetch(a.dataset.payloadUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
                 .then(function (r) { if (!r.ok) throw new Error('payload ' + r.status); return r.json(); })
                 .then(function (p) {
-                    if (!p.photos || !p.photos.length || !navigator.share || !navigator.canShare) {
+                    // Someone else's proposal: open the owner's own chat (the sharing sheet can't pick a contact).
+                    if (p.direct || !p.photos || !p.photos.length || !navigator.share || !navigator.canShare) {
                         openLink(p.fallback || a.href);
                         return;
                     }

@@ -572,24 +572,37 @@ class User extends Authenticatable implements MustVerifyEmail {
     public static function normalizePhoneNumberValue($n) {
         $pkCodes = ['300', '301', '302', '303', '304', '305', '306', '307', '308', '309', '310', '311', '312', '313', '314', '315', '316', '317', '318', '320', '321', '322', '323', '324', '330', '331', '332', '333', '334', '335', '336', '337', '340', '341', '342', '343', '344', '345', '346', '347', '348', '349', '355'];
 
-        // wa.me requires digits only — a "+" or spaces/dashes (common in
-        // international numbers like a Canadian/US appointment contact
-        // number) would otherwise pass through untouched below and produce
-        // an invalid link.
-        $n = preg_replace('/\D+/', '', (string) $n);
+        // wa.me wants digits only, country code first, no leading 0 / + / spaces.
+        $raw = trim((string) $n);
+        $hasPlus = str_starts_with($raw, '+');
+        $n = preg_replace('/\D+/', '', $raw);
 
-        foreach ($pkCodes as $code) {
-            if (Str::startsWith($n, $code)) {
-                return "92" . $n;
+        // International: "+44 7445 723296", "0044 7445 ...", "+44 (0)7445 ..." — trust the country code the
+        // number already carries (a Pakistani-looking prefix must not be re-read as +92), and drop the
+        // national "0" some people leave after it.
+        if ($hasPlus || Str::startsWith($n, '00')) {
+            $n = preg_replace('/^00/', '', $n);
+            foreach (['44', '353', '971', '966', '974', '965', '968', '973', '61', '64', '27', '49', '31', '32', '41', '43', '46', '47', '45', '358'] as $cc) {
+                if (Str::startsWith($n, $cc . '0')) {
+                    return $cc . Str::substr($n, strlen($cc) + 1);
+                }
+            }
+            return $n;
+        }
+
+        // Pakistani mobile written without the leading 0: exactly 10 digits, e.g. 3001234567. (Longer numbers
+        // such as French 33 6… or Spanish 34 6… also begin with 3xx but are complete international numbers.)
+        if (strlen($n) === 10) {
+            foreach ($pkCodes as $code) {
+                if (Str::startsWith($n, $code)) {
+                    return "92" . $n;
+                }
             }
         }
 
-        if (Str::startsWith($n, "00")) {
-            return Str::substr($n, 2);
-        }
-
+        // Local Pakistani format: 0300 1234567
         if (Str::startsWith($n, "0")) {
-            return "92". Str::substr($n, 1);
+            return "92" . Str::substr($n, 1);
         }
 
         return $n;
