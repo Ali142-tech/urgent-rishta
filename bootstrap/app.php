@@ -12,9 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // $middleware->trustProxies(at: '*');
+        // $middleware->trustHosts(at: ['*']);
         $middleware->trustProxies(at: '*');
-        $middleware->trustHosts(at: ['*']);
-        
         $middleware->web(append: [
             \App\Http\Middleware\MarkNotificationAsRead::class,
             \App\Http\Middleware\EnsurePhotosUploaded::class,
