@@ -31,7 +31,7 @@
     .ur-badge-pill--premium { background: rgba(201,151,77,.25); color: #F0D9AE; }
     .ur-badge-pill--royal { background: rgba(155,89,182,.35); color: #E6D3F0; }
     .ur-badge-pill--abroad { background: rgba(255,255,255,.16); color: #fff; }
-    .ur-badge-pill--highlight { background: rgba(178,60,90,.3); color: #F3C7D2; }
+    .ur-badge-pill--highlight { background: rgba(178,60,90,.3); color: #000; }
     .ur-am-matching-for__tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
     .ur-am-matching-for__tiles div { background: rgba(255,255,255,.08); border-radius: 10px; padding: 9px 12px; }
     .ur-am-matching-for__tiles span { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; color: rgba(255,255,255,.55); }
