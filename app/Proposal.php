@@ -310,6 +310,11 @@ class Proposal extends Model
      */
     private function branded(string $path): string
     {
+        // Admins, and team members an admin has allowed, see the original photos; everyone else sees them watermarked.
+        $viewer = \Illuminate\Support\Facades\Auth::guard('team')->user();
+        if ($viewer && $viewer->seesOriginalPhotos()) {
+            return $path;
+        }
         $file = basename($path);
         $owner = self::$ownerCache[$this->added_by] ??= TeamMember::find($this->added_by);
         return (new \App\Services\PhotoBrandingService())->brandedPath($owner, $file, $this->reference) ?: $path;

@@ -125,7 +125,7 @@
             <div class="ur-mm-owner">
                 <div class="ur-mm-owner__avatar">{{ strtoupper(substr($pair['ownerName'], 0, 1)) }}</div>
                 <div class="ur-mm-owner__body">
-                    <div class="ur-mm-owner__name">{{ $pair['ownerName'] }}</div>
+                    <div class="ur-mm-owner__name">{{ $pair['ownerName'] }}@if(!empty($pair['ownerPremium'])) @include('team.partials.premium-badge')@endif</div>
                     <div class="ur-mm-owner__meta">
                         {{ $pair['ownerLocation'] }}
                         @if($pair['ownerPhone']) &bull; {{ $pair['ownerPhone'] }} @endif

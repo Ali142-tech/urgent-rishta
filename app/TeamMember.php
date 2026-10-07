@@ -27,7 +27,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     protected $table = 'team_members';
 
     protected $fillable = [
-        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style',
+        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style', 'can_view_originals',
         'is_admin', 'is_approved', 'status', 'application_status', 'experience', 'about_me', 'approved_at',
     ];
 
@@ -35,6 +35,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
 
     protected $casts = [
         'is_admin' => 'boolean',
+        'can_view_originals' => 'boolean',
         'is_approved' => 'boolean',
         'approved_at' => 'datetime',
     ];
@@ -97,6 +98,29 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         return $query->where('application_status', 'pending');
     }
 
+    /** A team member who has added MORE than this many proposals gets the "Premium Profile" badge. */
+    public const PREMIUM_AFTER_PROPOSALS = 100;
+
+    /** Premium Profile badge: more than 100 proposals added. Counted once per request and cached for 10 minutes. */
+    public static function isPremiumId($id): bool
+    {
+        static $memo = [];
+        $id = (int) $id;
+        if (!$id) {
+            return false;
+        }
+        return $memo[$id] ??= \Illuminate\Support\Facades\Cache::remember(
+            'tm_premium_' . $id,
+            600,
+            fn () => Proposal::where('added_by', $id)->count() > self::PREMIUM_AFTER_PROPOSALS
+        );
+    }
+
+    public function isPremium(): bool
+    {
+        return self::isPremiumId($this->id);
+    }
+
     public function proposals()
     {
         return $this->hasMany(Proposal::class, 'added_by');
@@ -108,6 +132,12 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     }
 
     /** An admin's own team account (see AdminTeamMemberSeeder): works like any member, plus the management pages. */
+    /** Sees every proposal's photos without the watermark: admins always, other members when an admin allowed it. */
+    public function seesOriginalPhotos(): bool
+    {
+        return $this->isAdmin() || (bool) $this->can_view_originals;
+    }
+
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;

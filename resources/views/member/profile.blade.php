@@ -8,7 +8,10 @@
 <?php use App\User; ?>
 @php
     $isVerified = $profile->photo_verification_status === 'verified';
-    $royalBlur = auth()->check() && !empty($profile->dataid) && App\User::retrieveUserObject()->photosBlurredFor($profile);
+    $royalBlur = false;
+    if (auth('web')->check() && !empty($profile->dataid) && ($__viewer = App\User::retrieveUserObject())) {
+        $royalBlur = $__viewer->photosBlurredFor($profile);
+    }
     $galleryImages = $royalBlur ? [] : (json_decode($profile->getLightGalleryImages(!empty($profile->added_by) && empty($canViewContactInfo)), true) ?: []);
     $imageCount = $profile->getImageCount();
     $age = $profile->birthday ? date_diff(date_create($profile->birthday), date_create('now'))->y : null;

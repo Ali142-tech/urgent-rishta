@@ -180,7 +180,7 @@
             <div><span>PROFESSION</span><b>{{ $proposal->profession ?: '—' }}</b></div>
             <div><span>LOCATION</span><b>{{ $proposalProfile->lbl_city ?: $proposalProfile->lbl_con_of_residence ?: '—' }}</b></div>
             <div><span>NATIONALITY</span><b>{{ $proposalProfile->lbl_con_of_citizenship ?: $proposalProfile->lbl_con_of_residence ?: '—' }}</b></div>
-            <div><span>PROFILE OWNER</span><b>{{ $proposalProfile->added_by_name }}</b></div>
+            <div><span>PROFILE OWNER</span><b>{{ $proposalProfile->added_by_name }}@if(!empty($proposalProfile->added_by_premium)) @include('team.partials.premium-badge')@endif</b></div>
         </div>
         @if($proposalProfile->team_card_role === 'own')
             <a href="{{ route('team.proposals.edit', $proposal->dataid) }}" class="ur-am-matching-for__edit"><i class="fa fa-pencil"></i> Edit requirements</a>
@@ -312,7 +312,7 @@
                 <div class="ur-am-owner__avatar">{{ strtoupper(substr($match->added_by_name, 0, 1)) }}</div>
                 <div class="ur-am-owner__body">
                     <div class="ur-am-owner__label">MATCHED PROFILE OWNER</div>
-                    <div class="ur-am-owner__name">{{ $match->added_by_name }}</div>
+                    <div class="ur-am-owner__name">{{ $match->added_by_name }}@if(!empty($match->added_by_premium)) @include('team.partials.premium-badge')@endif</div>
                     <div class="ur-am-owner__meta">{{ $match->added_by_dataid }}{{ $match->added_by_experience ? ' &bull; '.$match->added_by_experience : '' }}</div>
                 </div>
                 @if($match->added_by_experience)<span class="ur-am-owner__role">{{ $match->added_by_experience }}</span>@endif

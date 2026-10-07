@@ -155,7 +155,7 @@
                 </div>
             </div>
             <div class="ur-mk-card__body">
-                <div class="ur-mk-card__name">{{ $member->first_name }} {{ $member->last_name }}</div>
+                <div class="ur-mk-card__name">{{ $member->first_name }} {{ $member->last_name }}@if($member->isPremium()) @include('team.partials.premium-badge')@endif</div>
                 <div class="ur-mk-card__sub">{{ $member->dataid }} &bull; Verified Partner</div>
 
                 @if($member->id === auth()->id())

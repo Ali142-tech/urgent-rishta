@@ -51,6 +51,7 @@
         <div class="ur-dash-sidebar__profile-avatar">{{ $__sidebarInitials }}</div>
         <div>
             <div class="ur-dash-sidebar__profile-name">{{ $__sidebarUser->first_name }} {{ $__sidebarUser->last_name }}</div>
+            @if($__sidebarUser->isPremium())<div style="margin-top:3px;">@include('team.partials.premium-badge')</div>@endif
             @if(!empty($__sidebarUser->experience))
                 <div class="ur-dash-sidebar__profile-meta">{{ $__sidebarUser->experience }}</div>
             @endif

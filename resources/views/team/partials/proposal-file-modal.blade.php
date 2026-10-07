@@ -64,7 +64,7 @@
             @if(!empty($member->profession)) &bull; {{ $member->profession }} @if($member->lbl_city) in {{ $member->lbl_city }} @endif @endif
         </p>
         <p class="ur-cf-owner">
-            Owned by {{ $member->added_by_name }}
+            Owned by {{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif
             @if($member->added_by_dataid) &bull; Login ID {{ $member->added_by_dataid }} @endif
             @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
         </p>
@@ -129,7 +129,7 @@
             <div><span>Profile category</span><b>{{ $member->profile_category ?: $notProvided }}</b></div>
             <div><span>Presentation highlight</span><b>{{ $member->presentation_highlight ?: $notProvided }}</b></div>
             <div><span>Father</span><b>{{ $member->father_occupation ?: $notProvided }}</b></div>
-            <div><span>Profile owner</span><b>{{ $member->added_by_name }}</b></div>
+            <div><span>Profile owner</span><b>{{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif</b></div>
             <div><span>Owner login ID</span><b>{{ $member->added_by_dataid ?: $notProvided }}</b></div>
         </div>
         @if(!empty($member->profile_description))
@@ -148,6 +148,13 @@
             <a href="{{ route('team.proposals.edit', $member->dataid) }}"><i class="fa fa-pencil"></i> Edit</a>
             <a href="{{ route('team.proposals.photos', $member->dataid) }}"><i class="fa fa-camera"></i> Manage photos</a>
             <a href="#" onclick="return deleteProposal('{{ $member->dataid }}');" style="color:#B5674A;"><i class="fa fa-trash"></i> Delete</a>
+        @endif
+        @if(!empty($canRunAiMatch))
+            <label class="ur-cf-status" style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:12.5px; font-weight:700; color:#123A2E;">Status
+                <select class="js-profile-status" data-url="{{ route('team.proposals.status', $member->dataid) }}" style="height:36px; border:1px solid #E7E2D6; border-radius:8px; padding:0 10px; font-size:13px; background:#fff;">
+                    @foreach(['active' => 'Active', 'on_hold' => 'On Hold', 'matched' => 'Matched', 'engaged' => 'Engaged', 'married' => 'Married', 'closed' => 'Closed'] as $__v => $__l)<option value="{{ $__v }}" {{ $member->profile_status === $__v ? 'selected' : '' }}>{{ $__l }}</option>@endforeach
+                </select>
+            </label>
         @endif
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>
         @if($hasRealPhotos)

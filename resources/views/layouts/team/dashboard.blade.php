@@ -15,6 +15,8 @@
         <div class="pace-activity"></div>
     </div>
     <style>
+        .ur-premium-badge { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: linear-gradient(135deg, #E9C27A, #C9974D); color: #3B2A0E !important; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.5; white-space: nowrap; text-transform: none; }
+        .ur-premium-badge i { color: #7A4F0C !important; font-size: 10px; margin: 0 !important; }
         /* ---------- Toast notifications (#message_alert / showAlert()) ---------- */
         .ur-toast-stack {
             position: fixed; top: 90px; right: 20px; z-index: 99999;

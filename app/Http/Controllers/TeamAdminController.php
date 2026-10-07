@@ -84,6 +84,7 @@ class TeamAdminController extends Controller
             $member->added_by_name = $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown';
             $member->added_by_dataid = $owner->dataid ?? null;
             $member->added_by_experience = $owner->experience ?? null;
+            $member->added_by_premium = $owner ? TeamMember::isPremiumId($owner->id) : false;
             $member->has_partner_preference = $member->hasPartnerPreferences();
             // An admin may edit any proposal (TeamController::authorizeProposalOwner()).
             $member->team_card_role = 'own';
@@ -176,6 +177,25 @@ class TeamAdminController extends Controller
 
         Log::info('Admin team account (' . Auth::guard('team')->user()->dataid . ') sent a password reset link to ' . $member->dataid);
         return ['code' => '200', 'message' => 'Reset link sent to ' . $member->email . '.'];
+    }
+
+    /** Lets one team member see every proposal's photos without the watermark (or turns that off again). */
+    public function setPhotoAccess(Request $request, $dataid)
+    {
+        $request->validate(['originals' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $member = TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $member->can_view_originals = $request->originals === '1';
+        $member->save();
+
+        Log::info('Admin team account (' . $admin->dataid . ') ' . ($member->can_view_originals ? 'allowed' : 'removed') . ' original-photo access for ' . $member->dataid);
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ($member->can_view_originals ? ' now sees photos without the watermark.' : ' now sees photos with the watermark.')];
     }
 
     /** "Become a Partner" applications awaiting a decision. */

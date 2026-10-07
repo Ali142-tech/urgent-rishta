@@ -54,6 +54,7 @@ class TeamController extends Controller
             $member->added_by_name = $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown';
             $member->added_by_dataid = $owner->dataid ?? null;
             $member->added_by_experience = $owner->experience ?? null;
+            $member->added_by_premium = TeamMember::isPremiumId($member->added_by);
             $member->team_card_role = $member->added_by == $viewerId ? 'own' : 'other';
             $member->has_partner_preference = $member->hasPartnerPreferences();
         }
@@ -184,6 +185,7 @@ class TeamController extends Controller
                 'match' => $best,
                 'compat' => $bestCompat,
                 'ownerName' => $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown',
+                'ownerPremium' => $owner ? TeamMember::isPremiumId($owner->id) : false,
                 'ownerLocation' => $owner->city ?? null,
                 'ownerPhone' => $owner->contact_mobile_number ?? null,
                 'ownerExperience' => $owner->experience ?? null,
@@ -392,6 +394,7 @@ class TeamController extends Controller
             $match->added_by_name = $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown';
             $match->added_by_dataid = $owner->dataid ?? null;
             $match->added_by_experience = $owner->experience ?? null;
+            $match->added_by_premium = TeamMember::isPremiumId($match->added_by);
             $match->added_by_whatsapp = $owner->contact_mobile_number ?? null;
             $match->compat = $compat;
             $match->already_successful = $existingSuccessfulIds->contains($match->id);
@@ -402,6 +405,7 @@ class TeamController extends Controller
         $proposalOwner = $owners->get($proposal->added_by);
         $proposalProfile->added_by_name = $proposalOwner ? trim($proposalOwner->first_name . ' ' . $proposalOwner->last_name) : 'Unknown';
         $proposalProfile->added_by_experience = $proposalOwner->experience ?? null;
+        $proposalProfile->added_by_premium = TeamMember::isPremiumId($proposal->added_by);
         $proposalProfile->team_card_role = $proposal->added_by == auth()->id() ? 'own' : 'other';
 
         $locations = $this->countryOptions();
@@ -598,6 +602,8 @@ class TeamController extends Controller
                     'percent' => $percent,
                     'reasons' => $reasons,
                     'ownerName' => $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown',
+                    'ownerPremium' => $owner ? TeamMember::isPremiumId($owner->id) : false,
+                'ownerPremium' => $owner ? TeamMember::isPremiumId($owner->id) : false,
                     'isTopMatch' => $overallBest && $overallBest->id === $candidate->id,
                 ]);
             }
@@ -931,6 +937,7 @@ TEMPLATE;
         $member->added_by_name = $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown';
         $member->added_by_dataid = $owner->dataid ?? null;
         $member->added_by_experience = $owner->experience ?? null;
+        $member->added_by_premium = TeamMember::isPremiumId($member->added_by);
         $member->team_card_role = $member->added_by == $viewer->id ? 'own' : 'other';
         $member->has_partner_preference = $member->hasPartnerPreferences();
 

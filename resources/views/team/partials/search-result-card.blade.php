@@ -51,7 +51,7 @@
         </div>
 
           <div class="ur-search-card__owner " style="font-weight: bolder">
-            <i class="fa fa-user-circle"></i> Owner: {{ $member->added_by_name }}
+            <i class="fa fa-user-circle"></i> Owner: {{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif
             @if($member->added_by_dataid) &bull; {{ $member->added_by_dataid }} @endif
             @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
         </div>

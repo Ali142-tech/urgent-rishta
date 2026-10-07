@@ -37,7 +37,13 @@ $hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
 // Guests on the homepage slider only ever get the single pre-blurred
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.
-$royalBlur = !$hideImage && auth()->check() && User::retrieveUserObject()->photosBlurredFor($member);
+// Royal+ photo blur is for MEMBERS looking at members: never for team proposals, and only when a real member is signed in
+// (a team member signed in on the team guard has no `users` row).
+$royalBlur = false;
+if (!$hideImage && empty($member->team_card_role) && auth('web')->check()) {
+    $__viewer = User::retrieveUserObject();
+    $royalBlur = $__viewer ? $__viewer->photosBlurredFor($member) : false;
+}
 $cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages(null, !empty($member->team_card_role) ? true : !empty($watermarked));
 $compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
 $compatTier = null;
@@ -170,7 +176,7 @@ $packageIcon = match ($packageSlug) {
             <li><span>Marital Status</span><b>{{$member->lbl_marital_status}}</b></li>
         </ul>
         @if(!empty($addedByName ?? null))
-            <div class="ur-team-added-by"><i class="fa fa-user-circle"></i> Added by {{ $addedByName }}</div>
+            <div class="ur-team-added-by"><i class="fa fa-user-circle"></i> Added by {{ $addedByName }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif</div>
         @endif
     </div>
     <div class="member-card__footer">
