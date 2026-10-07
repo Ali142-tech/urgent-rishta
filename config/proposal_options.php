@@ -97,4 +97,27 @@ return [
         'Agriculture / Farming / Landowner',
         'Overseas Professional',
     ],
+    /*
+     * Countries (name => ISO code, used for the flag) and the matching nationalities — the same 42 places in the
+     * same order, so nationalities[i] is the nationality of countries[i]. Both dropdowns end with
+     * "Other — Add Manually".
+     */
+    'countries' => [
+        'Pakistan' => 'PK', 'United Kingdom (UK)' => 'GB', 'United States (USA)' => 'US', 'Canada' => 'CA', 'Australia' => 'AU',
+        'United Arab Emirates (UAE)' => 'AE', 'Saudi Arabia' => 'SA', 'Qatar' => 'QA', 'Kuwait' => 'KW', 'Oman' => 'OM',
+        'Bahrain' => 'BH', 'Germany' => 'DE', 'France' => 'FR', 'Italy' => 'IT', 'Spain' => 'ES', 'Netherlands' => 'NL',
+        'Belgium' => 'BE', 'Switzerland' => 'CH', 'Sweden' => 'SE', 'Norway' => 'NO', 'Denmark' => 'DK', 'Ireland' => 'IE',
+        'Austria' => 'AT', 'New Zealand' => 'NZ', 'Turkey' => 'TR', 'Azerbaijan' => 'AZ', 'Malaysia' => 'MY', 'Singapore' => 'SG',
+        'South Africa' => 'ZA', 'India' => 'IN', 'Bangladesh' => 'BD', 'Sri Lanka' => 'LK', 'Afghanistan' => 'AF', 'Iran' => 'IR',
+        'Iraq' => 'IQ', 'Jordan' => 'JO', 'Egypt' => 'EG', 'Lebanon' => 'LB', 'Morocco' => 'MA', 'China' => 'CN', 'Japan' => 'JP',
+        'South Korea' => 'KR',
+    ],
+
+    'nationalities' => [
+        'Pakistani', 'British', 'American', 'Canadian', 'Australian', 'Emirati', 'Saudi Arabian', 'Qatari', 'Kuwaiti', 'Omani',
+        'Bahraini', 'German', 'French', 'Italian', 'Spanish', 'Dutch', 'Belgian', 'Swiss', 'Swedish', 'Norwegian', 'Danish',
+        'Irish', 'Austrian', 'New Zealander', 'Turkish', 'Azerbaijani', 'Malaysian', 'Singaporean', 'South African', 'Indian',
+        'Bangladeshi', 'Sri Lankan', 'Afghan', 'Iranian', 'Iraqi', 'Jordanian', 'Egyptian', 'Lebanese', 'Moroccan', 'Chinese',
+        'Japanese', 'South Korean',
+    ],
 ];

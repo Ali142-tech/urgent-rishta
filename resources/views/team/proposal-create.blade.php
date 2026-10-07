@@ -459,12 +459,14 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_country">
                             <label>Country</label>
-                            <select name="country" form="af_form" class="form-control" required>
+                            <select name="country" form="af_form" class="form-control ur-search-select" data-other="country_other" required>
                                 <option value="" disabled selected>Select</option>
                                 @foreach($countries as $country)
                                     <option value="{{ $country->dataid }}">{{ $country->name }}</option>
                                 @endforeach
+                                <option value="__other">Other — Add Manually</option>
                             </select>
+                            <input type="text" name="country_other" form="af_form" class="form-control ur-other-input" maxlength="100" placeholder="Type the country" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_current_city">
@@ -474,12 +476,14 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_nationality">
                             <label>Nationality</label>
-                            <select name="con_of_citizenship" form="af_form" class="form-control" required>
+                            <select name="con_of_citizenship" form="af_form" class="form-control ur-search-select" data-other="nationality_other" required>
                                 <option value="" disabled selected>Select</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country->dataid }}">{{ $country->name }}</option>
+                                @foreach($nationalities as $nat)
+                                    <option value="{{ $nat->dataid }}">{{ $nat->name }}</option>
                                 @endforeach
+                                <option value="__other">Other — Add Manually</option>
                             </select>
+                            <input type="text" name="nationality_other" form="af_form" class="form-control ur-other-input" maxlength="100" placeholder="Type the nationality" style="display:none; margin-top:8px;">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_city">
@@ -579,10 +583,12 @@
                             <label>Nationality <small style="font-weight:400;">(optional &mdash; select one or more)</small></label>
                             <select name="pref_nationalities[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Any nationality">
                                 <option value="__any" {{ in_array('__any', (array) old('pref_nationalities', [])) ? 'selected' : '' }}>Any</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country->dataid }}" {{ in_array($country->dataid, (array) old('pref_nationalities', [])) ? 'selected' : '' }}>{{ $country->name }}</option>
+                                @foreach($nationalities as $nat)
+                                    <option value="{{ $nat->dataid }}" {{ in_array($nat->dataid, (array) old('pref_nationalities', [])) ? 'selected' : '' }}>{{ $nat->name }}</option>
                                 @endforeach
+                                <option value="__other">Other — Add Manually</option>
                             </select>
+                            <input type="text" name="pref_nationality_other" form="af_form" id="pref_nationality_other" class="form-control" maxlength="200" placeholder="Type the nationality (separate several with commas)" style="display:none; margin-top:8px;">
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_pref_note" style="grid-column: 1 / -1;">
                             <label>Other requirements <small style="font-weight:400;">(optional)</small></label>
@@ -714,6 +720,8 @@ function urCopyTemplate(event) {
     // form="af_form"-associated.
     // Picks an option in a searchable select, or "Other — Add Manually" + the typed text when nothing matches.
     function pickOrOther(el, text) {
+        // "UK", "USA", "UAE" ... -> the long list entry (country dropdown only)
+        if (el.name === 'country' && COUNTRY_ALIASES[norm(text)]) { text = COUNTRY_ALIASES[norm(text)]; }
         var target = norm(text);
         var options = Array.from(el.options).filter(function (o) { return o.value !== '' && o.value !== '__other'; });
         var match = options.find(function (o) { return norm(o.textContent) === target; })
@@ -743,6 +751,8 @@ function urCopyTemplate(event) {
         refreshSelect(el);
     }
     // "Rajput, Arain or Jutt" -> one pick per answer. "Any" / "no preference" adds nothing.
+    // short names people type for the long list entries
+    var COUNTRY_ALIASES = { 'uk': 'United Kingdom (UK)', 'u.k': 'United Kingdom (UK)', 'u.k.': 'United Kingdom (UK)', 'england': 'United Kingdom (UK)', 'britain': 'United Kingdom (UK)', 'great britain': 'United Kingdom (UK)', 'usa': 'United States (USA)', 'us': 'United States (USA)', 'u.s.a': 'United States (USA)', 'america': 'United States (USA)', 'united states': 'United States (USA)', 'united kingdom': 'United Kingdom (UK)', 'uae': 'United Arab Emirates (UAE)', 'united arab emirates': 'United Arab Emirates (UAE)', 'dubai': 'United Arab Emirates (UAE)', 'ksa': 'Saudi Arabia' };
     var NATIONALITY_WORDS = { 'british': 'united kingdom', 'english': 'united kingdom', 'american': 'united states', 'emirati': 'united arab emirates', 'saudi': 'saudi arabia', 'pakistani': 'pakistan', 'indian': 'india', 'canadian': 'canada', 'australian': 'australia', 'german': 'germany', 'french': 'france', 'turkish': 'turkey', 'omani': 'oman', 'qatari': 'qatar', 'kuwaiti': 'kuwait', 'bangladeshi': 'bangladesh', 'afghan': 'afghanistan', 'chinese': 'china', 'norwegian': 'norway', 'swedish': 'sweden', 'italian': 'italy', 'spanish': 'spain', 'dutch': 'netherlands' };
     var MARITAL_SYNONYMS = { 'single': 'never married', 'unmarried': 'never married', 'divorcee': 'divorced', 'widowed': 'widow' };
     function addManyToMulti(selectName, otherName, text, synonyms) {
@@ -933,7 +943,7 @@ function urCopyTemplate(event) {
             'city': function (v) { setVal('city', v); },
             'address': function (v) { setVal('address', v); },
             'adress': function (v) { setVal('address', v); },
-            'nationality': function (v) { var w = String(v).trim().toLowerCase(); selectFuzzy('con_of_citizenship', NATIONALITY_WORDS[w] || v.replace(/i$/i, '').replace(/ian$/i, '')) || selectFuzzy('con_of_citizenship', v); },
+            'nationality': function (v) { selectFuzzy('con_of_citizenship', v); },   // falls back to "Other — Add Manually" when it is not in the list
             'current city': function (v) { setVal('current_city', v); },
             'country': function (v) { selectFuzzy('country', v); },
             'country of residence': function (v) { selectFuzzy('country', v); },
@@ -965,7 +975,7 @@ function urCopyTemplate(event) {
             'job/business': function (v) { addManyToMulti('pref_professions[]', 'pref_profession_other', v); },
             'caste': function (v) { addManyToMulti('pref_castes[]', null, v); setVal('pref_caste_note', v); },
             'city': function (v) { setVal('pref_city', v); },
-            'nationality': function (v) { addManyToMulti('pref_nationalities[]', null, v, NATIONALITY_WORDS); },
+            'nationality': function (v) { addManyToMulti('pref_nationalities[]', 'pref_nationality_other', v); },
             'other requirements': function (v) { setVal('partner_requirements', v); },
             'requirements': function (v) { setVal('partner_requirements', v); },
         }},
@@ -1217,6 +1227,11 @@ function urCopyTemplate(event) {
                     if (other) { var on = sel.value === '__other'; other.style.display = on ? '' : 'none'; other.required = on && !EDIT_MODE; }
                     if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary();
                 });
+        });
+        jQuery('select[name="pref_nationalities[]"]').on('change', function () {
+            var box = document.getElementById('pref_nationality_other');
+            var on = (jQuery(this).val() || []).indexOf('__other') !== -1;
+            if (box) { box.style.display = on ? '' : 'none'; box.required = on; }
         });
         jQuery('select[name="pref_professions[]"]').on('change', function () {
             var box = document.getElementById('pref_profession_other');

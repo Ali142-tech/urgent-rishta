@@ -303,7 +303,11 @@ class TeamController extends Controller
         $grid = $this->buildProposalGrid($query, (int) $request->query('page', 1), 10);
 
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
-        $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        // the list, plus any country someone typed in by hand that is already on a proposal
+        $countries = $this->countryOptions();
+        $typed = Proposal::whereNotNull('con_of_residence')->where('con_of_residence', '!=', '')->distinct()->pluck('con_of_residence')
+            ->reject(fn ($n) => isset(config('proposal_options.countries')[$n]) || is_numeric($n))->sort()->values();
+        $countries = $countries->concat($typed->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]));
         $caste = ProposalCaste::options();
         $education = $this->educationOptions();
 
@@ -400,7 +404,7 @@ class TeamController extends Controller
         $proposalProfile->added_by_experience = $proposalOwner->experience ?? null;
         $proposalProfile->team_card_role = $proposal->added_by == auth()->id() ? 'own' : 'other';
 
-        $locations = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $locations = $this->countryOptions();
 
         return compact('proposal', 'proposalProfile', 'preference', 'candidateProposals', 'matches', 'minScore', 'locationFilter', 'locations');
     }
@@ -614,14 +618,14 @@ class TeamController extends Controller
     {
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $education = $this->educationOptions();
-        $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $countries = $this->countryOptions();
         $caste = ProposalCaste::options();      // the short proposal caste list
         $religions = collect();                  // proposals no longer carry a religion
         $sendTemplate = $this->clientIntakeTemplate();
 
         $professionOptions = $this->professionOptions();
 
-        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions'));
+        return view('team.proposal-create', compact('religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions') + ['nationalities' => $this->nationalityOptions()]);
     }
 
     /**
@@ -685,6 +689,17 @@ TEMPLATE;
         return collect(config('proposal_options.education'))->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
     }
 
+    /** The 42 countries as objects (dataid = name), so the form and filter loops need no change. */
+    private function countryOptions()
+    {
+        return collect(array_keys(config('proposal_options.countries')))->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
+    }
+
+    private function nationalityOptions()
+    {
+        return collect(config('proposal_options.nationalities'))->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
+    }
+
     private function professionOptions()
     {
         return collect(config('proposal_options.profession'))->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
@@ -696,7 +711,7 @@ TEMPLATE;
      */
     private function resolveManualOptions(Request $request): void
     {
-        foreach (['education' => 'education_other', 'profession' => 'profession_other'] as $field => $otherField) {
+        foreach (['education' => 'education_other', 'profession' => 'profession_other', 'country' => 'country_other', 'con_of_citizenship' => 'nationality_other'] as $field => $otherField) {
             if ($request->input($field) === '__other') {
                 $request->validate([$otherField => 'required|string|max:150'], [$otherField . '.required' => 'Please type the ' . str_replace('_', ' ', $field) . '.']);
                 $request->merge([$field => trim(preg_replace('/\s+/', ' ', $request->input($otherField)))]);
@@ -708,6 +723,13 @@ TEMPLATE;
             $request->validate(['pref_profession_other' => 'required|string|max:200'], ['pref_profession_other.required' => 'Please type the partner profession.']);
             $typed = array_filter(array_map('trim', explode(',', $request->input('pref_profession_other'))));
             $request->merge(['pref_professions' => array_values(array_unique(array_merge(array_diff($professions, ['__other']), $typed)))]);
+        }
+
+        $nats = (array) $request->input('pref_nationalities', []);
+        if (in_array('__other', $nats, true)) {
+            $request->validate(['pref_nationality_other' => 'required|string|max:200'], ['pref_nationality_other.required' => 'Please type the partner nationality.']);
+            $typed = array_filter(array_map('trim', explode(',', $request->input('pref_nationality_other'))));
+            $request->merge(['pref_nationalities' => array_values(array_unique(array_merge(array_diff($nats, ['__other']), $typed)))]);
         }
 
         $educations = (array) $request->input('pref_educations', []);
@@ -1051,11 +1073,12 @@ TEMPLATE;
         $religions = collect();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $education = $this->educationOptions();
-        $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $countries = $this->countryOptions();
         $caste = ProposalCaste::options();
         $sendTemplate = $this->clientIntakeTemplate();
 
         $professionOptions = $this->professionOptions();
+        $nationalities = $this->nationalityOptions();
         $editAge = $proposal->birthday ? $proposal->birthday->age : null;
         // Proposals saved before the range existed: derive it from the old text the way matching did.
         $editHeightMin = $proposal->pref_height_min;
@@ -1098,9 +1121,11 @@ TEMPLATE;
         $savedProfessions = $proposal->prefProfessionList();
         $savedProfessions = array_map('strval', $proposal->pref_professions ?: $proposal->prefProfessionList());
         $typedProfessions = array_values(array_diff($savedProfessions, config('proposal_options.profession'), ['__any']));
-        $editExtra = ['pref_education_other' => implode(', ', $typedEducations), 'pref_profession_other' => implode(', ', $typedProfessions)];
+        $savedNats = array_map('strval', $proposal->pref_nationalities ?: []);
+        $typedNats = array_values(array_diff($savedNats, config('proposal_options.nationalities'), ['__any']));
+        $editExtra = ['pref_education_other' => implode(', ', $typedEducations), 'pref_profession_other' => implode(', ', $typedProfessions), 'pref_nationality_other' => implode(', ', $typedNats)];
         $editMulti = [
-            'pref_nationalities[]' => array_map('strval', $proposal->pref_nationalities ?: []),
+            'pref_nationalities[]' => $typedNats ? array_values(array_merge(array_intersect($savedNats, config('proposal_options.nationalities')), ['__other'])) : $savedNats,
             'pref_professions[]' => $typedProfessions ? array_values(array_merge(array_intersect($savedProfessions, config('proposal_options.profession')), ['__other'])) : $savedProfessions,
             'pref_castes[]' => array_map('strval', $proposal->pref_castes ?: []),
             'pref_educations[]' => $typedEducations ? array_values(array_merge(array_intersect($savedEducations, $knownEducation), ['__other'])) : $savedEducations,
@@ -1111,7 +1136,7 @@ TEMPLATE;
         $existingPhotos = $proposal->photos->isNotEmpty() ? $proposal->getCardImages(null, false) : [];
 
         return view('team.proposal-create', compact(
-            'proposal', 'editMulti', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions', 'editExtra',
+            'proposal', 'editMulti', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions', 'editExtra', 'nationalities',
             'editValues', 'editAge', 'existingPhotos'
         ));
     }

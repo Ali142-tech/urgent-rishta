@@ -137,10 +137,38 @@ class Proposal extends Model
     public function getLblMaritalStatusAttribute() { return self::masterName('MARITAL_STATUS', $this->marital_status); }
     // Stored as text now (pick-list or typed); older rows may still hold a masterdata id.
     public function getLblEducationAttribute() { return $this->education === null || $this->education === '' ? null : (self::masterName('EDUCATION', $this->education) ?? $this->education); }
-    public function getLblConOfResidenceAttribute() { return self::masterName('COUNTRY', $this->con_of_residence); }
-    public function getConOfResidenceCodeAttribute() { return self::masterAbbreviation('COUNTRY', $this->con_of_residence); }
-    public function getLblConOfCitizenshipAttribute() { return self::masterName('COUNTRY', $this->con_of_citizenship); }
-    public function getConOfCitizenshipCodeAttribute() { return self::masterAbbreviation('COUNTRY', $this->con_of_citizenship); }
+    // Stored as text now (pick-list or typed); older rows may still hold a masterdata id.
+    public function getLblConOfResidenceAttribute() { return $this->con_of_residence === null || $this->con_of_residence === '' ? null : (self::masterName('COUNTRY', $this->con_of_residence) ?? $this->con_of_residence); }
+    public function getConOfResidenceCodeAttribute() { return self::countryCode($this->con_of_residence); }
+    public function getLblConOfCitizenshipAttribute() { return $this->con_of_citizenship === null || $this->con_of_citizenship === '' ? null : (self::masterName('COUNTRY', $this->con_of_citizenship) ?? $this->con_of_citizenship); }
+    public function getConOfCitizenshipCodeAttribute() { return self::countryCode($this->con_of_citizenship); }
+
+    /** Flag code for a country name from the list, a typed country that exists in masterdata, or an old masterdata id. */
+    public static function countryCode(?string $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $list = config('proposal_options.countries');
+        if (isset($list[$value])) {
+            return $list[$value];
+        }
+        // a nationality from the list (Pakistani -> PK)
+        $i = array_search($value, config('proposal_options.nationalities'), true);
+        if ($i !== false) {
+            return array_values($list)[$i];
+        }
+        if (self::masterAbbreviation('COUNTRY', $value)) {
+            return self::masterAbbreviation('COUNTRY', $value);
+        }
+        self::masterName('COUNTRY', '0');   // warm the cache
+        foreach (self::$nameCache['COUNTRY'] ?? [] as $row) {
+            if (strcasecmp($row->name, $value) === 0) {
+                return $row->abbreviation ?: null;
+            }
+        }
+        return null;
+    }
     public function getLblConOfBirthAttribute() { return null; }
     public function getConOfBirthCodeAttribute() { return null; }
     public function getLblCityAttribute() { return $this->city; }
