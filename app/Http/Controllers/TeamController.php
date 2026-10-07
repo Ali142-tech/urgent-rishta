@@ -426,10 +426,15 @@ class TeamController extends Controller
         AuditLog::record($loggedInUser, 'profile.shared', $match);
         Log::info('Team member (' . $loggedInUser->dataid . ') forwarded proposals ' . $proposal->reference . ' + ' . $match->reference . ' via WhatsApp');
 
-        // route('share.proposal', ...) — a public link the WhatsApp preview crawler can open.
-        $text = 'Potential match — ' . $proposal->reference . ': ' . route('share.proposal', $proposal->reference)
-            . "\n" . $match->reference . ': ' . route('share.proposal', $match->reference);
-
+        // Both forms in full plus both public links (their previews show the photos) — the same message the share sheet
+        // sends. A chat link cannot attach picture files; the Forward both button sends those through the share sheet
+        // whenever the device supports it, and uses this link only when it does not.
+        $a = $this->shareContentFor($proposal);
+        $b = $this->shareContentFor($match);
+        $text = "*POTENTIAL MATCH*\n\n"
+            . "*CLIENT — " . $proposal->reference . "*\n\n" . $a['intake'] . "\n\n" . $a['link']
+            . "\n\n━━━━━━━━━━━━━━━\n\n"
+            . "*MATCHED PROFILE — " . $match->reference . "*\n\n" . $b['intake'] . "\n\n" . $b['link'];
         $matchOwner = TeamMember::find($match->added_by);
         $link = (!empty($matchOwner) && !empty($matchOwner->contact_mobile_number))
             ? User::whatsappLinkForNumber($matchOwner->contact_mobile_number, $text)
@@ -1379,8 +1384,6 @@ TEMPLATE;
         return response()->json([
             'code' => '200',
             'title' => $proposal->reference . ' + ' . $match->reference,
-            // Forward both goes to the MATCHED profile's owner: open their chat straight away when they are someone else.
-            'direct' => $match->added_by != $loggedInUser->id && !empty(TeamMember::find($match->added_by)->contact_mobile_number ?? null),
             'text' => $text,
             'photos' => array_values(array_merge($a['photos'], $b['photos'])),
             // Two long forms don't fit comfortably as a photo caption: photos first, forms second.
