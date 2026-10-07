@@ -466,6 +466,37 @@ class TeamController extends Controller
         return auth()->user()->unreadNotifications()->limit(5)->get()->toArray();
     }
 
+    /**
+     * Cities of a country for the Current City / Hometown dropdowns (select2 ajax). The country arrives as the name
+     * shown in the Country list ("United Kingdom (UK)") or one typed by hand; it is matched to the site's country /
+     * state / city data. Returns at most 50 names, starting with what was typed.
+     */
+    public function cityOptions(Request $request)
+    {
+        $country = trim((string) $request->query('country', ''));
+        $term = trim((string) $request->query('q', ''));
+        if ($country === '') {
+            return response()->json(['results' => []]);
+        }
+
+        $name = trim(preg_replace('/\s*\(.*\)$/', '', $country));       // "United Kingdom (UK)" -> "United Kingdom"
+        $countryId = MasterData::where('type', 'COUNTRY')->where('name', $name)->value('dataid');
+        if ($countryId === null) {
+            return response()->json(['results' => []]);
+        }
+
+        $stateIds = MasterData::where('type', 'STATE')->where('subtype', $countryId)->pluck('dataid');
+        $query = MasterData::where('type', 'CITY')->whereIn('subtype', $stateIds);
+        if ($term !== '') {
+            $like = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $term);
+            $query->where('name', 'like', $like . '%');
+        }
+
+        $names = $query->orderBy('name')->limit(200)->pluck('name')->unique()->values()->take(50);
+
+        return response()->json(['results' => $names->map(fn ($n) => ['id' => $n, 'text' => $n])->all()]);
+    }
+
     public function profile()
     {
         return view('team.profile', ['member' => auth()->user()]);
@@ -763,6 +794,13 @@ TEMPLATE;
         return [$min, $max];
     }
 
+    /** "Looking from": Pakistan, Abroad or both, saved as text ("Pakistan, Abroad"); null when nothing is picked. */
+    private function lookingFromValue(Request $request): ?string
+    {
+        $values = array_values(array_intersect(['Pakistan', 'Abroad'], (array) $request->input('looking_from', [])));
+        return $values ? implode(', ', $values) : null;
+    }
+
     /** A multi-select's picked values as a clean list, or null when nothing was picked. */
     private function multiValues(Request $request, string $field): ?array
     {
@@ -777,7 +815,7 @@ TEMPLATE;
     /** "Not in the list" caste: the typed name is reused if it already exists, otherwise added, and the request then carries its id. */
     private function resolveManualCaste(Request $request): void
     {
-        if ($request->caste !== '__new') {
+        if ($request->caste !== '__other') {
             return;
         }
         $request->validate(['caste_other' => 'required|string|max:80'], ['caste_other.required' => 'Please type the caste name.']);
@@ -811,7 +849,7 @@ TEMPLATE;
             'current_city' => 'required|string|max:150',
             // Classification the team picks by hand (never filled by the parser).
             'family_status' => 'nullable|string|max:30',
-            'looking_from' => 'nullable|string|max:20',
+            'looking_from' => 'nullable|array', 'looking_from.*' => 'in:Pakistan,Abroad',
             'presentation_highlight' => 'nullable|string|max:30',
             'image1' => 'nullable|image|max:5120',
             'image2' => 'nullable|image|max:5120',
@@ -848,7 +886,7 @@ TEMPLATE;
             'current_city' => $request->current_city,
             'city' => $request->city,
             'family_status' => $request->family_status,
-            'looking_from' => $request->looking_from,
+            'looking_from' => $this->lookingFromValue($request),
             'presentation_highlight' => $request->presentation_highlight,
             'raw_intake_text' => $request->raw_intake_text,
             'pref_age_min' => $request->pref_age_min,
@@ -1117,7 +1155,6 @@ TEMPLATE;
             'month' => $proposal->birthday ? $proposal->birthday->format('m') : null,
             'year' => $proposal->birthday ? $proposal->birthday->format('Y') : null,
             'family_status' => $proposal->family_status,
-            'looking_from' => $proposal->looking_from,
             'presentation_highlight' => $proposal->presentation_highlight,
             'pref_age_min' => $proposal->pref_age_min,
             'pref_age_max' => $proposal->pref_age_max,
@@ -1137,6 +1174,7 @@ TEMPLATE;
         $typedNats = array_values(array_diff($savedNats, config('proposal_options.nationalities'), ['__any']));
         $editExtra = ['pref_education_other' => implode(', ', $typedEducations), 'pref_profession_other' => implode(', ', $typedProfessions), 'pref_nationality_other' => implode(', ', $typedNats)];
         $editMulti = [
+            'looking_from[]' => array_values(array_filter(array_map('trim', explode(',', (string) $proposal->looking_from)))),
             'pref_nationalities[]' => $typedNats ? array_values(array_merge(array_intersect($savedNats, config('proposal_options.nationalities')), ['__other'])) : $savedNats,
             'pref_professions[]' => $typedProfessions ? array_values(array_merge(array_intersect($savedProfessions, config('proposal_options.profession')), ['__other'])) : $savedProfessions,
             'pref_castes[]' => array_map('strval', $proposal->pref_castes ?: []),
@@ -1176,7 +1214,7 @@ TEMPLATE;
             'con_of_citizenship' => 'nullable|string',
             'country' => 'nullable|string',
             'family_status' => 'nullable|string|max:30',
-            'looking_from' => 'nullable|string|max:20',
+            'looking_from' => 'nullable|array', 'looking_from.*' => 'in:Pakistan,Abroad',
             'presentation_highlight' => 'nullable|string|max:30',
             'raw_intake_text' => 'nullable|string|max:5000',
             'image1' => 'nullable|image|max:5120',
@@ -1204,7 +1242,7 @@ TEMPLATE;
             'education' => 'education', 'profession' => 'profession', 'caste_id' => 'caste', 'sect' => 'sect',
             'con_of_residence' => 'country', 'con_of_citizenship' => 'con_of_citizenship',
             'current_city' => 'current_city', 'city' => 'city',
-            'family_status' => 'family_status', 'looking_from' => 'looking_from',
+            'family_status' => 'family_status',
             'presentation_highlight' => 'presentation_highlight',
             'pref_age_min' => 'pref_age_min', 'pref_age_max' => 'pref_age_max',
             'pref_city' => 'pref_city', 'pref_note' => 'partner_requirements',
@@ -1215,6 +1253,8 @@ TEMPLATE;
                 $changes[$column] = $request->input($inputKey);
             }
         }
+        $changes['looking_from'] = $this->lookingFromValue($request);
+
         // Multi-selects send nothing when emptied, so they are always written (the edit page always has them).
         foreach (['pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities'] as $multi) {
             $changes[$multi] = $this->multiValues($request, $multi);

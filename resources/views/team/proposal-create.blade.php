@@ -442,14 +442,14 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_caste">
                             <label>Caste</label>
-                            <select name="caste" form="af_form" class="form-control" required>
+                            <select name="caste" form="af_form" class="form-control ur-search-select" data-other="caste_other" required>
                                 <option value="" disabled selected>Select</option>
                                 @foreach($caste as $cst)
                                     <option value="{{ $cst->dataid }}">{{ $cst->name }}</option>
                                 @endforeach
-                                <option value="__new">Not in the list — add manually…</option>
+                                <option value="__other">Other — Add Manually</option>
                             </select>
-                            <input type="text" name="caste_other" form="af_form" id="caste_other" class="form-control" maxlength="80" placeholder="Type the caste name" style="display:none; margin-top:8px;" value="{{ old('caste_other') }}">
+                            <input type="text" name="caste_other" form="af_form" id="caste_other" class="form-control ur-other-input" maxlength="80" placeholder="Type the caste name" style="display:none; margin-top:8px;" value="{{ old('caste_other') }}">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_sect">
@@ -471,7 +471,7 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_current_city">
                             <label>Current City</label>
-                            <input type="text" name="current_city" form="af_form" class="form-control" required>
+                            <select name="current_city" form="af_form" class="form-control ur-city-select" data-city="country" data-placeholder="Select or type a city" required><option></option></select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_nationality">
@@ -488,7 +488,7 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_city">
                             <label>Hometown</label>
-                            <input type="text" name="city" form="af_form" class="form-control" required>
+                            <select name="city" form="af_form" class="form-control ur-city-select" data-city="nationality" data-placeholder="Select or type a city" required><option></option></select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
 
@@ -616,10 +616,9 @@
                             </div>
                             <div class="ur-pp-review__field" id="pp_field_looking_from">
                                 <label>Looking from Pak/Abroad <span class="ur-pp-manual__tag">Manual</span></label>
-                                <select name="looking_from" form="af_form" class="form-control">
-                                    <option value="">Select Pakistan / Abroad</option>
+                                <select name="looking_from[]" form="af_form" class="form-control ur-multi" multiple data-placeholder="Select Pakistan / Abroad (or both)">
                                     @foreach(['Pakistan', 'Abroad'] as $__opt)
-                                        <option value="{{ $__opt }}" {{ old('looking_from') === $__opt ? 'selected' : '' }}>{{ $__opt }}</option>
+                                        <option value="{{ $__opt }}" {{ in_array($__opt, (array) old('looking_from', [])) ? 'selected' : '' }}>{{ $__opt }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -769,6 +768,25 @@ function urCopyTemplate(event) {
             addToMulti(selectName, otherName, part);
         });
     }
+    // ---- cities: Current City follows Country, Hometown follows Nationality's country (else Country) ----
+    var NAT_TO_COUNTRY = @json(array_combine(config('proposal_options.nationalities'), array_keys(config('proposal_options.countries'))));
+    function countryNameFor(kind) {
+        var country = document.querySelector('select[name="country"]');
+        var countryVal = country ? (country.value === '__other' ? (document.querySelector('[name="country_other"]') || {}).value : country.value) : '';
+        if (kind === 'nationality') {
+            var nat = document.querySelector('select[name="con_of_citizenship"]');
+            if (nat && NAT_TO_COUNTRY[nat.value]) return NAT_TO_COUNTRY[nat.value];
+        }
+        return countryVal || '';
+    }
+    // puts a typed / pasted city into a city dropdown, even though it is not one of the loaded options
+    function setCitySelect(el, value) {
+        value = String(value || '').trim();
+        if (!value) return;
+        if (!Array.from(el.options).some(function (o) { return o.value === value; })) { el.appendChild(new Option(value, value)); }
+        el.value = value;
+        refreshSelect(el);
+    }
     function refreshSelect(el) {
         if (window.jQuery) { jQuery(el).trigger('change'); } else { el.dispatchEvent(new Event('change')); }
     }
@@ -819,6 +837,7 @@ function urCopyTemplate(event) {
         if (el && value !== undefined && value !== null && String(value).trim() !== '') {
             if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, value); return; }
             if (el.tagName === 'SELECT' && el.dataset.height) { setHeightSelect(el, value); return; }
+            if (el.tagName === 'SELECT' && el.dataset.city) { setCitySelect(el, value); return; }
             el.value = value;
             if (el.tagName === 'SELECT') refreshSelect(el);
         }
@@ -1203,21 +1222,32 @@ function urCopyTemplate(event) {
         var m = text.match(PARTNER_PASSAGE_RE);
         return m ? text.replace(m[0], ' ') : text;
     }
-    (function () {
-        var sel = document.querySelector('select[name="caste"]'), other = document.getElementById('caste_other');
-        if (!sel || !other) return;
-        function sync() { var on = sel.value === '__new'; other.style.display = on ? '' : 'none'; other.required = on; if (on) other.focus(); }
-        sel.addEventListener('change', sync); sync();
-    })();
     if (window.jQuery && jQuery.fn.select2) {
         jQuery('.ur-multi').each(function () { jQuery(this).select2({ width: '100%', placeholder: this.getAttribute('data-placeholder'), closeOnSelect: false }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); }); });
     }
     if (window.jQuery && jQuery.fn.select2) {
         // every other single-choice dropdown in the form gets the search box too
-        jQuery('#af_form select:not([multiple]), select[form="af_form"]:not([multiple])').not('.ur-search-select').each(function () {
+        jQuery('#af_form select:not([multiple]), select[form="af_form"]:not([multiple])').not('.ur-search-select, .ur-city-select').each(function () {
             var el = this;
             jQuery(el).select2({ width: '100%', minimumResultsForSearch: 0, placeholder: 'Select' })
                 .on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); });
+        });
+        jQuery('.ur-city-select').each(function () {
+            var sel = this;
+            jQuery(sel).select2({
+                width: '100%',
+                placeholder: sel.getAttribute('data-placeholder') || 'Select or type a city',
+                minimumResultsForSearch: 0,
+                tags: true,                                   // a city that is not in the list can simply be typed
+                createTag: function (p) { var t = jQuery.trim(p.term); return t === '' ? null : { id: t, text: t }; },
+                ajax: {
+                    url: "{{ route('team.cities') }}",
+                    delay: 250,
+                    dataType: 'json',
+                    data: function (params) { return { country: countryNameFor(sel.getAttribute('data-city')), q: params.term || '' }; },
+                    processResults: function (data) { return data; }
+                }
+            }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); });
         });
         jQuery('.ur-search-select').each(function () {
             var sel = this;
@@ -1525,6 +1555,7 @@ function urCopyTemplate(event) {
             if (el && v !== null && v !== '') {
                 if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, v); }
                 else if (el.tagName === 'SELECT' && el.dataset.height) { setHeightSelect(el, v); }
+                else if (el.tagName === 'SELECT' && el.dataset.city) { setCitySelect(el, v); }
                 else { el.value = v; if (el.tagName === 'SELECT') refreshSelect(el); }
             }
         });

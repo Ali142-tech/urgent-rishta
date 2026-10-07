@@ -249,7 +249,7 @@
             $pct = $match->compat['percent'] ?? 0;
             $matchAge = $ageOf($match);
             $matchName = $nameOf($match);
-            $bothAbroad = strtolower($proposalProfile->looking_from ?? '') === 'abroad' && strtolower($match->looking_from ?? '') === 'abroad';
+            $bothAbroad = str_contains(strtolower($proposalProfile->looking_from ?? ''), 'abroad') && str_contains(strtolower($match->looking_from ?? ''), 'abroad');
         @endphp
         <div class="ur-am-match-card" id="match-{{ $match->dataid }}">
             <div class="ur-am-match-card__head">

@@ -9,7 +9,7 @@
     $__class = $class ?? 'ur-badge-pill';
     $__category = strtolower($profile->profile_category ?? '');
     $__highlight = strtolower($profile->presentation_highlight ?? '');
-    $__abroad = strtolower($profile->looking_from ?? '') === 'abroad';
+    $__abroad = str_contains(strtolower($profile->looking_from ?? ''), 'abroad');
 @endphp
 @if($__category === 'premium')<span class="{{ $__class }} {{ $__class }}--premium">Premium Profile</span>@endif
 @if($__category === 'royal')<span class="{{ $__class }} {{ $__class }}--royal">Royal Profile</span>@endif

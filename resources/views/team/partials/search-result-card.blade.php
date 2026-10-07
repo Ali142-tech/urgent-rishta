@@ -14,7 +14,7 @@
 @php
     $category = strtolower($member->profile_category ?? '');
     $highlight = strtolower($member->presentation_highlight ?? '');
-    $isAbroad = strtolower($member->looking_from ?? '') === 'abroad';
+    $isAbroad = str_contains(strtolower($member->looking_from ?? ''), 'abroad');
     $countryName = $member->lbl_con_of_residence ?: ($member->lbl_con_of_citizenship ?? null) ?: ($member->lbl_con_of_birth ?? null);
     $countryCode = !empty($member->lbl_con_of_residence) ? ($member->con_of_residence_code ?? null)
         : (!empty($member->lbl_con_of_citizenship) ? ($member->con_of_citizenship_code ?? null)

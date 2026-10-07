@@ -400,12 +400,16 @@ class Proposal extends Model
     }
 
     /**
-     * Candidates scoring at least MIN_MATCH_SCORE for this proposal: [candidate id => percent], best first.
+     * Candidates that fit EACH OTHER: [candidate id => percent], best first. A candidate is a match only when
+     *   (1) it fulfils THIS proposal's partner requirements (score >= MIN_MATCH_SCORE), and
+     *   (2) THIS proposal fulfils the candidate's own partner requirements (score >= MIN_MATCH_SCORE).
+     * So a pair shows up in both proposals' lists or in neither. A proposal that has no partner requirements
+     * filled in can't be checked against, so it is not matched at all until it has them.
      * Cached for 5 minutes (the scoring runs over every candidate), and dropped at once when a proposal is deleted/restored or the match weights change. A proposal's own list is always fresh the first time it is built.
      */
     public function strongMatchScores(): array
     {
-        $key = 'pm2:' . $this->id . ':' . Cache::get('proposal_match_version', 0);
+        $key = 'pm3:' . $this->id . ':' . Cache::get('proposal_match_version', 0);
         return Cache::remember($key, 300, function () {
             $query = $this->candidatesQuery();
             if ($query === null) {
@@ -413,9 +417,17 @@ class Proposal extends Model
             }
             $scores = [];
             foreach ($query->setEagerLoads([])->get() as $candidate) {
-                $percent = $candidate->compatibilityWith($this)['percent'] ?? 0;
-                if ($percent >= self::MIN_MATCH_SCORE) {
-                    $scores[$candidate->id] = $percent;
+                // (2) first the cheap test: the candidate must have requirements of its own.
+                if (!$candidate->hasPartnerPreferences()) {
+                    continue;
+                }
+                $forward = $candidate->compatibilityWith($this)['percent'] ?? 0;      // candidate fits this proposal's requirements
+                if ($forward < self::MIN_MATCH_SCORE) {
+                    continue;
+                }
+                $backward = $this->compatibilityWith($candidate)['percent'] ?? 0;      // this proposal fits the candidate's requirements
+                if ($backward >= self::MIN_MATCH_SCORE) {
+                    $scores[$candidate->id] = (int) round(($forward + $backward) / 2);
                 }
             }
             arsort($scores);

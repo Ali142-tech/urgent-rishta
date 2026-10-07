@@ -176,6 +176,7 @@ Route::get('team/password', [App\Http\Controllers\TeamController::class, 'passwo
 Route::post('team/password', [App\Http\Controllers\TeamController::class, 'passwordUpdate'])->name('team.password.update');
 Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
 Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
+Route::get('team/cities', [App\Http\Controllers\TeamController::class, 'cityOptions'])->name('team.cities');
 Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'matchmakers'])->name('team.matchmakers');
 Route::post('team/my-profile/photo', [App\Http\Controllers\TeamController::class, 'uploadMyPhoto'])->name('team.my-profile.photo');
 Route::get('team/proposals/create', [App\Http\Controllers\TeamController::class, 'create'])->name('team.proposals.create');
