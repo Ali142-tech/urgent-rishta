@@ -48,7 +48,7 @@
         <tbody>
         @foreach($members as $member)
             <tr>
-                <td>{{ $member->first_name }} {{ $member->last_name }}@if($member->isPremium()) @include('team.partials.premium-badge')@endif@if($member->is_admin) <span class="ur-td-pill ur-td-pill--warn">Admin</span>@endif<br><small style="color:#6B7570;">{{ $member->dataid }}@if($member->experience) &bull; {{ $member->experience }}@endif</small></td>
+                <td>{{ $member->first_name }} {{ $member->last_name }}@if($member->isPremium()) @include('team.partials.premium-badge') @endif @if($member->is_admin) <span class="ur-td-pill ur-td-pill--warn">Admin</span>@endif<br><small style="color:#6B7570;">{{ $member->dataid }}@if($member->experience) &bull; {{ $member->experience }}@endif</small></td>
                 <td><span class="ur-td-pill {{ $member->status === 'active' ? '' : 'ur-td-pill--warn' }}">{{ ucfirst($member->status) }}</span> <a href="{{ route('team.manage.members') }}" style="font-size:11.5px; font-weight:700; color:#C9974D;">change</a></td>
                 <td>{{ $member->proposals_count }}</td>
                 <td>{{ $member->active_proposals_count }}</td>
