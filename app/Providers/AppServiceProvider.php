@@ -68,6 +68,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with([
                 'sidebarTeamProposalsCount' => \App\Proposal::count(),
                 'sidebarAiMatchesCount' => $user->ownedProposalsAiMatchesCount(),
+                'sidebarMyMatchesCount' => $user->myMatchesPairCount(),
                 'sidebarMatchmakersCount' => \App\TeamMember::active()->count(),
                 'sidebarRequestsCount' => $user->unreadNotifications()->count(),
             ]);

@@ -175,6 +175,7 @@ Route::post('team/profile', [App\Http\Controllers\TeamController::class, 'profil
 Route::get('team/password', [App\Http\Controllers\TeamController::class, 'passwordForm'])->name('team.password');
 Route::post('team/password', [App\Http\Controllers\TeamController::class, 'passwordUpdate'])->name('team.password.update');
 Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
+Route::post('team/notifications/read-all', [App\Http\Controllers\TeamController::class, 'notificationsMarkAllRead'])->name('team.notifications.read-all');
 Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
 Route::get('team/cities', [App\Http\Controllers\TeamController::class, 'cityOptions'])->name('team.cities');
 Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'matchmakers'])->name('team.matchmakers');

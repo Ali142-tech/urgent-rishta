@@ -80,6 +80,19 @@
     .ur-ov-mtable th, .ur-ov-mtable td { padding-left: 10px; padding-right: 10px; }
     .ur-ov-mtable td { padding-top: 10px; padding-bottom: 10px; }
     .ur-ov-mtable span, .ur-ov-mtable img { margin: 0; padding: 0; box-sizing: border-box; min-height: 0; }
+    .ur-ov-layout > * { min-width: 0; }
+    /* phones: each match row becomes a small card instead of a table that runs off the screen */
+    @media (max-width: 560px) {
+        .ur-ov-section { padding: 14px; }
+        .ur-ov-mtable, .ur-ov-mtable tbody, .ur-ov-mtable tr, .ur-ov-mtable td { display: block !important; width: 100% !important; box-sizing: border-box; }
+        .ur-ov-mtable thead { display: none !important; }
+        .ur-ov-mtable tr { padding: 12px 0 !important; border-top: 1px solid #F0EEE7; }
+        .ur-ov-mtable tr:first-child { border-top: 0; padding-top: 0 !important; }
+        .ur-ov-mtable td { border: 0 !important; padding: 3px 0 !important; height: auto !important; }
+        .ur-ov-mtable td:nth-child(2)::before { content: 'Match: '; color: #9AA5A0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+        .ur-ov-mtable td > div[style*="width:110px"] { width: 100% !important; max-width: 220px; }
+        .ur-ov-mtable td:nth-child(4) { padding-top: 6px !important; }
+    }
     .ur-ov-mtable .ur-ov-client { display: flex; align-items: center; gap: 12px; }
     .ur-ov-mtable .ur-ov-client__photo { display: block; width: 40px; height: 40px; max-width: none; border-radius: 10px; object-fit: cover; flex: 0 0 40px; background: #F6F4EF; }
     .ur-ov-mtable .ur-ov-client__text { display: block; }

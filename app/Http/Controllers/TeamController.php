@@ -168,30 +168,29 @@ class TeamController extends Controller
         $myProposals = Proposal::where('added_by', $viewerId)->with('photos')->get();
 
         $pairs = collect();
+        $owners = [];
         foreach ($myProposals as $proposal) {
             if (!$proposal->hasPartnerPreferences()) {
                 continue;
             }
 
-            [$best, $bestCompat] = $this->bestMatchFor($proposal);
-            if (!$best) {
-                continue;
+            // every match of this client (not just the top one), each as its own card
+            foreach ($proposal->getProposalMatches(20) as $candidate) {
+                $owner = $owners[$candidate->added_by] ??= TeamMember::find($candidate->added_by);
+
+                $pairs->push([
+                    'client' => $proposal,
+                    'match' => $candidate,
+                    'compat' => $candidate->compatibilityWith($proposal),
+                    'ownerName' => $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown',
+                    'ownerPremium' => $owner ? TeamMember::isPremiumId($owner->id) : false,
+                    'ownerLocation' => $owner->city ?? null,
+                    'ownerPhone' => $owner->contact_mobile_number ?? null,
+                    'ownerExperience' => $owner->experience ?? null,
+                    // "Verified owner" = an admin-approved, active team member account.
+                    'ownerVerified' => $owner && $owner->isActiveMember(),
+                ]);
             }
-
-            $owner = TeamMember::find($best->added_by);
-
-            $pairs->push([
-                'client' => $proposal,
-                'match' => $best,
-                'compat' => $bestCompat,
-                'ownerName' => $owner ? trim($owner->first_name . ' ' . $owner->last_name) : 'Unknown',
-                'ownerPremium' => $owner ? TeamMember::isPremiumId($owner->id) : false,
-                'ownerLocation' => $owner->city ?? null,
-                'ownerPhone' => $owner->contact_mobile_number ?? null,
-                'ownerExperience' => $owner->experience ?? null,
-                // "Verified owner" = an admin-approved, active team member account.
-                'ownerVerified' => $owner && $owner->isActiveMember(),
-            ]);
         }
 
         $pairs = $pairs->sortByDesc(fn ($p) => $p['compat']['percent'] ?? 0)->values();
@@ -458,17 +457,84 @@ class TeamController extends Controller
      * (MarkNotificationAsRead middleware, already applied to every web
      * request, see bootstrap/app.php).
      */
-    public function notificationsList()
+    public function notificationsList(Request $request)
     {
-        $notifications = auth()->user()->notifications()->latest()->paginate(20);
+        $user = auth()->user();
+        $filter = $request->query('filter') === 'unread' ? 'unread' : 'all';
 
-        return view('team.notifications', compact('notifications'));
+        $query = $filter === 'unread' ? $user->unreadNotifications() : $user->notifications();
+        $notifications = $query->latest()->paginate(20)->withQueryString();
+        $unreadCount = $user->unreadNotifications()->count();
+        $totalCount = $user->notifications()->count();
+
+        $ui = $this->presentNotifications($notifications->items());
+
+        return view('team.notifications', compact('notifications', 'filter', 'unreadCount', 'totalCount', 'ui'));
+    }
+
+    public function notificationsMarkAllRead()
+    {
+        auth()->user()->unreadNotifications->markAsRead();
+
+        return redirect()->route('team.notifications')->with('status', 'All notifications marked as read.');
     }
 
     /** Unread notifications for the bell (polled by public/js/app.js). */
     public function notificationsRefresh()
     {
-        return auth()->user()->unreadNotifications()->limit(5)->get()->toArray();
+        $notifications = auth()->user()->unreadNotifications()->latest()->limit(5)->get();
+        $ui = $this->presentNotifications($notifications);
+
+        return $notifications->map(fn ($n) => $n->toArray() + ['ui' => $ui[$n->id]])->all();
+    }
+
+    /**
+     * What each notification looks like (shared by the bell and the Notifications page): title, line of text, the picture
+     * of whoever it is about (the matchmaker who added a proposal, the matched profile), an icon for when there is none,
+     * and where clicking it goes. Matchmakers and proposals are loaded once for the whole list.
+     *
+     * @return array<string, array{title:string,text:string,image:?string,icon:string,tone:string,url:string,go:?string,time:string,clock:string}>
+     */
+    private function presentNotifications($notifications): array
+    {
+        $notifications = collect($notifications);
+        $data = fn ($n, $key) => $n->data[$key] ?? null;
+
+        $members = TeamMember::whereIn('dataid', $notifications->map(fn ($n) => $data($n, 'addedbyid'))->filter()->unique())->get()->keyBy('dataid');
+        $proposals = Proposal::with('photos')->whereIn('reference', $notifications->flatMap(fn ($n) => [$data($n, 'matchid'), $data($n, 'proposalid')])->filter()->unique())->get()->keyBy('reference');
+
+        $out = [];
+        foreach ($notifications as $n) {
+            $kind = class_basename($n->type);
+            $row = ['title' => $n->data['status'] ?? \Illuminate\Support\Str::headline($kind), 'text' => (string) ($n->data['message'] ?? ''),
+                'image' => null, 'icon' => 'fa-bell-o', 'tone' => '', 'target' => null, 'go' => null];
+
+            if ($kind === 'NewProposalAdded') {
+                $owner = $members->get($data($n, 'addedbyid'));
+                $row = ['title' => 'New proposal ' . $data($n, 'proposal'),
+                    'text' => ($data($n, 'addedby') ?: 'A matchmaker') . ' added a new proposal to the network.',
+                    'image' => ($owner && $owner->photo && !str_contains($img = $owner->getProfileImage(true), 'male_large')) ? $img : null, 'icon' => 'fa-file-text-o', 'tone' => '',
+                    'target' => $data($n, 'proposalid') ? route('team.proposals.view', $data($n, 'proposalid')) : null, 'go' => 'View proposal'];
+            } elseif ($kind === 'AiMatchFound') {
+                $match = $proposals->get($data($n, 'matchid'));
+                $row = ['title' => $data($n, 'percent') . '% AI match found',
+                    'text' => 'Proposal ' . $data($n, 'matchid') . ' is a strong match for your client ' . $data($n, 'proposal') . '.',
+                    'image' => $match ? $match->getProfileImage(true) : null, 'icon' => 'fa-heart', 'tone' => 'match',
+                    'target' => $data($n, 'proposalid') ? route('team.matches.show', $data($n, 'proposalid')) : null, 'go' => 'See match'];
+            } elseif ($kind === 'AdminMessage') {
+                $row = ['title' => 'Message from admin', 'text' => (string) $data($n, 'message'), 'image' => null, 'icon' => 'fa-bullhorn', 'tone' => 'admin', 'target' => null, 'go' => null];
+            }
+
+            // opening one marks it read (?read=); one with nothing to open just reloads the list
+            $base = $row['target'] ?: route('team.notifications');
+            $row['url'] = $base . (str_contains($base, '?') ? '&' : '?') . 'read=' . $n->id;
+            unset($row['target']);
+            $row['time'] = $n->created_at->diffForHumans();
+            $row['clock'] = $n->created_at->format('g:i A');
+            $out[$n->id] = $row;
+        }
+
+        return $out;
     }
 
     /**
@@ -1438,6 +1504,9 @@ TEMPLATE;
             'title' => $proposal->reference . ' + ' . $match->reference,
             'text' => $text,
             'photos' => array_values(array_merge($a['photos'], $b['photos'])),
+            // The message must reach the person who added the matched profile: open a chat with them (the phone's share sheet
+            // cannot pick a contact). Both forms and both photo links go in the text; the links' previews show the photos.
+            'direct' => !empty(TeamMember::find($match->added_by)->contact_mobile_number ?? null),
             // Two long forms don't fit comfortably as a photo caption: photos first, forms second.
             'two_step' => mb_strlen($text) > 3000,
             'fallback' => route('team.matches.forward', [$proposal->reference, $match->reference]),

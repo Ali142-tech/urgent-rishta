@@ -191,4 +191,14 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         }
         return count($ids);
     }
+
+    /** Cards on the My Matches page: one per (own client, match) pair, up to 20 matches per client. */
+    public function myMatchesPairCount(): int
+    {
+        $total = 0;
+        foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
+            $total += min(20, count($proposal->strongMatchScores()));
+        }
+        return $total;
+    }
 }

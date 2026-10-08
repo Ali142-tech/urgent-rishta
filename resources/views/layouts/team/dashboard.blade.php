@@ -68,6 +68,14 @@
         .ur-cf-matches-pill { background: #F6F4EF; color: #6B7570; font-size: 11.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; white-space: nowrap; margin-top: 2px; }
         .ur-cf-close { width: 34px; height: 34px; border-radius: 8px; border: 1px solid #E7E2D6; background: #fff; color: #6B7570; cursor: pointer; flex-shrink: 0; }
         .ur-cf-close:hover { background: #F6F4EF; color: #1C2321; }
+        @media (max-width: 560px) {
+            .ur-cf-header { position: relative; flex-wrap: wrap; padding: 16px 52px 14px 16px; gap: 8px 12px; }
+            .ur-cf-header__text { flex: 1 1 0; min-width: 0; }
+            .ur-cf-header h2 { font-size: 17px; line-height: 1.25; }
+            .ur-cf-header p { line-height: 1.4; }
+            .ur-cf-close { position: absolute; top: 14px; right: 14px; }
+            .ur-cf-matches-pill { order: 3; margin: 0 0 0 52px; }
+        }
 
         {{-- align-items: start is load-bearing — grid's default "stretch"
              was matching the photo column's height to the (much taller)
