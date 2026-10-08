@@ -312,12 +312,17 @@ class TeamController extends Controller
         $countries = $countries->concat($typed->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]));
         $caste = ProposalCaste::options();
         $education = $this->educationOptions();
+        // the full profession list, plus any profession typed by hand that is already on a proposal
+        $professions = $this->professionOptions();
+        $typedProfessions = Proposal::whereNotNull('profession')->where('profession', '!=', '')->distinct()->pluck('profession')
+            ->reject(fn ($n) => in_array($n, config('proposal_options.profession'), true))->sort()->values();
+        $professions = $professions->concat($typedProfessions->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]));
 
         // "X profiles in the shared network" badge — the whole pool, unfiltered.
         $totalNetworkCount = Proposal::count();
 
         return view('team.proposals-search', array_merge($grid, compact(
-            'maritalstatuses', 'countries', 'caste', 'education', 'totalNetworkCount'
+            'maritalstatuses', 'countries', 'caste', 'education', 'professions', 'totalNetworkCount'
         )));
     }
 

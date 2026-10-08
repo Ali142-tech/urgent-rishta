@@ -31,6 +31,17 @@
     .ur-adv-search__tab.is-active { background: #123A2E; border-color: #123A2E; color: #fff; }
     .ur-adv-search__more-btn { margin-left: auto; background: #fff; border: 1px solid #E7E2D6; color: #1C2321; border-radius: 999px; padding: 9px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     .ur-adv-search__more-btn.is-active { border-color: #C9974D; color: #C9974D; }
+    /* searchable dropdowns (select2) look like the keyword input */
+    .ur-adv-search__field .select2-container { width: 100% !important; }
+    .ur-adv-search__field .select2-container--default .select2-selection--single { height: 42px; border: 1px solid #E7E2D6; border-radius: 8px; background: #fff; display: flex; align-items: center; outline: none; }
+    .ur-adv-search__field .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 40px !important; padding: 0 36px 0 13px !important; font-size: 13.5px; color: #123A2E; width: 100%; }
+    .ur-adv-search__field .select2-container--default .select2-selection--single .select2-selection__placeholder { color: #8A938E; }
+    .ur-adv-search__field .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; right: 8px; }
+    .ur-adv-search__field .select2-container--default.select2-container--focus .select2-selection--single, .ur-adv-search__field .select2-container--default.select2-container--open .select2-selection--single { border-color: #1F6B52; }
+    .select2-dropdown { border: 1px solid #E7E2D6 !important; border-radius: 8px !important; box-shadow: 0 8px 24px rgba(15,46,36,.12); overflow: hidden; }
+    .select2-container--default .select2-search--dropdown .select2-search__field { border: 1px solid #E7E2D6; border-radius: 6px; padding: 7px 10px; font-size: 13.5px; outline: none; }
+    .select2-container--default .select2-results__option { padding: 8px 12px !important; font-size: 13.5px; }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] { background: #123A2E; color: #fff; }
     .ur-adv-search__row { display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch; }
     .ur-adv-search__field { flex: 1; }
     .ur-adv-search__field .form-control, .ur-adv-search__field select { border: 1px solid #E7E2D6; border-radius: 8px; height: 42px; padding: 0 12px; width: 100%; font-size: 13.5px; }
@@ -201,10 +212,15 @@
                 <input type="text" class="form-control" name="keyword" placeholder="Search by name, profession or city…" value="{{ request('keyword') }}">
             </div>
             <div class="ur-adv-search__field" data-panel="profession" style="{{ $activeTab == 'profession' ? '' : 'display:none;' }}">
-                <input type="text" class="form-control" name="profession" placeholder="e.g. Doctor, Engineer, Teacher…" value="{{ request('profession') }}">
+                <select name="profession" class="form-control ur-adv-select" data-placeholder="Any profession">
+                    <option value="">Any profession</option>
+                    @foreach($professions as $prof)
+                        <option value="{{ $prof->dataid }}" {{ request('profession') == $prof->dataid ? 'selected' : '' }}>{{ $prof->name }}</option>
+                    @endforeach
+                </select>
             </div>
             <div class="ur-adv-search__field" data-panel="country" style="{{ $activeTab == 'country' ? '' : 'display:none;' }}">
-                <select name="country" class="form-control">
+                <select name="country" class="form-control ur-adv-select" data-placeholder="Any country">
                     <option value="">Any country</option>
                     @foreach($countries as $country)
                         <option value="{{ $country->dataid }}" {{ request('country') == $country->dataid ? 'selected' : '' }}>{{ $country->name }}</option>
@@ -266,9 +282,14 @@
             // silently stack an old value on top of the new one.
             if (!isTarget) {
                 var field = p.querySelector('input, select');
-                if (field) field.value = '';
+                if (field) { field.value = ''; if (window.jQuery) jQuery(field).trigger('change'); }
             }
         });
+    }
+
+    // searchable lists: every profession / country shows when the dropdown opens, typing narrows them
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery('.ur-adv-select').select2({ width: '100%', minimumResultsForSearch: 0 });
     }
 
     tabs.forEach(function (tab) {
