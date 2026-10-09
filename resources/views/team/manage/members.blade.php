@@ -74,7 +74,7 @@
 <div class="ur-tm-wrap">
 <table class="ur-tm-table">
     <thead>
-        <tr><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Photos</th><th>Message</th><th>Action</th></tr>
+        <tr><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Photos</th><th>Privacy</th><th>Message</th><th>Action</th></tr>
     </thead>
     <tbody>
         @forelse($members as $member)
@@ -103,6 +103,20 @@
                     </select>
                 @endif
             </td>
+            <td style="min-width:190px;">
+                @if($member->isAdmin())
+                    <span class="ur-tm-you">Sees all (admin)</span>
+                @else
+                    <select class="js-private-member" data-id="{{ $member->dataid }}" data-current="{{ $member->is_private_member ? '1' : '0' }}" title="A private member's proposals are private" style="height:34px; width:100%; margin-bottom:6px; border:1px solid #E7E2D6; border-radius:8px; padding:0 8px; font-size:13px; background:#fff;">
+                        <option value="0" {{ !$member->is_private_member ? 'selected' : '' }}>Proposals: public</option>
+                        <option value="1" {{ $member->is_private_member ? 'selected' : '' }}>Proposals: private</option>
+                    </select>
+                    <select class="js-private-access" data-id="{{ $member->dataid }}" data-current="{{ $member->can_view_private ? '1' : '0' }}" title="Whether this member can see private proposals" style="height:34px; width:100%; border:1px solid #E7E2D6; border-radius:8px; padding:0 8px; font-size:13px; background:#fff;">
+                        <option value="0" {{ !$member->can_view_private ? 'selected' : '' }}>Cannot see private</option>
+                        <option value="1" {{ $member->can_view_private ? 'selected' : '' }}>Can see private</option>
+                    </select>
+                @endif
+            </td>
             <td>
                 <form method="POST" action="{{ route('team.manage.members.message') }}" class="ur-tm-msg">
                     @csrf
@@ -119,7 +133,7 @@
             </td>
         </tr>
         @empty
-        <tr><td colspan="7">{{ $search !== '' ? 'No team members matching "'.$search.'".' : 'No team members yet.' }}</td></tr>
+        <tr><td colspan="8">{{ $search !== '' ? 'No team members matching "'.$search.'".' : 'No team members yet.' }}</td></tr>
         @endforelse
     </tbody>
 </table>
@@ -141,6 +155,28 @@
                     else { sel.value = previous; swalAlert('error', 'Error', result.message, function () {}); }
                 },
                 error: function () { sel.disabled = false; sel.value = previous; swalAlert('error', 'Error', 'Something went wrong. Please try again.', function () {}); }
+            });
+        });
+    });
+
+    // Privacy: "private member" (their proposals are private) and "can see private proposals".
+    [['select.js-private-member', 'private-member', 'private'], ['select.js-private-access', 'private-access', 'access']].forEach(function (cfg) {
+        document.querySelectorAll(cfg[0]).forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var previous = sel.dataset.current, wanted = sel.value, data = { '_token': '{{ csrf_token() }}' };
+                data[cfg[2]] = wanted;
+                sel.disabled = true;
+                $.ajax({
+                    type: 'post',
+                    url: "{{ url('team/manage/members') }}/" + sel.dataset.id + '/' + cfg[1],
+                    data: data,
+                    success: function (result) {
+                        sel.disabled = false;
+                        if (result.code == '200') { sel.dataset.current = wanted; swalAlert('success', 'Done', result.message, function () {}); }
+                        else { sel.value = previous; swalAlert('error', 'Error', result.message, function () {}); }
+                    },
+                    error: function () { sel.disabled = false; sel.value = previous; swalAlert('error', 'Error', 'Something went wrong. Please try again.', function () {}); }
+                });
             });
         });
     });

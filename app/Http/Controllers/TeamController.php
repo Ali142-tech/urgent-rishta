@@ -95,7 +95,7 @@ class TeamController extends Controller
         $distinctMatchIds = [];
         $previewMatches = collect();
         foreach (Proposal::where('added_by', $viewerId)->with('photos')->get() as $proposal) {
-            foreach (array_keys($proposal->strongMatchScores()) as $matchId) {
+            foreach (array_keys($proposal->visibleMatchScores()) as $matchId) {
                 $distinctMatchIds[$matchId] = true;   // a profile that fits several clients counts once
             }
             $aiMatchesCount = count($distinctMatchIds);
@@ -944,6 +944,7 @@ TEMPLATE;
 
         $proposal = Proposal::create([
             'added_by' => auth()->id(),
+            'is_private' => (bool) auth()->user()->is_private_member,   // a private member's proposals start private
             'gender' => $request->gender,
             'birthday' => $request->year . '-' . $request->month . '-' . $request->day,
             'height' => $request->height,
@@ -987,7 +988,9 @@ TEMPLATE;
         $this->alertOnStrongMatch($proposal);
 
         $loggedInUser = auth()->user();
+        // a private proposal is announced only to those who may see it (admins and members the admin allowed)
         TeamMember::approved()->where('id', '!=', $loggedInUser->id)
+            ->when($proposal->is_private, fn ($q) => $q->where(fn ($w) => $w->where('is_admin', true)->orWhere('can_view_private', true)))
             ->get()->each(fn ($teamMember) => $teamMember->notify(new NewProposalAdded($loggedInUser, $proposal)));
 
         Log::info('Team member (' . $loggedInUser->dataid . ') added proposal ' . $proposal->reference);

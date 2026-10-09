@@ -64,8 +64,11 @@
         </div>
 
 
-        @if($category === 'premium' || $category === 'royal' || $isAbroad || $highlight === 'highly attractive')
+        @if($category === 'premium' || $category === 'royal' || $isAbroad || $highlight === 'highly attractive' || !empty($member->is_private))
         <div class="ur-search-card__badges">
+            @if(!empty($member->is_private))
+                <span class="ur-search-card__badge ur-search-card__badge--private"><i class="fa fa-lock"></i> Private</span>
+            @endif
             @if($category === 'premium')
                 <span class="ur-search-card__badge ur-search-card__badge--premium">Premium Profile</span>
             @elseif($category === 'royal')

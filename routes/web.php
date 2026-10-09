@@ -156,6 +156,9 @@ Route::get('team/manage/members', [App\Http\Controllers\TeamAdminController::cla
 Route::post('team/manage/members/message', [App\Http\Controllers\TeamAdminController::class, 'sendMessage'])->name('team.manage.members.message');
 Route::post('team/manage/members/{dataid}/reset-link', [App\Http\Controllers\TeamAdminController::class, 'sendResetLink'])->middleware('throttle:10,1')->name('team.manage.members.reset-link');
 Route::post('team/manage/members/{dataid}/photo-access', [App\Http\Controllers\TeamAdminController::class, 'setPhotoAccess'])->name('team.manage.members.photo-access');
+Route::post('team/manage/members/{dataid}/private-access', [App\Http\Controllers\TeamAdminController::class, 'setPrivateAccess'])->name('team.manage.members.private-access');
+Route::post('team/manage/members/{dataid}/private-member', [App\Http\Controllers\TeamAdminController::class, 'setPrivateMember'])->name('team.manage.members.private-member');
+Route::post('team/manage/proposals/{dataid}/privacy', [App\Http\Controllers\TeamAdminController::class, 'setProposalPrivacy'])->name('team.manage.proposals.privacy');
 Route::post('team/manage/members/{action}/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'updateStatus'])->whereIn('action', ['suspend', 'deactivate', 'reactivate'])->name('team.manage.members.status');
 Route::get('team/manage/applications', [App\Http\Controllers\TeamAdminController::class, 'applications'])->name('team.manage.applications');
 Route::post('team/manage/applications/{dataid}/approve', [App\Http\Controllers\TeamAdminController::class, 'approve'])->name('team.manage.applications.approve');

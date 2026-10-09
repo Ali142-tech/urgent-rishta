@@ -30,7 +30,7 @@ class Proposal extends Model
 
     protected $fillable = [
         'reference', 'added_by',
-        'gender', 'birthday', 'height', 'marital_status', 'education', 'profession', 'caste_id', 'sect',
+        'is_private', 'gender', 'birthday', 'height', 'marital_status', 'education', 'profession', 'caste_id', 'sect',
         'con_of_residence', 'con_of_citizenship', 'current_city', 'city',
         'family_status', 'looking_from', 'presentation_highlight',
         'profile_status', 'active', 'raw_intake_text',
@@ -55,6 +55,8 @@ class Proposal extends Model
 
     protected static function booted()
     {
+        static::addGlobalScope(new \App\Scopes\PrivateProposalScope());
+
         // P-001, P-002 ... derived from the row id: unique, readable, never reused.
         // A deleted / restored proposal changes who can match: drop the cached match lists right away.
         foreach (['deleted', 'restored'] as $event) {
@@ -367,7 +369,8 @@ class Proposal extends Model
             return null;
         }
 
-        $query = static::query()->with('photos')
+        // Unscoped: match lists are cached and shared by every viewer; who may SEE a private candidate is applied when they are read.
+        $query = static::withoutGlobalScope(\App\Scopes\PrivateProposalScope::class)->with('photos')
             ->where('gender', $opposite)
             ->where('active', true)
             ->where('id', '!=', $this->id)
@@ -438,7 +441,7 @@ class Proposal extends Model
     /** The best AI matches (score >= 70), best first. */
     public function getProposalMatches($limit = 3, $offset = 0)
     {
-        $ids = array_slice(array_keys($this->strongMatchScores()), (int) $offset, (int) $limit);
+        $ids = array_slice(array_keys($this->visibleMatchScores()), (int) $offset, (int) $limit);
         if (!$ids) {
             return collect();
         }
@@ -448,7 +451,19 @@ class Proposal extends Model
 
     public function getProposalMatchesCount(): int
     {
-        return count($this->strongMatchScores());
+        return count($this->visibleMatchScores());
+    }
+
+    /** strongMatchScores() without the private proposals the current viewer may not see. */
+    public function visibleMatchScores(): array
+    {
+        $scores = $this->strongMatchScores();
+        if (!$scores) {
+            return [];
+        }
+        $visible = array_flip(static::whereIn('id', array_keys($scores))->pluck('id')->all());
+
+        return array_intersect_key($scores, $visible);
     }
 
     /** 66 -> 5'6" */

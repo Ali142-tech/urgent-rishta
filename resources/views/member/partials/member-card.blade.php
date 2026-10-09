@@ -176,10 +176,10 @@ $packageIcon = match ($packageSlug) {
             <li><span>Marital Status</span><b>{{$member->lbl_marital_status}}</b></li>
         </ul>
         @if(!empty($addedByName ?? null))
-            <div class="ur-team-added-by"><i class="fa fa-user-circle"></i> Added by {{ $addedByName }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif</div>
+            <div class="ur-team-added-by"><i class="fa fa-user-circle"></i> Added by {{ $addedByName }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge') @endif <span class="ur-private-tag" style="display:inline-block; vertical-align:middle; margin-left:6px; background:#3B2A4F; color:#fff; font-size:10.5px; font-weight:800; padding:2px 9px; border-radius:999px; {{ !empty($member->is_private) ? '' : 'display:none;' }}"><i class="fa fa-lock"></i> Private</span></div>
         @endif
     </div>
-    <div class="member-card__footer">
+    <div class="member-card__footer{{ !empty($member->team_card_role) ? ' member-card__footer--team' : '' }}">
         @if($hideImage)
             {{-- Homepage teaser slider — no Express Interest here (it's a
                  sample card, not a real search result), just the same
@@ -223,6 +223,51 @@ $packageIcon = match ($packageSlug) {
                 <a class="is-interest" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
                     <i class="fa fa-whatsapp"></i> <span>Share</span>
                 </a>
+                @if(auth('team')->check() && auth('team')->user()->is_admin)
+                    {{-- Admin only: make this proposal private / public again (TeamAdminController::setProposalPrivacy()). --}}
+                    <a class="is-interest js-privacy-toggle" href="#" data-ref="{{ $member->dataid }}" data-private="{{ $member->is_private ? '1' : '0' }}" onclick="return urTogglePrivacy(this);">
+                        <i class="fa {{ $member->is_private ? 'fa-unlock' : 'fa-lock' }}"></i> <span>{{ $member->is_private ? 'Make public' : 'Make private' }}</span>
+                    </a>
+                    @once
+                    <script>
+                    function urTogglePrivacy(btn) {
+                        var makePrivate = btn.dataset.private !== '1';
+                        var question = makePrivate
+                            ? 'Make ' + btn.dataset.ref + ' private?'
+                            : 'Make ' + btn.dataset.ref + ' public?';
+                        var detail = makePrivate
+                            ? 'Only admins, the team member who added it and members you allowed will be able to see it. Everyone else will no longer see it anywhere, including AI matches and share links.'
+                            : 'Every team member will be able to see this proposal again.';
+                        if (typeof swal === 'function') {
+                            swal({ title: question, text: detail, icon: 'warning', buttons: { cancel: 'Cancel', confirm: makePrivate ? 'Yes, make private' : 'Yes, make public' } })
+                                .then(function (ok) { if (ok) urSavePrivacy(btn, makePrivate); });
+                        } else if (confirm(question + '\n\n' + detail)) {
+                            urSavePrivacy(btn, makePrivate);
+                        }
+                        return false;
+                    }
+                    function urSavePrivacy(btn, makePrivate) {                        var form = new FormData();
+                        form.append('_token', '{{ csrf_token() }}');
+                        form.append('private', makePrivate ? '1' : '0');
+                        btn.style.opacity = .5;
+                        fetch('{{ url('team/manage/proposals') }}/' + btn.dataset.ref + '/privacy', { method: 'POST', body: form, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (res) {
+                                btn.style.opacity = 1;
+                                if (String(res.code) !== '200') { alert(res.message || 'Could not save.'); return; }
+                                btn.dataset.private = makePrivate ? '1' : '0';
+                                btn.querySelector('i').className = 'fa ' + (makePrivate ? 'fa-unlock' : 'fa-lock');
+                                btn.querySelector('span').textContent = makePrivate ? 'Make public' : 'Make private';
+                                var card = btn.closest('.member-card') || btn.closest('li') || btn.parentElement;
+                                var tag = card.querySelector('.ur-private-tag');
+                                if (tag) tag.style.display = makePrivate ? '' : 'none';
+                            })
+                            .catch(function () { btn.style.opacity = 1; alert('Something went wrong. Please try again.'); });
+                        return false;
+                    }
+                    </script>
+                    @endonce
+                @endif
             @else
             <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
                 <i class="fa fa-eye"></i> View Full Profile

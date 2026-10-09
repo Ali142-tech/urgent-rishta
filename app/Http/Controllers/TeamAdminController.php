@@ -199,6 +199,66 @@ class TeamAdminController extends Controller
     }
 
     /** "Become a Partner" applications awaiting a decision. */
+    /** Makes one proposal private (only admins, its owner and allowed members see it) or public again. */
+    public function setProposalPrivacy(Request $request, $dataid)
+    {
+        $request->validate(['private' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $proposal = Proposal::withoutGlobalScopes()->where('reference', $dataid)->first();
+        if (!$proposal) {
+            return ['code' => '404', 'message' => 'Proposal was not found (id: ' . $dataid . ')'];
+        }
+
+        $proposal->is_private = $request->private === '1';
+        $proposal->save();
+
+        Log::info('Admin team account (' . $admin->dataid . ') made proposal ' . $proposal->reference . ($proposal->is_private ? ' private' : ' public'));
+
+        return ['code' => '200', 'is_private' => $proposal->is_private, 'message' => $proposal->reference . ($proposal->is_private ? ' is now private.' : ' is now public.')];
+    }
+
+    /** A "private member": everything they have added (and add later) is private. Turning it off makes all their proposals public again. */
+    public function setPrivateMember(Request $request, $dataid)
+    {
+        $request->validate(['private' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $member = TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $member->is_private_member = $request->private === '1';
+        $member->save();
+        $count = Proposal::withoutGlobalScopes()->where('added_by', $member->id)->update(['is_private' => $member->is_private_member]);
+
+        Log::info('Admin team account (' . $admin->dataid . ') set ' . $member->dataid . ($member->is_private_member ? ' as a private member' : ' as a normal member') . ' (' . $count . ' proposals)');
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ($member->is_private_member
+            ? ' is now a private member — their ' . $count . ' proposals are private.'
+            : ' is a normal member again — their ' . $count . ' proposals are public.')];
+    }
+
+    /** Lets one team member see private proposals (or stops that). */
+    public function setPrivateAccess(Request $request, $dataid)
+    {
+        $request->validate(['access' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $member = TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $member->can_view_private = $request->access === '1';
+        $member->save();
+
+        Log::info('Admin team account (' . $admin->dataid . ') ' . ($member->can_view_private ? 'allowed' : 'removed') . ' private-proposal access for ' . $member->dataid);
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ($member->can_view_private ? ' can now see private proposals.' : ' can no longer see private proposals.')];
+    }
+
     public function applications()
     {
         $applications = TeamMember::pending()->orderBy('created_at')->get();

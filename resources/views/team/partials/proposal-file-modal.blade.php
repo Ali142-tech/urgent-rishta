@@ -23,7 +23,7 @@
     <div class="ur-cf-header__icon"><i class="fa fa-clipboard"></i></div>
     <div class="ur-cf-header__text">
         <h2>Complete Client File</h2>
-        <p>Profile ID {{ $member->dataid }} &bull; Original and AI-organized data</p>
+        <p>Profile ID {{ $member->dataid }} &bull; Original and AI-organized data <span class="ur-cf-private-pill" style="{{ $member->is_private ? '' : 'display:none;' }} background:#3B2A4F; color:#fff; font-size:10.5px; font-weight:800; padding:2px 9px; border-radius:999px; margin-left:6px;"><i class="fa fa-lock"></i> Private</span></p>
     </div>
     @if($matchCount > 0)<span class="ur-cf-matches-pill">{{ $matchCount }} top AI match{{ $matchCount == 1 ? '' : 'es' }}</span>@endif
     @unless($asPage)
@@ -149,9 +149,17 @@
             <a href="{{ route('team.proposals.photos', $member->dataid) }}"><i class="fa fa-camera"></i> Manage photos</a>
             <a href="#" onclick="return deleteProposal('{{ $member->dataid }}');" style="color:#B5674A;"><i class="fa fa-trash"></i> Delete</a>
         @endif
+        @if(auth()->user()->isAdmin())
+            <label style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:12.5px; font-weight:700; color:#123A2E;">Visibility
+                <select class="js-proposal-privacy" data-url="{{ route('team.manage.proposals.privacy', $member->dataid) }}" data-current="{{ $member->is_private ? '1' : '0' }}" style="height:36px; border:1px solid #E7E2D6; border-radius:8px; padding:0 10px; font-size:13px; background:#fff;">
+                    <option value="0" {{ !$member->is_private ? 'selected' : '' }}>Public</option>
+                    <option value="1" {{ $member->is_private ? 'selected' : '' }}>Private</option>
+                </select>
+            </label>
+        @endif
         @if(!empty($canRunAiMatch))
             <label class="ur-cf-status" style="display:inline-flex; align-items:center; gap:8px; margin:0; font-size:12.5px; font-weight:700; color:#123A2E;">Status
-                <select class="js-profile-status" data-url="{{ route('team.proposals.status', $member->dataid) }}" style="height:36px; border:1px solid #E7E2D6; border-radius:8px; padding:0 10px; font-size:13px; background:#fff;">
+                <select class="js-profile-status" data-url="{{ route('team.proposals.status', $member->dataid) }}" data-current="{{ $member->profile_status }}" style="height:36px; border:1px solid #E7E2D6; border-radius:8px; padding:0 10px; font-size:13px; background:#fff;">
                     @foreach(['active' => 'Active', 'on_hold' => 'On Hold', 'matched' => 'Matched', 'engaged' => 'Engaged', 'married' => 'Married', 'closed' => 'Closed'] as $__v => $__l)<option value="{{ $__v }}" {{ $member->profile_status === $__v ? 'selected' : '' }}>{{ $__l }}</option>@endforeach
                 </select>
             </label>
