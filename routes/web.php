@@ -17,36 +17,109 @@ use Illuminate\Support\Facades\Artisan;
 */
 Auth::routes(['verify' => true]);
 
-Route::get('/info', function () {
-    phpinfo();
-});
+// Shaadi-style login extras (OTP via email for now; SMS later)
+// throttle:10,1 — 10 requests/minute per IP. Unlike password login (which
+// uses ThrottlesLogins), these custom methods had NO route-level rate limit
+// at all: sendOtp() only had a 60s per-identifier resend cooldown, and
+// verifyOtp()'s only protection was a 5-guess cap tied to each OTP row —
+// neither stopped an attacker hammering the endpoint directly / requesting
+// unlimited fresh codes to reset that per-code counter.
+Route::post('login/otp/send', [App\Http\Controllers\Auth\LoginController::class, 'sendOtp'])->middleware('throttle:10,1')->name('login.otp.send');
+Route::post('login/otp/verify', [App\Http\Controllers\Auth\LoginController::class, 'verifyOtp'])->middleware('throttle:10,1')->name('login.otp.verify');
+Route::post('login/password', [App\Http\Controllers\Auth\LoginController::class, 'loginWithPassword'])->name('login.password');
+Route::post('login/email', [App\Http\Controllers\Auth\LoginController::class, 'loginWithEmail'])->name('login.email');
+Route::get('login/google', [App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('login.google');
+Route::get('login/google/callback', [App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('login.google.callback');
+
+// Multi-step register (name+DOB → mobile/email OTP → profile)
+Route::post('register/basics', [App\Http\Controllers\Auth\RegisterController::class, 'saveBasics'])->name('register.basics');
+Route::post('register/community', [App\Http\Controllers\Auth\RegisterController::class, 'saveCommunity'])->name('register.community');
+Route::post('register/contact', [App\Http\Controllers\Auth\RegisterController::class, 'saveContact'])->name('register.contact');
+Route::post('register/build', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild'])->name('register.build');
+Route::post('register/build2', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild2'])->name('register.build2');
+Route::post('register/build3', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild3'])->name('register.build3');
+Route::post('register/preferences', [App\Http\Controllers\Auth\RegisterController::class, 'savePreferences'])->name('register.preferences');
+Route::post('register/build4', [App\Http\Controllers\Auth\RegisterController::class, 'saveBuild4'])->name('register.build4');
+Route::post('register/mobile/otp', [App\Http\Controllers\Auth\RegisterController::class, 'sendMobileOtp'])->name('register.mobile.otp');
+Route::post('register/mobile/verify', [App\Http\Controllers\Auth\RegisterController::class, 'verifyMobile'])->name('register.mobile.verify');
+Route::post('register/otp/send', [App\Http\Controllers\Auth\RegisterController::class, 'sendOtp'])->name('register.otp.send');
+Route::post('register/otp/verify', [App\Http\Controllers\Auth\RegisterController::class, 'verifyOtp'])->name('register.otp.verify');
 
 // index/home routes
 Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('index');
 Route::get('home', [App\Http\Controllers\HomeController::class, 'home'])->name('home');
 Route::get('states/{id}', [App\Http\Controllers\HomeController::class, 'states']);
 Route::get('cities/{id}/{iscountry}', [App\Http\Controllers\HomeController::class, 'cities']);
-Route::post('member/searchresults/{refresh?}', [App\Http\Controllers\HomeController::class, 'search'])->name('searchresults');
+Route::get('castes/{id}', [App\Http\Controllers\HomeController::class, 'castes']);
+// Public WhatsApp/link-preview card for a shared team proposal — see
+// HomeController::sharePreview()'s docblock for why this has to be a
+// separate, unauthenticated route rather than member/profile/{dataid}.
+Route::get('share/proposal/{dataid}', [App\Http\Controllers\HomeController::class, 'sharePreview'])->name('share.proposal');
+// Also accepts GET (not just the form's POST) so that a guest's search can be replayed
+// automatically via redirect after they log in — see Authenticate::redirectTo() and
+// LoginController::finishLogin(), which resume the search instead of losing the filters.
+Route::match(['get', 'post'], 'member/searchresults/{refresh?}', [App\Http\Controllers\HomeController::class, 'search'])->name('searchresults');
+// Dedicated destination for the "View Recommended Matches"/"View All" links on
+// the Search Profiles page — same profiles as that page's preview grid
+// (see User::getRecommendedMatches()), just paginated instead of capped at 3.
+// Not in HomeController's guest-accessible $except list, so 'auth'+'verified' apply.
+Route::get('member/recommended-matches', [App\Http\Controllers\HomeController::class, 'recommendedMatches'])->name('member.recommended-matches');
 
 // Admin page routes
+Route::get('admin/dashboard', [App\Http\Controllers\AdminController::class, 'dashboardOverview']); // Dashboard Overview landing page (stat cards, growth, recent activity)
 Route::get('admin/profiles', [App\Http\Controllers\AdminController::class, 'profiles']); // route to index which will list profiles
+Route::get('admin/profile/panel/{id}', [App\Http\Controllers\AdminController::class, 'profilePanel']); // AJAX-loaded detail panel for the Member Profiles list+detail layout
 Route::post('admin/profiles/refresh', [App\Http\Controllers\AdminController::class, 'refreshProfiles']); // list all profiles in admin dashboard
 Route::get('admin/interests', [App\Http\Controllers\AdminController::class, 'interests']);
 Route::post('admin/interests/refresh', [App\Http\Controllers\AdminController::class, 'refreshInterests']); // list all interests in admin dashboard
+Route::get('admin/photoaccess', [App\Http\Controllers\AdminController::class, 'photoAccessRequests']);
+Route::post('admin/photoaccess/refresh', [App\Http\Controllers\AdminController::class, 'refreshPhotoAccessRequests']); // list all photo access requests in admin dashboard
 Route::get('admin/packages', [App\Http\Controllers\AdminController::class, 'packages']);
 Route::get('admin/packages/modal/{id?}', [App\Http\Controllers\AdminController::class, 'renderPackagesModal']);
 Route::get('admin/package-subscribers', [App\Http\Controllers\AdminController::class, 'packageSubscribers']);
 Route::post('admin/package-subscribers/refresh', [App\Http\Controllers\AdminController::class, 'refreshPackageSubscribers']);
 Route::get('admin/appointments', [App\Http\Controllers\AdminController::class, 'appointments']);
+Route::get('admin/appointments/panel/{id}', [App\Http\Controllers\AdminController::class, 'appointmentPanel']); // AJAX-loaded detail panel for the Appointments list+detail layout
 Route::post('admin/appointments/refresh', [App\Http\Controllers\AdminController::class, 'refreshAppointments']);
+Route::post('admin/appointments/{id}/status', [App\Http\Controllers\AdminController::class, 'updateAppointmentStatus']);
+// Photo & Identity Verification queue (Website Upgrade Brief §9)
+Route::get('admin/match-weights', [App\Http\Controllers\AdminController::class, 'matchWeights'])->name('admin.match-weights');
+Route::post('admin/match-weights', [App\Http\Controllers\AdminController::class, 'updateMatchWeights'])->name('admin.match-weights.update');
+Route::get('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'contactUnlockSettings'])->name('admin.contact-unlock-settings');
+Route::post('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'updateContactUnlockSettings'])->name('admin.contact-unlock-settings.update');
+Route::get('admin/successful-matches', [App\Http\Controllers\AdminController::class, 'successfulMatches'])->name('admin.successful-matches');
+Route::post('admin/successful-matches/{id}/share', [App\Http\Controllers\AdminController::class, 'updateSuccessfulMatchShare'])->name('admin.successful-matches.share');
+Route::get('admin/audit-log', [App\Http\Controllers\AdminController::class, 'auditLog'])->name('admin.audit-log');
+Route::get('admin/photo-verification', [App\Http\Controllers\AdminController::class, 'photoVerificationQueue']);
+Route::get('admin/photo-verification/logs', [App\Http\Controllers\AdminController::class, 'photoVerificationLogs']);
+Route::post('admin/photo-verification/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approvePhotoVerification']);
+Route::post('admin/photo-verification/{dataid}/reject', [App\Http\Controllers\AdminController::class, 'rejectPhotoVerification']);
+Route::post('admin/photo-verification/{dataid}/reopen', [App\Http\Controllers\AdminController::class, 'reopenPhotoVerification']);
+// Profile-completion email campaign (targets members with unverified photo status)
+Route::get('admin/campaigns/profile-completion', [App\Http\Controllers\AdminController::class, 'profileCompletionCampaign'])->name('admin.campaigns.profile-completion');
+Route::post('admin/campaigns/profile-completion/start', [App\Http\Controllers\AdminController::class, 'startProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.start');
+Route::post('admin/campaigns/profile-completion/retry-failed', [App\Http\Controllers\AdminController::class, 'retryFailedProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.retry-failed');
+Route::post('admin/campaigns/profile-completion/pause', [App\Http\Controllers\AdminController::class, 'pauseProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.pause');
+Route::post('admin/campaigns/profile-completion/resume', [App\Http\Controllers\AdminController::class, 'resumeProfileCompletionCampaign'])->name('admin.campaigns.profile-completion.resume');
 // admin profile routes
 Route::delete('admin/profile/{id}',[App\Http\Controllers\AdminController::class, 'deleteProfile']); // delete profile in admin dashboard
-Route::get('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
-Route::get('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
-Route::get('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
+Route::get('admin/profiles/deleted', [App\Http\Controllers\AdminController::class, 'deletedProfiles']);
+Route::post('admin/profile/{dataid}/restore', [App\Http\Controllers\AdminController::class, 'restoreProfile']);
+Route::delete('admin/profile/{dataid}/permanent', [App\Http\Controllers\AdminController::class, 'permanentlyDeleteProfile']);
+// POST, not GET — these change real account state (toggling active status,
+// sending password-reset/verification emails), so a GET route would be
+// exploitable via CSRF (Laravel's CSRF protection doesn't cover GET, so any
+// page a logged-in admin loads could trigger these with a plain <img src>).
+Route::post('admin/profile/toggle/{user}', [App\Http\Controllers\AdminController::class, 'toggleActive']); // toggle status of profile in admin dashboard
+Route::post('admin/profile/resendemail/{id}',[App\Http\Controllers\AdminController::class, 'resendVerificationEmail']); // send email verification email to profile in admin dashboard
+Route::post('admin/profile/requestreset/{id}',[App\Http\Controllers\AdminController::class, 'requestPasswordReset']); // send password reset email to profile in admin dashboard
 Route::post('admin/profile/updatepackage/{id}',[App\Http\Controllers\AdminController::class, 'updateProfilePackage']); // update package for profile in admin dashboard
 Route::get('admin/profile/listing/{type}/{id}', [App\Http\Controllers\AdminController::class, 'showListingModal']);
 Route::get('admin/profile/package/modal/{id}', [App\Http\Controllers\AdminController::class, 'renderUpdatePackageModal']);
+Route::get('admin/profile/package/{id}', [App\Http\Controllers\AdminController::class, 'changePackagePage']);
+Route::get('admin/profile/pdf/{id}', [App\Http\Controllers\AdminController::class, 'downloadProfilePdf']);
+Route::get('admin/profile/preview/{dataid}', [App\Http\Controllers\AdminController::class, 'profilePreview']);
+Route::post('admin/profile/{dataid}/photo-visibility', [App\Http\Controllers\AdminController::class, 'updatePhotoVisibility']);
 // admin package routes
 Route::post('admin/packages/',[App\Http\Controllers\AdminController::class, 'addPackage']); // add a new package in admin dashboard
 Route::post('admin/packages/{id}',[App\Http\Controllers\AdminController::class, 'updatePackage']); // update package details in admin dashboard
@@ -58,7 +131,6 @@ Route::get('admin/generate-thumbnails', [App\Http\Controllers\AdminController::c
 //generate blurs route
 Route::get('admin/generate-blurs', [App\Http\Controllers\AdminController::class, 'generateBlurs']);
 
-Route::get('admin/phpinfo', [App\Http\Controllers\AdminController::class, 'phpInfo']);
 Route::get('admin/art-optimize', [App\Http\Controllers\AdminController::class, 'artisanOptimize']);
 Route::get('admin/art-all-clear', [App\Http\Controllers\AdminController::class, 'artisanAllClear']);
 Route::get('admin/publish-image', [App\Http\Controllers\AdminController::class, 'registerPublishImageVendor']);
@@ -66,15 +138,86 @@ Route::get('admin/publish-image', [App\Http\Controllers\AdminController::class, 
 // check email in use route
 Route::post('eiu', [App\Http\Controllers\Auth\RegisterController::class, 'emailInUse']);
 
+// Team member sign-in — its own guard and page, separate from the member login.
+Route::get('team/login', [App\Http\Controllers\Auth\TeamLoginController::class, 'showLogin'])->name('team.login');
+Route::post('team/login', [App\Http\Controllers\Auth\TeamLoginController::class, 'login'])->name('team.login.submit');
+Route::get('team/forgot-password', [App\Http\Controllers\Auth\TeamPasswordController::class, 'forgotForm'])->name('team.password.forgot');
+Route::post('team/forgot-password', [App\Http\Controllers\Auth\TeamPasswordController::class, 'sendLink'])->middleware('throttle:5,1')->name('team.password.email');
+Route::get('team/reset-password/{token}', [App\Http\Controllers\Auth\TeamPasswordController::class, 'resetForm'])->name('team.password.reset');
+Route::post('team/reset-password', [App\Http\Controllers\Auth\TeamPasswordController::class, 'reset'])->name('team.password.update.reset');
+Route::post('team/logout', [App\Http\Controllers\Auth\TeamLoginController::class, 'logout'])->name('team.logout');
+
+// Team Dashboard — team_member-only routes (see EnsureUserIsTeamMember,
+// TeamController::__construct()). Proposals manually added here are
+// team-exclusive: see the `added_by IS NULL` exclusion added to
+// HomeController::search() and User::recommendedMatchesWhere().
+// Team management — an admin's own team account only (TeamAdminController checks team_members.is_admin).
+Route::get('team/manage/members', [App\Http\Controllers\TeamAdminController::class, 'members'])->name('team.manage.members');
+Route::get('team/manage/members/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'showMember'])->name('team.manage.members.show');
+Route::post('team/manage/members/message', [App\Http\Controllers\TeamAdminController::class, 'sendMessage'])->name('team.manage.members.message');
+Route::post('team/manage/members/{dataid}/reset-link', [App\Http\Controllers\TeamAdminController::class, 'sendResetLink'])->middleware('throttle:10,1')->name('team.manage.members.reset-link');
+Route::post('team/manage/members/{dataid}/photo-access', [App\Http\Controllers\TeamAdminController::class, 'setPhotoAccess'])->name('team.manage.members.photo-access');
+Route::post('team/manage/members/{dataid}/private-access', [App\Http\Controllers\TeamAdminController::class, 'setPrivateAccess'])->name('team.manage.members.private-access');
+Route::post('team/manage/members/{dataid}/private-member', [App\Http\Controllers\TeamAdminController::class, 'setPrivateMember'])->name('team.manage.members.private-member');
+Route::post('team/manage/proposals/{dataid}/privacy', [App\Http\Controllers\TeamAdminController::class, 'setProposalPrivacy'])->name('team.manage.proposals.privacy');
+Route::post('team/manage/members/{action}/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'updateStatus'])->whereIn('action', ['suspend', 'deactivate', 'reactivate'])->name('team.manage.members.status');
+Route::get('team/manage/applications', [App\Http\Controllers\TeamAdminController::class, 'applications'])->name('team.manage.applications');
+Route::post('team/manage/applications/{dataid}/approve', [App\Http\Controllers\TeamAdminController::class, 'approve'])->name('team.manage.applications.approve');
+Route::post('team/manage/applications/{dataid}/reject', [App\Http\Controllers\TeamAdminController::class, 'reject'])->name('team.manage.applications.reject');
+Route::get('team/manage/proposals', [App\Http\Controllers\TeamAdminController::class, 'proposals'])->name('team.manage.proposals');
+Route::get('team/manage/private-proposals', [App\Http\Controllers\TeamAdminController::class, 'privateProposals'])->name('team.manage.private-proposals');
+Route::get('team/dashboard', [App\Http\Controllers\TeamController::class, 'dashboard'])->name('team.dashboard');
+Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, 'myProposals'])->name('team.proposals.mine');
+Route::get('team/proposals/search', [App\Http\Controllers\TeamController::class, 'searchProposals'])->name('team.proposals.search');
+Route::get('team/matches', [App\Http\Controllers\TeamController::class, 'matches'])->name('team.matches');
+Route::get('team/my-matches', [App\Http\Controllers\TeamController::class, 'myMatches'])->name('team.my-matches');
+Route::get('team/matches/{dataid}', [App\Http\Controllers\TeamController::class, 'matchesForProposal'])->name('team.matches.show');
+Route::get('team/matches/{proposalDataid}/forward/{matchDataid}', [App\Http\Controllers\TeamController::class, 'forwardBothWhatsapp'])->name('team.matches.forward');
+Route::get('team/matches/{proposalDataid}/forward/{matchDataid}/payload', [App\Http\Controllers\TeamController::class, 'forwardPayload'])->name('team.matches.forward.payload');
+Route::get('team/notifications/refresh', [App\Http\Controllers\TeamController::class, 'notificationsRefresh'])->name('team.notifications.refresh');
+Route::get('team/profile', [App\Http\Controllers\TeamController::class, 'profile'])->name('team.profile');
+Route::post('team/profile', [App\Http\Controllers\TeamController::class, 'profileUpdate'])->name('team.profile.update');
+Route::get('team/password', [App\Http\Controllers\TeamController::class, 'passwordForm'])->name('team.password');
+Route::post('team/password', [App\Http\Controllers\TeamController::class, 'passwordUpdate'])->name('team.password.update');
+Route::get('team/notifications', [App\Http\Controllers\TeamController::class, 'notificationsList'])->name('team.notifications');
+Route::post('team/notifications/read-all', [App\Http\Controllers\TeamController::class, 'notificationsMarkAllRead'])->name('team.notifications.read-all');
+Route::get('team/successful-matches', [App\Http\Controllers\TeamController::class, 'successfulMatchesMine'])->name('team.successful-matches');
+Route::get('team/cities', [App\Http\Controllers\TeamController::class, 'cityOptions'])->name('team.cities');
+Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'matchmakers'])->name('team.matchmakers');
+Route::post('team/my-profile/photo', [App\Http\Controllers\TeamController::class, 'uploadMyPhoto'])->name('team.my-profile.photo');
+Route::get('team/proposals/create', [App\Http\Controllers\TeamController::class, 'create'])->name('team.proposals.create');
+Route::post('team/proposals', [App\Http\Controllers\TeamController::class, 'store'])->name('team.proposals.store');
+Route::get('team/proposals/{dataid}/view', [App\Http\Controllers\TeamController::class, 'viewProposal'])->name('team.proposals.view');
+Route::get('team/proposals/{dataid}/file', [App\Http\Controllers\TeamController::class, 'proposalFilePanel'])->name('team.proposals.file');
+Route::get('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'edit'])->name('team.proposals.edit');
+Route::post('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'update'])->name('team.proposals.update');
+Route::get('team/proposals/{dataid}/photos', [App\Http\Controllers\TeamController::class, 'photos'])->name('team.proposals.photos');
+Route::post('team/proposals/{dataid}/photos', [App\Http\Controllers\TeamController::class, 'uploadPhoto'])->name('team.proposals.photos.store');
+Route::delete('team/proposals/{dataid}/photos/{imageId}', [App\Http\Controllers\TeamController::class, 'deletePhoto'])->name('team.proposals.photos.destroy');
+Route::post('team/successful-matches', [App\Http\Controllers\TeamController::class, 'markSuccessfulMatch'])->name('team.successful-matches.store');
+Route::get('team/proposals/{dataid}/share/whatsapp', [App\Http\Controllers\TeamController::class, 'shareWhatsapp'])->name('team.proposals.share.whatsapp');
+Route::get('team/proposals/{dataid}/share/payload', [App\Http\Controllers\TeamController::class, 'sharePayload'])->name('team.proposals.share.payload');
+Route::delete('team/proposals/{dataid}', [App\Http\Controllers\TeamController::class, 'destroy'])->name('team.proposals.destroy');
+Route::post('team/proposals/{dataid}/status', [App\Http\Controllers\TeamController::class, 'updateProfileStatus'])->name('team.proposals.status');
+
 // profile routes
 Route::get('member/profile',[App\Http\Controllers\ProfileController::class, 'profile']);
+// Must be registered before member/profile/{id?} below — that catch-all matches
+// any single path segment (dataids never contain '/'), so a static route sharing
+// its depth has to come first or it never gets a chance to match.
+Route::get('member/profile/pictures', [App\Http\Controllers\ProfileController::class, 'picturesPage'])->name('member.pictures');
+Route::get('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'preferencesPage'])->name('member.preferences');
+Route::post('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'updatePreferences'])->name('member.preferences.update');
 Route::get('member/profile/{id?}',[App\Http\Controllers\ProfileController::class, 'profile']);
 Route::get('member/profile/notifications/refresh', [App\Http\Controllers\ProfileController::class, 'notifications']);
 Route::post('member/profile/account/terminate', [App\Http\Controllers\ProfileController::class, 'accountTerminate']);
 Route::get('member/profile/password/update', [App\Http\Controllers\ProfileController::class, 'passwordUpdate']);
 Route::post('member/profile/password/update', [App\Http\Controllers\ProfileController::class, 'updatePassword'])->name('change.password');
+// Mandatory photo gate shown right after registration (brief §5)
+Route::get('member/photos/required', [App\Http\Controllers\ProfileController::class, 'mustUploadPhotos'])->name('member.photos.required');
+Route::get('member/photos/required/status', [App\Http\Controllers\ProfileController::class, 'photosRequiredStatus'])->name('member.photos.required.status');
+Route::post('member/photos/selfie', [App\Http\Controllers\ProfileController::class, 'uploadSelfie'])->name('member.photos.selfie');
 // profile images
-Route::get('member/profile/images/modal',[App\Http\Controllers\ProfileController::class, 'renderImagesModal']);
 Route::post('member/profile/images/update/{action}/{id}',[App\Http\Controllers\ProfileController::class, 'updateImage']);
 // profile update
 Route::post('member/profile/update/{section}',[App\Http\Controllers\ProfileController::class, 'updateProfile']);
@@ -84,6 +227,9 @@ Route::post('member/profile/filtered/{action}/{type}/{id}', [App\Http\Controller
 // interest route
 Route::post('member/profile/interest/{action}/{id}', [App\Http\Controllers\ProfileController::class, 'updateInterest']);
 Route::post('member/profile/interest/{action}/{id}/{who}', [App\Http\Controllers\ProfileController::class, 'updateInterest']);
+// photo access request route (request/grant/decline a hidden photo, or withdraw one you sent/granted)
+Route::post('member/profile/photoaccess/{action}/{id}', [App\Http\Controllers\ProfileController::class, 'updatePhotoAccess']);
+Route::post('member/profile/photoaccess/{action}/{id}/{who}', [App\Http\Controllers\ProfileController::class, 'updatePhotoAccess']);
 // profile listing view
 Route::get('member/profile/listing/{type}', [App\Http\Controllers\ProfileController::class, 'showListing']);
 // profile links
@@ -104,13 +250,26 @@ Route::get('payment/stripe/success/{reference}', [App\Http\Controllers\PaymentCo
 Route::get('payment/stripe/cancel/{reference}', [App\Http\Controllers\PaymentController::class, 'stripeCancel'])
     ->name('stripe.cancel');
 Route::get('stories', [App\Http\Controllers\HomeController::class, 'storiesView']);
+Route::get('team', [App\Http\Controllers\HomeController::class, 'teamView']);
+// Named "photo-gallery" (not "gallery") — public/gallery/ already exists as a
+// static assets folder, which would collide with a route of that exact name
+// both locally (php artisan serve's built-in router) and in production
+// (public/.htaccess explicitly skips rewriting to index.php for any request
+// path that resolves to a real file or directory).
+Route::get('photo-gallery', [App\Http\Controllers\HomeController::class, 'galleryView']);
 Route::get('faqs', [App\Http\Controllers\HomeController::class, 'faqsView']);
 Route::get('tandc', [App\Http\Controllers\HomeController::class, 'termsAndConditionsView']);
 Route::get('privacy', [App\Http\Controllers\HomeController::class, 'privacyPolicyView']);
 Route::get('contact-us', [App\Http\Controllers\HomeController::class, 'contactUsView']);
 Route::post('contact-us',[App\Http\Controllers\HomeController::class, 'contactUsEmail']);
 
+// Public "Become a Partner" matchmaker signup — see MatchmakerApplicationController.
+Route::get('become-a-partner', [App\Http\Controllers\MatchmakerApplicationController::class, 'create'])->name('matchmaker.apply');
+Route::post('become-a-partner', [App\Http\Controllers\MatchmakerApplicationController::class, 'store'])->name('matchmaker.apply.store');
+Route::get('become-a-partner/thanks', [App\Http\Controllers\MatchmakerApplicationController::class, 'thanks'])->name('matchmaker.apply.thanks');
+
 // Appointments (auth required)
+Route::post('consultation-request', [App\Http\Controllers\AppointmentController::class, 'storeConsultationRequest'])->name('consultation.store');
 Route::get('appointments', [App\Http\Controllers\AppointmentController::class, 'index'])->name('appointments.index');
 Route::post('appointments', [App\Http\Controllers\AppointmentController::class, 'store'])->name('appointments.store');
 Route::post('appointments/{id}/cancel', [App\Http\Controllers\AppointmentController::class, 'cancel'])->name('appointments.cancel');
@@ -173,4 +332,3 @@ Route::get('clear-all', function () {
         ]);
     }
 });
-

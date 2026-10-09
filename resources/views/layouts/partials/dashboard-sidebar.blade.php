@@ -1,0 +1,84 @@
+{{--
+    Member dashboard sidebar. Included by layouts/dashboard.blade.php only.
+    Active-state highlighting is done with request()->is(...) so no JS is
+    needed just to mark the current page.
+--}}
+<?php use App\User; ?>
+<aside class="ur-dash-sidebar" id="ur_dash_sidebar">
+    <button type="button" class="ur-dash-sidebar__close" id="ur_dash_sidebar_close" aria-label="Close menu">
+        <i class="fa fa-times"></i>
+    </button>
+
+    <a href="{{ url('/') }}" class="ur-dash-sidebar__brand">
+        <img src="/images/header_logo2.png" alt="Urgent Rishta">
+        <span>Urgent Rishta</span>
+    </a>
+
+    <ul class="ur-dash-nav">
+        <li>
+            <a href="{{ url('member/profile') }}" class="{{ request()->is('member/profile') ? 'is-active' : '' }}">
+                <i class="fa fa-user"></i> My Profile
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('searchresults') }}" class="{{ request()->is('member/searchresults*') ? 'is-active' : '' }}">
+                <i class="fa fa-search"></i> Search Profiles
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('member.recommended-matches') }}" class="{{ request()->is('member/recommended-matches') ? 'is-active' : '' }}">
+                <i class="fa fa-users"></i> Recommended Matches
+            </a>
+        </li>
+        <li>
+            <a href="{{ url('member/profile/listing/interests') }}" class="{{ request()->is('member/profile/listing/interests') ? 'is-active' : '' }}">
+                <i class="fa fa-heart"></i> My Interests
+            </a>
+        </li>
+        <li>
+            <a href="{{ url('member/profile/listing/photoaccess') }}" class="{{ request()->is('member/profile/listing/photoaccess') ? 'is-active' : '' }}">
+                <i class="fa fa-lock"></i> Photo Access Requests
+            </a>
+        </li>
+        <li>
+            <a href="{{ url('member/profile/preferences') }}" class="{{ request()->is('member/profile/preferences') ? 'is-active' : '' }}">
+                <i class="fa fa-sliders"></i> Partner Preferences
+            </a>
+        </li>
+
+        <div class="ur-dash-nav__divider"></div>
+
+        <li>
+            <a href="{{ url('member/profile/pictures') }}" class="{{ request()->is('member/profile/pictures') ? 'is-active' : '' }}">
+                <i class="fa fa-photo"></i> Manage Pictures
+            </a>
+        </li>
+        <li>
+            <a href="{{ url('member/profile/password/update') }}" class="{{ request()->is('member/profile/password/update') ? 'is-active' : '' }}">
+                <i class="fa fa-key"></i> Change Password
+            </a>
+        </li>
+    </ul>
+
+    <div class="ur-dash-sidebar__footer">
+        @if(User::retrieveUserObject()->admin == 1)
+        <div class="ur-dash-nav__section-label" style="padding-top:0;">Switch Dashboard</div>
+        @if(User::retrieveUserObject()->admin == 1)
+        <a href="{{ url('admin/dashboard') }}" class="ur-dash-nav__link">
+            <i class="fa fa-cogs"></i> Admin Dashboard
+        </a>
+        <a href="{{ route('team.dashboard') }}" class="ur-dash-nav__link">
+            <i class="fa fa-briefcase"></i> Team Dashboard
+        </a>
+        @endif
+        <div class="ur-dash-nav__divider"></div>
+        @endif
+        <button type="button" class="ur-dash-nav__link is-danger" onclick="javascript:deleteAccount($(this));">
+            <i class="fa fa-close"></i> Close Account
+        </button>
+        <button type="button" class="ur-dash-nav__link" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <i class="fa fa-power-off"></i> Log Out
+        </button>
+    </div>
+</aside>
+<div class="ur-dash-backdrop" id="ur_dash_backdrop"></div>

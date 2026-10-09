@@ -26,7 +26,7 @@ const NOTIFICATION_TYPES = {
     interest_declined: 'App\\Notifications\\InterestDeclined',
 };
 function refreshNotifications() {
-    $.get('/member/profile/notifications/refresh', function (data) {
+    $.get(window.Laravel.notificationsUrl || '/member/profile/notifications/refresh', function (data) {
         addNotifications(data, "#notifications");
     });
 }

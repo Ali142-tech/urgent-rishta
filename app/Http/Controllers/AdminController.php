@@ -15,9 +15,16 @@ use Illuminate\Mail\Message;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Session;
+use App\Services\ProfileCompletionCampaignService;
+use App\Mail\ProfileVerified;
+use App\Mail\ProfileRejected;
+use App\PhotoVerificationLog;
 use Intervention\Image\Facades\Image;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AdminController extends Controller
 {
@@ -28,12 +35,13 @@ class AdminController extends Controller
      */
     public function __construct()
     {
-        $this->middleware('auth')->except(['phpInfo', 'artisanAllClear', 'registerPublishImageVendor']);
-    }
-
-    public function phpInfo()
-    {
-        return phpinfo();
+        // Website Upgrade Brief §12 P0: every action in this controller is
+        // admin-only — there is no public or "logged in but not admin"
+        // exception. 'phpInfo', 'artisanAllClear' and
+        // 'registerPublishImageVendor' used to be excluded from even the
+        // 'auth' check, meaning literally anyone on the internet could call
+        // them; that exemption was a live vulnerability, not a convenience.
+        $this->middleware(['auth', 'admin']);
     }
 
     public function artisanOptimize()
@@ -58,17 +66,255 @@ class AdminController extends Controller
         return 'Published.';
     }
 
+    public function profileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        return view('admin.dashboard.profile-completion-campaign', ['stats' => $service->status()]);
+    }
+
+    public function startProfileCompletionCampaign(Request $request, ProfileCompletionCampaignService $service)
+    {
+        $limit = $request->filled('limit') ? (int) $request->input('limit') : null;
+        $dispatched = $service->dispatchEligible($limit);
+
+        Session::flash('message', "success|Dispatched {$dispatched} emails for sending. They'll go out at the configured rate — check back here for progress.|8000");
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    public function retryFailedProfileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        $requeued = $service->retryFailed();
+        Session::flash('message', "success|Re-queued {$requeued} previously-failed emails.|8000");
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    public function pauseProfileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        $service->pause();
+        Session::flash('message', 'warning|Campaign paused. Already-queued emails will hold and re-check every 5 minutes instead of sending.|8000');
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    public function resumeProfileCompletionCampaign(ProfileCompletionCampaignService $service)
+    {
+        $service->resume();
+        Session::flash('message', 'success|Campaign resumed.|5000');
+        return redirect()->route('admin.campaigns.profile-completion');
+    }
+
+    /**
+     * Admin "Dashboard Overview" landing page — stat cards, membership
+     * growth, package distribution, recent activity and pending approvals.
+     * Everything here is built from real tables; there's no PKR revenue or
+     * CNIC-verification data in this app, so revenue is shown per-currency
+     * (the `payments` table is Stripe/USD+GBP, never PKR) and "pending
+     * approvals" reuses the real photo-verification queue.
+     */
+    function dashboardOverview()
+    {
+        $now = now();
+        $startOfThisMonth = $now->copy()->startOfMonth();
+        $startOfLastMonth = $now->copy()->subMonthNoOverflow()->startOfMonth();
+
+        // --- Stat cards ---------------------------------------------------
+        $totalMembers = User::where('admin', 0)->count();
+        $totalMembersAtMonthStart = User::where('admin', 0)->where('created_at', '<', $startOfThisMonth)->count();
+        $totalMembersGrowthPct = $totalMembersAtMonthStart > 0
+            ? round((($totalMembers - $totalMembersAtMonthStart) / $totalMembersAtMonthStart) * 100, 1)
+            : null;
+
+        $requiredPhotos = ProfileController::REQUIRED_PHOTO_COUNT;
+        $pendingVerification = User::where('photo_verification_status', 'pending')
+            ->has('regularImages', '>=', $requiredPhotos)
+            ->count();
+
+        $activeMemberships = User::where('admin', 0)->where('active', 1)->count();
+        $activeMembershipsAtMonthStart = User::where('admin', 0)->where('active', 1)
+            ->where('created_at', '<', $startOfThisMonth)->count();
+        $activeGrowthPct = $activeMembershipsAtMonthStart > 0
+            ? round((($activeMemberships - $activeMembershipsAtMonthStart) / $activeMembershipsAtMonthStart) * 100, 1)
+            : null;
+
+        $appointmentsToday = Appointment::whereDate('appointment_date', $now->toDateString())->count();
+        $appointmentsUnconfirmedToday = Appointment::whereDate('appointment_date', $now->toDateString())
+            ->where('status', 'pending')->count();
+
+        // Revenue — real `payments` rows only (status=paid), grouped by
+        // currency since this app has never actually charged in PKR.
+        $revenueThisMonth = DB::table('payments')->where('status', 'paid')
+            ->where('paid_at', '>=', $startOfThisMonth)
+            ->select('currency', DB::raw('SUM(amount) as total'))
+            ->groupBy('currency')->pluck('total', 'currency');
+        $revenueLastMonth = DB::table('payments')->where('status', 'paid')
+            ->whereBetween('paid_at', [$startOfLastMonth, $startOfThisMonth])
+            ->select('currency', DB::raw('SUM(amount) as total'))
+            ->groupBy('currency')->pluck('total', 'currency');
+
+        // --- Membership growth (last 6 months, new non-admin registrations) ---
+        $membershipGrowth = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $monthStart = $now->copy()->subMonthsNoOverflow($i)->startOfMonth();
+            $monthEnd = $monthStart->copy()->endOfMonth();
+            $membershipGrowth[] = [
+                'label' => $monthStart->format('M'),
+                'count' => User::where('admin', 0)->whereBetween('created_at', [$monthStart, $monthEnd])->count(),
+            ];
+        }
+
+        // --- Members by package (two separate breakdowns) -----------------
+        $matchmakingTiers = MasterData::where('type', 'PACKAGE')->orderByRaw('CAST(dataid AS UNSIGNED)')->get();
+        $packageDistribution = [];
+        foreach ($matchmakingTiers as $tier) {
+            $count = User::where('admin', 0)->where('package', $tier->dataid)->count();
+            $packageDistribution[] = [
+                'name' => $tier->name,
+                'slug' => Str::slug($tier->name),
+                'count' => $count,
+                'pct' => $totalMembers > 0 ? round(($count / $totalMembers) * 100) : 0,
+            ];
+        }
+        $assignedMatchmakingCount = array_sum(array_column($packageDistribution, 'count'));
+        $packageDistribution[] = [
+            'name' => 'Unassigned', 'slug' => 'unassigned',
+            'count' => $totalMembers - $assignedMatchmakingCount,
+            'pct' => $totalMembers > 0 ? round((($totalMembers - $assignedMatchmakingCount) / $totalMembers) * 100) : 0,
+        ];
+
+        $onlineTiers = OnlinePackage::orderBy('id')->get();
+        $onlinePackageDistribution = [];
+        foreach ($onlineTiers as $tier) {
+            $count = User::where('admin', 0)->where('online_package', $tier->dataid)->count();
+            $onlinePackageDistribution[] = [
+                'name' => $tier->name,
+                'slug' => Str::slug($tier->name),
+                'count' => $count,
+                'pct' => $totalMembers > 0 ? round(($count / $totalMembers) * 100) : 0,
+            ];
+        }
+        $assignedOnlineCount = array_sum(array_column($onlinePackageDistribution, 'count'));
+        $onlinePackageDistribution[] = [
+            'name' => 'None', 'slug' => 'none',
+            'count' => $totalMembers - $assignedOnlineCount,
+            'pct' => $totalMembers > 0 ? round((($totalMembers - $assignedOnlineCount) / $totalMembers) * 100) : 0,
+        ];
+
+        // --- Recent activity (merged real events, newest first) -----------
+        $recentActivity = collect();
+
+        User::where('admin', 0)->orderByDesc('created_at')->limit(5)->get(['first_name', 'last_name', 'created_at'])
+            ->each(function ($u) use ($recentActivity) {
+                $recentActivity->push([
+                    'type' => 'registered',
+                    'text' => trim($u->first_name . ' ' . $u->last_name) . ' registered',
+                    'at' => $u->created_at,
+                ]);
+            });
+
+        PhotoVerificationLog::with(['user' => fn ($q) => $q->select('id', 'dataid', 'first_name', 'last_name')])
+            ->orderByDesc('created_at')->limit(5)->get()
+            ->each(function ($log) use ($recentActivity) {
+                $name = $log->user ? trim($log->user->first_name . ' ' . $log->user->last_name) : 'A member';
+                $verb = match ($log->action) {
+                    'approved' => "$name's photo was approved",
+                    'rejected' => "$name's photo was flagged for review",
+                    'reopened' => "$name's photo verification was reopened",
+                    default => "$name's photo verification was updated",
+                };
+                $recentActivity->push(['type' => 'photo', 'text' => $verb, 'at' => $log->created_at]);
+            });
+
+        DB::table('payments')->where('status', 'paid')->orderByDesc('paid_at')->limit(5)
+            ->get(['amount', 'currency', 'paid_at'])
+            ->each(function ($p) use ($recentActivity) {
+                $recentActivity->push([
+                    'type' => 'payment',
+                    'text' => 'Payment received — ' . $p->currency . ' ' . number_format($p->amount, 2),
+                    'at' => $p->paid_at,
+                ]);
+            });
+
+        Appointment::orderByDesc('created_at')->limit(5)->get()
+            ->each(function ($a) use ($recentActivity) {
+                $recentActivity->push([
+                    'type' => 'appointment',
+                    'text' => 'Consultation requested by ' . ($a->contact_name ?: 'a guest'),
+                    'at' => $a->created_at,
+                ]);
+            });
+
+        $recentActivity = $recentActivity->filter(fn ($a) => !empty($a['at']))
+            ->sortByDesc('at')->take(8)->values();
+
+        // --- Pending approvals (real photo-verification queue) ------------
+        $pendingApprovals = User::where('photo_verification_status', 'pending')
+            ->has('regularImages', '>=', $requiredPhotos)
+            ->orderByDesc('updated_at')
+            ->limit(5)
+            ->get(['dataid', 'first_name', 'last_name']);
+
+        return view('admin.dashboard.overview', compact(
+            'totalMembers', 'totalMembersGrowthPct',
+            'pendingVerification',
+            'activeMemberships', 'activeGrowthPct',
+            'appointmentsToday', 'appointmentsUnconfirmedToday',
+            'revenueThisMonth', 'revenueLastMonth',
+            'membershipGrowth',
+            'packageDistribution', 'onlinePackageDistribution',
+            'recentActivity', 'pendingApprovals'
+        ));
+    }
+
     function profiles()
     {
         $pageSize = 10;
-        $total = Profile::getTotalCount();
+        // Admin accounts are excluded here (and in refreshProfiles()) — this
+        // list's actions (delete, suspend, package changes, etc.) are meant
+        // for regular members only. Mixing admin accounts in, distinguished
+        // only by a small badge, is exactly how an admin account got
+        // accidentally deleted before this fix.
+        //
+        // Team-added proposals (`added_by` IS NOT NULL — login-less shell
+        // records a matchmaker pastes in, with no email/password) are also
+        // excluded here: they were showing up mixed into this list with no
+        // way to tell them apart from real self-registered members, and this
+        // list's account-oriented actions (Resend Verification Email,
+        // Password Reset) are meaningless for them. See admin/team-proposals
+        // (teamProposals()) for that pool's own list instead.
+        $where = "`admin` = 0 and `added_by` IS NULL";
+        $total = User::whereRaw($where)->count();
+        $numPages = (int) ceil($total / $pageSize);
+
+        // Honor ?page=N (e.g. returning here from the Change Package screen
+        // after "Back to Profiles" or a save) so the admin lands back on the
+        // page they were on instead of always seeing page 1.
+        $currentPage = (int) request()->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+        if ($numPages > 0 && $currentPage > $numPages) $currentPage = $numPages;
+
+        $members = Profile::profiles("`u`.`admin` = 0 and `u`.`added_by` IS NULL", null, "`u`.`updated_at` DESC", $pageSize, $pageSize * ($currentPage - 1));
+
+        // The list+detail layout (desktop) shows one member's full summary
+        // in the right-hand panel. ?selected=<dataid> (set via pushState
+        // when clicking a row — see loadMemberDetail() in profiles.blade.php)
+        // lets that be bookmarked/shared; otherwise default to the first row
+        // on the current page, same as the mockup.
+        $selectedDataid = request()->query('selected');
+        $selectedMember = null;
+        if ($selectedDataid) {
+            $quoted = "'" . addslashes($selectedDataid) . "'";
+            $selectedMember = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+        }
+        if (!$selectedMember) {
+            $selectedMember = collect($members)->first();
+        }
+
         $view = view('admin.dashboard.memberdata')->with([
-            'currentPage' => 1,
+            'currentPage' => $currentPage,
             'pageSize' => $pageSize,
             'total' => $total,
-            'numPages' => ceil($total / $pageSize),
-            'members' => Profile::profiles(null, null, "`u`.`updated_at` DESC", "10"),
-            'packages' => MasterData::where('type', '=', 'PACKAGE')->get()
+            'numPages' => $numPages,
+            'members' => $members,
+            'packages' => MasterData::where('type', '=', 'PACKAGE')->get(),
+            'selectedMember' => $selectedMember,
         ]);
 
         if (request()->ajax()) {
@@ -79,6 +325,260 @@ class AdminController extends Controller
         } else return $view;
     }
 
+    /**
+     * AJAX-loaded right-hand summary panel for the Member Profiles
+     * list+detail layout — clicking a row in the list fetches this instead
+     * of a full page reload (see loadMemberDetail() in profiles.blade.php).
+     */
+    function profilePanel($dataid)
+    {
+        $quoted = "'" . addslashes($dataid) . "'";
+        $member = Profile::profiles("`u`.`dataid` = $quoted", null, null, null, null, null, true)->first();
+        if (!$member) {
+            return response()->json(['code' => '404', 'message' => 'Member not found.'], 404);
+        }
+
+        return [
+            'code' => '200',
+            'html' => view('admin.dashboard.profile-detail-panel', ['member' => $member])->render(),
+        ];
+    }
+
+    /**
+     * "Team Proposals" — every profile a team member has manually added
+     * (`added_by` IS NOT NULL), kept as its own list rather than mixed into
+     * profiles() above (see that method's comment). Search fields mirror
+     * TeamController::searchProposals()'s "keyword" quick search; admins can
+     * additionally filter by which matchmaker added the proposal.
+     */
+    function teamProposals(Request $request)
+    {
+        $pageSize = 12;
+        $query = \App\Proposal::query()->with('photos');
+
+        if (!empty($request->keyword)) {
+            $keyword = '%' . $request->keyword . '%';
+            $query->where(function ($q) use ($keyword) {
+                $q->where('reference', 'like', $keyword)->orWhere('profession', 'like', $keyword)
+                    ->orWhere('city', 'like', $keyword)->orWhere('current_city', 'like', $keyword);
+            });
+        }
+        if (!empty($request->matchmaker)) {
+            $query->where('added_by', (int) $request->matchmaker);
+        }
+
+        $resultCount = (int) (clone $query)->count();
+        $numPages = max(1, (int) ceil($resultCount / $pageSize));
+        $currentPage = (int) $request->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+        if ($currentPage > $numPages) $currentPage = $numPages;
+
+        $members = $query->orderByDesc('created_at')->skip($pageSize * ($currentPage - 1))->take($pageSize)->get();
+
+        $addedByIds = $members->pluck('added_by')->filter()->unique()->values();
+        $addedByUsers = $addedByIds->isEmpty()
+            ? collect()
+            : \App\TeamMember::whereIn('id', $addedByIds)->get(['id', 'first_name', 'last_name', 'dataid', 'experience'])->keyBy('id');
+        foreach ($members as $member) {
+            $addedByUser = $addedByUsers->get($member->added_by);
+            $member->added_by_name = $addedByUser ? trim($addedByUser->first_name . ' ' . $addedByUser->last_name) : 'Unknown';
+            $member->added_by_dataid = $addedByUser->dataid ?? null;
+            $member->added_by_experience = $addedByUser->experience ?? null;
+            $member->has_partner_preference = $member->hasPartnerPreferences();
+            // Grants the card's Edit action to the admin regardless of who added the
+            // proposal — same pass-through TeamController::authorizeProposalOwner() gives admins.
+            $member->team_card_role = 'admin';
+        }
+
+        $matchmakers = \App\TeamMember::approved()->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
+
+        return view('admin.team-proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers'));
+    }
+
+    /** Website Upgrade Brief §9 "Photo & Identity Verification" module. */
+    function photoVerificationQueue()
+    {
+        $pageSize = 15;
+        $required = ProfileController::REQUIRED_PHOTO_COUNT;
+        $search = trim((string) request()->query('search'));
+
+        $applySearch = function ($query) use ($search) {
+            if ($search === '') return;
+            $query->where(function ($q) use ($search) {
+                $q->where('email', 'like', '%' . $search . '%')
+                    ->orWhere('first_name', 'like', '%' . $search . '%')
+                    ->orWhere('last_name', 'like', '%' . $search . '%')
+                    ->orWhere('dataid', 'like', '%' . $search . '%');
+            });
+        };
+
+        $pending = User::where('photo_verification_status', 'pending')
+            ->has('regularImages', '>=', $required)
+            ->when($search !== '', fn ($q) => $applySearch($q))
+            ->with(['regularImages', 'selfieImage'])
+            ->orderBy('updated_at', 'DESC') // newest submissions first
+            ->paginate($pageSize, ['*'], 'pending_page')
+            ->appends(request()->query());
+
+        // Rejected accounts can no longer log in to resubmit themselves —
+        // an admin has to explicitly reopen them for another attempt.
+        $rejected = User::where('photo_verification_status', 'rejected')
+            ->when($search !== '', fn ($q) => $applySearch($q))
+            ->with(['regularImages', 'selfieImage'])
+            ->orderBy('updated_at', 'DESC')
+            ->paginate($pageSize, ['*'], 'rejected_page')
+            ->appends(request()->query());
+
+        $view = view('admin.dashboard.photo-verification', [
+            'pending' => $pending,
+            'rejected' => $rejected,
+            'required' => $required,
+            'search' => $search,
+        ]);
+
+        if (request()->ajax()) {
+            return [
+                'code' => '200',
+                'html' => $view->renderSections()['admin-content']
+            ];
+        } else return $view;
+    }
+
+    /**
+     * Audit trail for approve/reject/reopen decisions — the `users` table
+     * only ever holds the *current* verification state, so this is the only
+     * place "who decided what, and when" for a given member can be looked up.
+     */
+    function photoVerificationLogs(Request $request)
+    {
+        $pageSize = 25;
+        $search = trim((string) $request->query('dataid'));
+
+        $logs = PhotoVerificationLog::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('user_dataid', 'like', '%' . $search . '%')
+                      ->orWhere('admin_dataid', 'like', '%' . $search . '%');
+                });
+            })
+            ->orderBy('created_at', 'DESC')
+            ->paginate($pageSize);
+
+        $view = view('admin.dashboard.photo-verification-logs', [
+            'logs' => $logs,
+            'search' => $search,
+        ]);
+
+        if ($request->ajax()) {
+            return [
+                'code' => '200',
+                'html' => $view->renderSections()['admin-content']
+            ];
+        } else return $view;
+    }
+
+    function approvePhotoVerification($dataid)
+    {
+        $admin = User::retrieveUserObject();
+        $user = User::where('dataid', $dataid)->first();
+
+        if (!$user) {
+            return ['code' => '404', 'message' => 'User was not found.'];
+        }
+
+        $user->photo_verification_status = 'verified';
+        $user->photo_verified_at = now();
+        $user->photo_verified_by = $admin->id;
+        $user->photo_rejection_reason = null;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
+
+        Log::info('Admin (' . $admin->dataid . ') verified photos for ' . $user->dataid);
+        PhotoVerificationLog::record($user, $admin, 'approved');
+
+        try {
+            Mail::to($user)->send(new ProfileVerified($user));
+        } catch (\Exception $e) {
+            Log::error('Failed to send profile-verified email to ' . $user->dataid . ': ' . $e->getMessage());
+        }
+
+        return [
+            'code' => '200',
+            'message' => 'success|Photos verified for ' . $user->first_name . ' ' . $user->last_name . '.'
+        ];
+    }
+
+    function rejectPhotoVerification(Request $request, $dataid)
+    {
+        $admin = User::retrieveUserObject();
+        $user = User::where('dataid', $dataid)->first();
+
+        if (!$user) {
+            return ['code' => '404', 'message' => 'User was not found.'];
+        }
+
+        $reason = trim((string) $request->input('reason'));
+        if ($reason === '') {
+            return ['code' => '422', 'message' => 'danger|Please provide a reason so the member knows what to fix.'];
+        }
+
+        $user->photo_verification_status = 'rejected';
+        $user->photo_rejection_reason = $reason;
+        $user->photo_verified_at = null;
+        $user->photo_verified_by = $admin->id;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true); // re-cache — retrieveUserObject() caches for 4h
+
+        Log::info('Admin (' . $admin->dataid . ') rejected photos for ' . $user->dataid . ': ' . $reason);
+        PhotoVerificationLog::record($user, $admin, 'rejected', $reason);
+
+        try {
+            Mail::to($user)->send(new ProfileRejected($user, $reason));
+        } catch (\Exception $e) {
+            Log::error('Failed to send profile-rejected email to ' . $user->dataid . ': ' . $e->getMessage());
+        }
+
+        return [
+            'code' => '200',
+            'message' => 'success|Photos rejected for ' . $user->first_name . ' ' . $user->last_name . '. Their account is locked out of login until you reopen it for resubmission.'
+        ];
+    }
+
+    /**
+     * A rejected account can't log back in on its own (see
+     * User::photoVerificationBlockMessage()) — this is the only way for a
+     * rejected member to get another attempt.
+     */
+    function reopenPhotoVerification($dataid)
+    {
+        $admin = User::retrieveUserObject();
+        $user = User::where('dataid', $dataid)->first();
+
+        if (!$user) {
+            return ['code' => '404', 'message' => 'User was not found.'];
+        }
+
+        // Wipe the rejected photos so re-login lands on an empty gate (0 of
+        // required) rather than one that already looks "satisfied" from the
+        // photos that were just rejected. Matches the existing (DB-row-only,
+        // no derivative-file cleanup) convention used by deleteProfile() above.
+        Images::where('user_id', $user->id)->delete();
+
+        $user->photo_verification_status = 'resubmit';
+        $user->photo_rejection_reason = null;
+        $user->photo_verified_at = null;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true);
+
+        Log::info('Admin (' . $admin->dataid . ') reopened photo verification for ' . $user->dataid . ' (old photos cleared)');
+        PhotoVerificationLog::record($user, $admin, 'reopened');
+
+        return [
+            'code' => '200',
+            'message' => 'success|' . $user->first_name . ' ' . $user->last_name . ' can now log in to resubmit their photos.'
+        ];
+    }
+
     function refreshProfiles(Request $request)
     {
         if ($request->ajax()) {
@@ -87,13 +587,20 @@ class AdminController extends Controller
             $pageRequested = $request->pagerequested;
             $showOnly = $request->showonly;
             $showWithin = $request->showwithin;
-            $where = "";
+            // Always excluded — see the comment on profiles() above.
+            $where = "`u`.`admin` = 0 and `u`.`added_by` IS NULL";
             $resultCount = null;
             $members = null;
 
+            // Every value below is admin-submitted but still goes straight
+            // into a raw SQL string (Profile::profiles() has no parameter
+            // binding) — addslashes() before concatenation is required to
+            // prevent SQL injection via any of these filter fields, same as
+            // the fix applied to the public search (HomeController::search())
+            // and API search (APIController::searchProfiles()).
             if (!empty($searchTerm)) {
-                $searchTerm = strtolower($searchTerm);
-                $where = "(lower(`u`.`first_name`) LIKE '%" . $searchTerm . "%'" .
+                $searchTerm = addslashes(strtolower($searchTerm));
+                $where = $where . " and (lower(`u`.`first_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`last_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`dataid`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`email`) LIKE '%" . $searchTerm . "%'" .
@@ -112,17 +619,17 @@ class AdminController extends Controller
 
             $gender = $request->gender;
             if (!empty($gender)) {
-                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`gender`='" . $gender . "'");
+                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`gender`='" . addslashes($gender) . "'");
             }
 
             $status = $request->status;
             if (!empty($status)) {
-                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`active`='" . $status . "'");
+                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`active`='" . addslashes($status) . "'");
             }
 
             $package = $request->package;
             if (!empty($package)) {
-                $where = $where . ((empty($where) ? "" : " and ") . ($package == "null" ? "`u`.`package` IS NULL" : "`u`.`package`='" . $package . "'"));
+                $where = $where . ((empty($where) ? "" : " and ") . ($package == "null" ? "`u`.`package` IS NULL" : "`u`.`package`='" . addslashes($package) . "'"));
             }
 
             if (!empty($showOnly) && $showOnly != 'all' && !empty($showWithin)) {
@@ -135,7 +642,7 @@ class AdminController extends Controller
             $members = Profile::profiles($where, null, $orderBy, $pageSize, $pageSize * ($pageRequested - 1));
 
             $resultCount = Profile::profiles($where, null, null, null, null, true);
-            $total = empty($searchTerm) && empty($gender) ? Profile::getTotalCount() : $resultCount;
+            $total = empty($searchTerm) && empty($gender) ? User::where('admin', 0)->count() : $resultCount;
 
             return [
                 'code' => '200',
@@ -163,6 +670,10 @@ class AdminController extends Controller
             as sender, ur.dataid as rid, CONCAT(ur.first_name, " ",ur.last_name) as receiver,
             us.email as sender_email,
             ur.email as receiver_email,
+            us.contact_mobile_number as sender_mobile,
+            ur.contact_mobile_number as receiver_mobile,
+            us.gender as sender_gender,
+            ur.gender as receiver_gender,
             (select group_concat(img_url separator ",") from images where user_id=i.sender) as sender_images,
             (select group_concat(img_url separator ",") from images where user_id=i.receiver) as receiver_images,
             i.interest_back as interest_back, i.created_at as created_at, i.updated_at as updated_at')
@@ -197,6 +708,10 @@ class AdminController extends Controller
                 ->select(DB::raw('us.dataid as sid, CONCAT(us.first_name, " ", us.last_name) as sender, ur.dataid as rid,
             CONCAT(ur.first_name, " ", ur.last_name) as receiver,
             us.email as sender_email, ur.email as receiver_email,
+            us.contact_mobile_number as sender_mobile,
+            ur.contact_mobile_number as receiver_mobile,
+            us.gender as sender_gender,
+            ur.gender as receiver_gender,
             (select group_concat(img_url separator ",") from images where user_id=i.sender) as sender_images,
             (select group_concat(img_url separator ",") from images where user_id=i.receiver) as receiver_images,
             i.interest_back as interest_back, i.created_at as created_at, i.updated_at as updated_at'))
@@ -245,36 +760,338 @@ class AdminController extends Controller
         ];
     }
 
-    function packages()
+    /**
+     * "Photo Access Requests" — same shape as interests()/refreshInterests()
+     * above, backed by photo_access_requests instead of `interest`. `uid`/
+     * `pid` here are the JOINED users' `dataid` (not the raw numeric FK
+     * columns on photo_access_requests) — admin.dashboard.photoaccessdata
+     * uses them directly as profile URLs/IDs, same convention as sid/rid
+     * on the interests query above.
+     */
+    function photoAccessRequests()
     {
+        $pageSize = 10;
+        $query = DB::table('photo_access_requests', 'p')->select(
+            DB::raw('us.dataid as uid, CONCAT(us.first_name, " ",us.last_name)
+            as user, ur.dataid as pid, CONCAT(ur.first_name, " ",ur.last_name) as profile,
+            us.email as user_email,
+            ur.email as profile_email,
+            (select group_concat(img_url separator ",") from images where user_id=p.uid) as user_images,
+            (select group_concat(img_url separator ",") from images where user_id=p.pid) as profile_images,
+            p.allowed as allowed, p.created_at as created_at, p.updated_at as updated_at')
+        )
+            ->leftJoin('users as us', 'p.uid', '=', 'us.id')
+            ->leftJoin('users as ur', 'p.pid', '=', 'ur.id');
+        $total = $query->count();
+        $view = view('admin.dashboard.photoaccessdata')->with([
+            'currentPage' => 1,
+            'pageSize' => $pageSize,
+            'total' => $total,
+            'numPages' => ceil($total / $pageSize),
+            'requests' => $query->orderBy('p.updated_at', 'DESC')->limit(10)->get()
+        ]);
+
         if (request()->ajax()) {
             return [
                 'code' => '200',
-                'html' => view('admin.dashboard.packages')->with(['packages' => MasterData::where('type', 'PACKAGE')->get()])->renderSections()['admin-content']
+                'html' => $view->renderSections()['admin-content']
+            ]; // only return whats in the main-content section
+        } else return $view;
+    }
+
+    function refreshPhotoAccessRequests(Request $request)
+    {
+        if ($request->ajax()) {
+            $searchTerm = $request->term;
+            $pageSize = $request->pagesize;
+            $pageRequested = $request->pagerequested;
+            $query = DB::table('photo_access_requests', 'p')
+                ->select(DB::raw('us.dataid as uid, CONCAT(us.first_name, " ", us.last_name) as user, ur.dataid as pid,
+            CONCAT(ur.first_name, " ", ur.last_name) as profile,
+            us.email as user_email, ur.email as profile_email,
+            (select group_concat(img_url separator ",") from images where user_id=p.uid) as user_images,
+            (select group_concat(img_url separator ",") from images where user_id=p.pid) as profile_images,
+            p.allowed as allowed, p.created_at as created_at, p.updated_at as updated_at'))
+                ->leftJoin('users as us', 'p.uid', '=', 'us.id')
+                ->leftJoin('users as ur', 'p.pid', '=', 'ur.id');
+            $resultCount = null;
+            $requests = null;
+
+            $total = $query->count();
+
+            $status = $request->status;
+            if ($status != null) {
+                $query->where('p.allowed', '=', $status);
+            }
+            if (!empty($searchTerm)) {
+                $searchTerm = strtolower($searchTerm);
+                $query = $query->where(function ($query) use ($searchTerm) {
+                    $query->orWhereRaw('lower(us.dataid) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.dataid) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(us.first_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(us.last_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.first_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.last_name) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(us.email) LIKE "%' . $searchTerm . '%"')
+                        ->orWhereRaw('lower(ur.email) LIKE "%' . $searchTerm . '%"');
+                });
+            }
+
+            $resultCount = $query->count();
+            $requests = $query->orderBy('p.updated_at', 'DESC')->offset($pageSize * ($pageRequested - 1))->limit($pageSize)->get();
+
+            return [
+                'code' => '200',
+                'html' => view('admin.dashboard.photoaccessdata')->with([
+                    'currentPage' => $pageRequested,
+                    'pageSize' => $pageSize,
+                    'total' => $total,
+                    'numPages' => ceil($resultCount / $pageSize),
+                    'resultCount' => !empty($request->term) ? $resultCount : null,
+                    'requests' => $requests
+                ])->renderSections()['photoaccess-data']
             ]; // only return whats in the main-content section
         } else return [
             'code' => '200'
         ];
     }
 
+    function packages()
+    {
+        $view = view('admin.dashboard.packages')->with(['packages' => MasterData::where('type', 'PACKAGE')->get()]);
+
+        if (request()->ajax()) {
+            return [
+                'code' => '200',
+                'html' => $view->renderSections()['admin-content']
+            ]; // only return whats in the main-content section
+        } else return $view;
+    }
+
+    /**
+     * Admin-configurable weight per compatibility factor (see
+     * Profile::compatibilityWith(), MatchWeightSetting::current()) — the
+     * AI match % is no longer a hard-coded flat average once an admin
+     * edits these.
+     */
+    function matchWeights()
+    {
+        return view('admin.dashboard.match-weights', ['weights' => \App\MatchWeightSetting::current()]);
+    }
+
+    function updateMatchWeights(Request $request)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $validated = $request->validate([
+            'age_weight' => 'required|integer|min:0|max:100',
+            'location_weight' => 'required|integer|min:0|max:100',
+            'religion_weight' => 'required|integer|min:0|max:100',
+            'caste_weight' => 'required|integer|min:0|max:100',
+            'marital_status_weight' => 'required|integer|min:0|max:100',
+            'education_weight' => 'required|integer|min:0|max:100',
+            'mother_tongue_weight' => 'required|integer|min:0|max:100',
+            'children_weight' => 'required|integer|min:0|max:100',
+        ]);
+
+        $row = \App\MatchWeightSetting::first() ?? new \App\MatchWeightSetting();
+        $row->fill($validated);
+        $row->save();
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") updated AI match weights: " . json_encode($validated));
+
+        Session::flash('message', 'success|AI match weights updated.');
+        return redirect()->route('admin.match-weights');
+    }
+
+    /**
+     * Website Upgrade Brief §13 "Manage notifications" — the admin-facing
+     * side of App\Notifications\AdminMessage. Lists team members so admin
+     * can message one specifically, or broadcast to all of them.
+     */
+    function teamMembers()
+    {
+        $search = trim((string) request()->query('search', ''));
+
+        $query = \App\TeamMember::approved();
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', '%' . $search . '%')
+                    ->orWhere('last_name', 'like', '%' . $search . '%')
+                    ->orWhere('email', 'like', '%' . $search . '%');
+            });
+        }
+        $members = $query->orderBy('first_name')->get();
+
+        return view('admin.dashboard.team-members', ['members' => $members, 'search' => $search]);
+    }
+
+    function sendAdminMessage(Request $request)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $request->validate([
+            'recipient' => 'required|string',
+            'message' => 'required|string|max:1000',
+        ]);
+
+        if ($request->recipient === 'all') {
+            $recipients = \App\TeamMember::approved()->get();
+        } else {
+            $recipients = \App\TeamMember::approved()->where('dataid', $request->recipient)->get();
+        }
+
+        foreach ($recipients as $recipient) {
+            $recipient->notify(new \App\Notifications\AdminMessage($request->message));
+        }
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") sent a message to " . $recipients->count() . " team member(s)");
+
+        Session::flash('message', 'success|Message sent to ' . $recipients->count() . ' team member(s).');
+        return redirect()->route('admin.team-members');
+    }
+
+    /**
+     * Which of the 4 contact fields actually render once a viewer passes
+     * User::canViewContactInfoOf() — the gate itself stays all-or-nothing
+     * (has this person earned access at all); this only prunes which
+     * fields show once that gate is open (member/profile.blade.php's
+     * Contact Info card, ProfileController::profile()).
+     */
+    function contactUnlockSettings()
+    {
+        return view('admin.dashboard.contact-unlock-settings', ['settings' => \App\ContactUnlockSetting::current()]);
+    }
+
+    function updateContactUnlockSettings(Request $request)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $validated = [
+            'unlock_email' => $request->boolean('unlock_email'),
+            'unlock_phone' => $request->boolean('unlock_phone'),
+            'unlock_name' => $request->boolean('unlock_name'),
+            'unlock_address' => $request->boolean('unlock_address'),
+        ];
+
+        $row = \App\ContactUnlockSetting::first() ?? new \App\ContactUnlockSetting();
+        $row->fill($validated);
+        $row->save();
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") updated contact unlock settings: " . json_encode($validated));
+
+        Session::flash('message', 'success|Contact unlock settings updated.');
+        return redirect()->route('admin.contact-unlock-settings');
+    }
+
+    /**
+     * Website Upgrade Brief §18 — admin-visible list of every match a
+     * team member has marked successful, with the revenue-share split
+     * editable "case by case" (§15).
+     */
+    function successfulMatches(Request $request)
+    {
+        $matches = \App\SuccessfulMatch::with('proposal', 'counterpartProposal', 'partnerA', 'partnerB')
+            ->orderByDesc('matched_at')
+            ->paginate(25);
+
+        return view('admin.dashboard.successful-matches', ['matches' => $matches]);
+    }
+
+    function updateSuccessfulMatchShare(Request $request, $id)
+    {
+        $loggedInUser = User::retrieveUserObject();
+        $match = \App\SuccessfulMatch::find($id);
+        if (!$match) {
+            return ['code' => '404', 'message' => 'Successful match record was not found.'];
+        }
+
+        $validated = $request->validate([
+            'share_partner_a' => 'nullable|integer|min:0|max:100',
+            'share_partner_b' => 'nullable|integer|min:0|max:100',
+        ]);
+
+        $match->fill($validated);
+        $match->save();
+
+        Log::info('Admin (' . $loggedInUser->dataid . ') updated revenue share for successful match ' . $id);
+
+        return ['code' => '200', 'message' => 'Revenue share updated.'];
+    }
+
+    /**
+     * Website Upgrade Brief §16 — queryable audit trail (see App\AuditLog).
+     * Every other Log::info(...) call in this app only ever reaches
+     * storage/logs/laravel.log; this is the one admin-visible, filterable
+     * history of who did what.
+     */
+    function auditLog(Request $request)
+    {
+        $action = trim((string) $request->query('action'));
+
+        $logs = \App\AuditLog::with('actor')
+            ->when($action !== '', fn ($q) => $q->where('action', $action))
+            ->orderByDesc('created_at')
+            ->paginate(30)
+            ->appends($request->query());
+
+        return view('admin.dashboard.audit-log', [
+            'logs' => $logs,
+            'action' => $action,
+        ]);
+    }
+
     /**
      * Admin view: all user appointments.
      */
+    /** Shared SELECT for both appointments() and refreshAppointments() — COALESCEs to the guest_* columns so requests submitted without an account (see AppointmentController::storeConsultationRequest) still show a name/email/phone. */
+    private function appointmentsSelect(): string
+    {
+        return 'a.id, a.appointment_date, a.appointment_time, a.subject, a.notes, a.status, a.created_at, a.updated_at,
+                u.dataid as member_id,
+                COALESCE(CONCAT(u.first_name, " ", u.last_name), a.guest_name) as member_name,
+                COALESCE(u.email, a.guest_email) as member_email,
+                COALESCE(u.contact_mobile_number, a.guest_phone) as member_phone,
+                (u.id IS NULL) as is_guest';
+    }
+
     function appointments()
     {
         $pageSize = 10;
-        $query = DB::table('appointments as a')
-            ->select(DB::raw('a.id, a.appointment_date, a.appointment_time, a.subject, a.notes, a.status, a.created_at, a.updated_at, u.dataid as member_id, CONCAT(u.first_name, " ", u.last_name) as member_name, u.email as member_email'))
-            ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
-        $total = $query->count();
-        $view = view('admin.dashboard.appointmentsdata')->with([
-            'currentPage' => 1,
+        $currentPage = (int) request()->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+
+        $baseQuery = function () {
+            return DB::table('appointments as a')
+                ->select(DB::raw($this->appointmentsSelect()))
+                ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
+        };
+
+        $total = $baseQuery()->count();
+        $numPages = (int) ceil(max(1, $total) / $pageSize);
+        if ($currentPage > $numPages) $currentPage = $numPages;
+
+        $appointments = $baseQuery()
+            ->orderBy('a.appointment_date', 'DESC')->orderBy('a.appointment_time', 'DESC')
+            ->offset($pageSize * ($currentPage - 1))->limit($pageSize)->get();
+
+        // List+detail layout (desktop) — same ?selected= pattern as Member
+        // Profiles: bookmarkable/shareable, falls back to the first row.
+        $selectedId = request()->query('selected');
+        $selectedAppointment = $selectedId ? Appointment::find($selectedId) : null;
+        if (!$selectedAppointment && !empty($appointments)) {
+            $selectedAppointment = Appointment::find($appointments[0]->id);
+        }
+
+        $view = view('admin.dashboard.appointmentsdata')->with(array_merge([
+            'currentPage' => $currentPage,
             'pageSize' => $pageSize,
             'total' => $total,
-            'numPages' => ceil(max(1, $total) / $pageSize),
+            'numPages' => $numPages,
             'resultCount' => null,
-            'appointments' => $query->orderBy('a.appointment_date', 'DESC')->orderBy('a.appointment_time', 'DESC')->limit($pageSize)->get(),
-        ]);
+            'appointments' => $appointments,
+            'selectedAppointment' => $selectedAppointment,
+        ], $this->appointmentStats()));
 
         if (request()->ajax()) {
             return [
@@ -287,6 +1104,50 @@ class AdminController extends Controller
     }
 
     /**
+     * Stat cards for the Appointments list+detail page — real data only.
+     * There's no fee/payment column on appointments (the consultation fee
+     * is collected separately after admin review, see AppointmentController
+     * ::storeConsultationRequest), so there's deliberately no revenue card
+     * here — "Completed" (lifetime) fills that slot instead.
+     */
+    private function appointmentStats(): array
+    {
+        $now = now();
+        $lastMonth = $now->copy()->subMonth();
+
+        $thisMonthCount = Appointment::whereYear('created_at', $now->year)->whereMonth('created_at', $now->month)->count();
+        $lastMonthCount = Appointment::whereYear('created_at', $lastMonth->year)->whereMonth('created_at', $lastMonth->month)->count();
+        $thisMonthDeltaPct = $lastMonthCount > 0
+            ? round((($thisMonthCount - $lastMonthCount) / $lastMonthCount) * 100)
+            : ($thisMonthCount > 0 ? 100 : 0);
+
+        return [
+            'pendingCount' => Appointment::where('status', 'pending')->count(),
+            'confirmedTodayCount' => Appointment::where('status', 'confirmed')->whereDate('appointment_date', $now->toDateString())->count(),
+            'thisMonthCount' => $thisMonthCount,
+            'thisMonthDeltaPct' => $thisMonthDeltaPct,
+            'completedCount' => Appointment::where('status', 'completed')->count(),
+        ];
+    }
+
+    /**
+     * AJAX-loaded right-hand summary panel for the Appointments list+detail
+     * layout — same pattern as profilePanel() for Member Profiles.
+     */
+    function appointmentPanel($id)
+    {
+        $appointment = Appointment::find($id);
+        if (!$appointment) {
+            return response()->json(['code' => '404', 'message' => 'Appointment not found.'], 404);
+        }
+
+        return [
+            'code' => '200',
+            'html' => view('admin.dashboard.appointment-detail-panel', ['appointment' => $appointment])->render(),
+        ];
+    }
+
+    /**
      * AJAX refresh for appointments list.
      */
     function refreshAppointments(Request $request)
@@ -294,15 +1155,20 @@ class AdminController extends Controller
         if ($request->ajax()) {
             $searchTerm = $request->term;
             $status = $request->status;
+            $date = $request->date;
             $pageSize = (int) ($request->pagesize ?? 10);
             $pageRequested = (int) ($request->pagerequested ?? 1);
 
             $query = DB::table('appointments as a')
-                ->select(DB::raw('a.id, a.appointment_date, a.appointment_time, a.subject, a.notes, a.status, a.created_at, a.updated_at, u.dataid as member_id, CONCAT(u.first_name, " ", u.last_name) as member_name, u.email as member_email'))
+                ->select(DB::raw($this->appointmentsSelect()))
                 ->leftJoin('users as u', 'a.user_id', '=', 'u.id');
 
             if (!empty($status)) {
                 $query->where('a.status', '=', $status);
+            }
+
+            if (!empty($date)) {
+                $query->whereDate('a.appointment_date', '=', $date);
             }
 
             if (!empty($searchTerm)) {
@@ -312,7 +1178,9 @@ class AdminController extends Controller
                     $sub->whereRaw('LOWER(u.dataid) LIKE ?', [$like])
                         ->orWhereRaw('LOWER(u.first_name) LIKE ?', [$like])
                         ->orWhereRaw('LOWER(u.last_name) LIKE ?', [$like])
-                        ->orWhereRaw('LOWER(u.email) LIKE ?', [$like]);
+                        ->orWhereRaw('LOWER(u.email) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(a.guest_name) LIKE ?', [$like])
+                        ->orWhereRaw('LOWER(a.guest_email) LIKE ?', [$like]);
                 });
             }
 
@@ -326,14 +1194,18 @@ class AdminController extends Controller
 
             return [
                 'code' => '200',
-                'html' => view('admin.dashboard.appointmentsdata')->with([
+                // renderSections() evaluates the WHOLE extends chain (including
+                // the parent's stat cards) even though only 'appointments-data'
+                // is used below — appointmentStats() must be included here too
+                // or those variables are undefined on every filter/search AJAX call.
+                'html' => view('admin.dashboard.appointmentsdata')->with(array_merge([
                     'currentPage' => $pageRequested,
                     'pageSize' => $pageSize,
                     'total' => $resultCount,
                     'numPages' => ceil(max(1, $resultCount) / $pageSize),
                     'resultCount' => $resultCount,
                     'appointments' => $appointments,
-                ])->renderSections()['appointments-data'],
+                ], $this->appointmentStats()))->renderSections()['appointments-data'],
             ];
         }
 
@@ -342,6 +1214,77 @@ class AdminController extends Controller
         ];
     }
 
+    /**
+     * Admin reviews a consultation/appointment request — sets the final
+     * status and, when confirming, can adjust the date/time to whatever
+     * slot actually works on their schedule (the member/guest only
+     * submitted a PREFERENCE via the public request form).
+     */
+    function updateAppointmentStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,cancelled,completed',
+            'appointment_date' => 'nullable|date',
+            'appointment_time' => 'nullable|string|max:20',
+        ]);
+
+        $appointment = Appointment::find($id);
+        if (!$appointment) {
+            return ['code' => '404', 'message' => 'Appointment not found.'];
+        }
+
+        $appointment->status = $request->status;
+        if ($request->filled('appointment_date')) {
+            $appointment->appointment_date = $request->appointment_date;
+        }
+        if ($request->filled('appointment_time')) {
+            $appointment->appointment_time = $request->appointment_time;
+        }
+        $appointment->save();
+
+        Log::info("Admin updated appointment #{$id} to status '{$request->status}'");
+
+        // Calendar invite (.ics email): a confirmed (scheduled) appointment
+        // is emailed to the client + this admin; a cancelled/reopened one is
+        // withdrawn. Never blocks the save itself.
+        $calendarNote = $this->sendAppointmentCalendarInvite($appointment);
+
+        return ['code' => '200', 'message' => 'Appointment updated.' . $calendarNote];
+    }
+
+    /**
+     * Calendar hand-off after an appointment's status/date/time changes.
+     *  - confirmed: an .ics invitation is emailed to the client and the
+     *    scheduling admin (Gmail/Outlook/Apple offer Yes / Add-to-calendar).
+     *    A reschedule re-sends it with the same event ID so calendars update
+     *    the existing event instead of adding a second one.
+     *  - cancelled / reopened (pending): the invite is withdrawn (only if one
+     *    was actually sent).
+     * Never blocks the save itself — failures come back as a note.
+     */
+    private function sendAppointmentCalendarInvite(Appointment $appointment): string
+    {
+        $invites = app(\App\Services\AppointmentInviteService::class);
+        $adminEmail = auth()->user()->email ?? null;
+
+        try {
+            if ($appointment->status === 'confirmed') {
+                $sent = $invites->sendInvite($appointment, $adminEmail);
+                if (!$sent) {
+                    return ' (No calendar invite sent — the request has no valid client email and your account has none.)';
+                }
+                return ' Calendar invite emailed to ' . implode(' and ', $sent) . '.';
+            }
+            if (in_array($appointment->status, ['cancelled', 'pending'], true)) {
+                $sent = $invites->sendCancel($appointment, $adminEmail);
+                return $sent ? ' Cancellation emailed to ' . implode(' and ', $sent) . '.' : '';
+            }
+        } catch (\Throwable $e) {
+            Log::error("Calendar invite failed for appointment #{$appointment->id}: " . $e->getMessage());
+            return ' (Saved, but the calendar invite failed: ' . $e->getMessage() . ')';
+        }
+        return '';
+    }
     /**
      * List users who have any package: admin-assigned (offline) or online subscription.
      * Admin only. Filters: search (name/email/dataid), package type (all / admin_only / online_only), specific package.
@@ -540,6 +1483,86 @@ class AdminController extends Controller
         ];
     }
 
+    /**
+     * "Download User Data (PDF)" action on the admin/profiles member card.
+     * Was a dead <a> with no href/onclick before — never implemented.
+     */
+    function downloadProfilePdf($dataid)
+    {
+        $member = Profile::where('dataid', $dataid)->first();
+        if (empty($member)) {
+            abort(404, 'Member not found.');
+        }
+
+        $imagePath = public_path($member->getProfileImage());
+        $photo = is_file($imagePath) ? $imagePath : null;
+
+        $pdf = Pdf::loadView('admin.dashboard.profile-pdf', compact('member', 'photo'));
+        return $pdf->download($member->dataid . '-profile.pdf');
+    }
+
+    /**
+     * Full admin page (with the sidebar/shell) for changing a member's
+     * package — replaces the old renderUpdatePackageModal() popup.
+     */
+    function changePackagePage($dataid)
+    {
+        $member = User::retrieveUserObject($dataid);
+        $packages = MasterData::where('type', 'PACKAGE')->get();
+        // Which page of the member list the admin came from (see
+        // memberdata.blade.php's "Change Package" links) — carried through
+        // so "Back to Profiles" and the post-save redirect land back on
+        // that same page instead of always resetting to page 1.
+        $returnPage = (int) request()->query('page', 1);
+        return view('admin.dashboard.profile-package', compact('member', 'packages', 'returnPage'));
+    }
+
+    /**
+     * "Profile Preview" admin page — a live-website-style preview of the
+     * member's card alongside admin controls (package, photo privacy,
+     * verification/security actions, suspend/delete), reached via the
+     * "Full Profile" button on the member list.
+     */
+    function profilePreview($dataid)
+    {
+        $quotedDataid = "'" . addslashes($dataid) . "'";
+        // includeTrashed=true so the "View" action on Deleted Profiles works
+        // too — harmless for a normal (non-trashed) dataid either way.
+        $member = Profile::profiles("`u`.`dataid` = $quotedDataid", null, null, null, null, null, true)->first();
+        if (!$member) {
+            abort(404);
+        }
+
+        $returnPage = (int) request()->query('page', 1);
+        return view('admin.dashboard.profile-preview', compact('member', 'returnPage'));
+    }
+
+    /**
+     * Sets the admin-controlled override for how this member's photo
+     * appears to OTHER members — independent of photo_verification_status
+     * (see Profile::showBlur()/getProfileImage()).
+     */
+    function updatePhotoVisibility(Request $request, $dataid)
+    {
+        $request->validate(['visibility' => 'required|in:visible,blurred,hidden']);
+
+        $user = User::where('dataid', $dataid)->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Member not found.'];
+        }
+
+        $user->photo_visibility = $request->visibility;
+        $user->save();
+
+        // Without this, other members viewing this profile keep seeing the
+        // stale cached copy (retrieveUserObject caches for 4 hours) and the
+        // change wouldn't actually take effect for up to that long — same
+        // fix toggleActive() already applies after changing active.
+        User::retrieveUserObject($dataid, true);
+
+        return ['code' => '200', 'message' => 'Photo privacy updated.', 'visibility' => $request->visibility];
+    }
+
     function fixDataId($table)
     {
         $msg_array = array();
@@ -713,6 +1736,76 @@ class AdminController extends Controller
         }
     }
 
+    /** Suspend / deactivate / reactivate an already-approved team member. */
+    function updateTeamMemberStatus($action, $dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $statusMap = ['suspend' => 'suspended', 'deactivate' => 'deactivated', 'reactivate' => 'active'];
+        if (!isset($statusMap[$action])) {
+            return ['code' => '404', 'message' => 'Action not permitted!!!'];
+        }
+
+        $teamMember = \App\TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$teamMember) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $teamMember->status = $statusMap[$action];
+        $teamMember->save();
+
+        $displayName = $teamMember->first_name . ' ' . $teamMember->last_name;
+        Log::info("Admin (" . $loggedInUser->dataid . ") set team member status of " . $displayName . " (" . $teamMember->email . ") to " . $statusMap[$action]);
+
+        return [
+            'code' => '200',
+            'message' => $displayName . ' is now ' . $statusMap[$action] . '.',
+            'team_member_status' => $teamMember->status
+        ];
+    }
+
+    /** Public "Become a Partner" applications awaiting review (see MatchmakerApplicationController). */
+    function matchmakerApplications()
+    {
+        $applications = \App\TeamMember::pending()->orderBy('created_at')->get();
+        return view('admin.dashboard.matchmaker-applications', ['applications' => $applications]);
+    }
+
+    /** Approving lets the applicant sign in at /team/login and use the Team Dashboard. */
+    function approveMatchmakerApplication($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+        $member = \App\TeamMember::pending()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Application was not found or already reviewed.'];
+        }
+
+        $member->update([
+            'application_status' => 'approved',
+            'is_approved' => true,
+            'status' => 'active',
+            'approved_at' => now(),
+        ]);
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") approved matchmaker application " . $member->dataid . " (" . $member->email . ")");
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ' has been approved as a team member.'];
+    }
+
+    function rejectMatchmakerApplication($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+        $member = \App\TeamMember::pending()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Application was not found or already reviewed.'];
+        }
+
+        $member->update(['application_status' => 'rejected']);
+
+        Log::info("Admin (" . $loggedInUser->dataid . ") rejected matchmaker application " . $member->dataid . " (" . $member->email . ")");
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . '\'s application has been rejected.'];
+    }
     function deleteProfile($dataid)
     {
         $loggedInUser = User::retrieveUserObject();
@@ -721,19 +1814,36 @@ class AdminController extends Controller
         try {
             if (!empty($dataid)) {
                 $user = User::retrieveUserObject($dataid);
-                Log::info("Initiating profile delete for " . $dataid);
-                $id = $user->id;
-                Images::where('user_id', $id)->delete();
-                Log::info("Deleted images");
-                Interest::where('sender', $id)->delete();
-                Interest::where('receiver', $id)->delete();
-                Log::info("Deleted interests");
-                Filtered::where('user', $id)->delete();
-                Log::info("Deleted Filtered");
+
+                // Admin accounts can appear in this same member list/search
+                // (see memberdata.blade.php's small admin badge) — nothing
+                // was stopping one from being deleted exactly like a regular
+                // member, by accident, with no way back. Refuse outright
+                // rather than relying on an admin noticing a small icon.
+                if ($user && $user->isAdmin()) {
+                    DB::rollback();
+                    return [
+                        'code' => '403',
+                        'message' => 'Admin accounts cannot be deleted from this page.',
+                    ];
+                }
+
+                Log::info("Initiating profile soft-delete for " . $dataid);
                 $displayName = $user->first_name . " " . $user->last_name;
+
+                // Soft delete only (App\User's SoftDeletes trait makes this
+                // set deleted_at rather than remove the row) — images,
+                // interests, and filtered-list entries are deliberately left
+                // untouched so restoring the account restores everything,
+                // not just a name. Also flips active off, matching how
+                // "Suspend Account" already works, as defense-in-depth for
+                // any other code path that checks active without also
+                // checking deleted_at.
+                $user->active = 0;
+                $user->save();
                 $user->delete();
                 DB::commit();
-                Log::info("User (" . $loggedInUser->dataid . ") deleted profile of " . $displayName . " (" . $user->email . ")");
+                Log::info("User (" . $loggedInUser->dataid . ") soft-deleted profile of " . $displayName . " (" . $user->email . ")");
             }
             if (request()->ajax()) {
                 return [
@@ -742,6 +1852,84 @@ class AdminController extends Controller
             } else return [
                 'code' => '200'
             ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            return ['code' => '500', 'message' => $e->getMessage()];
+        }
+    }
+
+    /** List of soft-deleted (non-admin) profiles, for recovery. Supports ?search= filtering by email. */
+    function deletedProfiles()
+    {
+        $pageSize = 20;
+        $currentPage = (int) request()->query('page', 1);
+        if ($currentPage < 1) $currentPage = 1;
+        $search = trim((string) request()->query('search', ''));
+
+        $query = User::onlyTrashed()->where('admin', 0);
+        if ($search !== '') {
+            $query->where('email', 'like', '%' . $search . '%');
+        }
+        $query->orderBy('deleted_at', 'desc');
+
+        $total = (clone $query)->count();
+        $numPages = (int) ceil($total / $pageSize);
+        if ($numPages > 0 && $currentPage > $numPages) $currentPage = $numPages;
+
+        $members = $query->forPage($currentPage, $pageSize)->get();
+
+        return view('admin.dashboard.deleted-profiles', compact('members', 'currentPage', 'pageSize', 'total', 'numPages', 'search'));
+    }
+
+    /**
+     * Undoes a soft delete (App\User's SoftDeletes trait) — deliberately
+     * does NOT also reactivate the account (active stays 0), so an admin
+     * reviews it via the normal "Activate Account" action rather than a
+     * restored account silently going live again.
+     */
+    function restoreProfile($dataid)
+    {
+        $user = User::onlyTrashed()->where('dataid', $dataid)->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Deleted profile not found.'];
+        }
+
+        $user->restore();
+        Log::info("User (" . User::retrieveUserObject()->dataid . ") restored profile of " . $user->first_name . " " . $user->last_name . " (" . $user->email . ")");
+
+        return ['code' => '200', 'message' => 'Profile restored. It is still inactive until you activate it.'];
+    }
+
+    /**
+     * Permanently removes an already soft-deleted profile — unlike the
+     * regular "Delete Profile" action, this really is unrecoverable, so it
+     * only ever operates on a profile that's already in the trash (never a
+     * live one), and this time really does cascade-delete images/interests/
+     * filtered-list rows along with the user row.
+     */
+    function permanentlyDeleteProfile($dataid)
+    {
+        $user = User::onlyTrashed()->where('dataid', $dataid)->where('admin', 0)->first();
+        if (!$user) {
+            return ['code' => '404', 'message' => 'Deleted profile not found.'];
+        }
+
+        $displayName = $user->first_name . " " . $user->last_name;
+        $email = $user->email;
+        $id = $user->id;
+
+        DB::beginTransaction();
+        try {
+            Images::where('user_id', $id)->delete();
+            Interest::where('sender', $id)->delete();
+            Interest::where('receiver', $id)->delete();
+            Filtered::where('user', $id)->delete();
+            $user->forceDelete();
+            DB::commit();
+
+            Log::warning("User (" . User::retrieveUserObject()->dataid . ") PERMANENTLY deleted profile of " . $displayName . " (" . $email . ") — unrecoverable");
+
+            return ['code' => '200', 'message' => 'Profile permanently deleted.'];
         } catch (\Exception $e) {
             DB::rollback();
             return ['code' => '500', 'message' => $e->getMessage()];
@@ -912,19 +2100,29 @@ class AdminController extends Controller
 
     public function showListingModal($type, $dataid)
     {
+        $member = User::retrieveUserObject($dataid);
+        $members = null;
+        if ($type != "interests") {
+            $members = $member->getTypeFilteredList($type);
+        } else {
+            $members = $member->getInterestLists();
+        }
+
+        // Full admin page (with the sidebar/shell) — this is the normal path
+        // now that admin/profiles links here directly instead of opening a modal.
+        if ($type == 'interests') {
+            return view('admin.dashboard.profile-interests', compact('member', 'members'));
+        }
+
         if (request()->ajax()) {
-            $user = User::retrieveUserObject($dataid);
-            $members = null;
-            if ($type != "interests") {
-                $members = $user->getTypeFilteredList($type);
-            } else {
-                $members = $user->getInterestLists();
-            }
-            $body = view('member.listing', compact('type', 'members'))->renderSections()['main-content'];
-            $buttons = "";
+            // member.listing is just the page shell (@yield('filtered-data')) —
+            // the actual cards live in member.filtereddata, which @extends it
+            // and fills that yield. Rendering member.listing directly here
+            // left the modal body blank.
+            $body = view('member.filtereddata', compact('type', 'members'))->renderSections()['main-content'];
             return [
                 'code' => '200',
-                'html' => $this->renderModal("", $body, $buttons)
+                'html' => $this->renderModal("", $body, "")
             ];
         } else return [
             'code' => '200'

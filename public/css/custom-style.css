@@ -151,6 +151,23 @@ button.dropdown-toggle,
     width: 100%;
 }
 
+/* Member listing cards (filtered search results, photo access requests)
+   pack 2 label/value pairs per row: the two .w50 value cells alone already
+   claim 100% of the table's width, leaving no room for the nowrap .label
+   cells, which overflow the card — badly on a narrow phone. Stack each
+   cell onto its own line there instead. */
+@media (max-width: 575.98px) {
+    table td.table-cell {
+        display: block;
+        width: 100% !important;
+        white-space: normal;
+        text-align: center;
+    }
+    table td.table-cell.label {
+        padding-bottom: 0;
+    }
+}
+
 .float-left {
     float: left;
 }
