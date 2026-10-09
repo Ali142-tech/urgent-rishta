@@ -27,7 +27,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     protected $table = 'team_members';
 
     protected $fillable = [
-        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style', 'can_view_originals',
+        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style', 'can_view_originals', 'is_private_member', 'can_view_private',
         'is_admin', 'is_approved', 'status', 'application_status', 'experience', 'about_me', 'approved_at',
     ];
 
@@ -35,6 +35,8 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
 
     protected $casts = [
         'is_admin' => 'boolean',
+        'is_private_member' => 'boolean',
+        'can_view_private' => 'boolean',
         'can_view_originals' => 'boolean',
         'is_approved' => 'boolean',
         'approved_at' => 'datetime',
@@ -185,7 +187,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         // Distinct profiles: one that fits several of this member's clients is still one AI match.
         $ids = [];
         foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
-            foreach (array_keys($proposal->strongMatchScores()) as $id) {
+            foreach (array_keys($proposal->visibleMatchScores()) as $id) {
                 $ids[$id] = true;
             }
         }
@@ -197,7 +199,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     {
         $total = 0;
         foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
-            $total += min(20, count($proposal->strongMatchScores()));
+            $total += min(20, count($proposal->visibleMatchScores()));
         }
         return $total;
     }

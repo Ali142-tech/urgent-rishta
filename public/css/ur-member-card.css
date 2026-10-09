@@ -583,3 +583,8 @@
         flex-direction: column;
     }
 }
+
+/* Team Dashboard cards carry up to five actions (View, Edit, Delete, Share, Make private): View gets its own row, the rest share the next one. */
+.member-card__footer--team { flex-wrap: wrap; }
+.member-card__footer--team a { flex: 1 1 auto; white-space: nowrap; padding: 10px 12px; }
+.member-card__footer--team a:first-child { flex: 1 1 100%; }

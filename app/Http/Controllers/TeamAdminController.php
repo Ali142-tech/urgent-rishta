@@ -53,10 +53,19 @@ class TeamAdminController extends Controller
     }
 
     /** Every proposal on the platform, with search and a "added by" filter. */
-    public function proposals(Request $request)
+    /** The private proposals only — the same list and cards as All Proposals, where each one can be made public again. */
+    public function privateProposals(Request $request)
+    {
+        return $this->proposals($request, true);
+    }
+
+    public function proposals(Request $request, bool $privateOnly = false)
     {
         $pageSize = 12;
         $query = Proposal::query()->with('photos');
+        if ($privateOnly) {
+            $query->where('is_private', true);
+        }
 
         if (!empty($request->keyword)) {
             $keyword = '%' . $request->keyword . '%';
@@ -92,25 +101,66 @@ class TeamAdminController extends Controller
 
         $matchmakers = TeamMember::approved()->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
 
-        return view('team.manage.proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers'));
+        $privateCount = Proposal::where('is_private', true)->count();
+
+        return view('team.manage.proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers', 'privateOnly', 'privateCount'));
     }
 
     /** Approved team members, with a message box each and suspend / deactivate / reactivate. */
-    public function members()
+    public function members(Request $request)
     {
-        $search = trim((string) request()->query('search', ''));
+        $search = trim((string) $request->query('search', ''));
+        $statusFilter = in_array($request->query('status'), ['active', 'suspended', 'deactivated'], true) ? $request->query('status') : '';
 
         $query = TeamMember::approved();
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', '%' . $search . '%')
                     ->orWhere('last_name', 'like', '%' . $search . '%')
-                    ->orWhere('email', 'like', '%' . $search . '%');
+                    ->orWhere('email', 'like', '%' . $search . '%')
+                    ->orWhere('dataid', 'like', '%' . $search . '%');
             });
         }
-        $members = $query->orderBy('first_name')->get();
+        if ($statusFilter === 'active') {
+            $query->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'));
+        } elseif ($statusFilter !== '') {
+            $query->where('status', $statusFilter);
+        }
 
-        return view('team.manage.members', ['members' => $members, 'search' => $search]);
+        // 10 at a time; "Load more" asks for the next page and gets just those cards back.
+        $members = $query->orderBy('first_name')->paginate(10)->withQueryString();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html' => view('team.manage.partials.member-cards', ['members' => $members])->render(),
+                'next' => $members->nextPageUrl(),
+                'total' => $members->total(),
+            ]);
+        }
+
+        $total = TeamMember::approved()->count();
+        $activeTotal = TeamMember::approved()->where(fn ($q) => $q->whereNull('status')->orWhere('status', 'active'))->count();
+
+        return view('team.manage.members', compact('members', 'search', 'statusFilter', 'total', 'activeTotal'));
+    }
+    /** One team member's complete profile: who they are, their branding, access settings, workload and latest proposals. */
+    public function showMember($dataid)
+    {
+        $member = TeamMember::approved()->where('dataid', $dataid)->firstOrFail();
+
+        $own = Proposal::where('added_by', $member->id);
+        $stats = [
+            'total' => (clone $own)->count(),
+            'active' => (clone $own)->where('profile_status', 'active')->count(),
+            'private' => (clone $own)->where('is_private', true)->count(),
+            'month' => (clone $own)->where('created_at', '>=', now()->startOfMonth())->count(),
+            'matches' => \App\SuccessfulMatch::where('partner_a_id', $member->id)->orWhere('partner_b_id', $member->id)->count(),
+            'first' => (clone $own)->min('created_at'),
+            'last' => (clone $own)->max('created_at'),
+        ];
+        $recent = (clone $own)->with('photos')->orderByDesc('created_at')->take(10)->get();
+
+        return view('team.manage.member-show', compact('member', 'stats', 'recent'));
     }
 
     /** One message to a team member, or to all of them. */
@@ -199,6 +249,66 @@ class TeamAdminController extends Controller
     }
 
     /** "Become a Partner" applications awaiting a decision. */
+    /** Makes one proposal private (only admins, its owner and allowed members see it) or public again. */
+    public function setProposalPrivacy(Request $request, $dataid)
+    {
+        $request->validate(['private' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $proposal = Proposal::withoutGlobalScopes()->where('reference', $dataid)->first();
+        if (!$proposal) {
+            return ['code' => '404', 'message' => 'Proposal was not found (id: ' . $dataid . ')'];
+        }
+
+        $proposal->is_private = $request->private === '1';
+        $proposal->save();
+
+        Log::info('Admin team account (' . $admin->dataid . ') made proposal ' . $proposal->reference . ($proposal->is_private ? ' private' : ' public'));
+
+        return ['code' => '200', 'is_private' => $proposal->is_private, 'message' => $proposal->reference . ($proposal->is_private ? ' is now private.' : ' is now public.')];
+    }
+
+    /** A "private member": everything they have added (and add later) is private. Turning it off makes all their proposals public again. */
+    public function setPrivateMember(Request $request, $dataid)
+    {
+        $request->validate(['private' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $member = TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $member->is_private_member = $request->private === '1';
+        $member->save();
+        $count = Proposal::withoutGlobalScopes()->where('added_by', $member->id)->update(['is_private' => $member->is_private_member]);
+
+        Log::info('Admin team account (' . $admin->dataid . ') set ' . $member->dataid . ($member->is_private_member ? ' as a private member' : ' as a normal member') . ' (' . $count . ' proposals)');
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ($member->is_private_member
+            ? ' is now a private member — their ' . $count . ' proposals are private.'
+            : ' is a normal member again — their ' . $count . ' proposals are public.')];
+    }
+
+    /** Lets one team member see private proposals (or stops that). */
+    public function setPrivateAccess(Request $request, $dataid)
+    {
+        $request->validate(['access' => 'required|in:0,1']);
+        $admin = Auth::guard('team')->user();
+
+        $member = TeamMember::approved()->where('dataid', $dataid)->first();
+        if (!$member) {
+            return ['code' => '404', 'message' => 'Team member was not found (id: ' . $dataid . ')'];
+        }
+
+        $member->can_view_private = $request->access === '1';
+        $member->save();
+
+        Log::info('Admin team account (' . $admin->dataid . ') ' . ($member->can_view_private ? 'allowed' : 'removed') . ' private-proposal access for ' . $member->dataid);
+
+        return ['code' => '200', 'message' => $member->first_name . ' ' . $member->last_name . ($member->can_view_private ? ' can now see private proposals.' : ' can no longer see private proposals.')];
+    }
+
     public function applications()
     {
         $applications = TeamMember::pending()->orderBy('created_at')->get();

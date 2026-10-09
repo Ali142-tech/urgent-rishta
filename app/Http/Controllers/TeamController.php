@@ -95,7 +95,7 @@ class TeamController extends Controller
         $distinctMatchIds = [];
         $previewMatches = collect();
         foreach (Proposal::where('added_by', $viewerId)->with('photos')->get() as $proposal) {
-            foreach (array_keys($proposal->strongMatchScores()) as $matchId) {
+            foreach (array_keys($proposal->visibleMatchScores()) as $matchId) {
                 $distinctMatchIds[$matchId] = true;   // a profile that fits several clients counts once
             }
             $aiMatchesCount = count($distinctMatchIds);
@@ -124,6 +124,7 @@ class TeamController extends Controller
             'pendingRequestsCount' => $pendingRequestsCount,
             'previewMatches' => $previewMatches,
             'recentNotifications' => $recentNotifications,
+            'notificationUi' => $this->presentNotifications($recentNotifications),
         ]);
     }
 
@@ -922,6 +923,7 @@ TEMPLATE;
             'family_status' => 'nullable|string|max:30',
             'looking_from' => 'nullable|array', 'looking_from.*' => 'in:Pakistan,Abroad',
             'presentation_highlight' => 'nullable|string|max:30',
+            'visibility' => 'nullable|in:public,private',
             'image1' => 'nullable|image|max:5120',
             'image2' => 'nullable|image|max:5120',
             // Partner requirements.
@@ -944,6 +946,8 @@ TEMPLATE;
 
         $proposal = Proposal::create([
             'added_by' => auth()->id(),
+            // Admins pick Public / Private on the form (default Public); for everyone else a private member's proposals start private.
+            'is_private' => auth()->user()->isAdmin() ? $request->input('visibility') === 'private' : (bool) auth()->user()->is_private_member,
             'gender' => $request->gender,
             'birthday' => $request->year . '-' . $request->month . '-' . $request->day,
             'height' => $request->height,
@@ -987,7 +991,9 @@ TEMPLATE;
         $this->alertOnStrongMatch($proposal);
 
         $loggedInUser = auth()->user();
+        // a private proposal is announced only to those who may see it (admins and members the admin allowed)
         TeamMember::approved()->where('id', '!=', $loggedInUser->id)
+            ->when($proposal->is_private, fn ($q) => $q->where(fn ($w) => $w->where('is_admin', true)->orWhere('can_view_private', true)))
             ->get()->each(fn ($teamMember) => $teamMember->notify(new NewProposalAdded($loggedInUser, $proposal)));
 
         Log::info('Team member (' . $loggedInUser->dataid . ') added proposal ' . $proposal->reference);
@@ -1287,6 +1293,7 @@ TEMPLATE;
             'family_status' => 'nullable|string|max:30',
             'looking_from' => 'nullable|array', 'looking_from.*' => 'in:Pakistan,Abroad',
             'presentation_highlight' => 'nullable|string|max:30',
+            'visibility' => 'nullable|in:public,private',
             'raw_intake_text' => 'nullable|string|max:5000',
             'image1' => 'nullable|image|max:5120',
             'image2' => 'nullable|image|max:5120',
@@ -1325,6 +1332,9 @@ TEMPLATE;
             }
         }
         $changes['looking_from'] = $this->lookingFromValue($request);
+        if (auth()->user()->isAdmin() && $request->filled('visibility')) {
+            $changes['is_private'] = $request->input('visibility') === 'private';
+        }
 
         // Multi-selects send nothing when emptied, so they are always written (the edit page always has them).
         foreach (['pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities'] as $multi) {

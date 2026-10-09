@@ -237,6 +237,53 @@
             // tab-switching/copy JS silently did nothing. Binding once here,
             // on the stable #ur_client_file_body container, works no matter
             // how many times its content gets replaced.
+            // Status and Visibility (Public / Private) dropdowns in the file window: saved as soon as they change.
+            body.addEventListener('change', function (e) {
+                var sel = e.target.closest('select.js-profile-status, select.js-proposal-privacy');
+                if (!sel) return;
+                var previous = sel.dataset.current || '';
+                if (sel.classList.contains('js-proposal-privacy') && typeof swal === 'function') {
+                    // Making a proposal private / public is an admin decision with wide effect: confirm it first.
+                    var toPrivate = sel.value === '1';
+                    swal({
+                        title: toPrivate ? 'Make this proposal private?' : 'Make this proposal public?',
+                        text: toPrivate
+                            ? 'Only admins, the team member who added it and members you allowed will be able to see it. Everyone else will no longer see it anywhere, including AI matches and share links.'
+                            : 'Every team member will be able to see this proposal again.',
+                        icon: 'warning',
+                        buttons: { cancel: 'Cancel', confirm: toPrivate ? 'Yes, make private' : 'Yes, make public' }
+                    }).then(function (ok) {
+                        if (ok) { urSaveSelect(sel, previous); } else { sel.value = previous; }
+                    });
+                    return;
+                }
+                urSaveSelect(sel, previous);
+            });
+
+            function urSaveSelect(sel, previous) {
+                var form = new FormData();
+                form.append('_token', '{{ csrf_token() }}');
+                form.append(sel.classList.contains('js-proposal-privacy') ? 'private' : 'profile_status', sel.value);
+                sel.disabled = true;
+                fetch(sel.dataset.url, { method: 'POST', body: form, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (res) {
+                        sel.disabled = false;
+                        if (String(res.code) === '200') {
+                            sel.dataset.current = sel.value;
+                            if (sel.classList.contains('js-proposal-privacy')) {
+                                var pill = body.querySelector('.ur-cf-private-pill');
+                                if (pill) pill.style.display = sel.value === '1' ? '' : 'none';
+                            }
+                            if (typeof showAlert === 'function') showAlert('success', res.message || 'Saved.', 3000);
+                        } else {
+                            sel.value = previous;
+                            if (typeof showAlert === 'function') showAlert('danger', res.message || 'Could not save.', 5000);
+                        }
+                    })
+                    .catch(function () { sel.disabled = false; sel.value = previous; if (typeof showAlert === 'function') showAlert('danger', 'Something went wrong. Please try again.', 5000); });
+            }
+
             body.addEventListener('click', function (e) {
                 var tabBtn = e.target.closest('.ur-cf-tabs button[data-tab]');
                 if (tabBtn) {

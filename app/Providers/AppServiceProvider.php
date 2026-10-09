@@ -69,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
                 'sidebarTeamProposalsCount' => \App\Proposal::count(),
                 'sidebarAiMatchesCount' => $user->ownedProposalsAiMatchesCount(),
                 'sidebarMyMatchesCount' => $user->myMatchesPairCount(),
+                'sidebarPrivateCount' => $user->isAdmin() ? \App\Proposal::where('is_private', true)->count() : null,
                 'sidebarMatchmakersCount' => \App\TeamMember::active()->count(),
                 'sidebarRequestsCount' => $user->unreadNotifications()->count(),
             ]);

@@ -8,7 +8,7 @@
     use), just listing the whole pool instead of one matchmaker's own.
 --}}
 @extends('layouts.team.dashboard')
-@section('dashboard-title', 'Team Proposals')
+@section('dashboard-title', !empty($privateOnly) ? 'Private Proposals' : 'Team Proposals')
 @push('styles')
 <link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
 @endpush
@@ -35,13 +35,18 @@
 <div class="ur-team-page">
     <div class="ur-team-page__head">
         <div>
+            @if(!empty($privateOnly))
+            <h1><i class="fa fa-lock" style="color:#3B2A4F; font-size:20px;"></i> Private Proposals</h1>
+            <p>Only admins, the member who added each one and members you allowed can see these. Use "Make public" on a card to release it. {{ number_format($privateCount) }} in total.</p>
+            @else
             <h1>Team Proposals</h1>
-            <p>Every profile a matchmaker has manually added to the shared network — kept separate from self-registered Member Profiles.</p>
+            <p>Every profile a matchmaker has manually added to the shared network — kept separate from self-registered Member Profiles. <a href="{{ route('team.manage.private-proposals') }}" style="font-weight:700; color:#3B2A4F;">{{ number_format($privateCount) }} private &rarr;</a></p>
+            @endif
         </div>
     </div>
 
     <div class="ur-tp-search">
-        <form method="GET" action="{{ route('team.manage.proposals') }}" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; flex:1;">
+        <form method="GET" action="{{ route(!empty($privateOnly) ? 'team.manage.private-proposals' : 'team.manage.proposals') }}" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; flex:1;">
             <div class="form-group">
                 <label for="keyword">Search by name, profession, city or ID</label>
                 <input type="search" name="keyword" id="keyword" placeholder="Search proposals..." value="{{ request('keyword') }}" autocomplete="off">
@@ -57,16 +62,16 @@
             </div>
             <button type="submit" class="ur-tp-search-btn">Search</button>
             @if(request()->filled('keyword') || request()->filled('matchmaker'))
-            <a href="{{ route('team.manage.proposals') }}" class="ur-tp-clear-btn">Clear</a>
+            <a href="{{ route(!empty($privateOnly) ? 'team.manage.private-proposals' : 'team.manage.proposals') }}" class="ur-tp-clear-btn">Clear</a>
             @endif
         </form>
     </div>
 
     @include('team.partials.proposal-grid', [
         'members' => $members, 'resultCount' => $resultCount, 'currentPage' => $currentPage, 'numPages' => $numPages,
-        'paginationRoute' => 'team.manage.proposals',
+        'paginationRoute' => !empty($privateOnly) ? 'team.manage.private-proposals' : 'team.manage.proposals',
         'paginationParams' => request()->except('page'),
-        'emptyMessage' => 'No team-added proposals match this search.',
+        'emptyMessage' => !empty($privateOnly) ? 'No private proposals yet. Use "Make private" on any proposal card in All Proposals.' : 'No team-added proposals match this search.',
     ])
 </div>
 @endsection

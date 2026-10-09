@@ -85,6 +85,7 @@
     .ur-search-card__badge--royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); color: #fff; }
     .ur-search-card__badge--abroad { background: #E4EEF7; color: #2C5F8A; }
     .ur-search-card__badge--highlight { background: #FBE4E9; color: #A23B57; }
+    .ur-search-card__badge--private { background: #3B2A4F; color: #fff; }
     .ur-search-card__profession { font-size: 12.5px; color: #6B7570; margin-bottom: 6px; }
     .ur-search-card__profession i { color: #C9974D; margin-right: 5px; }
     .ur-search-card__owner { font-size: 12px; color: #6B7570; margin-bottom: 10px; }
