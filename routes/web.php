@@ -153,6 +153,7 @@ Route::post('team/logout', [App\Http\Controllers\Auth\TeamLoginController::class
 // HomeController::search() and User::recommendedMatchesWhere().
 // Team management — an admin's own team account only (TeamAdminController checks team_members.is_admin).
 Route::get('team/manage/members', [App\Http\Controllers\TeamAdminController::class, 'members'])->name('team.manage.members');
+Route::get('team/manage/members/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'showMember'])->name('team.manage.members.show');
 Route::post('team/manage/members/message', [App\Http\Controllers\TeamAdminController::class, 'sendMessage'])->name('team.manage.members.message');
 Route::post('team/manage/members/{dataid}/reset-link', [App\Http\Controllers\TeamAdminController::class, 'sendResetLink'])->middleware('throttle:10,1')->name('team.manage.members.reset-link');
 Route::post('team/manage/members/{dataid}/photo-access', [App\Http\Controllers\TeamAdminController::class, 'setPhotoAccess'])->name('team.manage.members.photo-access');
@@ -164,6 +165,7 @@ Route::get('team/manage/applications', [App\Http\Controllers\TeamAdminController
 Route::post('team/manage/applications/{dataid}/approve', [App\Http\Controllers\TeamAdminController::class, 'approve'])->name('team.manage.applications.approve');
 Route::post('team/manage/applications/{dataid}/reject', [App\Http\Controllers\TeamAdminController::class, 'reject'])->name('team.manage.applications.reject');
 Route::get('team/manage/proposals', [App\Http\Controllers\TeamAdminController::class, 'proposals'])->name('team.manage.proposals');
+Route::get('team/manage/private-proposals', [App\Http\Controllers\TeamAdminController::class, 'privateProposals'])->name('team.manage.private-proposals');
 Route::get('team/dashboard', [App\Http\Controllers\TeamController::class, 'dashboard'])->name('team.dashboard');
 Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, 'myProposals'])->name('team.proposals.mine');
 Route::get('team/proposals/search', [App\Http\Controllers\TeamController::class, 'searchProposals'])->name('team.proposals.search');

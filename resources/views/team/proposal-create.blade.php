@@ -630,6 +630,17 @@
                                     <option value="Highly Attractive" {{ old('presentation_highlight') === 'Highly Attractive' ? 'selected' : '' }}>Highly Attractive</option>
                                 </select>
                             </div>
+                            @if(auth()->user()->isAdmin())
+                            {{-- Admin only: Public (the default) or Private — a private proposal is seen only by admins, its owner and members the admin allowed. --}}
+                            <div class="ur-pp-review__field" id="pp_field_visibility" style="grid-column: 1 / -1;">
+                                <label>Visibility <span class="ur-pp-manual__tag">Admin</span></label>
+                                <select name="visibility" form="af_form" class="form-control">
+                                    @php($__vis = old('visibility', isset($proposal) && $proposal->is_private ? 'private' : 'public'))
+                                    <option value="public" {{ $__vis === 'public' ? 'selected' : '' }}>Public &mdash; every team member can see it</option>
+                                    <option value="private" {{ $__vis === 'private' ? 'selected' : '' }}>Private &mdash; only admins, the owner and allowed members</option>
+                                </select>
+                            </div>
+                            @endif
                         </div>
                         <p class="ur-pp-manual__note"><b>Fair premium tagging:</b> &ldquo;Highly Attractive&rdquo; is only ever chosen by a team member after looking at the client's photo &mdash; AI never selects it.</p>
                     </div>

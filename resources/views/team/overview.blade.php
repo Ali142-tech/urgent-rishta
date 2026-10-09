@@ -102,6 +102,91 @@
     .ur-ov-mtable .ur-ov-score__pct { display: block; font-size: 13.5px; font-weight: 700; color: #123A2E; line-height: 18px; margin-bottom: 4px; }
     .ur-ov-mtable .ur-ov-score__bar { display: block; width: 100%; height: 5px; border-radius: 999px; background: #EFEBE0; overflow: hidden; }
     .ur-ov-mtable .ur-ov-score__fill { display: block; height: 5px; border-radius: 999px; background: linear-gradient(90deg, #123A2E, #3E8E6B); }
+
+    /* ---- softer, card-based lower dashboard: quick tiles, Recent AI Matches, Activity ---- */
+    .ur-ov-tiles { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+    @media (max-width: 1280px) { .ur-ov-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 700px) { .ur-ov-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 420px) { .ur-ov-tiles { grid-template-columns: 1fr; } }
+    .ur-ov-tile { display: flex; align-items: center; gap: 12px; padding: 14px 14px; border: 0; border-radius: 16px; box-shadow: 0 2px 10px rgba(15,46,36,.06); transition: transform .15s ease, box-shadow .15s ease; }
+    .ur-ov-tile:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(15,46,36,.1); }
+    .ur-ov-tile__icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin: 0 !important; }
+    .ur-ov-tile i.ur-ov-tile__go { display: block; margin: 0 0 0 auto !important; font-size: 18px; color: #A9B3AE; flex-shrink: 0; }
+    .ur-ov-tile__icon i { margin: 0 !important; font-size: 18px; }
+    .ur-ov-tile__icon--green { background: #E3F3EA; } .ur-ov-tile__icon--green i { color: #1C8A5E; }
+    .ur-ov-tile__icon--rose { background: #FCE4E8; } .ur-ov-tile__icon--rose i { color: #C23A55; }
+    .ur-ov-tile__icon--indigo { background: #E9E8FB; } .ur-ov-tile__icon--indigo i { color: #4A47B5; }
+    .ur-ov-tile__icon--amber { background: #FCEBD2; } .ur-ov-tile__icon--amber i { color: #C77A1E; }
+    .ur-ov-tile__text { min-width: 0; }
+    .ur-ov-tile__label { font-size: 13.5px; line-height: 1.25; }
+    .ur-ov-tile__sub { font-size: 11.5px; line-height: 1.3; }
+
+    .ur-ov-card { background: #fff; border-radius: 20px; box-shadow: 0 2px 14px rgba(15,46,36,.07); overflow: hidden; margin-bottom: 24px; }
+    .ur-ov-card__head { display: flex; align-items: center; gap: 14px; padding: 18px 22px; }
+    .ur-ov-card--matches .ur-ov-card__head { background: linear-gradient(180deg, #EAF6EF, #F4FAF6); }
+    .ur-ov-card--activity .ur-ov-card__head { background: linear-gradient(180deg, #FDEEF0, #FEF6F7); }
+    .ur-ov-card__icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 21px; flex-shrink: 0; color: #fff; }
+    .ur-ov-card__icon--green { background: #1C7A58; }
+    .ur-ov-card__icon--rose { background: #FBE0E5; color: #C23A55; }
+    .ur-ov-card__title { flex: 1; min-width: 0; }
+    .ur-ov-card__title h2 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: #123A2E; margin: 0; line-height: 1.2; }
+    .ur-ov-card__title p { margin: 3px 0 0; font-size: 12.5px; color: #4B5651; line-height: 1.4; }
+    .ur-ov-card__all { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 700; text-decoration: none !important; white-space: nowrap; }
+    .ur-ov-card__all--green { background: #DDF0E6; color: #1C7A58 !important; }
+    .ur-ov-card__all--rose { background: #FBE0E5; color: #C23A55 !important; }
+    .ur-ov-card__empty { margin: 0; padding: 22px; font-size: 13px; color: #6B7570; }
+
+    .ur-ov-mhead, .ur-ov-mrow { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.6fr) minmax(0, .8fr) 90px 44px; gap: 12px; align-items: center; }
+    .ur-ov-mhead { padding: 14px 22px 8px 26px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #8A938E; }
+    .ur-ov-mrow { position: relative; margin: 0 16px 12px; padding: 14px 16px; background: #fff; border-radius: 14px; box-shadow: 0 1px 8px rgba(15,46,36,.07); text-decoration: none !important; color: inherit !important; transition: box-shadow .15s ease; }
+    .ur-ov-mrow::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: #1C9A6C; }
+    .ur-ov-mrow:hover { box-shadow: 0 6px 18px rgba(15,46,36,.13); }
+    .ur-ov-mcell { min-width: 0; display: flex; align-items: center; gap: 12px; }
+    .ur-ov-mcell img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #F3EFE6; }
+    .ur-ov-mcell b { display: block; font-size: 14px; font-weight: 800; color: #123A2E; line-height: 1.25; }
+    .ur-ov-mcell small { display: block; font-size: 12px; color: #6B7570; line-height: 1.4; }
+    .ur-ov-mcell--score { flex-direction: column; align-items: flex-start; gap: 6px; }
+    .ur-ov-mcell--score b { font-size: 16px; }
+    .ur-ov-bar { display: block; width: 100%; max-width: 110px; height: 6px; border-radius: 999px; background: #E5EDE8; overflow: hidden; }
+    .ur-ov-bar span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #123A2E, #2FA678); }
+    .ur-ov-new { display: inline-block; background: #E3F3EA; color: #1C7A58; font-size: 12px; font-weight: 700; padding: 6px 16px; border-radius: 999px; }
+    .ur-ov-mcell--go { justify-content: flex-end; }
+    .ur-ov-mcell--go i { width: 34px; height: 34px; border-radius: 50%; background: #F3F1EA; color: #123A2E; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+    .ur-ov-mtags { display: block; margin-top: 4px; }
+    .ur-ov-mtags .ur-badge-pill { display: inline-block; font-size: 10.5px; font-weight: 700; line-height: 1.2; padding: 3px 9px; border-radius: 999px; margin: 0 5px 3px 0; }
+    .ur-ov-mtags .ur-badge-pill--premium { background: #FBF0DA; color: #8A6218; }
+    .ur-ov-mtags .ur-badge-pill--royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); color: #fff; }
+    .ur-ov-mtags .ur-badge-pill--abroad { background: #EAF2FB; color: #2C5F8A; }
+    .ur-ov-mtags .ur-badge-pill--highlight { background: #FBE4E9; color: #A23B57; }
+    .ur-ov-card--matches > .ur-ov-mrow:last-child { margin-bottom: 16px; }
+
+    .ur-ov-act { display: flex; align-items: center; gap: 12px; padding: 14px 22px; border-bottom: 1px solid #F3EFE8; text-decoration: none !important; color: inherit !important; }
+    .ur-ov-act:hover { background: #FAF8F4; }
+    .ur-ov-act__dot { width: 10px; height: 10px; border-radius: 50%; background: #1C9A6C; flex-shrink: 0; }
+    .ur-ov-act__dot.is-read { background: #C9D6CF; }
+    .ur-ov-act__body { flex: 1; min-width: 0; }
+    .ur-ov-act__body b { display: block; font-size: 13px; font-weight: 700; color: #1C2321; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ur-ov-act__body small { display: block; font-size: 12px; color: #8A938E; }
+    .ur-ov-act__go { font-size: 12px; color: #6B7570; flex-shrink: 0; }
+    .ur-ov-soon { display: flex; gap: 12px; align-items: flex-start; margin: 0; padding: 16px 22px 20px; background: #EAF6EF; }
+    .ur-ov-soon__icon { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: #C9974D; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .ur-ov-soon b { display: block; font-size: 13px; color: #123A2E; }
+    .ur-ov-soon p { margin: 2px 0 0; font-size: 12px; color: #4B5651; line-height: 1.45; }
+
+    @media (max-width: 1100px) {
+        .ur-ov-mhead { display: none; }
+        .ur-ov-mrow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 10px; }
+        .ur-ov-mcell--match { grid-column: 1 / -1; order: 3; }
+        .ur-ov-mcell--client { grid-column: 1; }
+        .ur-ov-mcell--score { grid-column: 2; grid-row: 1; align-items: flex-end; }
+        .ur-ov-mcell:nth-child(4), .ur-ov-mcell--go { display: none; }
+    }
+    @media (max-width: 560px) {
+        .ur-ov-card__head { flex-wrap: wrap; padding: 16px; }
+        .ur-ov-card__title h2 { font-size: 19px; }
+        .ur-ov-card__all { margin-left: 64px; }
+        .ur-ov-mrow { margin: 0 12px 10px; padding: 12px; }
+    }
 </style>
 
 <div class="ur-ov-hero mt-5">
@@ -156,91 +241,97 @@
 </div>
 
 <div class="ur-ov-tiles">
-    <a href="{{ route('team.proposals.create') }}" class="ur-ov-tile"><i class="fa fa-clipboard"></i><span class="ur-ov-tile__label">Paste Profile</span><span class="ur-ov-tile__sub">Import client text</span></a>
-    <a href="{{ route('team.proposals.search') }}" class="ur-ov-tile"><i class="fa fa-search"></i><span class="ur-ov-tile__label">Advanced Search</span><span class="ur-ov-tile__sub">Search partner profiles</span></a>
-    <a href="{{ route('team.matches') }}" class="ur-ov-tile"><i class="fa fa-magic"></i><span class="ur-ov-tile__label">AI Match</span><span class="ur-ov-tile__sub">Find compatible clients</span></a>
-    <a href="{{ route('team.proposals.search') }}" class="ur-ov-tile"><i class="fa fa-users"></i><span class="ur-ov-tile__label">Team Proposals</span><span class="ur-ov-tile__sub">{{ number_format($teamProposalsCount) }} profiles</span></a>
-    <a href="{{ route('team.proposals.mine') }}" class="ur-ov-tile"><i class="fa fa-file-text-o"></i><span class="ur-ov-tile__label">My Clients</span><span class="ur-ov-tile__sub">Manage your proposals</span></a>
-    <a href="{{ route('team.notifications') }}" class="ur-ov-tile"><i class="fa fa-bell-o"></i><span class="ur-ov-tile__label">Requests</span><span class="ur-ov-tile__sub">Review activity</span></a>
+    <a href="{{ route('team.proposals.create') }}" class="ur-ov-tile"><span class="ur-ov-tile__icon ur-ov-tile__icon--green"><i class="fa fa-clipboard"></i></span><span class="ur-ov-tile__text"><span class="ur-ov-tile__label">Paste Profile</span><span class="ur-ov-tile__sub">Import client text</span></span><i class="fa fa-angle-right ur-ov-tile__go"></i></a>
+    <a href="{{ route('team.proposals.search') }}" class="ur-ov-tile"><span class="ur-ov-tile__icon ur-ov-tile__icon--rose"><i class="fa fa-search"></i></span><span class="ur-ov-tile__text"><span class="ur-ov-tile__label">Advanced Search</span><span class="ur-ov-tile__sub">Search partner profiles</span></span><i class="fa fa-angle-right ur-ov-tile__go"></i></a>
+    <a href="{{ route('team.matches') }}" class="ur-ov-tile"><span class="ur-ov-tile__icon ur-ov-tile__icon--indigo"><i class="fa fa-magic"></i></span><span class="ur-ov-tile__text"><span class="ur-ov-tile__label">AI Match</span><span class="ur-ov-tile__sub">Find compatible clients</span></span><i class="fa fa-angle-right ur-ov-tile__go"></i></a>
+    <a href="{{ route('team.proposals.search', ['view' => 'all']) }}" class="ur-ov-tile"><span class="ur-ov-tile__icon ur-ov-tile__icon--amber"><i class="fa fa-users"></i></span><span class="ur-ov-tile__text"><span class="ur-ov-tile__label">Team Proposals</span><span class="ur-ov-tile__sub">{{ number_format($teamProposalsCount) }} profiles</span></span><i class="fa fa-angle-right ur-ov-tile__go"></i></a>
+    <a href="{{ route('team.proposals.mine') }}" class="ur-ov-tile"><span class="ur-ov-tile__icon ur-ov-tile__icon--green"><i class="fa fa-file-text-o"></i></span><span class="ur-ov-tile__text"><span class="ur-ov-tile__label">My Clients</span><span class="ur-ov-tile__sub">Manage your proposals</span></span><i class="fa fa-angle-right ur-ov-tile__go"></i></a>
+    <a href="{{ route('team.notifications') }}" class="ur-ov-tile"><span class="ur-ov-tile__icon ur-ov-tile__icon--rose"><i class="fa fa-bell-o"></i></span><span class="ur-ov-tile__text"><span class="ur-ov-tile__label">Requests</span><span class="ur-ov-tile__sub">Review activity</span></span><i class="fa fa-angle-right ur-ov-tile__go"></i></a>
 </div>
 
 <div class="ur-ov-layout">
-    <div>
-        <div class="ur-ov-section">
-            <div class="ur-ov-section__head">
+    <div class="ur-ov-card ur-ov-card--matches">
+        <div class="ur-ov-card__head">
+            <span class="ur-ov-card__icon ur-ov-card__icon--green"><i class="fa fa-heart-o"></i></span>
+            <div class="ur-ov-card__title">
                 <h2>Recent AI Matches</h2>
-                <a href="{{ route('team.matches') }}">View All &rarr;</a>
+                <p>Your latest AI-powered matches based on your preferences and compatibility.</p>
             </div>
-            @if($previewMatches->isEmpty())
-            <p style="color:#6B7570; font-size:13px; margin:0;">No AI matches yet — add Partner Requirements/Preferred fields on a proposal to start finding matches for it.</p>
-            @else
-            <table class="ur-ov-mtable">
-                <thead>
-                    <tr><th>Your Client</th><th>Potential Match</th><th>Score</th><th>Status</th></tr>
-                </thead>
-                <tbody>
-                    @foreach($previewMatches as $match)
-                        @php $compat = $match->compatibilityWith($match->for_proposal_profile); @endphp
-                    
-                        @php
-                            $clientProfile = $match->for_proposal_profile;
-                            $clientGender = $clientProfile->gender ?? '';
-                            $matchCity = $match->lbl_city ?: ($match->city ?? '');
-                            $scorePct = $compat ? (int) $compat['percent'] : null;
-                        @endphp
-                        <tr style="cursor:pointer;" onclick="window.location.href='{{ route('team.matches.show', $match->for_proposal_dataid) }}#match-{{ $match->dataid }}'">
-                            <td style="line-height:1.2 !important; height:auto !important;">
-                                <div style="display:flex; align-items:center; gap:12px;">
-                                    <img src="{{ $clientProfile->getProfileImage(true) }}" alt="" style="width:40px !important; height:40px !important; border-radius:10px; object-fit:cover; flex:0 0 40px; padding:0 !important; margin:0 !important;" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($clientGender) }}';">
-                                    <div style="line-height:1.2 !important; margin:0 !important; padding:0 !important;">
-                                        <div style="font-size:13.5px; font-weight:700; color:#1C2321; line-height:1.2 !important; margin:0 !important; padding:0 !important;">{{ $match->for_proposal_dataid }}</div>
-                                        <div style="font-size:11.5px; font-weight:400; color:#6B7570; line-height:1.2 !important; margin:2px 0 0 !important; padding:0 !important; text-transform:capitalize;">{{ collect([$clientGender, $clientProfile->age ?? null, $clientProfile->lbl_city ?? null])->filter()->implode(' • ') }}</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td style="line-height:1.2 !important;">{{ $match->dataid }}@if($matchCity) &bull; {{ $matchCity }}@endif</td>
-                            <td style="line-height:1.2 !important;">
-                                @if($scorePct !== null)
-                                    <div style="width:110px; margin:0 !important; padding:0 !important;">
-                                        <div style="font-size:13.5px; font-weight:700; color:#123A2E; line-height:1.2 !important; margin:0 0 5px !important; padding:0 !important;">{{ $scorePct }}%</div>
-                                        <div style="width:100%; height:5px !important; min-height:0 !important; border-radius:999px; background:#EFEBE0; overflow:hidden; margin:0 !important; padding:0 !important; line-height:0 !important; font-size:0;">
-                                            <div style="width:{{ min(100, $scorePct) }}%; height:5px !important; min-height:0 !important; border-radius:999px; background:linear-gradient(90deg,#123A2E,#3E8E6B); margin:0 !important; padding:0 !important;"></div>
-                                        </div>
-                                    </div>
-                                @else
-                                    —
-                                @endif
-                            </td>
-                            <td style="line-height:1.2 !important;"><span style="display:inline-block; background:#F6F4EF; color:#123A2E; font-size:11px; font-weight:700; line-height:1.2 !important; padding:5px 12px; border-radius:999px;">New</span></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @endif
+            <a href="{{ route('team.my-matches') }}" class="ur-ov-card__all ur-ov-card__all--green">View All <i class="fa fa-long-arrow-right"></i></a>
         </div>
+
+        @if($previewMatches->isEmpty())
+            <p class="ur-ov-card__empty">No AI matches yet — add Partner Requirements/Preferred fields on a proposal to start finding matches for it.</p>
+        @else
+            <div class="ur-ov-mhead"><span>Your Client</span><span>Potential Match</span><span>Score</span><span>Status</span><span></span></div>
+            @foreach($previewMatches as $match)
+                @php
+                    $client = $match->for_proposal_profile;
+                    $compat = $match->compatibilityWith($client);
+                    $scorePct = $compat ? (int) $compat['percent'] : null;
+                    $matchPlace = $match->lbl_city ?: ($match->city ?? '');
+                    $matchAge = !empty($match->birthday) ? date_diff(date_create($match->birthday), date_create('now'))->y : null;
+                @endphp
+                <a class="ur-ov-mrow" href="{{ route('team.matches.show', $match->for_proposal_dataid) }}#match-{{ $match->dataid }}">
+                    <span class="ur-ov-mcell ur-ov-mcell--client">
+                        <img src="{{ $client->getProfileImage(true) }}" alt="" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($client->gender ?? '') }}';">
+                        <span>
+                            <b>{{ $match->for_proposal_dataid }}</b>
+                            <small>{{ collect([ucfirst($client->gender ?? ''), $client->age ?? null, $client->lbl_city ?? null])->filter()->implode(' • ') }}</small>
+                        </span>
+                    </span>
+                    <span class="ur-ov-mcell ur-ov-mcell--match">
+                        <img src="{{ $match->getProfileImage(true) }}" alt="" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($match->gender ?? '') }}';">
+                        <span>
+                            <b>{{ $match->dataid }}</b>
+                            <small>{{ collect([ucfirst($match->gender ?? ''), $matchAge, $matchPlace])->filter()->implode(' • ') }}</small>
+                            <span class="ur-ov-mtags">@include('team.partials.classification-badges', ['profile' => $match])</span>
+                        </span>
+                    </span>
+                    <span class="ur-ov-mcell ur-ov-mcell--score">
+                        @if($scorePct !== null)
+                            <b>{{ $scorePct }}%</b>
+                            <span class="ur-ov-bar"><span style="width: {{ min(100, $scorePct) }}%"></span></span>
+                        @else —
+                        @endif
+                    </span>
+                    <span class="ur-ov-mcell"><span class="ur-ov-new">New</span></span>
+                    <span class="ur-ov-mcell ur-ov-mcell--go"><i class="fa fa-arrow-right"></i></span>
+                </a>
+            @endforeach
+        @endif
     </div>
 
-    <div>
-        <div class="ur-ov-panel">
-            <h3><i class="fa fa-bell" style="color:#C9974D;"></i> Activity</h3>
-            @forelse($recentNotifications as $notification)
-                @php $data = $notification->data; @endphp
-                <div class="ur-notif-mini">
-                    <i class="fa fa-circle" style="font-size:8px;"></i>
-                    <div>
-                        <div><b>{{ $data['status'] ?? class_basename($notification->type) }}</b></div>
-                        @if(!empty($data['message']))<div>{{ $data['message'] }}</div>@endif
-                        <div class="ur-notif-mini__time">{{ $notification->created_at->diffForHumans() }}</div>
-                    </div>
-                </div>
-            @empty
-                <p style="color:#6B7570; font-size:12.5px; margin:0;">No notifications yet.</p>
-            @endforelse
-            <a href="{{ route('team.notifications') }}" style="display:block; margin-top:10px; font-size:12px; color:#C9974D; font-weight:700; text-decoration:none;">View All Notifications &rarr;</a>
+    <div class="ur-ov-card ur-ov-card--activity">
+        <div class="ur-ov-card__head">
+            <span class="ur-ov-card__icon ur-ov-card__icon--rose"><i class="fa fa-bell-o"></i></span>
+            <div class="ur-ov-card__title"><h2>Activity</h2></div>
+            <a href="{{ route('team.notifications') }}" class="ur-ov-card__all ur-ov-card__all--rose">View All <i class="fa fa-long-arrow-right"></i></a>
+        </div>
+
+        @forelse($recentNotifications as $notification)
+            @php $u = $notificationUi[$notification->id] ?? null; @endphp
+            <a class="ur-ov-act" href="{{ $u['url'] ?? route('team.notifications') }}">
+                <span class="ur-ov-act__dot {{ $notification->read_at ? 'is-read' : '' }}"></span>
+                <span class="ur-ov-act__body">
+                    <b>{{ $u['title'] ?? ($notification->data['status'] ?? class_basename($notification->type)) }}</b>
+                    <small>{{ $notification->created_at->diffForHumans() }}</small>
+                </span>
+                <i class="fa fa-arrow-right ur-ov-act__go"></i>
+            </a>
+        @empty
+            <p class="ur-ov-card__empty">No notifications yet.</p>
+        @endforelse
+
+        <div class="ur-ov-soon">
+            <span class="ur-ov-soon__icon"><i class="fa fa-magic"></i></span>
+            <div>
+                <b>More matches coming!</b>
+                <p>Our AI is continuously finding better matches for you based on your preferences.</p>
+            </div>
         </div>
     </div>
 </div>
-
 <div class="ur-trust-bar">
     <span><i class="fa fa-lock"></i> Private</span>
     <span><i class="fa fa-check-circle"></i> Verified</span>

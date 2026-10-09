@@ -58,6 +58,11 @@ class ProfileController extends Controller
         if ($dataid) {
             $ownerUser = User::retrieveUserObject($dataid);
             if (!$ownerUser) {
+                // Arrived from a notification (?read=...) about a member whose profile has since been removed: say so, don't 404.
+                if ($request->has('read')) {
+                    Session::flash('message', 'warning|That profile is no longer available.');
+                    return redirect('member/profile');
+                }
                 abort(404);
             }
             // Team-added proposals (see TeamController::store()) are only
@@ -66,6 +71,10 @@ class ProfileController extends Controller
             // guessing/sharing its dataid.
             $loggedInUser = User::retrieveUserObject();
             if (!empty($ownerUser->added_by) && (!$loggedInUser || !$loggedInUser->isAdmin())) {
+                if ($request->has('read')) {
+                    Session::flash('message', 'warning|That profile is no longer available.');
+                    return redirect('member/profile');
+                }
                 abort(404);
             }
             if ($loggedInUser && $loggedInUser->id !== $ownerUser->id) {

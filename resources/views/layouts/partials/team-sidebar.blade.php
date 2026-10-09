@@ -127,6 +127,12 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('team.manage.private-proposals') }}" class="{{ request()->is('team/manage/private-proposals') ? 'is-active' : '' }}">
+                <i class="fa fa-lock"></i> Private Proposals
+                @isset($sidebarPrivateCount)<span class="ur-dash-nav__badge">{{ $sidebarPrivateCount }}</span>@endisset
+            </a>
+        </li>
+        <li>
             <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
         </li>
         <li>
