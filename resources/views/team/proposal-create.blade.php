@@ -1,22 +1,4 @@
-{{--
-    Direct-entry "Add Proposal" form for team members — a single flat form,
-    no OTP/session wizard (unlike auth/register.blade.php's self-registration
-    flow), since a team member is entering a client's proposal on their
-    behalf. Submits to TeamController::store(), which stamps `added_by` and
-    creates a login-less "shell" record (client confirmed: these proposals
-    are never meant to log in themselves).
 
-    2026-09: client sends a fixed WhatsApp template to prospective clients
-    to fill in and send back — this form now mirrors that template's own
-    section order/labels, and a "Paste client details" box at the top can
-    parse that whole block and auto-fill the fields below (still fully
-    editable before saving — the parser is a convenience, not a black box).
-    "Your Requirements" only has the 5 fields the client's template lists
-    (Age Limit/Height/City/Caste/Qualification) — this deliberately drops
-    Preferred Country/Marital Status/Education from the old form, which
-    used to feed AI Matches' hard filtering; new proposals added here only
-    get AI-matched by age range now (client's explicit call).
---}}
 @extends('layouts.team.dashboard')
 @section('dashboard-title', isset($proposal) ? 'Edit Proposal' : 'Add Proposal')
 @section('main-content')
@@ -449,7 +431,7 @@
                                 @endforeach
                                 <option value="__other">Other — Add Manually</option>
                             </select>
-                            <input type="text" name="caste_other" form="af_form" id="caste_other" class="form-control ur-other-input" maxlength="80" placeholder="Type the caste name" style="display:none; margin-top:8px;" value="{{ old('caste_other') }}">
+                            <input type="text" name="caste_other" form="af_form" id="caste_other" class="form-control ur-other-input" maxlength="80" placeholder="Type the caste name (letters only)" oninput="this.value = this.value.replace(/[0-9]/g, '')" style="display:none; margin-top:8px;" value="{{ old('caste_other') }}">
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_sect">

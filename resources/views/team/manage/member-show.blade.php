@@ -129,6 +129,7 @@
                 <dt>Their proposals</dt><dd>{{ $member->is_private_member ? 'Private — hidden from other members' : 'Public' }}</dd>
                 <dt>Private proposals</dt><dd>{{ $member->isAdmin() || $member->can_view_private ? 'Can see them' : 'Cannot see them' }}</dd>
                 <dt>Watermark text</dt><dd>{{ $member->watermark_text ?: $dash }}</dd>
+                <dt>Proposal ID letters</dt><dd>{{ $member->proposalPrefix() }}-###</dd>
                 <dt>Watermark style</dt><dd>{{ $member->watermark_style === 'corner' ? 'Corner' : 'Diagonal' }}</dd>
                 <dt>Logo</dt><dd>@if($logoUrl)<img class="ur-mp-logo" src="{{ $logoUrl }}" alt="">@else {{ $dash }} @endif</dd>
             </dl>

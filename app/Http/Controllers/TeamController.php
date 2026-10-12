@@ -571,7 +571,10 @@ class TeamController extends Controller
 
     public function profile()
     {
-        return view('team.profile', ['member' => auth()->user()]);
+        // the number the next proposal will get (the shared sequence), for the "Proposal ID" preview
+        $nextNumber = (int) \App\Proposal::withoutGlobalScopes()->max('id') + 1;
+
+        return view('team.profile', ['member' => auth()->user(), 'nextNumber' => $nextNumber]);
     }
 
     public function profileUpdate(Request $request)
@@ -587,12 +590,14 @@ class TeamController extends Controller
             'image' => 'nullable|image|max:5120',
             'watermark_text' => 'nullable|string|max:100',
             'watermark_style' => 'nullable|in:diagonal,corner',
+            'proposal_prefix' => ['nullable', 'regex:/^[A-Za-z]{1,3}$/'],
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
-        ]);
+        ], ['proposal_prefix.regex' => 'Use 1 to 3 letters only (for example UR or CV) — no numbers, spaces or symbols.']);
 
         $member->fill(collect($data)->except(['image', 'logo'])->all());
         $member->watermark_text = trim((string) $request->input('watermark_text')) ?: null;
         $member->watermark_style = $request->input('watermark_style') ?: 'diagonal';
+        $member->proposal_prefix = strtoupper(trim((string) $request->input('proposal_prefix'))) ?: 'P';
 
         $logoDir = public_path(\App\TeamMember::PHOTO_PATH . '/logos');
         if ($request->boolean('remove_logo') && $member->logo) {
@@ -890,7 +895,11 @@ TEMPLATE;
         if ($request->caste !== '__other') {
             return;
         }
-        $request->validate(['caste_other' => 'required|string|max:80'], ['caste_other.required' => 'Please type the caste name.']);
+        // A typed caste joins the shared list everyone picks from, so it must be a real name: letters (spaces . - / ' & allowed), never just numbers.
+        $request->validate(
+            ['caste_other' => ['required', 'string', 'min:2', 'max:80', "regex:/^(?=.*\\p{L})[\\p{L}\\s.\\-\\/'’&()]+$/u"]],
+            ['caste_other.required' => 'Please type the caste name.', 'caste_other.regex' => 'The caste must be a name made of letters — numbers and symbols are not allowed.', 'caste_other.min' => 'The caste name is too short.']
+        );
         $name = trim(preg_replace('/\s+/', ' ', $request->caste_other));
         $caste = ProposalCaste::whereRaw('lower(name) = ?', [mb_strtolower($name)])->first()
             ?: ProposalCaste::create(['name' => $name, 'sort_order' => 0, 'is_active' => true]);
@@ -1443,7 +1452,7 @@ TEMPLATE;
             ? $proposal->raw_intake_text
             : $this->buildSyntheticIntakeText($proposal);
 
-        $text = "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . route('share.proposal', $proposal->reference);
+        $text = "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . $this->shareLinkFor($proposal);
         if ($request->boolean('with_photos')) {
             $text .= "\n(client photos are viewable at this link)";
         }
@@ -1461,6 +1470,25 @@ TEMPLATE;
      * public link, and the paths of its REAL photos (full-size when the file
      * exists; never the gender placeholder).
      */
+    /** True when the team member doing the sharing is an admin — admins share pictures and links without any watermark. */
+    private function sharerIsAdmin(): bool
+    {
+        $user = auth()->user();
+
+        return $user instanceof TeamMember && $user->isAdmin();
+    }
+
+    /**
+     * The public link that goes into a shared message. Anyone's link opens a preview with the owner's watermark; an admin's is
+     * a signed link (cannot be forged or edited) that opens the same preview with the original, un-watermarked picture.
+     */
+    private function shareLinkFor(Proposal $proposal): string
+    {
+        return $this->sharerIsAdmin()
+            ? \Illuminate\Support\Facades\URL::signedRoute('share.proposal', ['dataid' => $proposal->reference, 'orig' => 1])
+            : route('share.proposal', $proposal->reference);
+    }
+
     private function shareContentFor(Proposal $proposal): array
     {
         $proposal->loadMissing('photos');
@@ -1468,7 +1496,8 @@ TEMPLATE;
         $intakeText = !empty(trim((string) ($proposal->raw_intake_text ?? '')))
             ? $proposal->raw_intake_text
             : $this->buildSyntheticIntakeText($proposal);
-        $link = route('share.proposal', $proposal->reference);
+        $link = $this->shareLinkFor($proposal);
+        $adminShare = $this->sharerIsAdmin();
 
         $photos = [];
         $branding = new \App\Services\PhotoBrandingService();
@@ -1476,7 +1505,8 @@ TEMPLATE;
         foreach (json_decode($proposal->getLightGalleryImages(false), true) ?: [] as $g) {
             if (!empty($g['src'])) {
                 // The owner's logo / watermark / name + ID go on the copy that leaves; the stored photo stays clean.
-                $branded = $branding->brandedPath($owner, basename(parse_url($g['src'], PHP_URL_PATH)), $proposal->reference);
+                // An admin's share carries no watermark at all: the original picture goes out as it is stored.
+                $branded = $adminShare ? null : $branding->brandedPath($owner, basename(parse_url($g['src'], PHP_URL_PATH)), $proposal->reference);
                 $photos[] = $branded ?: $g['src'];
             }
         }

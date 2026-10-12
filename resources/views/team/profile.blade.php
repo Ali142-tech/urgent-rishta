@@ -35,6 +35,10 @@
     .ur-pf-card input[type=file]::file-selector-button { height: 36px; padding: 0 16px; margin-right: 10px; border: 1px solid #DDD5C2; border-radius: 9px; background: #F3EFE6; color: #1C2321; font-size: 13.5px; font-weight: 600; cursor: pointer; }
     .ur-pf-card input[type=file]::file-selector-button:hover { background: #EAE4D5; }
 
+    .ur-pf-col { display: grid; gap: 22px; align-content: start; min-width: 0; }
+    .ur-pf-prefix-preview { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: #F6F4EF; border-radius: 14px; padding: 14px 16px; }
+    .ur-pf-prefix-preview span { font-size: 13px; color: #4B5651; }
+    .ur-pf-prefix-preview b { font-family: 'Manrope', system-ui, sans-serif; font-size: 22px; font-weight: 800; color: #123A2E; letter-spacing: .03em; }
     .ur-pf-wm-title { display: flex; align-items: center; gap: 10px; font-size: 15.5px; font-weight: 800; color: #123A2E; margin: 0 0 6px; }
     .ur-pf-wm-title i { color: #E4572E; }
     .ur-pf-wm-sub { font-size: 13px; color: #6B7570; line-height: 1.55; margin: 0 0 18px; }
@@ -130,6 +134,7 @@
             </div>
         </div>
 
+        <div class="ur-pf-col">
         <div class="ur-pf-card">
             <div class="ur-pf-wm-title"><i class="fa fa-tint"></i> Watermark on proposal photos</div>
             <p class="ur-pf-wm-sub">Shown on every shared photo: your name, proposal ID, and optional logo/text. Stored photos are never changed.</p>
@@ -164,6 +169,35 @@
                 <p class="ur-pf-hint" style="margin-top:10px;">Diagonal pattern repeats your logo, text and "Name · Proposal ID" faintly across the photo. Centre mark + corner badge puts one large faint logo and text in the middle and a small badge with your name and the proposal ID in the corner. With no logo or text, only your name and the proposal ID are shown.</p>
             </div>
         </div>
+
+        <div class="ur-pf-card">
+            <div class="ur-pf-wm-title"><i class="fa fa-hashtag" style="color:#C9974D;"></i> Proposal ID</div>
+            <p class="ur-pf-wm-sub">Choose the letters your proposals start with. The number after them continues the shared sequence automatically.</p>
+            <div class="ur-pf-field" style="margin-bottom:12px;">
+                <label for="proposal_prefix">Letters <small>(1 to 3 letters, e.g. P, UR, CV)</small></label>
+                <input type="text" id="proposal_prefix" name="proposal_prefix" maxlength="3" value="{{ old('proposal_prefix', $member->proposalPrefix()) }}" placeholder="P" autocomplete="off" style="text-transform:uppercase; letter-spacing:.06em; font-weight:700;">
+                @error('proposal_prefix')<div class="ur-pf-err">{{ $message }}</div>@enderror
+            </div>
+            <div class="ur-pf-prefix-preview">
+                <span>Your next proposal will be</span>
+                <b id="pf_prefix_preview">{{ old('proposal_prefix', $member->proposalPrefix()) }}-{{ str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT) }}</b>
+            </div>
+            <p class="ur-pf-hint" style="margin-top:10px;">Only proposals you add from now on use the new letters. The IDs of proposals you already added stay the same, so shared links and photo watermarks keep working.</p>
+        </div>
+        </div>
     </div>
 </form>
+
+<script>
+    // live preview of the next proposal ID while typing the letters
+    (function () {
+        var input = document.getElementById('proposal_prefix'), out = document.getElementById('pf_prefix_preview');
+        if (!input || !out) return;
+        var number = "{{ str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT) }}";
+        input.addEventListener('input', function () {
+            input.value = input.value.replace(/[^A-Za-z]/g, '').toUpperCase().slice(0, 3);
+            out.textContent = (input.value || 'P') + '-' + number;
+        });
+    })();
+</script>
 @endsection

@@ -27,7 +27,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     protected $table = 'team_members';
 
     protected $fillable = [
-        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style', 'can_view_originals', 'is_private_member', 'can_view_private',
+        'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style', 'can_view_originals', 'is_private_member', 'can_view_private', 'proposal_prefix',
         'is_admin', 'is_approved', 'status', 'application_status', 'experience', 'about_me', 'approved_at',
     ];
 
@@ -98,6 +98,12 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     public function scopePending($query)
     {
         return $query->where('application_status', 'pending');
+    }
+
+    /** The letters this member's new proposals start with ("P" -> P-199, "UR" -> UR-199). */
+    public function proposalPrefix(): string
+    {
+        return strtoupper(preg_replace('/[^A-Za-z]/', '', (string) $this->proposal_prefix)) ?: 'P';
     }
 
     /** A team member who has added MORE than this many proposals gets the "Premium Profile" badge. */

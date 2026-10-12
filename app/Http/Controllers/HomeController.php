@@ -467,7 +467,7 @@ class HomeController extends Controller {
      * photo + the same handful of non-sensitive fields the public
      * homepage slider already exposes to guests.
      */
-    public function sharePreview($dataid) {
+    public function sharePreview(\Illuminate\Http\Request $request, $dataid) {
         $member = \App\Proposal::with('photos')->where('reference', $dataid)->first();
         if (!$member) {
             abort(404);
@@ -475,8 +475,9 @@ class HomeController extends Controller {
 
         $age = $member->age;
         $photoPath = $member->getCardImages(null, false)[0] ?? null;
-        // The link preview carries the owner's watermark too.
-        if ($photoPath && $member->photos->isNotEmpty()) {
+        // The link preview carries the owner's watermark too — except on the signed link an admin shares, which shows the original.
+        $original = $request->boolean('orig') && $request->hasValidSignature();
+        if (!$original && $photoPath && $member->photos->isNotEmpty()) {
             $photoPath = (new \App\Services\PhotoBrandingService())->brandedPath(\App\TeamMember::find($member->added_by), basename(parse_url($photoPath, PHP_URL_PATH)), $member->reference) ?: $photoPath;
         }
         $photoUrl = url($photoPath ?: Profile::defaultImage($member->gender));

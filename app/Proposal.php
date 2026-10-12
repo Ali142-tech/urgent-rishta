@@ -65,14 +65,16 @@ class Proposal extends Model
 
         static::created(function (Proposal $proposal) {
             if (empty($proposal->reference)) {
-                $proposal->forceFill(['reference' => self::formatReference($proposal->id)])->saveQuietly();
+                // the number comes from the row id (unique, never reused); the letters are the owner's own choice (profile setting)
+                $prefix = TeamMember::find($proposal->added_by)?->proposalPrefix() ?? 'P';
+                $proposal->forceFill(['reference' => self::formatReference($proposal->id, $prefix)])->saveQuietly();
             }
         });
     }
 
-    public static function formatReference(int $id): string
+    public static function formatReference(int $id, string $prefix = 'P'): string
     {
-        return 'P-' . str_pad((string) $id, 3, '0', STR_PAD_LEFT);
+        return $prefix . '-' . str_pad((string) $id, 3, '0', STR_PAD_LEFT);
     }
 
     // ------------------------------------------------------------------
