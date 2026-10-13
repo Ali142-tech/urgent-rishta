@@ -24,6 +24,59 @@
     .tm-page * { box-sizing: border-box; }
     .tm-page a { text-decoration: none; }
 
+    /* Videos (Welcome + Company Highlight) — cinematic dark section */
+    .tm-videos { position: relative; overflow: hidden; padding: 84px 20px 92px; color: #fff;
+        background: radial-gradient(1100px 520px at 12% -10%, rgba(201,151,77,.20), rgba(201,151,77,0) 60%),
+                    radial-gradient(900px 480px at 100% 110%, rgba(201,151,77,.14), rgba(201,151,77,0) 60%),
+                    linear-gradient(135deg, #0B241C 0%, #123A2E 52%, #0F2E24 100%); }
+    .tm-videos::after { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .5;
+        background-image: radial-gradient(rgba(239,227,200,.10) 1px, transparent 1.4px); background-size: 26px 26px;
+        -webkit-mask-image: linear-gradient(180deg, transparent, #000 25%, #000 75%, transparent); mask-image: linear-gradient(180deg, transparent, #000 25%, #000 75%, transparent); }
+    .tm-videos__inner { position: relative; z-index: 1; max-width: 1240px; margin: 0 auto; }
+    .tm-videos__head { text-align: center; margin-bottom: 46px; }
+    .tm-videos__eyebrow { display: inline-flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: var(--tm-gold); margin-bottom: 14px; }
+    .tm-videos__eyebrow::before, .tm-videos__eyebrow::after { content: ''; width: 34px; height: 1px; background: linear-gradient(90deg, transparent, var(--tm-gold)); }
+    .tm-videos__eyebrow::after { transform: scaleX(-1); }
+    .tm-videos__head h2 { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 44px; line-height: 1.15; color: #fff; margin: 0 0 14px; }
+    .tm-videos__head h2 em { color: var(--tm-gold); font-style: italic; }
+    .tm-videos__head p { margin: 0 auto; max-width: 620px; font-size: 16px; line-height: 1.75; color: var(--tm-cream-text-2); }
+
+    .tm-videos__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 34px; }
+    .tm-video { position: relative; border-radius: 26px; padding: 8px; background: linear-gradient(145deg, rgba(239,227,200,.34), rgba(201,151,77,.10) 40%, rgba(239,227,200,.22));
+        box-shadow: 0 30px 70px rgba(0,0,0,.45), 0 0 0 1px rgba(239,227,200,.10); transition: transform .3s ease, box-shadow .3s ease; }
+    .tm-video:hover { transform: translateY(-6px); box-shadow: 0 40px 84px rgba(0,0,0,.55), 0 0 0 1px rgba(201,151,77,.35); }
+    .tm-video__frame { position: relative; aspect-ratio: 16 / 9; border-radius: 19px; overflow: hidden; background: linear-gradient(135deg, #123A2E, #1F5C46 60%, #123A2E); isolation: isolate; }
+    .tm-video__frame video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; background: transparent; z-index: 0; }
+    .tm-video__shade { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(8,24,19,.35) 0%, rgba(8,24,19,0) 32%, rgba(8,24,19,.55) 62%, rgba(8,24,19,.92) 100%); transition: opacity .35s ease; }
+    .tm-video__tag { position: absolute; left: 18px; top: 18px; z-index: 3; display: inline-flex; align-items: center; gap: 7px; background: rgba(8,24,19,.62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: #EFE3C8; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(239,227,200,.30); pointer-events: none; transition: opacity .3s; }
+    .tm-video__tag::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--tm-gold); }
+    .tm-video__caption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 26px 26px 24px; pointer-events: none; transition: opacity .3s, transform .3s; }
+    .tm-video__caption b { display: block; font-family: 'Playfair Display', serif; font-size: 25px; font-weight: 700; line-height: 1.2; color: #fff; margin-bottom: 6px; text-shadow: 0 2px 14px rgba(0,0,0,.4); }
+    .tm-video__caption span { display: block; max-width: 460px; font-size: 14.5px; line-height: 1.6; color: rgba(239,227,200,.92); }
+    .tm-video__play { position: absolute; inset: 0; z-index: 2; width: 100%; border: 0; padding: 0; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity .3s ease; }
+    .tm-video__play > span { position: relative; width: 88px; height: 88px; border-radius: 50%; background: linear-gradient(145deg, #E3B369, #C9974D); display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px rgba(0,0,0,.45); transition: transform .25s ease; margin-bottom: 34px; }
+    .tm-video__play > span::before, .tm-video__play > span::after { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(227,179,105,.65); animation: tmPulse 2.4s ease-out infinite; }
+    .tm-video__play > span::after { animation-delay: 1.2s; }
+    .tm-video__play:hover > span { transform: scale(1.1); }
+    .tm-video__play svg { width: 32px; height: 32px; margin-left: 5px; fill: #0F2E24; }
+    @keyframes tmPulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.75); opacity: 0; } }
+    .tm-video.is-playing .tm-video__play, .tm-video.is-playing .tm-video__tag, .tm-video.is-playing .tm-video__caption, .tm-video.is-playing .tm-video__shade { opacity: 0; pointer-events: none; }
+    @media (prefers-reduced-motion: reduce) { .tm-video__play > span::before, .tm-video__play > span::after { animation: none; } .tm-video { transition: none; } }
+    @media (max-width: 900px) {
+        .tm-videos { padding: 56px 16px 62px; }
+        .tm-videos__head { margin-bottom: 30px; }
+        .tm-videos__head h2 { font-size: 30px; }
+        .tm-videos__head p { font-size: 14.5px; }
+        .tm-videos__grid { grid-template-columns: 1fr; gap: 24px; }
+        .tm-video { border-radius: 22px; padding: 6px; }
+        .tm-video__frame { border-radius: 17px; }
+        .tm-video__play > span { width: 68px; height: 68px; margin-bottom: 26px; }
+        .tm-video__play svg { width: 26px; height: 26px; }
+        .tm-video__caption { padding: 18px 18px 16px; }
+        .tm-video__caption b { font-size: 19px; }
+        .tm-video__caption span { font-size: 13px; }
+        .tm-video__tag { left: 12px; top: 12px; font-size: 10px; padding: 6px 11px; }
+    }
     /* Hero */
     .tm-hero {
         background: linear-gradient(135deg, var(--tm-green) 0%, #1F5C46 55%, var(--tm-green) 100%);
@@ -202,6 +255,56 @@
         <div class="tm-hero__badge">Meet The Team</div>
         <h1>The People Behind <em>Every Introduction</em></h1>
         <p>A dedicated matchmaking team across Pakistan and the UK, personally managing every step of your search.</p>
+    </section>
+
+    <section class="tm-videos" id="videos">
+        <div class="tm-videos__inner">
+            <div class="tm-videos__head">
+                <span class="tm-videos__eyebrow">Our Story</span>
+                <h2>Get to Know <em>Urgent Rishta</em></h2>
+                <p>A short welcome and a look at who we are and how we work with families.</p>
+            </div>
+            <div class="tm-videos__grid">
+                <div class="tm-video">
+                    <div class="tm-video__frame">
+                        <video playsinline preload="metadata" aria-label="Welcome to Urgent Rishta">
+                            <source src="/Videos/1%20Welcome%20Animation.mp4#t=0.5" type="video/mp4">
+                        </video>
+                        <div class="tm-video__shade"></div>
+                        <span class="tm-video__tag">Welcome</span>
+                        <div class="tm-video__caption"><b>Welcome to Urgent Rishta</b><span>A quick introduction to our private, professional matchmaking service.</span></div>
+                        <button type="button" class="tm-video__play" aria-label="Play: Welcome to Urgent Rishta"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span></button>
+                    </div>
+                </div>
+                <div class="tm-video">
+                    <div class="tm-video__frame">
+                        <video playsinline preload="metadata" aria-label="Company Highlight">
+                            <source src="/Videos/Company%20Highlight.mp4#t=0.5" type="video/mp4">
+                        </video>
+                        <div class="tm-video__shade"></div>
+                        <span class="tm-video__tag">Highlights</span>
+                        <div class="tm-video__caption"><b>Company Highlight</b><span>The people, the process and the care behind every introduction.</span></div>
+                        <button type="button" class="tm-video__play" aria-label="Play: Company Highlight"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Big play button over each video; native controls appear once it plays, and only one video plays at a time.
+            (function () {
+                var cards = document.querySelectorAll('.tm-video');
+                cards.forEach(function (card) {
+                    var video = card.querySelector('video'), btn = card.querySelector('.tm-video__play');
+                    btn.addEventListener('click', function () {
+                        cards.forEach(function (other) { var v = other.querySelector('video'); if (v !== video) v.pause(); });
+                        video.controls = true;
+                        video.play();
+                    });
+                    video.addEventListener('play', function () { card.classList.add('is-playing'); });
+                    video.addEventListener('ended', function () { video.controls = false; card.classList.remove('is-playing'); });
+                });
+            })();
+        </script>
     </section>
 
     <div class="tm-wrap">
