@@ -54,6 +54,8 @@ Route::get('castes/{id}', [App\Http\Controllers\HomeController::class, 'castes']
 // Public WhatsApp/link-preview card for a shared team proposal — see
 // HomeController::sharePreview()'s docblock for why this has to be a
 // separate, unauthenticated route rather than member/profile/{dataid}.
+// Partner links (Gallery ▸ Our Partners): records the click, then redirects to the allowlisted partner site (config/partners.php).
+Route::get('go/{partner}', [App\Http\Controllers\PartnerRedirectController::class, 'go'])->where('partner', '[a-z0-9-]+')->middleware('throttle:60,1')->name('partner.go');
 Route::get('share/proposal/{dataid}', [App\Http\Controllers\HomeController::class, 'sharePreview'])->name('share.proposal');
 // Also accepts GET (not just the form's POST) so that a guest's search can be replayed
 // automatically via redirect after they log in — see Authenticate::redirectTo() and
@@ -90,6 +92,7 @@ Route::post('admin/contact-unlock-settings', [App\Http\Controllers\AdminControll
 Route::get('admin/successful-matches', [App\Http\Controllers\AdminController::class, 'successfulMatches'])->name('admin.successful-matches');
 Route::post('admin/successful-matches/{id}/share', [App\Http\Controllers\AdminController::class, 'updateSuccessfulMatchShare'])->name('admin.successful-matches.share');
 Route::get('admin/audit-log', [App\Http\Controllers\AdminController::class, 'auditLog'])->name('admin.audit-log');
+Route::get('admin/partner-referrals', [App\Http\Controllers\AdminController::class, 'partnerReferrals'])->name('admin.partner-referrals');
 Route::get('admin/photo-verification', [App\Http\Controllers\AdminController::class, 'photoVerificationQueue']);
 Route::get('admin/photo-verification/logs', [App\Http\Controllers\AdminController::class, 'photoVerificationLogs']);
 Route::post('admin/photo-verification/{dataid}/approve', [App\Http\Controllers\AdminController::class, 'approvePhotoVerification']);
@@ -257,6 +260,7 @@ Route::get('team', [App\Http\Controllers\HomeController::class, 'teamView']);
 // (public/.htaccess explicitly skips rewriting to index.php for any request
 // path that resolves to a real file or directory).
 Route::get('photo-gallery', [App\Http\Controllers\HomeController::class, 'galleryView']);
+Route::get('partners', [App\Http\Controllers\HomeController::class, 'partnersView'])->name('partners');
 Route::get('faqs', [App\Http\Controllers\HomeController::class, 'faqsView']);
 Route::get('tandc', [App\Http\Controllers\HomeController::class, 'termsAndConditionsView']);
 Route::get('privacy', [App\Http\Controllers\HomeController::class, 'privacyPolicyView']);

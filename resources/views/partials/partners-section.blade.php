@@ -190,6 +190,14 @@
         gap: 8px;
     }
 
+    /* Partners page (/partners): heading centred on top, the cards in a row below */
+    .ur-partners--page { padding: 84px 24px 96px; }
+    .ur-partners--page .ur-partners__wrap { grid-template-columns: 1fr; text-align: center; gap: 44px; }
+    .ur-partners--page .ur-partners__sub { max-width: 620px; margin-left: auto; margin-right: auto; }
+    .ur-partners--page .ur-partners__divider { justify-content: center; }
+    .ur-partners--page .ur-partners__grid { justify-content: center; gap: 28px; }
+    .ur-partners--page .ur-partner-card { width: 250px; }
+
     @media (max-width: 900px) {
         .ur-partners__wrap { grid-template-columns: 1fr; text-align: center; }
         .ur-partners__sub { max-width: none; margin-left: auto; margin-right: auto; }
@@ -202,7 +210,7 @@
     }
 </style>
 
-<section class="ur-partners" aria-label="Our partners">
+<section class="ur-partners{{ !empty($partnersPage) ? ' ur-partners--page' : '' }}" id="partners" aria-label="Our partners">
     <div class="ur-partners__wrap">
         <div>
             <div class="ur-partners__eyebrow">Trusted Alongside Us</div>
@@ -218,25 +226,25 @@
                     [
                         'name' => 'Lumina Skin & Laser Clinic',
                         'tag' => 'Skin & Laser Clinic',
-                        'url' => 'https://www.instagram.com/lumina_clinic.pk',
+                        'key' => 'lumina',   // destination + UTM tags live in config/partners.php
                         'logo' => 'images/partners/lumina-clinic.jpg',
                     ],
                     [
                         'name' => "Mishi's Collection",
                         'tag' => 'Fashion & Apparel',
-                        'url' => 'https://mishiscollection.com',
+                        'key' => 'mishis',
                         'logo' => 'images/partners/mishis-collection.webp',
                     ],
                     [
                         'name' => 'UK Security Hub',
                         'tag' => 'Security Services',
-                        'url' => 'https://www.smartroutesystems.co.uk/',
+                        'key' => 'smartroute',
                         'logo' => null,
                     ],
                 ];
             @endphp
             @foreach ($urPartners as $urPartner)
-            <a href="{{ $urPartner['url'] }}" target="_blank" rel="noopener" class="ur-partner-card">
+            <a href="{{ route('partner.go', $urPartner['key']) }}" target="_blank" rel="nofollow noopener" class="ur-partner-card">
                 <div class="ur-partner-card__logo">
                     @if(!empty($urPartner['logo']))
                         <img src="{{ $urPartner['logo'] }}" alt="{{ $urPartner['name'] }}" loading="lazy">

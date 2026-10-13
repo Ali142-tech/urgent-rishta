@@ -1025,6 +1025,76 @@ class AdminController extends Controller
      * storage/logs/laravel.log; this is the one admin-visible, filterable
      * history of who did what.
      */
+    /**
+     * Partner Referral Analytics — clicks from UrgentRishta to the partner websites (PartnerRedirectController). Counts
+     * visits, not purchases or commission. "Total clicks" counts every click; "unique" counts distinct signed-in members or
+     * (for visitors) distinct browser sessions, so one person clicking five times is five clicks but one unique user.
+     */
+    function partnerReferrals(Request $request)
+    {
+        $partners = \App\Services\PartnerLinkService::all();
+        $partnerKey = array_key_exists((string) $request->query('partner'), $partners) ? $request->query('partner') : '';
+
+        $parse = function ($value, $fallback) {
+            try {
+                return $value ? \Carbon\Carbon::createFromFormat('Y-m-d', $value) : $fallback;
+            } catch (\Throwable $e) {
+                return $fallback;
+            }
+        };
+        $to = $parse($request->query('to'), now())->endOfDay();
+        $from = $parse($request->query('from'), now()->subDays(29))->startOfDay();
+        if ($from->gt($to)) {
+            [$from, $to] = [$to->copy()->startOfDay(), $from->copy()->endOfDay()];
+        }
+
+        $inRange = fn () => \App\PartnerClick::query()
+            ->when($partnerKey !== '', fn ($q) => $q->where('partner_key', $partnerKey))
+            ->whereBetween('created_at', [$from, $to]);
+
+        // Per partner, inside the chosen date range.
+        $loggedIn = '(user_id IS NOT NULL OR team_member_id IS NOT NULL)';
+        $rows = $inRange()
+            ->selectRaw("partner_key, COUNT(*) as total, SUM($loggedIn) as logged_in, SUM(NOT $loggedIn) as anonymous,
+                COUNT(DISTINCT user_id) as unique_users, COUNT(DISTINCT team_member_id) as unique_team,
+                COUNT(DISTINCT CASE WHEN NOT $loggedIn THEN visitor_hash END) as unique_visitors")
+            ->groupBy('partner_key')->get()->keyBy('partner_key');
+
+        // Fixed windows (today / 7 / 30 days), independent of the date filter.
+        $windows = \App\PartnerClick::query()
+            ->when($partnerKey !== '', fn ($q) => $q->where('partner_key', $partnerKey))
+            ->selectRaw('partner_key, SUM(created_at >= ?) as today, SUM(created_at >= ?) as d7, SUM(created_at >= ?) as d30',
+                [now()->startOfDay(), now()->subDays(6)->startOfDay(), now()->subDays(29)->startOfDay()])
+            ->groupBy('partner_key')->get()->keyBy('partner_key');
+
+        $stats = [];
+        foreach ($partners as $key => $partner) {
+            if ($partnerKey !== '' && $partnerKey !== $key) {
+                continue;
+            }
+            $r = $rows->get($key);
+            $w = $windows->get($key);
+            $stats[$key] = [
+                'name' => $partner['name'],
+                'total' => (int) ($r->total ?? 0), 'logged_in' => (int) ($r->logged_in ?? 0), 'anonymous' => (int) ($r->anonymous ?? 0),
+                'unique_users' => (int) ($r->unique_users ?? 0) + (int) ($r->unique_team ?? 0), 'unique_visitors' => (int) ($r->unique_visitors ?? 0),
+                'today' => (int) ($w->today ?? 0), 'd7' => (int) ($w->d7 ?? 0), 'd30' => (int) ($w->d30 ?? 0),
+            ];
+        }
+        $totals = [
+            'total' => array_sum(array_column($stats, 'total')), 'logged_in' => array_sum(array_column($stats, 'logged_in')),
+            'anonymous' => array_sum(array_column($stats, 'anonymous')), 'today' => array_sum(array_column($stats, 'today')),
+            'd7' => array_sum(array_column($stats, 'd7')), 'd30' => array_sum(array_column($stats, 'd30')),
+        ];
+
+        $clicks = $inRange()->with(['user:id,dataid,first_name,last_name', 'teamMember:id,dataid,first_name,last_name'])
+            ->orderByDesc('created_at')->orderByDesc('id')->paginate(25)->appends($request->query());
+
+        return view('admin.dashboard.partner-referrals', [
+            'partners' => $partners, 'partnerKey' => $partnerKey, 'from' => $from, 'to' => $to,
+            'stats' => $stats, 'totals' => $totals, 'clicks' => $clicks,
+        ]);
+    }
     function auditLog(Request $request)
     {
         $action = trim((string) $request->query('action'));

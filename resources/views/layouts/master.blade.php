@@ -430,15 +430,9 @@ a.appointment-btn::before{
                                                     <a class="dropdown-item" href="{{ url('photo-gallery') }}"><i class="fa fa-picture-o"></i><span>Gallery</span></a>
                                                 </div>
                                             </li>
-                                            <li class="custom-nav dropdown ur-plans-dropdown">
-                                                <a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" onclick="return false;">
+                                            <li class="custom-nav">
+                                                <a class="nav-link {{ request()->is('partners') ? 'active' : '' }}" href="{{ route('partners') }}" aria-haspopup="true" aria-expanded="false">
                                                     Partners</a>
-                                                <div class="dropdown-menu">
-                                                    <a class="dropdown-item" href="{{ url('become-a-partner') }}"><i class="fa fa-handshake-o"></i><span>Become a Partner</span></a>
-                                                    @if(!Auth::check() && !Auth::guard('team')->check())
-                                                    <a class="dropdown-item" href="{{ route('team.login') }}"><i class="fa fa-sign-in"></i><span>Partner Login</span></a>
-                                                    @endif
-                                                </div>
                                             </li>
                                             <li class="custom-nav">
                                                 <a class="nav-link " href="{{url('contact-us')}}" aria-haspopup="true" aria-expanded="false">

@@ -83,6 +83,13 @@
         </li>
 
 
+        <div class="ur-dash-nav__section-label">Growth</div>
+        <li>
+            <a href="{{ route('admin.partner-referrals') }}" class="{{ request()->is('admin/partner-referrals') ? 'is-active' : '' }}">
+                <i class="fa fa-handshake-o"></i> Partner Referrals
+            </a>
+        </li>
+
         <div class="ur-dash-nav__section-label">System</div>
         <li>
             <a href="{{ route('admin.audit-log') }}" class="{{ request()->is('admin/audit-log') ? 'is-active' : '' }}">
