@@ -112,6 +112,11 @@
     <div class="ur-dash-nav__section-label">Team Management</div>
     <ul class="ur-dash-nav">
         <li>
+            <a href="{{ route('team.manage.overview') }}" class="{{ request()->is('team/manage/overview') ? 'is-active' : '' }}">
+                <i class="fa fa-bar-chart"></i> Team Overview
+            </a>
+        </li>
+        <li>
             <a href="{{ route('team.manage.members') }}" class="{{ request()->is('team/manage/members') ? 'is-active' : '' }}">
                 <i class="fa fa-users"></i> Team Members
             </a>

@@ -11,7 +11,7 @@
     $isUpdated = !$isNew && round((time() - strtotime($member->updated_at)) / 604800) <= config('app.updated_profile_duration');
 @endphp
 <div class="ur-search-card">
-    <a class="ur-search-card__photo" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">
+    <a class="ur-search-card__photo" style="--ph: url('{{ $member->getProfileImage() }}');" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">
         <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
         @if($isNew)
             <span class="ur-search-card__ribbon ur-search-card__ribbon--new">New</span>

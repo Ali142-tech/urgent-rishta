@@ -103,7 +103,11 @@
     }
     @media (max-width: 560px) {
         .ur-search-card { flex-direction: column; }
-        .ur-search-card__photo { width: 100%; height: 160px; }
+        /* Phones: the whole photo in a portrait frame (never a thin banner that cuts the face); the empty sides are filled with a blurred copy of the same photo. */
+        .ur-search-card__photo { width: 100%; flex: none; height: auto; aspect-ratio: 4 / 5; max-height: 460px; }
+        .ur-search-card__photo::before { content: ''; position: absolute; inset: -16px; background: var(--ph) center / cover no-repeat; filter: blur(16px); transform: scale(1.06); }
+        .ur-search-card__photo img { position: relative; z-index: 1; object-fit: contain; }
+        .ur-search-card__ribbon { z-index: 2; }
         .ur-adv-search__row { flex-direction: column; }
         .ur-adv-search__submit, .ur-adv-search__clear { width: 100%; justify-content: center; }
         .ur-adv-search__more-btn { margin-left: 0; }

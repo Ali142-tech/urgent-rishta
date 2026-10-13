@@ -591,8 +591,8 @@
 
 /* Phones: team cards get a neat two-column grid instead of the generic stacked column above (which made View Full Profile tall and pushed the other buttons off to the side). */
 @media (max-width: 575px) {
-    .member-card__footer--team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; flex-direction: row; }
-    .member-card__footer--team a { flex: none; width: 100%; min-height: 44px; padding: 10px 8px; box-sizing: border-box; white-space: nowrap; }
+    .member-card__footer--team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; flex-direction: row; padding: 12px 14px 14px; }
+    .member-card__footer--team a { flex: none; width: 100%; min-height: 36px; padding: 7px 6px; border-radius: 8px; font-size: .66rem; gap: 5px; box-sizing: border-box; white-space: nowrap; }
     .member-card__footer--team a:first-child { grid-column: 1 / -1; }
     .member-card__footer--team a:last-child:nth-child(even) { grid-column: 1 / -1; }
 }

@@ -15,6 +15,9 @@
         <div class="pace-activity"></div>
     </div>
     <style>
+        /* Small square / round photo crops: most client photos are portrait (head at the top), so crop from the top instead of the middle — otherwise the face is cut off. */
+        .ur-search-card__photo img, .ur-mm-photo, .ur-ov-client__photo, .ur-ov-mcell img, .ur-am-matching-for__photo, .ur-am-pair__photo,
+        .ur-mc-profile__photo, .ur-mp-prop img, .ur-nt-avatar > img, .ur-mka-card__photo { object-position: center 12%; }
         .ur-premium-badge { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: linear-gradient(135deg, #E9C27A, #C9974D); color: #3B2A0E !important; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.5; white-space: nowrap; text-transform: none; }
         .ur-premium-badge i { color: #7A4F0C !important; font-size: 10px; margin: 0 !important; }
         /* ---------- Toast notifications (#message_alert / showAlert()) ---------- */

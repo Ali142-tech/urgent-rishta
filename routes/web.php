@@ -155,6 +155,7 @@ Route::post('team/logout', [App\Http\Controllers\Auth\TeamLoginController::class
 // team-exclusive: see the `added_by IS NULL` exclusion added to
 // HomeController::search() and User::recommendedMatchesWhere().
 // Team management — an admin's own team account only (TeamAdminController checks team_members.is_admin).
+Route::get('team/manage/overview', [App\Http\Controllers\TeamAdminController::class, 'overview'])->name('team.manage.overview');
 Route::get('team/manage/members', [App\Http\Controllers\TeamAdminController::class, 'members'])->name('team.manage.members');
 Route::get('team/manage/members/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'showMember'])->name('team.manage.members.show');
 Route::post('team/manage/members/message', [App\Http\Controllers\TeamAdminController::class, 'sendMessage'])->name('team.manage.members.message');

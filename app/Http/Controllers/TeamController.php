@@ -73,11 +73,6 @@ class TeamController extends Controller
      */
     public function dashboard(Request $request)
     {
-        // An admin's team account gets the whole-team overview, not a matchmaker's own client dashboard.
-        if (auth()->user()->isAdmin()) {
-            return app(TeamAdminController::class)->overview();
-        }
-
         $viewerId = auth()->id();
 
         $myProposalsCount = Proposal::where('added_by', $viewerId)->count();

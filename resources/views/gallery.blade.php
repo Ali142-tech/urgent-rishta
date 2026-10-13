@@ -144,5 +144,4 @@
     </div>
 </div>
 
-@include('partials.partners-section')
 @endsection
