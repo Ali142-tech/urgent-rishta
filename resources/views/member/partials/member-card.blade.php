@@ -220,7 +220,7 @@ $packageIcon = match ($packageSlug) {
                         <i class="fa fa-trash"></i> <span>Delete</span>
                     </a>
                 @endif
-                <a class="is-interest" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
+                <a class="is-interest js-share-proposal" data-payload-url="{{ route('team.proposals.share.payload', $member->dataid) }}" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
                     <i class="fa fa-whatsapp"></i> <span>Share</span>
                 </a>
                 @if(auth('team')->check() && auth('team')->user()->is_admin)

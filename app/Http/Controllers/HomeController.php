@@ -472,7 +472,12 @@ class HomeController extends Controller {
      * homepage slider already exposes to guests.
      */
     public function sharePreview(\Illuminate\Http\Request $request, $dataid) {
-        $member = \App\Proposal::with('photos')->where('reference', $dataid)->first();
+        // A private proposal stays hidden from visitors (PrivateProposalScope) — except through the signed link a team member
+        // deliberately shared (TeamController::shareLinkFor()), which is checked here.
+        $signed = $request->hasValidSignature();
+        $member = \App\Proposal::with('photos')
+            ->when($signed, fn ($q) => $q->withoutGlobalScope(\App\Scopes\PrivateProposalScope::class))
+            ->where('reference', $dataid)->first();
         if (!$member) {
             abort(404);
         }
@@ -480,7 +485,7 @@ class HomeController extends Controller {
         $age = $member->age;
         $photoPath = $member->getCardImages(null, false)[0] ?? null;
         // The link preview carries the owner's watermark too — except on the signed link an admin shares, which shows the original.
-        $original = $request->boolean('orig') && $request->hasValidSignature();
+        $original = $request->boolean('orig') && $signed;
         if (!$original && $photoPath && $member->photos->isNotEmpty()) {
             $photoPath = (new \App\Services\PhotoBrandingService())->brandedPath(\App\TeamMember::find($member->added_by), basename(parse_url($photoPath, PHP_URL_PATH)), $member->reference) ?: $photoPath;
         }

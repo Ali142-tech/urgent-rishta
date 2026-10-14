@@ -1479,9 +1479,19 @@ TEMPLATE;
      */
     private function shareLinkFor(Proposal $proposal): string
     {
-        return $this->sharerIsAdmin()
-            ? \Illuminate\Support\Facades\URL::signedRoute('share.proposal', ['dataid' => $proposal->reference, 'orig' => 1])
-            : route('share.proposal', $proposal->reference);
+        $url = \Illuminate\Support\Facades\URL::class;
+
+        if ($this->sharerIsAdmin()) {
+            return $url::signedRoute('share.proposal', ['dataid' => $proposal->reference, 'orig' => 1, 'v' => time()]);
+        }
+        // ('v' = now: every share is a new address, so WhatsApp never reuses a preview it cached earlier — e.g. an empty one from before this worked.)
+        // A private proposal is hidden from visitors, so a plain link to it would be a 404 for whoever receives it (no preview
+        // picture, nothing to open). Someone allowed to see it who shares it on purpose gets a signed link, which opens it.
+        if ($proposal->is_private) {
+            return $url::signedRoute('share.proposal', ['dataid' => $proposal->reference, 'share' => 1, 'v' => time()]);
+        }
+
+        return route('share.proposal', $proposal->reference);
     }
 
     private function shareContentFor(Proposal $proposal): array
@@ -1571,7 +1581,8 @@ TEMPLATE;
             'code' => '200',
             'title' => $proposal->reference,
             // Someone else's proposal: Share opens a chat with its owner (a wa.me link can't carry files, but its link preview shows the photo).
-            'direct' => $proposal->added_by != $loggedInUser->id && !empty(TeamMember::find($proposal->added_by)->contact_mobile_number ?? null),
+            // (an admin shares the photos themselves — through the share sheet where the device allows — rather than opening the owner's chat)
+            'direct' => !$this->sharerIsAdmin() && $proposal->added_by != $loggedInUser->id && !empty(TeamMember::find($proposal->added_by)->contact_mobile_number ?? null),
             'text' => $pieces['text'],
             'photos' => $pieces['photos'],
             // wa.me link used when the browser can't attach files.

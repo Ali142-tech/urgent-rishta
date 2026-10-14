@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $member->dataid }} &bull; Urgent Rishta</title>
-    <meta name="description" content="{{ ucfirst($member->gender) }}{{ $age ? ', '.$age : '' }}{{ $member->profession ? ', '.$member->profession : '' }}{{ $location ? ' &bull; '.$location : '' }} &mdash; shared via Urgent Rishta.">
+    <meta name="description" content="{{ ucfirst($member->gender) }}{{ $age ? ', '.$age : '' }}{{ $member->profession ? ', '.$member->profession : '' }}{{ $location ? ' • '.$location : '' }} &mdash; shared via Urgent Rishta.">
 
     {{-- Open Graph / WhatsApp link preview — this real photo is
          deliberately public here (client's explicit choice, Sep 2026),
@@ -12,7 +12,7 @@
          everything else. See HomeController::sharePreview(). --}}
     <meta property="og:type" content="profile">
     <meta property="og:title" content="{{ $member->dataid }} &bull; Urgent Rishta">
-    <meta property="og:description" content="{{ ucfirst($member->gender) }}{{ $age ? ', '.$age : '' }}{{ $member->profession ? ', '.$member->profession : '' }}{{ $location ? ' &bull; '.$location : '' }}">
+    <meta property="og:description" content="{{ ucfirst($member->gender) }}{{ $age ? ', '.$age : '' }}{{ $member->profession ? ', '.$member->profession : '' }}{{ $location ? ' • '.$location : '' }}">
     <meta property="og:image" content="{{ $photoUrl }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta name="twitter:card" content="summary_large_image">
