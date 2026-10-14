@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Cache;
@@ -14,7 +15,7 @@ use App\MasterData;
 //use App\Profile;
 
 class User extends Authenticatable implements MustVerifyEmail {
-    use Notifiable;
+    use Notifiable, SoftDeletes;
     /**
      * The channels the user receives notification broadcasts on.
      *
@@ -34,12 +35,15 @@ class User extends Authenticatable implements MustVerifyEmail {
         'first_name',
         'last_name',
         'gender',
+        'service_type',
         'email',
+        'google_id',
         'contact_mobile_number',
         'height',
         'birthday',
         'mobile_country',
         'con_of_residence',
+        'state',
         'city',
         'religion',
         'caste',
@@ -49,14 +53,48 @@ class User extends Authenticatable implements MustVerifyEmail {
         'marital_status',
         'education',
         'profession',
+        'con_of_citizenship',
+        'immigration_status',
+        'family_residence',
+        'family_values',
+        'family_status',
+        'looking_from',
+        'profile_category',
+        'presentation_highlight',
+        'raw_intake_text',
+        'income',
+        'property_financial_status',
+        'profile_description',
+        'address',
+        'college_university',
+        'residence_size',
+        'current_city',
+        'father_occupation',
+        'mother_occupation',
+        'siblings_brothers',
+        'siblings_sisters',
+        'siblings_married_note',
         'password',
-        'package',
-        'package_started_at',
-        'package_expires_at',
-        'online_package',
-        'online_package_started_at',
-        'online_package_expires_at',
     ];
+
+    /**
+     * Entitlement fields deliberately excluded from $fillable — no legitimate
+     * code path mass-assigns them (they're always set via explicit property
+     * writes, e.g. activateOnlinePackage() below, or AdminController's
+     * package-change flow), so keeping them out of $fillable closes off a
+     * mass-assignment privilege-escalation path (a user self-granting a
+     * package via a crafted request) for any future code that isn't as
+     * careful: 'package', 'package_started_at', 'package_expires_at',
+     * 'online_package', 'online_package_started_at', 'online_package_expires_at'.
+     * Same reasoning covers the team-member state (now the team_members table, written only via
+     * AdminController::approveMatchmakerApplication()/rejectMatchmakerApplication()) and
+     * 'added_by' (set only via TeamController::store()
+     * to Auth::id() of the acting team member) — neither should ever be
+     * settable from a mass-assigned request body. The matchmaker application status
+     * follows the same rule — a signup form submitter must never be able to set their own
+     * application straight to 'approved'; only MatchmakerApplicationController::store()
+     * (hardcoded to 'pending') and AdminController's approve/reject actions ever write it.
+     */
 
     /**
      * The attributes that should be hidden for arrays.
@@ -106,6 +144,36 @@ class User extends Authenticatable implements MustVerifyEmail {
             }
         }
         return $user;
+    }
+
+    public function partnerPreference() {
+        return $this->hasOne(PartnerPreference::class);
+    }
+
+    /**
+     * Whether this member has actually filled in at least one partner
+     * preference field — used to gate "Recommended Matches" (no
+     * preferences = we have nothing to base a recommendation on, show a
+     * prompt to set them instead of a generic/irrelevant list). Checks
+     * every fillable field except the housekeeping ones (id/user_id/
+     * timestamps), so setting just one field (e.g. only a religion) already
+     * counts as "has preferences".
+     */
+    public function hasPartnerPreferences(): bool
+    {
+        $pref = $this->partnerPreference;
+        if (empty($pref)) {
+            return false;
+        }
+        $meaningfulFields = ['age_min', 'age_max', 'height', 'weight', 'marital_status', 'with_children',
+            'country_id', 'state_id', 'city_id', 'religion_id', 'caste_id', 'sect', 'education_id',
+            'profession', 'mother_tongue_id', 'languages', 'preferred_country_id', 'general_requirement'];
+        foreach ($meaningfulFields as $field) {
+            if (!empty($pref->{$field})) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function profile($refresh = null) {
@@ -211,17 +279,184 @@ class User extends Authenticatable implements MustVerifyEmail {
         if ($this->isAdmin()) {
             return $packages->pluck('dataid')->values()->all();
         }
-        // No admin package: if they have active online package, allow seeing all tiers; otherwise none.
+        // Per client request (Sep 2026): every member who can search at all
+        // now sees EVERY package tier's profiles — previously a lower tier
+        // couldn't see higher tiers at all (rank-limited to their own tier
+        // and below). The package gate has moved to sending an interest to
+        // a Royal+ profile instead (see canMessageRoyalTier() below and
+        // ProfileController::sendInterest()), not to browsing/searching.
         if (empty($this->package)) {
             return $this->hasActiveOnlinePackage()
                 ? $packages->pluck('dataid')->values()->all()
                 : [];
         }
-        $searcherPackage = $packages->firstWhere('dataid', $this->package);
-        if (!$searcherPackage) {
-            return [];
+        return $packages->pluck('dataid')->values()->all();
+    }
+
+    /**
+     * True if the given package dataid ranks Royal or higher (currently
+     * Royal, Imperial — see the PACKAGE masterdata rank order, lowest id
+     * first: Platinum, Diamond, Royal, Imperial). Used to gate sending an
+     * interest request to a Royal+ profile: the sender must also be Royal+
+     * (see ProfileController::sendInterest()) — client request Sep 2026.
+     */
+    /**
+     * Client request (Oct 2026): a Royal+ profile's photos show blurred to a member who is not on
+     * Royal or higher themselves (that member can't send it an interest request either — see
+     * ProfileController::sendInterest()). Admins, the owner and team accounts are never affected.
+     * $this is the viewer; $member is the profile being looked at (anything with ->package / ->id).
+     */
+    public function photosBlurredFor($member): bool
+    {
+        if ((int) ($this->admin ?? 0) === 1 || $this->id === ($member->id ?? null) || !empty($member->added_by)) {
+            return false;
         }
-        return $packages->where('id', '<=', $searcherPackage->id)->pluck('dataid')->values()->all();
+        return self::packageIsRoyalOrHigher($member->package ?? null) && !self::packageIsRoyalOrHigher($this->package);
+    }
+
+    public static function packageIsRoyalOrHigher(?string $packageDataid): bool
+    {
+        if (empty($packageDataid)) {
+            return false;
+        }
+        $packages = MasterData::where('type', 'PACKAGE')->orderBy('id')->get();
+        $royal = $packages->firstWhere('name', 'Royal');
+        $target = $packages->firstWhere('dataid', $packageDataid);
+        return $royal && $target && $target->id >= $royal->id;
+    }
+
+    /**
+     * WHERE clause shared by getRecommendedMatches()/getRecommendedMatchesCount()
+     * — same active/package visibility rules as the real search
+     * (HomeController::search()), restricted to the opposite gender, AND
+     * (per client request) narrowed down to whatever this member has
+     * actually set on their Partner Preferences page. Null when the viewer
+     * can't search yet (inactive profile / no package), has no gender set,
+     * or — crucially — has no partner preferences saved at all: with
+     * nothing to base a recommendation on, callers show a "please add your
+     * preferences" prompt instead of falling back to an unrelated list (see
+     * hasPartnerPreferences()).
+     *
+     * Hard-filtered fields (per client request, Sep 2026): age range,
+     * marital status, has-children, country of residence, state, religion,
+     * and a partial-text match on profession. City, caste, and education
+     * are deliberately NOT filtered here — each was found to zero out
+     * results entirely (city for smaller towns, caste for less common
+     * castes, education for narrow country/state/religion combinations)
+     * even with otherwise-good matches available nearby — mother tongue/
+     * height/weight/sect/languages/preferred country/general requirement
+     * are free-text or have no reliable single-column equivalent, so
+     * they're saved on the preferences page but not enforced here either.
+     */
+    private function recommendedMatchesWhere(): ?string
+    {
+        if (!$this->isActive() || !$this->canSearchSoulMates()) {
+            return null;
+        }
+
+        $ownGender = strtolower($this->gender ?? '');
+        $oppositeGender = $ownGender === 'male' ? 'female' : ($ownGender === 'female' ? 'male' : null);
+        if (empty($oppositeGender)) {
+            return null;
+        }
+
+        if (!$this->hasPartnerPreferences()) {
+            return null;
+        }
+
+        $where = "`u`.`gender`='" . $oppositeGender . "' and `u`.`active`=1";
+        $visiblePackageDataids = $this->getVisiblePackageDataidsForSearch();
+        if (empty($visiblePackageDataids)) {
+            $where .= " and 1=0";
+        } elseif (!$this->isAdmin()) {
+            $quoted = array_map(function ($d) {
+                return "'" . addslashes($d) . "'";
+            }, $visiblePackageDataids);
+            $where .= " and `u`.`package` IN (" . implode(',', $quoted) . ")";
+        }
+
+        $pref = $this->partnerPreference;
+        if (!empty($pref->age_min) || !empty($pref->age_max)) {
+            $min = !empty($pref->age_min) ? (int) $pref->age_min : 18;
+            $max = !empty($pref->age_max) ? (int) $pref->age_max : 99;
+            $where .= " and FLOOR(DATEDIFF(NOW(), `u`.`birthday`)/365.25) between " . $min . " and " . $max;
+        }
+        if (!empty($pref->marital_status)) {
+            $where .= " and `u`.`marital_status`='" . addslashes($pref->marital_status) . "'";
+        }
+        // `u`.`children` stores a free-text/number of kids ("0", "2", ...);
+        // the preference is a Yes/No/Does-not-matter question — "No" means
+        // childless (0/blank), "Yes" means at least one, "Does not matter"
+        // (or empty) applies no filter at all.
+        if ($pref->with_children === 'No') {
+            $where .= " and (`u`.`children` is null or `u`.`children`='' or CAST(`u`.`children` AS UNSIGNED)=0)";
+        } elseif ($pref->with_children === 'Yes') {
+            $where .= " and CAST(`u`.`children` AS UNSIGNED) > 0";
+        }
+        if (!empty($pref->country_id)) {
+            $where .= " and `u`.`con_of_residence`='" . addslashes($pref->country_id) . "'";
+        }
+        if (!empty($pref->state_id)) {
+            $where .= " and `u`.`state`='" . addslashes($pref->state_id) . "'";
+        }
+        if (!empty($pref->religion_id)) {
+            $where .= " and `u`.`religion`='" . addslashes($pref->religion_id) . "'";
+        }
+        if (!empty($pref->profession)) {
+            $where .= " and `u`.`profession` LIKE '%" . addslashes($pref->profession) . "%'";
+        }
+
+        // Team-added proposals (see TeamController::store()) are team-exclusive
+        // — they must never surface in the regular recommended-matches pool.
+        $where .= " and `u`.`added_by` IS NULL";
+
+        return $where;
+    }
+
+    /**
+     * Up to $limit "recommended" profiles for this member, starting at
+     * $offset (for the dedicated "Recommended Matches" page's
+     * pagination). Filtered by this member's own Partner Preferences (age
+     * range, marital status, country/city, religion, caste, mother tongue,
+     * profession — see recommendedMatchesWhere()); returns empty when no
+     * preferences have been saved at all, rather than an unrelated default
+     * list — callers should check hasPartnerPreferences() to show a
+     * "please add your preferences" prompt in that case. Beyond the
+     * preference filters, same-city results are still prioritized first
+     * (via ORDER BY), then same-country, then everyone else by recency.
+     */
+    public function getRecommendedMatches($limit = 3, $offset = 0)
+    {
+        $where = $this->recommendedMatchesWhere();
+        if ($where === null) {
+            return collect();
+        }
+
+        $orderParts = [];
+        if (!empty($this->city)) {
+            $orderParts[] = "(`u`.`city`='" . addslashes($this->city) . "') DESC";
+        }
+        if (!empty($this->con_of_residence)) {
+            $orderParts[] = "(`u`.`con_of_residence`='" . addslashes($this->con_of_residence) . "') DESC";
+        }
+        $orderParts[] = "`u`.`updated_at` DESC";
+        $orderBy = implode(', ', $orderParts);
+
+        return Profile::profiles($where, "", $orderBy, $limit, $offset);
+    }
+
+    /**
+     * Total count of profiles getRecommendedMatches() draws from — used
+     * by the dedicated "Recommended Matches" page to paginate.
+     */
+    public function getRecommendedMatchesCount(): int
+    {
+        $where = $this->recommendedMatchesWhere();
+        if ($where === null) {
+            return 0;
+        }
+
+        return (int) Profile::profiles($where, "", null, null, null, true);
     }
 
     /**
@@ -282,6 +517,44 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $this->profile()->getInterest($dataid);
     }
 
+    public function getPhotoAccessLists() {
+        return $this->profile()->getPhotoAccessLists();
+    }
+
+    public function updatePhotoAccessLists() {
+        return $this->profile()->updatePhotoAccessLists();
+    }
+
+    public function getPhotoAccess($dataid) {
+        return $this->profile()->getPhotoAccess($dataid);
+    }
+
+    /**
+     * Can this member see $owner's hidden (Private) photos right now?
+     * Admins always can (Website Upgrade Brief-style moderation access —
+     * "hidden" only ever meant hidden from other members); the owner
+     * always can on their own profile (not that this page renders for
+     * them); everyone else needs a granted photo_access_requests row.
+     */
+    public function canViewHiddenPhotosOf(User $owner): bool {
+        if ($this->id === $owner->id) return true;
+        if ($this->isAdmin()) return true;
+        return $this->getPhotoAccess($owner->dataid) === 1;
+    }
+
+    /**
+     * Can this member see $proposalOwner's hidden contact info (email,
+     * phone, last name, exact address) right now? These fields are hidden
+     * by default for any team-added proposal (see TeamController::store())
+     * — but the whole team-added pool is shared/open across the team, so
+     * any active team member can see them, not just the one who added it.
+     */
+    public function canViewContactInfoOf(User $proposalOwner): bool {
+        if ($this->id === $proposalOwner->id) return true;
+        if ($this->isAdmin()) return true;
+        return false;
+    }
+
     public function getTotalCount() {
         return $this->profile()->getTotalCount();
     }
@@ -290,29 +563,121 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $this->first_name . ' ' . $this->last_name;
     }
 
-    public function getNormalizedPhoneNumber() {
+    /**
+     * Static version of the normalization logic so callers that only have a
+     * raw phone number (e.g. a stdClass row from a raw DB::table() select,
+     * like the admin Interests list — not a full User model) can still get
+     * a correct WhatsApp link without an extra query per row.
+     */
+    public static function normalizePhoneNumberValue($n) {
         $pkCodes = ['300', '301', '302', '303', '304', '305', '306', '307', '308', '309', '310', '311', '312', '313', '314', '315', '316', '317', '318', '320', '321', '322', '323', '324', '330', '331', '332', '333', '334', '335', '336', '337', '340', '341', '342', '343', '344', '345', '346', '347', '348', '349', '355'];
 
-        $n = $this->contact_mobile_number;
+        // wa.me wants digits only, country code first, no leading 0 / + / spaces.
+        $raw = trim((string) $n);
+        $hasPlus = str_starts_with($raw, '+');
+        $n = preg_replace('/\D+/', '', $raw);
 
-        foreach ($pkCodes as $code) {
-            if (Str::startsWith($n, $code)) {
-                return "92" . $n;
+        // International: "+44 7445 723296", "0044 7445 ...", "+44 (0)7445 ..." — trust the country code the
+        // number already carries (a Pakistani-looking prefix must not be re-read as +92), and drop the
+        // national "0" some people leave after it.
+        if ($hasPlus || Str::startsWith($n, '00')) {
+            $n = preg_replace('/^00/', '', $n);
+            foreach (['44', '353', '971', '966', '974', '965', '968', '973', '61', '64', '27', '49', '31', '32', '41', '43', '46', '47', '45', '358'] as $cc) {
+                if (Str::startsWith($n, $cc . '0')) {
+                    return $cc . Str::substr($n, strlen($cc) + 1);
+                }
+            }
+            return $n;
+        }
+
+        // Pakistani mobile written without the leading 0: exactly 10 digits, e.g. 3001234567. (Longer numbers
+        // such as French 33 6… or Spanish 34 6… also begin with 3xx but are complete international numbers.)
+        if (strlen($n) === 10) {
+            foreach ($pkCodes as $code) {
+                if (Str::startsWith($n, $code)) {
+                    return "92" . $n;
+                }
             }
         }
 
-        if (Str::startsWith($n, "00")) {
-            return Str::substr($n, 2);
-        }
-
+        // Local Pakistani format: 0300 1234567
         if (Str::startsWith($n, "0")) {
-            return "92". Str::substr($n, 1);
+            return "92" . Str::substr($n, 1);
         }
 
         return $n;
     }
 
+    public static function whatsappLinkForNumber($n, $text = null) {
+        $link = 'https://wa.me/' . self::normalizePhoneNumberValue($n);
+        return $text ? $link . '?text=' . rawurlencode($text) : $link;
+    }
+
+    /**
+     * A "share to anyone" WhatsApp link — no target number, opens WhatsApp's
+     * own contact picker. Used for sharing a proposal (Website Upgrade
+     * Brief §10: never send phone/email/address via WhatsApp — only a
+     * proposal ID and a secure portal link belong in $text).
+     */
+    public static function whatsappShareLink($text) {
+        return 'https://wa.me/?text=' . rawurlencode($text);
+    }
+
+    public function getNormalizedPhoneNumber() {
+        return self::normalizePhoneNumberValue($this->contact_mobile_number);
+    }
+
     public function getWhatsappLink() {
-        return 'https://wa.me/' . $this->getNormalizedPhoneNumber();
+        return self::whatsappLinkForNumber($this->contact_mobile_number);
+    }
+
+    /**
+     * Website Upgrade Brief §5/§9 — photo verification. Split into the two
+     * regular uploads vs. the live-captured selfie (Images::is_selfie) so
+     * the admin verification queue can show them separately.
+     */
+    public function images() {
+        return $this->hasMany(Images::class, 'user_id');
+    }
+
+    public function regularImages() {
+        return $this->images()->where('is_selfie', 0);
+    }
+
+    public function selfieImage() {
+        return $this->hasOne(Images::class, 'user_id')->where('is_selfie', 1)->latestOfMany();
+    }
+
+    /**
+     * Single source of truth for "can this account actually log in yet?" —
+     * used by every login path (password, OTP, Google — none of which share
+     * a common base method, so this stays here instead of being duplicated
+     * per controller). Null means fine, proceed; otherwise a "type|text"
+     * flash string ready for Session::flash('message', ...).
+     *
+     * 'rejected' is the ONLY status that hard-blocks login here — it's the
+     * old manual-admin-review outcome and genuinely requires an admin to
+     * call reopenPhotoVerification() before the account can do anything
+     * again, so there's no self-service path being cut off.
+     *
+     * 'pending' (never yet completed photo verification) and 'resubmit'
+     * (AI verification failed, needs to try again) are deliberately NOT
+     * blocked here — login always succeeds for them, and
+     * LoginController@finishLogin / GoogleAuthController@callback instead
+     * redirect straight to the photo verification gate with an explanatory
+     * message. Hard-blocking either of those at login would leave the
+     * member with no way to ever reach the gate again to fix it themselves
+     * (client explicitly wants zero manual/admin involvement in this flow)
+     * — the EnsurePhotosUploaded middleware already fully prevents them
+     * from reaching search, other profiles, or sending interest while in
+     * either state, so nothing is lost security-wise by letting login
+     * proceed.
+     */
+    public function photoVerificationBlockMessage(): ?string {
+        if ($this->photo_verification_status === 'rejected') {
+            $reason = $this->photo_rejection_reason;
+            return 'danger|Your account was not approved' . (!empty($reason) ? ': ' . $reason : '') . '. Please contact support.';
+        }
+        return null;
     }
 }

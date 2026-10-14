@@ -4,7 +4,9 @@ namespace App;
 
 use App\User;
 use App\Images;
+use App\PartnerPreference;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +22,7 @@ class Profile extends Model {
     protected $table="profile";
 
     protected $interestLists = null;
+    protected $photoAccessLists = null;
     protected $followerCount = null;
     protected $userObj = null;
 
@@ -58,7 +61,16 @@ class Profile extends Model {
     }
 
     private function showBlur() {
-        return Auth::guest();
+        if (Auth::guest()) {
+            return true;
+        }
+        // Logged-in team members / admins see sharp photos inside the team
+        // dashboard (/team/*); the public site and member area still honour
+        // the per-profile 'blurred' setting.
+        if (request()->is('team/*')) {
+            return false;
+        }
+        return $this->photo_visibility === 'blurred';
     }
 
     private function getBlurName($name) {
@@ -70,29 +82,206 @@ class Profile extends Model {
         return strtolower($this->gender?$this->gender:'male').'_large.jpg';
     }
 
-    public function getProfileImage($tiny = null) {
-        if (!empty($this->displaypic))
-            return self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->displaypic)[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->displaypic)[2]);
-        else if (!empty($this->images)) {
+    /**
+     * $watermarked: see getCardImages()'s docblock — same gate, same
+     * watermark_ derivative, checked before the normal thumbnail path.
+     */
+    public function getProfileImage($tiny = null, $watermarked = false) {
+        if ($this->photo_visibility === 'hidden') {
+            return self::defaultImage($this->gender);
+        }
+
+        $sourceImage = !empty($this->displaypic) ? $this->displaypic : null;
+        if ($sourceImage === null && !empty($this->images)) {
+            if (!is_array($this->images))
+                $this->images = explode(',', $this->images);
+            $sourceImage = $this->images[0] ?? null;
+        }
+
+        $path = null;
+        if (!empty($sourceImage)) {
+            $filename = explode("/", $sourceImage)[2] ?? null;
+            if ($watermarked && $filename && !$this->showBlur()) {
+                $watermarkPath = self::MEMBER_IMAGES_PATH.'/watermark_'.$filename;
+                if (file_exists(public_path($watermarkPath))) {
+                    return $watermarkPath;
+                }
+            }
+            if ($filename) {
+                $path = self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):"thumbnail_".($tiny?"sm_":"").$filename);
+            }
+        }
+
+        // Fall back to the gender default avatar both when there's no photo
+        // on record, and when the DB points at a file that isn't actually on
+        // disk (e.g. a live DB dump imported locally without also copying
+        // public/users) — otherwise the background-image div just renders
+        // blank with no visible fallback.
+        if ($path && file_exists(public_path($path)))
+            return $path;
+        return self::defaultImage($this->gender);
+    }
+
+    /**
+     * Same real photo as getProfileImage(), but always the pre-generated
+     * blurred variant (the one guests already see everywhere via
+     * showBlur()/getBlurName() — a heavy whole-image blur baked to disk at
+     * upload time, filename salted so it can't be reverse-engineered to the
+     * sharp original) — regardless of the viewer's auth state. Used by the
+     * homepage "Meet Our Members" slider so a real photo is genuinely shown
+     * (per client request), just never a sharp/identifiable one, whether the
+     * visitor is logged in or not.
+     */
+    public function getBlurredProfileImage($tiny = null) {
+        if ($this->photo_visibility === 'hidden') {
+            return self::defaultImage($this->gender);
+        }
+
+        $path = null;
+        if (!empty($this->displaypic)) {
+            $path = self::MEMBER_IMAGES_PATH.'/'.$this->getBlurName(explode("/",$this->displaypic)[2]);
+        } else if (!empty($this->images)) {
             if (!is_array($this->images))
                 $this->images=explode(',', $this->images);
             if (!empty($this->images[0]))
-                return self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$this->images[0])[2]):"thumbnail_".($tiny?"sm_":"").explode("/",$this->images[0])[2]);
-        } else return '/images/'.strtolower($this->gender?$this->gender:'male').'_large.jpg';
+                $path = self::MEMBER_IMAGES_PATH.'/'.$this->getBlurName(explode("/",$this->images[0])[2]);
+        }
+
+        if ($path && file_exists(public_path($path)))
+            return $path;
+        return self::defaultImage($this->gender);
     }
 
-    public function getLightGalleryImages() {
+    /**
+     * Default fallback avatar for a gender when no profile photo exists.
+     * Appends the file's mtime as a version query so browsers/CDNs pick up
+     * a new default image immediately instead of serving a stale cached copy
+     * of the same filename.
+     */
+    public static function defaultImage($gender) {
+        $file = strtolower($gender ? $gender : 'male').'_large.jpg';
+        $full = public_path('images/'.$file);
+        return '/images/'.$file.(file_exists($full) ? '?v='.filemtime($full) : '');
+    }
+
+    /**
+     * URL of a small flag image for a 2-letter ISO 3166-1 country code
+     * (masterdata.abbreviation for COUNTRY rows), e.g. "PK" -> a Pakistan
+     * flag PNG. We first tried rendering the Unicode flag emoji directly
+     * (regional indicator symbols, no assets needed) but Windows Chrome/
+     * Edge has no flag glyphs in its emoji font and falls back to showing
+     * the raw two letters ("AE", "PK"...) instead of a flag — so an actual
+     * image is the only way to get a flag everywhere. Uses flagcdn.com
+     * (the same free public CDN pattern this app already uses for other
+     * external assets); returns null for anything that isn't exactly 2
+     * letters.
+     *
+     * flagcdn.com only serves a fixed set of width buckets (w20/w40/w80/
+     * w160/...), not arbitrary pixel widths — requesting anything else
+     * (e.g. "w24") 404s. $width here is one of those bucket numbers, not
+     * a literal pixel size; we request w40 and let CSS scale it down for
+     * a crisper (retina-friendly) result at the small display size.
+     */
+    public static function countryFlagUrl($code, $width = 40) {
+        $code = strtolower((string) $code);
+        if (!preg_match('/^[a-z]{2}$/', $code)) {
+            return null;
+        }
+        return "https://flagcdn.com/w{$width}/{$code}.png";
+    }
+
+    /**
+     * All of this member's photos (thumbnail-sized, blur/hidden-respecting —
+     * same rules as getProfileImage()), for the member-card carousel. Falls
+     * back to a single-element array with the gender default avatar when
+     * there are no real photos, so callers can always safely index [0].
+     */
+    /**
+     * $watermarked: currently always passed as false — any team member can
+     * see any team-added proposal's sharp photo directly (see
+     * User::canViewContactInfoOf()). Kept as a parameter (and
+     * App\Services\WatermarkService still bakes the watermark_ derivative
+     * at upload time, TeamController::uploadPhoto()) in case per-proposal
+     * photo gating is reintroduced later.
+     */
+    public function getCardImages($tiny = null, $watermarked = false) {
+        if ($this->photo_visibility === 'hidden') {
+            return [self::defaultImage($this->gender)];
+        }
+
+        $images = $this->images;
+        if (!empty($images)) {
+            if (!is_array($images))
+                $images = explode(',', $images);
+        } else {
+            $images = [];
+        }
+
+        $paths = [];
+        foreach ($images as $image) {
+            if (empty($image)) continue;
+            $filename = explode("/", $image)[2] ?? null;
+            if (!$filename) continue;
+            $derivative = $this->showBlur() ? $this->getBlurName($filename) : "thumbnail_".($tiny?"sm_":"").$filename;
+            if ($watermarked && !$this->showBlur()) {
+                $watermarkPath = self::MEMBER_IMAGES_PATH.'/watermark_'.$filename;
+                if (file_exists(public_path($watermarkPath))) {
+                    $paths[] = $watermarkPath;
+                    continue;
+                }
+            }
+            $path = self::MEMBER_IMAGES_PATH.'/'.$derivative;
+            if (file_exists(public_path($path))) {
+                $paths[] = $path;
+            }
+        }
+
+        return !empty($paths) ? $paths : [self::defaultImage($this->gender)];
+    }
+
+    /**
+     * "Online" for the green-dot indicator = logged in within the last month.
+     * Profile::profiles() already selects `u.*` (users.last_login_at included),
+     * so this is available on every Profile row with no extra query.
+     */
+    public function isOnline() {
+        return !empty($this->last_login_at) && Carbon::parse($this->last_login_at)->gt(now()->subMonth());
+    }
+
+    /**
+     * $watermarked: see getCardImages()'s docblock — same gate, same
+     * watermark_ derivative. All three of src/thumb/mobileSrc point at
+     * that one (thumbnail-sized) derivative when watermarked, rather than
+     * the full-size original, since there's no full-size watermarked
+     * variant baked at upload time.
+     */
+    public function getLightGalleryImages($watermarked = false) {
         $lightgallery = array();
+        // Admin-hidden photos must not be reachable via the gallery either —
+        // showBlur() below only accounts for 'blurred' (and guests), so
+        // 'hidden' needs its own check or the sharp originals would still
+        // show here even though getProfileImage() correctly hides the main photo.
+        if ($this->photo_visibility === 'hidden') {
+            return json_encode($lightgallery);
+        }
         if (!empty($this->images)) {
             if (!is_array($this->images))
                 $this->images = explode(',', $this->images);
             $images = $this->images;
 
             for ($i=0; $i<sizeof($images); $i++) {
+                $filename = explode("/",$images[$i])[2];
+                if ($watermarked && !$this->showBlur()) {
+                    $watermarkPath = self::MEMBER_IMAGES_PATH.'/watermark_'.$filename;
+                    if (file_exists(public_path($watermarkPath))) {
+                        $lightgallery[] = ["src" => $watermarkPath, "thumb" => $watermarkPath, "mobileSrc" => $watermarkPath];
+                        continue;
+                    }
+                }
                 $lightgallery[] = [
-                    "src" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$images[$i])[2]):explode("/",$images[$i])[2]),
-                    "thumb" => !empty($images[$i])?self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$images[$i])[2]):"thumbnail_".explode("/",$images[$i])[2]):"",
-                    "mobileSrc" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName(explode("/",$images[$i])[2]):explode("/",$images[$i])[2])
+                    "src" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):$filename),
+                    "thumb" => !empty($images[$i])?self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):"thumbnail_".$filename):"",
+                    "mobileSrc" => self::MEMBER_IMAGES_PATH.'/'.($this->showBlur()?$this->getBlurName($filename):$filename)
                 ];
             }
         }
@@ -105,6 +294,255 @@ class Profile extends Model {
                 $this->images =explode(',', $this->images);
             return sizeof($this->images);
         } else return 0;
+    }
+
+    /**
+     * "Profile Completeness" meter shown at the top of the My Profile page.
+     * One point per editable section on that page (matching the section
+     * names ProfileController::updateProfile() switches on) plus Photo and
+     * Partner Preferences — a section counts as filled if any one of its
+     * fields is set, same "any field present" convention already used to
+     * decide whether to show a section on the public profile view
+     * (resources/views/member/profile.blade.php). Legacy/frozen fields
+     * (users.r*, brother/sister) are intentionally left out.
+     */
+    public function profileCompleteness(): array {
+        $sections = [
+            'Photo' => $this->getImageCount() > 0 || !empty($this->displaypic),
+            'Introduction' => !empty($this->intro),
+            'Basic Info' => !empty($this->first_name) && !empty($this->last_name) && !empty($this->gender) && !empty($this->birthday),
+            'Education & Career' => !empty($this->education) || !empty($this->profession) || !empty($this->salary),
+            'Physical Attributes' => !empty($this->height) || !empty($this->weight),
+            'Language' => !empty($this->mother_tongue) || !empty($this->language),
+            'Residency Information' => !empty($this->con_of_birth) || !empty($this->con_of_residence) || !empty($this->con_of_citizenship) || !empty($this->con_grew_up) || !empty($this->immigration_status),
+            'Spiritual & Social Background' => !empty($this->religion) || !empty($this->caste) || !empty($this->sect),
+            'Permanent Address' => !empty($this->state) || !empty($this->city) || !empty($this->society),
+            'Family Info' => !empty($this->father) || !empty($this->mother) || !empty($this->brothers_count) || !empty($this->sisters_count) || !empty($this->siblings),
+            'Additional Personal Details' => !empty($this->district) || !empty($this->family_residence) || !empty($this->father_profession) || !empty($this->mother_profession) || !empty($this->special_circumstances) || !empty($this->family_values),
+            'Partner Preferences' => !empty($this->rage_min) || !empty($this->rgen_req) || !empty($this->rheight) || !empty($this->rmarital_status)
+                || !empty($this->rcon_of_residence) || !empty($this->rcity) || !empty($this->rreligion) || !empty($this->rcaste)
+                || !empty($this->reducation) || !empty($this->rprofession) || !empty($this->rmother_tongue) || !empty($this->rlanguages) || !empty($this->rcon_pref),
+        ];
+
+        $filled = count(array_filter($sections));
+        $total = count($sections);
+
+        return [
+            'percent' => $total > 0 ? (int) round($filled / $total * 100) : 0,
+            'filled' => $filled,
+            'total' => $total,
+            'sections' => $sections,
+        ];
+    }
+
+    /**
+     * Real, per-viewer Compatibility Score — how well THIS profile matches
+     * the VIEWER's own saved Partner Preferences (not how filled-out this
+     * profile is; that's profileCompleteness() above). Only checks
+     * criteria the viewer actually set a preference for — an unset
+     * preference (e.g. no religion preference chosen) isn't counted for or
+     * against the match, since there's nothing to compare.
+     *
+     * $preferenceLabels is the same resolved-label array
+     * ProfileController::profile() builds for the "Looking For" tab
+     * (['city' => ..., 'country' => ..., ...]) — reused here purely for
+     * display text like "UK location matched", not for the matching logic
+     * itself (which compares raw masterdata ids).
+     *
+     * Deliberately does NOT attempt Height/Weight/Sect (free-text fields on
+     * both sides — format varies too much to compare reliably) or "Family
+     * background" / "Lifestyle" as blanket checks (Partner Preferences
+     * doesn't store a desired family type or lifestyle — nothing real to
+     * compare against, so no fabricated check for those).
+     *
+     * Returns null if the viewer has no usable preference data at all —
+     * the caller shows a "set your preferences" prompt in that case
+     * instead of a meaningless 0%/100%.
+     */
+    public function compatibilityWith(?PartnerPreference $preference, array $preferenceLabels = [], $ownProfile = null): ?array {
+        if (empty($preference)) {
+            return null;
+        }
+
+        $checks = [];
+
+        // Age and Location are the only two factors below with a genuine
+        // "closeness" concept, so they get a graduated 0-100 score instead
+        // of a flat matched/unmatched — a candidate one year outside the
+        // preferred range reads very differently from one 15 years outside.
+        // Every other factor (religion, caste, marital status, education,
+        // mother tongue, children) is inherently categorical — there's no
+        // meaningful "70% religion match" — so those stay a clean 100/0.
+        //
+        // $ownProfile (optional — the PROPOSAL's own profile, passed only
+        // by team-context callers, e.g. TeamController::buildMatchCenterData())
+        // fills in Age/Religion when no explicit preference was set for
+        // them, and is the ONLY source for the Nationality/Profession
+        // checks below (there's no "preferred nationality" field at all,
+        // and "preferred profession" is free text nobody reliably fills
+        // in). Team-added proposals' Partner Requirements form only
+        // reliably captures Age + Religion as real structured fields (see
+        // TeamController::savePreferenceAndCheckMatches()'s own comment) —
+        // without this fallback, most team proposals scored against just
+        // 1 criterion, which trivially lands on 100%. Every other caller
+        // (self-registered members, whose own Preferences page already
+        // captures a full set) omits $ownProfile and keeps the exact
+        // preference-only behavior this method always had.
+        $hasAgePreference = !empty($preference->age_min) || !empty($preference->age_max);
+        $ownAge = ($ownProfile && !empty($ownProfile->birthday)) ? Carbon::parse($ownProfile->birthday)->age : null;
+        if ($hasAgePreference || $ownAge !== null) {
+            $ageMin = $hasAgePreference ? $preference->age_min : max(18, $ownAge - 7);
+            $ageMax = $hasAgePreference ? $preference->age_max : min(99, $ownAge + 7);
+            $age = !empty($this->birthday) ? Carbon::parse($this->birthday)->age : null;
+            $matched = $age !== null
+                && (empty($ageMin) || $age >= $ageMin)
+                && (empty($ageMax) || $age <= $ageMax);
+            $score = 0;
+            if ($age !== null) {
+                if ($matched) {
+                    $score = 100;
+                } else {
+                    $distance = 0;
+                    if (!empty($ageMin) && $age < $ageMin) {
+                        $distance = $ageMin - $age;
+                    } elseif (!empty($ageMax) && $age > $ageMax) {
+                        $distance = $age - $ageMax;
+                    }
+                    $score = max(0, 100 - ($distance * 15)); // -15%/year outside the range
+                }
+            }
+            $checks[] = ['factor' => 'Age', 'label' => $hasAgePreference ? 'Preferred age range matched' : 'Similar age', 'matched' => (bool) $matched, 'score' => (int) round($score)];
+        }
+
+        // City is the most specific ask; country and "preferred country (if
+        // different from residence)" are both acceptable alternatives to it.
+        if (!empty($preference->city_id) || !empty($preference->country_id) || !empty($preference->preferred_country_id)) {
+            $cityMatched = !empty($preference->city_id) && $this->city == $preference->city_id;
+            $countryMatched = (!empty($preference->country_id) && $this->con_of_residence == $preference->country_id)
+                || (!empty($preference->preferred_country_id) && $this->con_of_residence == $preference->preferred_country_id);
+            $matched = $cityMatched || $countryMatched;
+            // Exact city = 100%, right country but different city = 65%,
+            // neither = 20% — a location mismatch alone isn't treated as a
+            // total dealbreaker the way e.g. marital status would be.
+            $score = $cityMatched ? 100 : ($countryMatched ? 65 : 20);
+            $locationLabel = $preferenceLabels['city'] ?? $preferenceLabels['country'] ?? $preferenceLabels['preferred_country'] ?? null;
+            $checks[] = ['factor' => 'Location', 'label' => $locationLabel ? "{$locationLabel} location matched" : 'Location preference matched', 'matched' => (bool) $matched, 'score' => $score];
+        }
+
+        $hasReligionPreference = !empty($preference->religion_id);
+        $targetReligion = $hasReligionPreference ? $preference->religion_id : ($ownProfile->religion ?? null);
+        if (!empty($targetReligion)) {
+            $matched = $this->religion == $targetReligion;
+            $checks[] = ['factor' => 'Religion', 'label' => $hasReligionPreference ? 'Religion preference matched' : 'Same religion', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        // No "preferred nationality" field exists anywhere — this only ever
+        // runs via the $ownProfile fallback (see above), comparing the
+        // candidate's citizenship directly against the proposal's own.
+        if ($ownProfile && !empty($ownProfile->con_of_citizenship)) {
+            $matched = $this->con_of_citizenship == $ownProfile->con_of_citizenship;
+            $checks[] = ['factor' => 'Nationality', 'label' => 'Same nationality', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        // "Preferred profession" is free text (pref_profession) that
+        // nobody reliably fills in usefully — a loose substring match
+        // when it IS set, otherwise falls back to comparing the
+        // candidate's profession directly against the proposal's own.
+        $hasProfessionPreference = !empty($preference->profession);
+        if ($hasProfessionPreference) {
+            $matched = !empty($this->profession) && stripos($this->profession, $preference->profession) !== false;
+            $checks[] = ['factor' => 'Profession', 'label' => 'Preferred profession matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        } elseif ($ownProfile && !empty($ownProfile->profession) && !empty($this->profession)) {
+            $matched = strcasecmp(trim($this->profession), trim($ownProfile->profession)) === 0;
+            $checks[] = ['factor' => 'Profession', 'label' => 'Same profession', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        if (!empty($preference->caste_id)) {
+            $matched = $this->caste == $preference->caste_id;
+            $checks[] = ['factor' => 'Caste', 'label' => 'Caste preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        if (!empty($preference->marital_status)) {
+            $matched = $this->marital_status == $preference->marital_status;
+            $checks[] = ['factor' => 'Marital Status', 'label' => 'Marital status matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        if (!empty($preference->education_id)) {
+            $matched = $this->education == $preference->education_id;
+            $checks[] = ['factor' => 'Education', 'label' => 'Education preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        if (!empty($preference->mother_tongue_id)) {
+            $matched = $this->mother_tongue == $preference->mother_tongue_id;
+            $checks[] = ['factor' => 'Mother Tongue', 'label' => 'Mother tongue matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        // "Does not matter" means the viewer explicitly has no preference
+        // here — same as leaving it unset, so no check either way.
+        if (!empty($preference->with_children) && $preference->with_children !== 'Does not matter') {
+            $hasChildren = !empty($this->children) && $this->children > 0;
+            $matched = $preference->with_children === 'Yes' ? $hasChildren : !$hasChildren;
+            $checks[] = ['factor' => 'Children', 'label' => 'Children preference matched', 'matched' => $matched, 'score' => $matched ? 100 : 0];
+        }
+
+        if (empty($checks)) {
+            return null; // a preference row exists but nothing on it is usable for matching
+        }
+
+        $matchedCount = count(array_filter($checks, fn ($c) => $c['matched']));
+        $total = count($checks);
+        // Overall percent is a WEIGHTED average of each check's own graduated
+        // score (not just matchedCount/total) — a near-miss on age nudges
+        // the overall number instead of counting as a full miss, same as
+        // the per-factor bars now shown on member-card.blade.php. Weights are
+        // admin-configurable (see MatchWeightSetting, AdminController::
+        // matchWeights()); a factor missing from settings defaults to 1, so
+        // this stays a flat average until an admin actually changes something.
+        $weights = \App\MatchWeightSetting::current();
+        $weightedSum = 0;
+        $weightTotal = 0;
+        foreach ($checks as $check) {
+            $weight = $weights[$check['factor']] ?? 1;
+            $weightedSum += $check['score'] * $weight;
+            $weightTotal += $weight;
+        }
+        $overallScore = $weightTotal > 0 ? (int) round($weightedSum / $weightTotal) : 0;
+
+        return [
+            'percent' => $overallScore,
+            'matched' => $matchedCount,
+            'total' => $total,
+            'checks' => $checks,
+        ];
+    }
+
+    /**
+     * Website Upgrade Brief §6 "AI Match Explanation" — one short sentence
+     * built from the top-scoring factors in an already-computed
+     * compatibilityWith() result, e.g. "Age, Location and Profession
+     * strongly match." Deterministic (not a real LLM call) — the
+     * underlying scores are already real per-factor comparisons, this
+     * just turns them into a sentence.
+     */
+    public static function compatibilityExplanation(array $compatibility): string
+    {
+        $strong = collect($compatibility['checks'] ?? [])
+            ->filter(fn ($c) => $c['score'] >= 70)
+            ->sortByDesc('score')
+            ->take(3)
+            ->pluck('factor')
+            ->all();
+
+        if (empty($strong)) {
+            return 'A few shared preferences, but no strong standout factors yet.';
+        }
+
+        $count = count($strong);
+        $list = $count === 1
+            ? $strong[0]
+            : implode(', ', array_slice($strong, 0, -1)) . ' and ' . end($strong);
+
+        return $list . ($count > 1 ? ' requirements strongly match.' : ' strongly matches.');
     }
 
     public function getFilteredCount($type) {
@@ -195,11 +633,106 @@ class Profile extends Model {
         }
     }
 
+    /**
+     * "Request to view hidden photos" — same sent/received shape as
+     * getInterestLists()/updateInterestLists() above, backed by
+     * photo_access_requests (uid=requester, pid=owner, allowed=0/1/-1)
+     * instead of `interest`. Powers member.photoaccessdata (My Photo
+     * Access Requests) and admin.dashboard.photoaccess*.
+     */
+    public function getPhotoAccessLists($refresh = null) {
+        if ($refresh || $this->photoAccessLists == null)
+            $this->updatePhotoAccessLists();
+        return $this->photoAccessLists;
+    }
+
+    public function updatePhotoAccessLists() {
+        try {
+            $sentList = array();
+            $result = DB::table("photo_access_requests as p")
+                ->select("u.dataid", "u.first_name", "u.last_name", "u.email", "u.gender", "u.birthday", "u.height",
+                    "mr.name as lbl_religion", "mc.name as lbl_caste", "mmt.name as lbl_mother_tongue", "mms.name as lbl_marital_status", "mcor.name as lbl_con_of_residence",
+                    "p.allowed")
+                ->leftJoin("users as u", "u.id", "=", "p.pid")
+                ->leftJoin("masterdata as mr", function($join) {
+                    $join->on("u.religion", "=", "mr.dataid");
+                    $join->where("mr.type","=","RELIGION");
+                })
+                ->leftJoin("masterdata as mc", function($join) {
+                    $join->on("u.caste", "=", "mc.dataid");
+                    $join->where("mc.type","=","CASTE");
+                })
+                ->leftJoin("masterdata as mmt", function($join) {
+                    $join->on("u.mother_tongue", "=", "mmt.dataid");
+                    $join->where("mmt.type","=","MOTHER_TONGUE");
+                })
+                ->leftJoin("masterdata as mms", function($join) {
+                    $join->on("u.marital_status", "=", "mms.dataid");
+                    $join->where("mms.type","=","MARITAL_STATUS");
+                })
+                ->leftJoin("masterdata as mcor", function($join) {
+                    $join->on("u.con_of_residence", "=", "mcor.dataid");
+                    $join->where("mcor.type","=","COUNTRY");
+                })
+                ->where("p.uid", $this->id)
+                ->orderBy("p.updated_at", "DESC")->get();
+            foreach($result as $row) {
+                $sentList[$row->dataid] = $row;
+            }
+
+            $receivedList = array();
+            $result = DB::table("photo_access_requests as p")
+                ->select("u.dataid", "u.first_name", "u.last_name", "u.email", "u.gender", "u.birthday", "u.height",
+                    "mr.name as lbl_religion", "mc.name as lbl_caste", "mmt.name as lbl_mother_tongue", "mms.name as lbl_marital_status", "mcor.name as lbl_con_of_residence",
+                    "p.allowed")
+                ->leftJoin("users as u", "u.id", "=", "p.uid")
+                ->leftJoin("masterdata as mr", function($join) {
+                    $join->on("u.religion", "=", "mr.dataid");
+                    $join->where("mr.type","=","RELIGION");
+                })
+                ->leftJoin("masterdata as mc", function($join) {
+                    $join->on("u.caste", "=", "mc.dataid");
+                    $join->where("mc.type","=","CASTE");
+                })
+                ->leftJoin("masterdata as mmt", function($join) {
+                    $join->on("u.mother_tongue", "=", "mmt.dataid");
+                    $join->where("mmt.type","=","MOTHER_TONGUE");
+                })
+                ->leftJoin("masterdata as mms", function($join) {
+                    $join->on("u.marital_status", "=", "mms.dataid");
+                    $join->where("mms.type","=","MARITAL_STATUS");
+                })
+                ->leftJoin("masterdata as mcor", function($join) {
+                    $join->on("u.con_of_residence", "=", "mcor.dataid");
+                    $join->where("mcor.type","=","COUNTRY");
+                })
+                ->where("p.pid", $this->id)
+                ->orderBy("p.updated_at", "DESC")->get();
+            foreach($result as $row) {
+                $receivedList[$row->dataid] = $row;
+            }
+
+            $this->photoAccessLists = [
+                'sent' => $sentList,
+                'received' => $receivedList
+            ];
+            return true;
+        } catch (\Exception $e) {
+            Log::error("Error encountered while updating photo access list for ".$this->dataid." - ".$e->getMessage());
+            return false;
+        }
+    }
+
     public function inList($dataid, $listname) {
         if ($listname && $dataid) {
             $list = null;
             if ($listname=="interest") {
                 $list = $this->getInterestLists();
+                if ($list != null && array_key_exists('sent', $list))
+                    $list = $list['sent'];
+                else return false;
+            } else if ($listname=="photoaccess") {
+                $list = $this->getPhotoAccessLists();
                 if ($list != null && array_key_exists('sent', $list))
                     $list = $list['sent'];
                 else return false;
@@ -223,11 +756,39 @@ class Profile extends Model {
         return -1;
     }
 
+    /**
+     * This member's own request to view $dataid's hidden photos — null if
+     * never requested, else 0 (requested/pending), 1 (granted) or -1
+     * (declined). Used both for the "My Photo Access Requests" page and to
+     * gate a hidden photo on someone else's profile (see
+     * ProfileController::profile()).
+     */
+    public function getPhotoAccess($dataid) {
+        if ($this->inList($dataid, "photoaccess")) {
+            return (int) $this->getPhotoAccessLists()["sent"][$dataid]->allowed;
+        }
+        return null;
+    }
+
     public static function getTotalCount() {
         return User::select('id')->count();
     }
 
-    public static function profiles($where = null, $having = null, $orderBy = null, $limit = null, $offset = null, $count = null) {
+    public static function profiles($where = null, $having = null, $orderBy = null, $limit = null, $offset = null, $count = null, $includeTrashed = false) {
+        // Soft-deleted members (see users.deleted_at / App\User's SoftDeletes
+        // trait) must never appear anywhere this shared query is used —
+        // admin list, public search, homepage, recommended matches, API —
+        // so it's baked in here once rather than relying on every caller to
+        // remember it. This raw-SQL query doesn't go through Eloquent, so
+        // SoftDeletes' automatic query scope doesn't reach it on its own.
+        // $includeTrashed opts out, for the one case that needs to see a
+        // trashed profile on purpose (admin's "View" action on the Deleted
+        // Profiles page) — default stays false for every existing caller.
+        if (!$includeTrashed) {
+            $deletedFilter = "`u`.`deleted_at` IS NULL";
+            $where = empty($where) ? $deletedFilter : "{$deletedFilter} and ({$where})";
+        }
+
         // For count queries, use a simpler approach without all the joins
         if (!empty($count)) {
             // If WHERE references joined tables, we need to do a proper count with joins
@@ -264,6 +825,7 @@ class Profile extends Model {
         $hasJoinedTableRefs = !empty($where) && preg_match('/`(mr|mc|mmt|mms|me|mcor|mcob|mcoc|mcgu|ms|mcst|rmms|rmcor|rmc|rmr|rmcst|rme|rmmt|rmcp|mp|ml|dp|i)`\./', $where);
         
         $orderByClause = !empty($orderBy) ? $orderBy : "`u`.`updated_at` DESC";
+        $limit = $limit === null ? null : (int) $limit; $offset = $offset === null ? null : max(0, (int) $offset);
         $limitClause = !empty($limit) ? (empty($offset) ? $limit : $offset . ", " . $limit) : "";
 
         // Optimized query: First get limited user IDs, then join (only if WHERE doesn't reference joined tables)
@@ -284,13 +846,32 @@ class Profile extends Model {
                 `mmt`.`name` AS `lbl_mother_tongue`,
                 `ml`.`name` AS `lbl_language`,
                 `mcor`.`name` AS `lbl_con_of_residence`,
+                `mcor`.`abbreviation` AS `con_of_residence_code`,
                 `mcob`.`name` AS `lbl_con_of_birth`,
+                `mcob`.`abbreviation` AS `con_of_birth_code`,
                 `mcoc`.`name` AS `lbl_con_of_citizenship`,
+                `mcoc`.`abbreviation` AS `con_of_citizenship_code`,
                 `mcgu`.`name` AS `lbl_con_grew_up`,
                 `ms`.`name` AS `lbl_state`,
                 `mc`.`name` AS `lbl_city`,
                 `mcst`.`name` AS `lbl_caste`,
                 `me`.`name` AS `lbl_education`,
+                `pp`.`age_min` AS `rage_min`,
+                `pp`.`age_max` AS `rage_max`,
+                `pp`.`height` AS `rheight`,
+                `pp`.`weight` AS `rweight`,
+                `pp`.`marital_status` AS `rmarital_status`,
+                `pp`.`with_children` AS `rwith_children`,
+                `pp`.`country_id` AS `rcon_of_residence`,
+                `pp`.`city_id` AS `rcity`,
+                `pp`.`religion_id` AS `rreligion`,
+                `pp`.`caste_id` AS `rcaste`,
+                `pp`.`sect` AS `rsect`,
+                `pp`.`education_id` AS `reducation`,
+                `pp`.`profession` AS `rprofession`,
+                `pp`.`mother_tongue_id` AS `rmother_tongue`,
+                `pp`.`languages` AS `rlanguages`,
+                `pp`.`preferred_country_id` AS `rcon_pref`,
                 `rmms`.`name` AS `lbl_rmarital_status`,
                 `rmcor`.`name` AS `lbl_rcon_of_residence`,
                 `rmc`.`name` AS `lbl_rcity`,
@@ -299,6 +880,7 @@ class Profile extends Model {
                 `rme`.`name` AS `lbl_reducation`,
                 `rmmt`.`name` AS `lbl_rmother_tongue`,
                 `rmcp`.`name` AS `lbl_rcon_pref`,
+                `rms`.`name` AS `lbl_rstate`,
                 `dp`.`img_url` AS `displaypic` ,
                 group_concat(`i`.`img_url` separator ',') AS `images`
                 from (" . $subQuery . ") as `limited_users`
@@ -317,16 +899,18 @@ class Profile extends Model {
                 left join `masterdata` `mc` on((`u`.`city` = `mc`.`dataid`) and (`mc`.`type` = 'CITY'))
                 left join `masterdata` `mcst` on((`u`.`caste` = `mcst`.`dataid`) and (`mcst`.`type` = 'CASTE'))
                 left join `masterdata` `me` on((`u`.`education` = `me`.`dataid`) and (`me`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmms` on((`u`.`rmarital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
-                left join `masterdata` `rmcor` on((`u`.`rcon_of_residence` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
-                left join `masterdata` `rmc` on((`u`.`rcity` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
-                left join `masterdata` `rmr` on((`u`.`rreligion` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
-                left join `masterdata` `rmcst` on((`u`.`rcaste` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
-                left join `masterdata` `rme` on((`u`.`reducation` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmmt` on((`u`.`rmother_tongue` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
-                left join `masterdata` `rmcp` on((`u`.`rcon_pref` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
-                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1')
-                left join `images` `i` on(`u`.`id` = `i`.`user_id`)
+                left join `partner_preferences` `pp` on(`pp`.`user_id` = `u`.`id`)
+                left join `masterdata` `rmms` on((`pp`.`marital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
+                left join `masterdata` `rmcor` on((`pp`.`country_id` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
+                left join `masterdata` `rmc` on((`pp`.`city_id` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
+                left join `masterdata` `rmr` on((`pp`.`religion_id` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
+                left join `masterdata` `rmcst` on((`pp`.`caste_id` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
+                left join `masterdata` `rme` on((`pp`.`education_id` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
+                left join `masterdata` `rmmt` on((`pp`.`mother_tongue_id` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
+                left join `masterdata` `rmcp` on((`pp`.`preferred_country_id` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
+                left join `masterdata` `rms` on((`pp`.`state_id` = `rms`.`dataid`) and (`rms`.`type` = 'STATE'))
+                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1' and `dp`.`visibility` = 'Public')
+                left join `images` `i` on(`u`.`id` = `i`.`user_id` and `i`.`visibility` = 'Public')
                 group by `u`.`id`
                 " . (empty($having) ? "" : " having " . $having) . "
                 order by " . $orderByClause . "
@@ -340,13 +924,32 @@ class Profile extends Model {
                 `mmt`.`name` AS `lbl_mother_tongue`,
                 `ml`.`name` AS `lbl_language`,
                 `mcor`.`name` AS `lbl_con_of_residence`,
+                `mcor`.`abbreviation` AS `con_of_residence_code`,
                 `mcob`.`name` AS `lbl_con_of_birth`,
+                `mcob`.`abbreviation` AS `con_of_birth_code`,
                 `mcoc`.`name` AS `lbl_con_of_citizenship`,
+                `mcoc`.`abbreviation` AS `con_of_citizenship_code`,
                 `mcgu`.`name` AS `lbl_con_grew_up`,
                 `ms`.`name` AS `lbl_state`,
                 `mc`.`name` AS `lbl_city`,
                 `mcst`.`name` AS `lbl_caste`,
                 `me`.`name` AS `lbl_education`,
+                `pp`.`age_min` AS `rage_min`,
+                `pp`.`age_max` AS `rage_max`,
+                `pp`.`height` AS `rheight`,
+                `pp`.`weight` AS `rweight`,
+                `pp`.`marital_status` AS `rmarital_status`,
+                `pp`.`with_children` AS `rwith_children`,
+                `pp`.`country_id` AS `rcon_of_residence`,
+                `pp`.`city_id` AS `rcity`,
+                `pp`.`religion_id` AS `rreligion`,
+                `pp`.`caste_id` AS `rcaste`,
+                `pp`.`sect` AS `rsect`,
+                `pp`.`education_id` AS `reducation`,
+                `pp`.`profession` AS `rprofession`,
+                `pp`.`mother_tongue_id` AS `rmother_tongue`,
+                `pp`.`languages` AS `rlanguages`,
+                `pp`.`preferred_country_id` AS `rcon_pref`,
                 `rmms`.`name` AS `lbl_rmarital_status`,
                 `rmcor`.`name` AS `lbl_rcon_of_residence`,
                 `rmc`.`name` AS `lbl_rcity`,
@@ -355,6 +958,7 @@ class Profile extends Model {
                 `rme`.`name` AS `lbl_reducation`,
                 `rmmt`.`name` AS `lbl_rmother_tongue`,
                 `rmcp`.`name` AS `lbl_rcon_pref`,
+                `rms`.`name` AS `lbl_rstate`,
                 `dp`.`img_url` AS `displaypic` ,
                 group_concat(`i`.`img_url` separator ',') AS `images`
                 from `users` `u`
@@ -372,16 +976,18 @@ class Profile extends Model {
                 left join `masterdata` `mc` on((`u`.`city` = `mc`.`dataid`) and (`mc`.`type` = 'CITY'))
                 left join `masterdata` `mcst` on((`u`.`caste` = `mcst`.`dataid`) and (`mcst`.`type` = 'CASTE'))
                 left join `masterdata` `me` on((`u`.`education` = `me`.`dataid`) and (`me`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmms` on((`u`.`rmarital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
-                left join `masterdata` `rmcor` on((`u`.`rcon_of_residence` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
-                left join `masterdata` `rmc` on((`u`.`rcity` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
-                left join `masterdata` `rmr` on((`u`.`rreligion` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
-                left join `masterdata` `rmcst` on((`u`.`rcaste` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
-                left join `masterdata` `rme` on((`u`.`reducation` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
-                left join `masterdata` `rmmt` on((`u`.`rmother_tongue` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
-                left join `masterdata` `rmcp` on((`u`.`rcon_pref` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
-                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1')
-                left join `images` `i` on(`u`.`id` = `i`.`user_id`)"
+                left join `partner_preferences` `pp` on(`pp`.`user_id` = `u`.`id`)
+                left join `masterdata` `rmms` on((`pp`.`marital_status` = `rmms`.`dataid`) and (`rmms`.`type` = 'MARITAL_STATUS'))
+                left join `masterdata` `rmcor` on((`pp`.`country_id` = `rmcor`.`dataid`) and (`rmcor`.`type` = 'COUNTRY'))
+                left join `masterdata` `rmc` on((`pp`.`city_id` = `rmc`.`dataid`) and (`rmc`.`type` = 'CITY'))
+                left join `masterdata` `rmr` on((`pp`.`religion_id` = `rmr`.`dataid`) and (`rmr`.`type` = 'RELIGION'))
+                left join `masterdata` `rmcst` on((`pp`.`caste_id` = `rmcst`.`dataid`) and (`rmcst`.`type` = 'CASTE'))
+                left join `masterdata` `rme` on((`pp`.`education_id` = `rme`.`dataid`) and (`rme`.`type` = 'EDUCATION'))
+                left join `masterdata` `rmmt` on((`pp`.`mother_tongue_id` = `rmmt`.`dataid`) and (`rmmt`.`type` = 'MOTHER_TONGUE'))
+                left join `masterdata` `rmcp` on((`pp`.`preferred_country_id` = `rmcp`.`dataid`) and (`rmcp`.`type` = 'COUNTRY'))
+                left join `masterdata` `rms` on((`pp`.`state_id` = `rms`.`dataid`) and (`rms`.`type` = 'STATE'))
+                left join `images` `dp` on(`u`.`id` = `dp`.`user_id` and `dp`.`displaypic` = '1' and `dp`.`visibility` = 'Public')
+                left join `images` `i` on(`u`.`id` = `i`.`user_id` and `i`.`visibility` = 'Public')"
                 .(empty($where)?"":" where (".$where.") ")
                 ." group by `u`.`id`"
                 .(empty($having)?"":" having ".$having)

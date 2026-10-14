@@ -1,80 +1,68 @@
 @extends('admin.dashboard.appointments')
 @section('appointments-data')
-<div class="row">
-    <div class="col-md-6 col-sm-12">
-        <ul class="pagination">
-            @if($currentPage != 1)
-                <li class="paginate_button page-item previous">
-                    <a onclick="javascript:refreshAppointments(true, {{ $currentPage - 1 }});" class="page-link">Previous</a>
-                </li>
-            @endif
-
-            @for ($i = ($currentPage-3>1 ? $currentPage-3 : 1); $i <= ($currentPage+4 <= $numPages ? $currentPage+4 : $numPages); $i++)
-                <li class="paginate_button page-item {{ $i == $currentPage ? 'active' : '' }}">
-                    <a {{ $currentPage == $i ? 'disabled' : '' }} onclick="javascript:refreshAppointments(true, {{ $i }});" class="page-link">{{ $i }}</a>
-                </li>
-            @endfor
-
-            @if($currentPage < $numPages)
-                <li class="paginate_button page-item next">
-                    <a onclick="javascript:refreshAppointments(true, {{ $currentPage + 1 }});" class="page-link">Next</a>
-                </li>
-            @endif
-        </ul>
-    </div>
-</div>
-<div class="block-footer b-xs-top" style="margin: 20px 0;">@if(!empty($pageSize)) Showing
-    {{ isset($resultCount) && $resultCount==0 ? 0 : ($currentPage-1)*$pageSize+1 }}
-    to {{ isset($resultCount) ?
+@if($currentPage > 1 || $currentPage < $numPages)
+<ul class="ur-admin-pagination mb-3">
+    @if($currentPage != 1)
+        <li><a onclick="javascript:refreshAppointments(true, {{ $currentPage - 1 }});">Previous</a></li>
+    @endif
+    @for ($i = ($currentPage-3>1 ? $currentPage-3 : 1); $i <= ($currentPage+4 <= $numPages ? $currentPage+4 : $numPages); $i++)
+        <li class="{{ $i == $currentPage ? 'active' : '' }}">
+            <a {{ $currentPage == $i ? 'disabled' : '' }} onclick="javascript:refreshAppointments(true, {{ $i }});">{{ $i }}</a>
+        </li>
+    @endfor
+    @if($currentPage < $numPages)
+        <li><a onclick="javascript:refreshAppointments(true, {{ $currentPage + 1 }});">Next</a></li>
+    @endif
+</ul>
+@endif
+<div class="ur-admin-summary">@if(!empty($pageSize)) Showing
+    <span>{{ isset($resultCount) && $resultCount==0 ? 0 : ($currentPage-1)*$pageSize+1 }}</span>
+    to <span>{{ isset($resultCount) ?
         ($resultCount-(($currentPage-1)*$pageSize)>$pageSize ? ($currentPage*$pageSize) : $resultCount)
         :
-        ($total-($currentPage*$pageSize)>$pageSize ? ($currentPage*$pageSize) : $total) }}
-    <span>@if (isset($resultCount)) from {{ $resultCount }} filtered appointments @endif</span>
-    out of {{ $total }} total appointments @endif</div>
+        ($total-($currentPage*$pageSize)>$pageSize ? ($currentPage*$pageSize) : $total) }}</span>
+    @if (isset($resultCount)) from <span>{{ $resultCount }}</span> filtered requests @endif
+    out of <span>{{ $total }}</span> total requests @endif</div>
 
 @if(!empty($appointments) && sizeof($appointments) > 0)
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered table-hover mb-0" style="font-size: 12px;">
-            <thead class="thead-light">
-                <tr>
-                    <th>Member ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Date</th>
-                    <th>Time</th>
-                    <th>Subject</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($appointments as $apt)
-                    <tr>
-                        <td><a href="{{ url('/member/profile/'.$apt->member_id) }}" target="_blank" class="c-base-1">{{ $apt->member_id }}</a></td>
-                        <td>{{ $apt->member_name }}</td>
-                        <td><a href="mailto:{{ $apt->member_email }}">{{ $apt->member_email }}</a></td>
-                        <td>{{ \Carbon\Carbon::parse($apt->appointment_date)->format('d/m/Y') }}</td>
-                        <td>{{ $apt->appointment_time ?? '—' }}</td>
-                        <td>{{ $apt->subject ?: '—' }}</td>
-                        <td>
-                            @if($apt->status === 'pending')
-                                <span class="badge badge-warning">Pending</span>
-                            @elseif($apt->status === 'confirmed')
-                                <span class="badge badge-success">Confirmed</span>
-                            @elseif($apt->status === 'cancelled')
-                                <span class="badge badge-secondary">Cancelled</span>
-                            @else
-                                <span class="badge badge-info">{{ ucfirst($apt->status) }}</span>
-                            @endif
-                        </td>
-                        <td>{{ \Carbon\Carbon::parse($apt->created_at)->format('d/m/Y H:i') }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    @foreach($appointments as $apt)
+        @php
+            $initials = strtoupper(substr(trim($apt->member_name ?: 'G'), 0, 1));
+            $statusClass = match($apt->status) {
+                'pending' => 'ur-admin-badge--warning',
+                'confirmed' => 'ur-admin-badge--success',
+                'completed' => 'ur-admin-badge--info',
+                'cancelled' => 'ur-admin-badge--neutral',
+                default => 'ur-admin-badge--neutral',
+            };
+        @endphp
+        <div class="ur-apt-row {{ isset($selectedAppointment) && $selectedAppointment && $selectedAppointment->id == $apt->id ? 'is-active' : '' }}" onclick="loadAppointmentDetail('{{ $apt->id }}', this);">
+            <span class="ur-apt-row__thumb">{{ $initials }}</span>
+            <div class="ur-apt-row__body">
+                <div class="ur-apt-row__name">{{ $apt->member_name ?: 'Guest' }}</div>
+                <div class="ur-apt-row__sub"><i class="fa fa-calendar"></i> {{ \Carbon\Carbon::parse($apt->appointment_date)->format('d M') }} &bull; {{ $apt->appointment_time ?? '—' }}</div>
+            </div>
+            <div class="ur-apt-row__reason">{{ $apt->subject ?: '—' }}</div>
+            <span class="ur-apt-row__status ur-admin-badge {{ $statusClass }}">{{ ucfirst($apt->status) }}</span>
+        </div>
+    @endforeach
 @else
-    <div class="alert alert-info mt-3 mb-0">No appointments found.</div>
+    <div class="ur-admin-empty"><i class="fa fa-calendar"></i> No appointments found.</div>
+@endif
+
+@if($currentPage > 1 || $currentPage < $numPages)
+<ul class="ur-admin-pagination mt-3">
+    @if($currentPage != 1)
+        <li><a onclick="javascript:refreshAppointments(true, {{ $currentPage - 1 }});">Previous</a></li>
+    @endif
+    @for ($i = ($currentPage-3>1 ? $currentPage-3 : 1); $i <= ($currentPage+4 <= $numPages ? $currentPage+4 : $numPages); $i++)
+        <li class="{{ $i == $currentPage ? 'active' : '' }}">
+            <a {{ $currentPage == $i ? 'disabled' : '' }} onclick="javascript:refreshAppointments(true, {{ $i }});">{{ $i }}</a>
+        </li>
+    @endfor
+    @if($currentPage < $numPages)
+        <li><a onclick="javascript:refreshAppointments(true, {{ $currentPage + 1 }});">Next</a></li>
+    @endif
+</ul>
 @endif
 @endsection
-

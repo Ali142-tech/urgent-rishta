@@ -2,24 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\AuditLog;
 use App\Mail\InterestSent as InterestSentMail;
 use App\Mail\InterestAccepted as InterestAcceptedMail;
 use App\Mail\InterestDeclined as InterestDeclinedMail;
 use App\User;
 use App\Interest;
+use App\PhotoAccessRequest;
 use App\MasterData;
 use App\Images;
 use App\Filtered;
 use App\AllowedProfiles;
 use App\Profile;
+use App\PhotoVerificationLog;
+use App\Mail\ProfileVerified;
+use App\Mail\ProfileRejected;
+use App\Services\PhotoVerificationService;
 use App\Notifications\InterestAccepted;
 use App\Notifications\InterestDeclined;
 use App\Notifications\InterestSent;
+use App\Notifications\PhotoAccessRequested;
+use App\Notifications\PhotoAccessGranted;
+use App\Notifications\PhotoAccessDeclined;
 use App\Notifications\UserFollowed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
-use Intervention\Image\ImageManager;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +36,11 @@ use Mail;
 
 class ProfileController extends Controller
 {
+    use \App\Traits\HandlesImageUploads;
+
+    /** Website Upgrade Brief §5 "Mandatory photo policy": minimum before a profile is Active. */
+    const REQUIRED_PHOTO_COUNT = 2;
+
     /**
      * Display a listing of the resource.
      *
@@ -41,18 +54,202 @@ class ProfileController extends Controller
     public function profile(Request $request, $dataid = null)
     {
         $profile = null;
+        $hiddenPhotos = null;
         if ($dataid) {
-            $profile = User::retrieveUserObject($dataid)->profile();
+            $ownerUser = User::retrieveUserObject($dataid);
+            if (!$ownerUser) {
+                // Arrived from a notification (?read=...) about a member whose profile has since been removed: say so, don't 404.
+                if ($request->has('read')) {
+                    Session::flash('message', 'warning|That profile is no longer available.');
+                    return redirect('member/profile');
+                }
+                abort(404);
+            }
+            // Team-added proposals (see TeamController::store()) are only
+            // ever browsable by team members/admins — a regular member
+            // must never reach a team-exclusive proposal just by
+            // guessing/sharing its dataid.
+            $loggedInUser = User::retrieveUserObject();
+            if (!empty($ownerUser->added_by) && (!$loggedInUser || !$loggedInUser->isAdmin())) {
+                if ($request->has('read')) {
+                    Session::flash('message', 'warning|That profile is no longer available.');
+                    return redirect('member/profile');
+                }
+                abort(404);
+            }
+            if ($loggedInUser && $loggedInUser->id !== $ownerUser->id) {
+                AuditLog::record($loggedInUser, 'profile.viewed', $ownerUser);
+            }
+            $profile = $ownerUser->profile();
+            $hiddenPhotos = $this->hiddenPhotosFor($ownerUser, $profile);
         } else $profile = User::retrieveUserObject()->profile();
 
-        $religions = MasterData::where('type', 'RELIGION')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
-        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderBy('name', 'ASC')->get();
+        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
         $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
+        // Only the own-profile "My Profile" page shows the completeness meter —
+        // it's about nudging the logged-in member to finish their own profile,
+        // not something shown while browsing someone else's.
+        $completeness = $dataid ? null : $profile->profileCompleteness();
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste'));
+        // Partner Preferences belong to whoever is LOGGED IN, not whoever's
+        // profile we're viewing — needed both for the "Looking For" tab on
+        // your own profile (a "go manage your preferences" teaser used to
+        // show here with no way to tell whether anything had actually been
+        // saved — see ProfileController::preferencesPage()/updatePreferences()
+        // for the separate page where these are edited) AND for computing
+        // Compatibility below when viewing someone ELSE's profile — that's
+        // always "how well does THIS profile match MY OWN preferences",
+        // never the other way around. Resolve the masterdata IDs to display
+        // labels here, the same way the rest of this method already does
+        // for $profile.
+        $loggedInUser = User::retrieveUserObject();
+        $preference = $loggedInUser ? $loggedInUser->partnerPreference()->first() : null;
+        $preferenceLabels = [];
+        $hasPreferenceData = false;
+        if ($preference) {
+            // A row can exist (created by updateOrCreate the first time the
+            // preferences form is ever submitted) with every field still
+            // blank — e.g. the member opened the page and saved without
+            // filling anything in. Only treat it as "has preferences" if
+            // something was actually entered, so the tab doesn't render an
+            // empty-looking grid with nothing in it.
+            $hasPreferenceData = collect($preference->getAttributes())
+                ->except(['id', 'user_id', 'created_at', 'updated_at'])
+                ->filter(fn ($value) => $value !== null && $value !== '')
+                ->isNotEmpty();
+
+            $preferenceLabels = [
+                'marital_status' => optional($maritalstatuses->firstWhere('dataid', $preference->marital_status))->name,
+                'country' => optional($countries->firstWhere('dataid', $preference->country_id))->name,
+                'state' => $preference->state_id ? optional(MasterData::where('type', 'STATE')->where('dataid', $preference->state_id)->first())->name : null,
+                'city' => $preference->city_id ? optional(MasterData::where('type', 'CITY')->where('dataid', $preference->city_id)->first())->name : null,
+                'religion' => optional($religions->firstWhere('dataid', $preference->religion_id))->name,
+                'caste' => optional($caste->firstWhere('dataid', $preference->caste_id))->name,
+                'mother_tongue' => optional($mothertongues->firstWhere('dataid', $preference->mother_tongue_id))->name,
+                'education' => optional($education->firstWhere('dataid', $preference->education_id))->name,
+                'preferred_country' => optional($countries->firstWhere('dataid', $preference->preferred_country_id))->name,
+                'languages' => !empty($preference->languages) ? $mothertongues->whereIn('dataid', explode(',', $preference->languages))->pluck('name')->implode(', ') : null,
+            ];
+        }
+
+        // Compatibility Score — only meaningful when viewing someone ELSE's
+        // profile (needs two people: my preferences + their actual profile).
+        // On your own profile this stays null and that tab shows the
+        // Profile Scorer (profileCompleteness()) instead — see
+        // member/user.blade.php's "Profile Scorer" tab.
+        $compatibility = $dataid ? $profile->compatibilityWith($hasPreferenceData ? $preference : null, $preferenceLabels) : null;
+
+        // Contact info (email/phone/last name/exact address) is hidden by
+        // default for a team-added proposal (see TeamController::store())
+        // — unlocked for any active team member (the whole pool is shared
+        // across the team) or an admin. See User::canViewContactInfoOf().
+        // Not relevant for the regular self-registered pool, which never
+        // shows these fields anyway.
+        $canViewContactInfo = $dataid && !empty($ownerUser->added_by) && $loggedInUser
+            ? $loggedInUser->canViewContactInfoOf($ownerUser)
+            : false;
+        // Which of the 4 fields actually render once the gate above passes
+        // — admin-configurable, see AdminController::contactUnlockSettings().
+        $contactUnlockSettings = \App\ContactUnlockSetting::current();
+
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility', 'canViewContactInfo', 'contactUnlockSettings'));
+    }
+
+    /**
+     * Private (hidden) photos belonging to $ownerUser, gated by who's
+     * looking. $profile is $ownerUser->profile() — already Public-only
+     * (see Profile::profiles()'s `visibility='Public'` join) — so a viewer
+     * who's allowed to see the Private ones (admin, or a member with a
+     * granted photo_access_requests row — see User::canViewHiddenPhotosOf())
+     * gets them merged straight into $profile->images/getLightGalleryImages(),
+     * same as any other photo. Everyone else just gets a count + their own
+     * request status, so member.profile.blade.php can show a locked
+     * placeholder instead of the photos themselves. Returns null when the
+     * owner has no hidden photos at all — nothing to show either way.
+     */
+    private function hiddenPhotosFor(User $ownerUser, Profile $profile): ?array
+    {
+        $hiddenImages = Images::where('user_id', $ownerUser->id)
+            ->where('visibility', 'Private')
+            ->where('is_selfie', 0)
+            ->get();
+        if ($hiddenImages->isEmpty()) {
+            return null;
+        }
+
+        $viewer = User::retrieveUserObject();
+        $canView = $viewer && $viewer->canViewHiddenPhotosOf($ownerUser);
+
+        if ($canView) {
+            $existing = is_array($profile->images) ? $profile->images : (!empty($profile->images) ? explode(',', $profile->images) : []);
+            $profile->images = array_values(array_unique(array_merge($existing, $hiddenImages->pluck('img_url')->all())));
+        }
+
+        return [
+            'count' => $hiddenImages->count(),
+            'canView' => $canView,
+            'status' => $viewer ? $viewer->getPhotoAccess($ownerUser->dataid) : null,
+        ];
+    }
+
+    public function preferencesPage()
+    {
+        $user = User::retrieveUserObject();
+        $preference = $user->partnerPreference()->first();
+
+        $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
+        $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
+        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
+        // Religion->caste cascading isn't actually wired to a live route anywhere
+        // in this app today (the JS for it on the My Profile page calls an
+        // endpoint that was never routed) — same as ProfileController::profile(),
+        // show the full flat caste list rather than pretend to filter it.
+        $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
+
+        return view('member.preferences', compact(
+            'preference', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste'
+        ));
+    }
+
+    public function updatePreferences(Request $request)
+    {
+        $user = User::retrieveUserObject();
+
+        \App\PartnerPreference::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'age_min' => $request->age_min !== '' ? $request->age_min : null,
+                'age_max' => $request->age_max !== '' ? $request->age_max : null,
+                'height' => $request->height,
+                'weight' => $request->weight,
+                'marital_status' => $request->marital_status,
+                'with_children' => $request->with_children,
+                'country_id' => $request->country_id,
+                'state_id' => $request->state_id,
+                'city_id' => $request->city_id,
+                'religion_id' => $request->religion_id,
+                'caste_id' => $request->caste_id,
+                'sect' => $request->sect,
+                'education_id' => $request->education_id,
+                'profession' => $request->profession,
+                'mother_tongue_id' => $request->mother_tongue_id,
+                'languages' => is_array($request->preferred_languages) ? implode(',', $request->preferred_languages) : $request->preferred_languages,
+                'preferred_country_id' => $request->preferred_country_id,
+                'general_requirement' => $request->general_requirement,
+            ]
+        );
+
+        Log::info("User (" . $user->dataid . ") updated their partner preferences.");
+        User::retrieveUserObject($user->dataid, true);
+
+        Session::flash('message', 'success|Your partner preferences have been saved.');
+        return redirect()->route('member.preferences');
     }
 
     public function notifications()
@@ -110,6 +307,201 @@ class ProfileController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * Website Upgrade Brief §5 "Mandatory photo policy" — shown right after
+     * registration (see RegisterController@completeRegistration) so a new
+     * account uploads its 2 required photos + a live selfie before the
+     * account goes into admin review. Reuses the existing
+     * uploadImages()/Images model — nothing new stored, just a dedicated
+     * screen + a minimum-requirement gate around it.
+     *
+     * Once satisfied, photo verification runs immediately and automatically
+     * via AWS Rekognition (runAutomaticPhotoVerification()) — per client
+     * request, no admin ever reviews this manually anymore. The account is
+     * then logged out either fully verified, or sent back to redo the gate
+     * (see that method's docblock for why a rejection doesn't lock the
+     * account the way a human rejection used to).
+     */
+    public function mustUploadPhotos()
+    {
+        $user = User::retrieveUserObject();
+        $count = Images::where('user_id', $user->id)->where('is_selfie', 0)->count();
+        $hasSelfie = Images::where('user_id', $user->id)->where('is_selfie', 1)->exists();
+
+        if ($count >= self::REQUIRED_PHOTO_COUNT && $hasSelfie) {
+            session()->forget('photos_gate_redirect');
+            // Guards against a rare double-submit/race firing this route
+            // twice for the same user before the first request finishes —
+            // without it, both requests would independently call (and pay
+            // for) Rekognition. If a second request loses the lock, it just
+            // re-reads whatever the first one already decided.
+            $lock = \Illuminate\Support\Facades\Cache::lock('photo_verification_' . $user->id, 30);
+            if ($lock->get()) {
+                try {
+                    $this->runAutomaticPhotoVerification($user);
+                } finally {
+                    $lock->release();
+                }
+            } else {
+                $user = User::retrieveUserObject(null, true);
+            }
+            Auth::logout();
+
+            if ($user->photo_verification_status === 'verified') {
+                Log::info('User (' . $user->dataid . ') auto-verified by AI (AWS Rekognition).');
+                Session::flash('message', 'success|Your photos have been verified automatically! You can now log in.|10000');
+            } else {
+                Log::info('User (' . $user->dataid . ') auto-verification failed — sent back to resubmit: ' . $user->photo_rejection_reason);
+                Session::flash('message', 'danger|' . $user->photo_rejection_reason . '|15000');
+            }
+
+            return redirect()->route('login');
+        }
+
+        return view('member.photos-required', [
+            'count' => $count,
+            'required' => self::REQUIRED_PHOTO_COUNT,
+            'hasSelfie' => $hasSelfie,
+        ]);
+    }
+
+    /**
+     * Fully automated replacement for admin manual photo review, per client
+     * request — compares the live selfie against the user's uploaded photo
+     * via AWS Rekognition and immediately verifies or sends them back to
+     * resubmit. No admin is involved at any point, including on a failed
+     * match: rather than the old 'rejected' status (which required an admin
+     * to explicitly call AdminController::reopenPhotoVerification() before
+     * the member could even log back in), a failed AI check goes straight
+     * to 'resubmit' — the exact same self-service-retry status/flow that
+     * method already builds (wipe photos, let them straight back into the
+     * gate on next login, no human step). AdminController's manual
+     * approve/reject/reopen actions and the admin review queue are left
+     * intact as a fallback/spot-check tool, just no longer the primary gate.
+     */
+    private function runAutomaticPhotoVerification(User $user): void
+    {
+        // Can now be triggered either immediately from uploadSelfie() (the
+        // common case — selfie is the last step) or as a fallback from
+        // mustUploadPhotos() (covers uploading the selfie before the
+        // required photo count is met). Guard against ever running it twice
+        // for the same submission.
+        if ($user->photo_verification_status === 'verified') {
+            return;
+        }
+
+        $selfie = Images::where('user_id', $user->id)->where('is_selfie', 1)->first();
+        $photo = Images::where('user_id', $user->id)->where('is_selfie', 0)
+            ->orderBy('displaypic', 'desc')->first();
+
+        $result = ($selfie && $photo)
+            ? app(PhotoVerificationService::class)->compareFaces(public_path($selfie->img_url), public_path($photo->img_url))
+            : ['matched' => false, 'similarity' => null, 'error' => 'Your photos could not be found.'];
+
+        if ($result['matched']) {
+            $user->photo_verification_status = 'verified';
+            $user->photo_verified_at = now();
+            $user->photo_verified_by = null; // AI decision — no admin involved
+            $user->photo_rejection_reason = null;
+            $user->save();
+            User::retrieveUserObject($user->dataid, true);
+
+            PhotoVerificationLog::record($user, null, 'approved', 'AI face match: ' . round($result['similarity'], 1) . '% similarity');
+
+            try {
+                Mail::to($user)->send(new ProfileVerified($user));
+            } catch (\Exception $e) {
+                Log::error('Failed to send profile-verified email to ' . $user->dataid . ': ' . $e->getMessage());
+            }
+            return;
+        }
+
+        $reason = $result['error']
+            ? "We couldn't automatically verify your selfie ({$result['error']}). Please retake it with clear, even lighting, facing the camera directly."
+            : 'Your selfie doesn\'t sufficiently match your uploaded photo (similarity: ' . round($result['similarity'] ?? 0, 1) . '%). Please retake your selfie so it clearly matches your uploaded photo.';
+
+        // Wipe the photos so re-login lands on an empty gate (0 of required)
+        // rather than one that already looks "satisfied" — same convention
+        // AdminController::reopenPhotoVerification() uses.
+        Images::where('user_id', $user->id)->delete();
+        $user->photo_verification_status = 'resubmit';
+        $user->photo_rejection_reason = $reason;
+        $user->photo_verified_at = null;
+        $user->photo_verified_by = null;
+        $user->save();
+        User::retrieveUserObject($user->dataid, true);
+
+        PhotoVerificationLog::record($user, null, 'rejected', $reason);
+
+        try {
+            Mail::to($user)->send(new ProfileRejected($user, $reason));
+        } catch (\Exception $e) {
+            Log::error('Failed to send profile-rejected email to ' . $user->dataid . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Runs the AI check (with the same double-submit lock mustUploadPhotos()
+     * uses) and packages the outcome as JSON for an AJAX caller — per client
+     * request, the result is handed straight back to the page that's still
+     * open instead of only being communicated by email. Called from
+     * uploadSelfie() the moment both requirements are met, so the member
+     * sees pass/fail within seconds, without being logged out or having to
+     * check email first.
+     */
+    private function finalizeAutomaticVerification(User $user): array
+    {
+        $lock = \Illuminate\Support\Facades\Cache::lock('photo_verification_' . $user->id, 30);
+        if ($lock->get()) {
+            try {
+                $this->runAutomaticPhotoVerification($user);
+            } finally {
+                $lock->release();
+            }
+        }
+        $user = User::retrieveUserObject($user->dataid, true);
+
+        if ($user->photo_verification_status === 'verified') {
+            return [
+                'code' => '200',
+                'message' => 'success|Selfie captured.',
+                'verification' => [
+                    'status' => 'verified',
+                    'message' => "You're verified! Redirecting you now…",
+                ],
+            ];
+        }
+
+        return [
+            'code' => '200',
+            'message' => 'success|Selfie captured.',
+            'verification' => [
+                'status' => 'failed',
+                'message' => $user->photo_rejection_reason ?: 'Verification failed. Please try uploading your photos again.',
+            ],
+        ];
+    }
+
+    /**
+     * Lightweight JSON poll used by the gate page's JS after each upload —
+     * avoids changing uploadImages()'s existing response contract (other
+     * pages already depend on it returning full profile HTML).
+     */
+    public function photosRequiredStatus()
+    {
+        $user = User::retrieveUserObject();
+        $count = Images::where('user_id', $user->id)->where('is_selfie', 0)->count();
+        $hasSelfie = Images::where('user_id', $user->id)->where('is_selfie', 1)->exists();
+
+        return [
+            'code' => '200',
+            'count' => $count,
+            'required' => self::REQUIRED_PHOTO_COUNT,
+            'satisfied' => $count >= self::REQUIRED_PHOTO_COUNT && $hasSelfie,
+            'has_selfie' => $hasSelfie,
+        ];
+    }
+
     public function uploadImages(Request $request)
     {
         $user = User::retrieveUserObject();
@@ -131,19 +523,23 @@ class ProfileController extends Controller
                     $publicPath = null;
                     $salt = null;
                     try {
-                        $imageExtension = $image->getClientOriginalExtension();
                         $imageSize = $image->getSize();
                         $imageSizeInMb = floatval(number_format($imageSize / (1024 * 1024), 2));
-                        if ($imageSizeInMb > 2) { // only allow images of 2 MB or less
+                        if ($imageSizeInMb > 5) { // only allow images of 5 MB or less
                             $largeFiles .= ", " . $imageName . " (" . $imageSizeInMb . " MB)";
                             $countLargeFiles += 1;
                             Log::info("Skipping large image " . $imageName . " (" . $imageSizeInMb . " MB)");
                             continue;
                         }
 
-                        if (!$image->isValid()) {
+                        // Verifies real image content (not just a plausible
+                        // filename) and returns our own canonical extension —
+                        // see validateUploadedImage()'s docblock.
+                        $imageExtension = $this->validateUploadedImage($image);
+                        if (!$imageExtension) {
                             $invalidFiles .= ", " . $imageName;
                             $countInvalidFiles += 1;
+                            Log::warning("Rejected non-image or invalid upload: " . $imageName);
                             continue;
                         }
 
@@ -192,7 +588,7 @@ class ProfileController extends Controller
                 $message = ($totalUploaded > 0 ?
                     'success|You have successfully uploaded ' . $totalUploaded . ' image(s).' :
                     'warning|Images(s) could not be uploaded.') .
-                    ($countLargeFiles > 0 ? ' Following files were discarded due to size restriction of 2 MB - ' . substr($largeFiles, 2) : '') .
+                    ($countLargeFiles > 0 ? ' Following files were discarded due to size restriction of 5 MB - ' . substr($largeFiles, 2) : '') .
                     ($countInvalidFiles > 0 ? ' Following files were discarded as they were not fully uploaded - ' . substr($invalidFiles, 2) : '') .
                     ($countProcessingFailed > 0 ? ' ' . $countProcessingFailed . ' file(s) failed during processing—check laravel.log.' : '') .
                     ($totalUploaded > 0 ? ' Do not forget to update the visibility in the gallery.|5000' : '|5000');
@@ -218,57 +614,113 @@ class ProfileController extends Controller
         ];
     }
 
-    public function renderImagesModal()
+    /**
+     * Live-captured selfie (brief §5 "Selfie/liveness check ... where
+     * technically feasible"). Kept separate from uploadImages() above: only
+     * one selfie is kept at a time (a resubmission replaces it), it's
+     * flagged is_selfie=1 so the admin verification queue can show it next
+     * to the two regular uploads, and it resets a previously-rejected
+     * profile back to "pending" for re-review.
+     */
+    public function uploadSelfie(Request $request)
+    {
+        $user = User::retrieveUserObject();
+        $id = $user->id;
+        $dataid = $user->dataid;
+        $selfie = $request->file('selfie');
+
+        if (empty($selfie)) {
+            return ['code' => '400', 'message' => 'danger|No selfie captured. Please try again.'];
+        }
+
+        try {
+            if (!$selfie->isValid()) {
+                return ['code' => '400', 'message' => 'danger|Selfie capture failed. Please try again.'];
+            }
+
+            $imageSizeInMb = floatval(number_format($selfie->getSize() / (1024 * 1024), 2));
+            if ($imageSizeInMb > 5) {
+                return ['code' => '400', 'message' => 'danger|Selfie capture is too large. Please try again.'];
+            }
+
+            // Verifies real image content — see validateUploadedImage()'s docblock.
+            $extension = $this->validateUploadedImage($selfie);
+            if (!$extension) {
+                return ['code' => '400', 'message' => 'danger|That file doesn\'t look like a valid image. Please try again.'];
+            }
+
+            // Only one live selfie kept per account — replace on resubmission.
+            $existing = Images::where('user_id', $id)->where('is_selfie', 1)->get();
+            foreach ($existing as $old) {
+                $publicPath = public_path(Profile::MEMBER_IMAGES_PATH);
+                $this->deleteUploadDerivatives($publicPath, $old->name, $old->salt);
+                $old->delete();
+            }
+
+            $name = time() . '_selfie_' . $id . '.' . $extension;
+            $rootImgPath = Profile::MEMBER_IMAGES_PATH;
+            $path = $rootImgPath . '/' . $name;
+            $publicPath = public_path($rootImgPath);
+            $selfie->move($publicPath, $name);
+
+            $salt = random_int(111, 99999);
+            $manager = $this->createImageManager();
+            if ($manager) {
+                $this->generateBlurAndThumbnails($manager, $publicPath, $name, $salt);
+            } else {
+                $this->copyDerivativesWithoutProcessing($publicPath, $name, $salt);
+            }
+
+            $image = new Images();
+            $image->dataid = strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, 9));
+            $image->name = $name;
+            $image->user_id = $id;
+            $image->img_url = $path;
+            $image->salt = $salt;
+            $image->visibility = 'Private';
+            $image->displaypic = 0;
+            $image->is_selfie = 1;
+            $image->save();
+
+            // A resubmitted selfie after a rejection puts the account back in the review queue.
+            if ($user->photo_verification_status === 'rejected') {
+                $user->photo_verification_status = 'pending';
+                $user->photo_rejection_reason = null;
+                $user->save();
+            }
+
+            Log::info("User (" . $dataid . ") captured a verification selfie.");
+
+            // If the required photo count was already met before this
+            // selfie (the normal order — photos first, selfie last), both
+            // requirements are now satisfied: run AI verification right now
+            // and hand the result straight back in this same response,
+            // instead of waiting for a page reload.
+            $photoCount = Images::where('user_id', $id)->where('is_selfie', 0)->count();
+            if ($photoCount >= self::REQUIRED_PHOTO_COUNT) {
+                return $this->finalizeAutomaticVerification($user);
+            }
+
+            return ['code' => '200', 'message' => 'success|Selfie captured.'];
+        } catch (\Exception $e) {
+            Log::error("User (" . $dataid . ") selfie capture failed: " . $e->getMessage());
+            return ['code' => '500', 'message' => 'danger|Could not save selfie. Please try again.'];
+        }
+    }
+
+    /**
+     * Dedicated "Manage Pictures" dashboard page. Was previously a Bootstrap
+     * modal (renderImagesModal()) opened from any page via AJAX — replaced
+     * with a real page so refreshing it after an upload/delete no longer
+     * depends on Bootstrap's modal/backdrop lifecycle at all (a stale modal
+     * re-render was leaving orphaned .modal-backdrop divs stacking on every
+     * action, compounding into what looked like a solid black screen).
+     */
+    public function picturesPage()
     {
         $loggedInUser = User::retrieveUserObject();
-
-        if (request()->ajax()) {
-            $images = Images::where('user_id', $loggedInUser->id)->get();
-            $body = '<label id="mdl_btn_image_edit" class="btn-aux" for="images" style="cursor: pointer;"><i class="fa fa-plus"></i> Add Pictures</label>
-                     <form id="mdl_images_form" enctype="multipart/form-data">
-                        <input name="_token" value="' . csrf_token() . '" type="hidden"/>
-                         <input type="file" accept="image/png,image/x-png,image/gif,image/jpeg" style="display: none;" id="mdl_images" name="images[]" multiple onchange="javascript:modalImagesUpload();" />
-                     </form>
-                     <script type="text/javascript">
-                        function modalImagesUpload() {alert("here");
-                            uploadImages($("#mdl_btn_image_edit"));
-                            renderImagesModal();
-                        }
-                     </script>';
-            foreach ($images as $image) {
-                $body = $body . '<div id="image_' . $image->dataid . '" class="block block--style-3 list z-depth-1-top" style="padding: 5px">' .
-                    '<div class="block-image" style="display:inline">' .
-                    '<span class="c-base-1 displaypic" style="border-radius: 5px; margin: 3px; padding: 3px; float: right; background-color: white" id="displaypic_' . $image->dataid . '" onclick="javascript:updateImage($(this), \'dp\', \'' . $image->dataid . '\');"><i class="fa fa-' . ($image->displaypic == 1 ? "user" : "user-times") . '"></i></span>' .
-                    '<img style="padding: 5px" src="' . Profile::MEMBER_IMAGES_PATH . '/thumbnail_' . $image->name . '" />' .
-                    '</div>' .
-                    '<ul class="inline-links inline-links--style-3" style="padding: 10px">' .
-                    '<li class="listing-hover">' .
-                    '<a onclick="javascript:deleteImage($(this), \'' . $image->dataid . '\');">' .
-                    '<i class="fa fa-trash"></i> Delete </a>' .
-                    '</li>' .
-                    '<li class="listing-hover">' .
-                    '<a onclick="javascript:updateImage($(this), \'dp\', \'' . $image->dataid . '\');">' .
-                    '<i class="fa fa-id-badge"></i> Set as Display Pic </a>' .
-                    '</li>' .
-                    '</ul>' .
-                    '</div>' .
-                    '<style>' .
-                    '.modal-dialog{' .
-                    'overflow-y: initial !important' .
-                    '}' .
-                    '.modal-body{' .
-                    'height: 50vh;' .
-                    'overflow-y: auto;' .
-                    '}' .
-                    '</style>';
-            }
-            return [
-                'code' => '200',
-                'html' => $this->renderModal("Image Settings Update", $body, "")
-            ];
-        } else return [
-            'code' => '200'
-        ];
+        $images = Images::where('user_id', $loggedInUser->id)->get();
+        return view('member.pictures', compact('images'));
     }
 
     public function updateImage(Request $request, $action, $dataid)
@@ -310,6 +762,22 @@ class ProfileController extends Controller
 
                     Log::info("User (" . $loggedInUserDataId . ") updated display pic to image (" . $dataid . ").");
                     $message = 'success|You have successfully updated display pic to image (' . $dataid . ').';
+                } else if ($action == 'v') {
+                    // Toggle Public/Private. Private already means "not shown to anyone" —
+                    // the `profile` VIEW's display pic / gallery joins (and everything built
+                    // on it: search results, other members' view of this profile, light
+                    // gallery) only ever pick up visibility='Public' images, so this alone
+                    // is enough to hide it everywhere outside this member's own Manage
+                    // Pictures page. Hiding the current display pic isn't blocked — it just
+                    // falls back to the next Public image (or the default avatar) via
+                    // Profile::getProfileImage(), same as if no display pic were set.
+                    $image->visibility = $image->visibility === 'Private' ? 'Public' : 'Private';
+                    $image->save();
+
+                    Log::info("User (" . $loggedInUserDataId . ") set image (" . $dataid . ") visibility to " . $image->visibility . ".");
+                    $message = $image->visibility === 'Private'
+                        ? 'success|This image is now hidden — it will not be shown to anyone.'
+                        : 'success|This image is visible to other members again.';
                 }
                 User::retrieveUserObject($loggedInUserDataId, true);
             } catch (\Exception $e) {
@@ -325,9 +793,8 @@ class ProfileController extends Controller
             return [
                 'code' => '200',
                 'nav_img' => User::retrieveUserObject()->getProfileImage(true),
-                'html' => $this->profile($request)->renderSections()['main-content'],
                 'message' => $message
-            ]; // only return whats in the main-content section
+            ];
         } else return [
             'code' => '200'
         ];
@@ -353,6 +820,8 @@ class ProfileController extends Controller
             } else if ($section == "education_and_career") {
                 $user->education = $request->education;
                 $user->profession = $request->profession;
+                $user->designation = $request->designation;
+                $user->companyname = $request->companyname;
                 $user->salary = $request->salary;
             } else if ($section == "physical_attributes") {
                 $user->height = $request->height;
@@ -360,6 +829,13 @@ class ProfileController extends Controller
             } else if ($section == "language") {
                 $user->mother_tongue = $request->mother_tongue;
                 $user->language = $request->language;
+            } else if ($section == "lifestyle_details") {
+                $user->prayer = $request->prayer;
+                $user->smoking = $request->smoking;
+                $user->diet = $request->diet;
+                $user->exercise = $request->exercise;
+                $user->hobbies = $request->hobbies;
+                $user->living_arrangement = $request->living_arrangement;
             } else if ($section == "residency_information") {
                 $user->con_of_birth = $request->con_of_birth;
                 $user->con_of_residence = $request->con_of_residence;
@@ -378,29 +854,23 @@ class ProfileController extends Controller
             } else if ($section == "family_info") {
                 $user->father = $request->father;
                 $user->mother = $request->mother;
-                $user->brother = $request->brother;
-                $user->sister = $request->sister;
+                // brother/sister (free-text) are frozen legacy fields, superseded by
+                // brothers_count/sisters_count below — no longer written on save, same
+                // as the users.r* columns frozen by the partner_preferences migration.
+                $user->brothers_count = $request->brothers_count !== '' ? $request->brothers_count : null;
+                $user->sisters_count = $request->sisters_count !== '' ? $request->sisters_count : null;
+                $user->siblings = $request->siblings;
             } else if ($section == "additional_personal_details") {
                 $user->district = $request->district;
                 $user->family_residence = $request->family_residence;
                 $user->father_profession = $request->father_profession;
+                $user->mother_profession = $request->mother_profession;
                 $user->special_circumstances = $request->special_circumstances;
-            } else if ($section == "partner_expectation") {
-                $user->rgen_req = $request->rgen_req;
-                $user->rage = $request->rage;
-                $user->rheight = $request->rheight;
-                $user->rmarital_status = $request->rmarital_status;
-                $user->rwith_children = $request->rwith_children;
-                $user->rcon_of_residence = $request->rcon_of_residence;
-                $user->rcity = $request->rcity;
-                $user->rreligion = $request->rreligion;
-                $user->rcaste = $request->rcaste;
-                $user->rsect = $request->rsect;
-                $user->reducation = $request->reducation;
-                $user->rprofession = $request->rprofession;
-                $user->rmother_tongue = $request->rmother_tongue;
-                $user->rcon_pref = $request->rcon_pref;
+                $user->family_values = $request->family_values;
             }
+            // Partner Preferences no longer lives on this page/section switch —
+            // it's its own dashboard page now, saved by updatePreferences() below,
+            // writing to the partner_preferences table instead of users.r*.
             $user->save();
             Log::info("User (" . $dataid . ") updated " . $section . " section.");
 
@@ -551,6 +1021,20 @@ class ProfileController extends Controller
         if ($member) {
             $id = $member->id;
             $message = null;
+
+            // Client request (Sep 2026): Royal+ profiles are now visible to
+            // everyone in search, but sending an interest TO one still
+            // requires the sender to also be Royal+ — shown as a dedicated
+            // upgrade popup on the frontend (see sendInterest() in
+            // global-scripts.blade.php), not the normal toast.
+            if (User::packageIsRoyalOrHigher($member->package) && !User::packageIsRoyalOrHigher($loggedInUser->package)) {
+                Log::info("User (" . $loggedInUser->dataid . ") blocked from sending interest to Royal+ member (" . $dataid . ") — sender's plan isn't Royal+.");
+                return [
+                    'code' => '403',
+                    'message' => 'This profile is on our Royal plan. Upgrade your plan to Royal to send an interest request.'
+                ];
+            }
+
             $existing = Interest::where('receiver', $id)->where('sender', $loggedInUser->id)->first();
             if (empty($existing)) {
                 $interest = new Interest;
@@ -685,120 +1169,176 @@ class ProfileController extends Controller
     }
 
     /**
-     * Intervention Image driver: prefer Imagick when available, else GD.
+     * "Request to view hidden photos" — same request/grant/decline/withdraw
+     * shape as updateInterest() above, backed by photo_access_requests
+     * instead of `interest`. $dataid is always "the other member" in the
+     * pair; for withdraw, $who tells us which side of the pair we are
+     * ('s' = I'm the requester withdrawing my own sent request, else I'm
+     * the owner revoking a grant/decline I'd made).
      */
-    private function createImageManager(): ?ImageManager
+    public function updatePhotoAccess($action, $dataid, $who = null)
     {
-        if (extension_loaded('imagick')) {
-            return new ImageManager(['driver' => 'imagick']);
-        }
-        if (extension_loaded('gd')) {
-            return new ImageManager(['driver' => 'gd']);
-        }
+        $loggedInUser = User::retrieveUserObject();
 
-        return null;
-    }
-
-//     private function createImageManager(): ?ImageManager
-// {
-//     if (extension_loaded('imagick')) {
-//         return new ImageManager('imagick');
-//     }
-
-//     if (extension_loaded('gd')) {
-//         return new ImageManager('gd');
-//     }
-
-//     return null;
-// }
-
-    private function generateBlurAndThumbnails(ImageManager $manager, string $publicPath, string $name, int $salt): void
-    {
-        $thumbnail = $manager->make($publicPath . '/' . $name);
-        $height = $thumbnail->height();
-        $width = $thumbnail->width();
-
-        $blur = $manager->make($publicPath . '/' . $name);
-        $blurAmt = 70;
-
-        if ($width > $height) {
-            $blur->resize(210, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $blur->blur($blurAmt);
-            $blurName = explode("_", $name);
-            $blur->save($publicPath . '/' . $blurName[0] . $salt . $blurName[1]);
-
-            $thumbnail->resize(210, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_" . $name);
-
-            $thumbnail->resize(100, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_md_" . $name);
-
-            $thumbnail->resize(32, null, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_sm_" . $name);
-        } else {
-            $blur->resize(null, 210, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $blur->blur($blurAmt);
-            $blurName = explode("_", $name);
-            $blur->save($publicPath . '/' . $blurName[0] . $salt . $blurName[1]);
-
-            $thumbnail->resize(null, 210, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_" . $name);
-
-            $thumbnail->resize(null, 100, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_md_" . $name);
-
-            $thumbnail->resize(null, 32, function ($constraint) {
-                $constraint->aspectRatio();
-            });
-            $thumbnail->save($publicPath . "/thumbnail_sm_" . $name);
+        switch ($action) {
+            case "request":
+                return $this->requestPhotoAccess($dataid);
+            case "grant":
+                return $this->grantPhotoAccess($dataid);
+            case "decline":
+                return $this->declinePhotoAccess($dataid);
+            case "withdraw":
+                return $this->withdrawPhotoAccess($dataid, $who);
+            default:
+                Log::info("User (" . $loggedInUser->dataid . ") requested " . $action . " photo access action on (" . $dataid . ")");
+                return [
+                    'code' => '404',
+                    'message' => 'Action not permitted!!!'
+                ];
         }
     }
 
-    /**
-     * Last resort when neither GD nor Imagick is loaded: duplicate the original so expected paths exist.
-     */
-    private function copyDerivativesWithoutProcessing(string $publicPath, string $name, int $salt): void
+    public function requestPhotoAccess($dataid)
     {
-        $src = $publicPath . '/' . $name;
-        File::copy($src, $publicPath . '/thumbnail_' . $name);
-        File::copy($src, $publicPath . '/thumbnail_md_' . $name);
-        File::copy($src, $publicPath . '/thumbnail_sm_' . $name);
-        $blurName = explode("_", $name);
-        if (count($blurName) >= 2) {
-            File::copy($src, $publicPath . '/' . $blurName[0] . $salt . $blurName[1]);
-        }
-    }
+        $loggedInUser = User::retrieveUserObject();
 
-    private function deleteUploadDerivatives(string $publicPath, string $name, ?int $salt): void
-    {
-        $paths = [
-            $publicPath . '/' . $name,
-            $publicPath . '/thumbnail_' . $name,
-            $publicPath . '/thumbnail_md_' . $name,
-            $publicPath . '/thumbnail_sm_' . $name,
-        ];
-        $blurName = explode("_", $name);
-        if ($salt !== null && count($blurName) >= 2) {
-            $paths[] = $publicPath . '/' . $blurName[0] . $salt . $blurName[1];
-        }
-        foreach ($paths as $p) {
-            if (File::exists($p)) {
-                File::delete($p);
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            $message = null;
+            $existing = PhotoAccessRequest::where('pid', $id)->where('uid', $loggedInUser->id)->first();
+            if (empty($existing)) {
+                $request = new PhotoAccessRequest;
+                $request->pid = $id;
+                $request->uid = $loggedInUser->id;
+                $request->allowed = 0;
+                $request->save();
+
+                $member->notify(new PhotoAccessRequested($loggedInUser, $member));
+
+                Log::info("User (" . $loggedInUser->dataid . ") requested photo access from user (" . $id . ")");
+                $message = "success|You've requested to view this member's hidden photos. We'll let you know if they approve it.";
+
+                User::retrieveUserObject($dataid, true);
+                User::retrieveUserObject($loggedInUser->dataid, true);
+            } else {
+                Log::info("User (" . $loggedInUser->dataid . ") already requested photo access from " . $dataid);
+                $message = 'warning|You have already requested to view this member\'s hidden photos.';
             }
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not request photo access from " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    public function grantPhotoAccess($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            $obj = PhotoAccessRequest::where('uid', $id)->where('pid', $loggedInUser->id)->first();
+            if (empty($obj)) {
+                Log::info("User (" . $loggedInUser->dataid . ") could not grant photo access to " . $dataid . " — no request found");
+                return ['code' => '404', 'message' => 'No photo access request was found for this member.'];
+            }
+            $obj->allowed = 1;
+            $obj->save();
+
+            $member->notify(new PhotoAccessGranted($member, $loggedInUser));
+
+            Log::info("User (" . $loggedInUser->dataid . ") granted photo access to (" . $dataid . ")");
+            $message = 'success|You have granted this member access to your hidden photos.';
+
+            User::retrieveUserObject($dataid, true);
+            User::retrieveUserObject($loggedInUser->dataid, true);
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not grant photo access to " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    public function declinePhotoAccess($dataid)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            $obj = PhotoAccessRequest::where('uid', $id)->where('pid', $loggedInUser->id)->first();
+            if (empty($obj)) {
+                Log::info("User (" . $loggedInUser->dataid . ") could not decline photo access for " . $dataid . " — no request found");
+                return ['code' => '404', 'message' => 'No photo access request was found for this member.'];
+            }
+            $obj->allowed = -1;
+            $obj->save();
+
+            $member->notify(new PhotoAccessDeclined($member, $loggedInUser));
+
+            Log::info("User (" . $loggedInUser->dataid . ") declined photo access for (" . $dataid . ")");
+            $message = 'success|You have declined this member\'s photo access request.';
+
+            User::retrieveUserObject($dataid, true);
+            User::retrieveUserObject($loggedInUser->dataid, true);
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not decline photo access for " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
+        }
+    }
+
+    public function withdrawPhotoAccess($dataid, $who)
+    {
+        $loggedInUser = User::retrieveUserObject();
+
+        $member = User::retrieveUserObject($dataid);
+        if ($member) {
+            $id = $member->id;
+            if ($who == 's') {
+                $obj = PhotoAccessRequest::where('pid', $id)->where('uid', $loggedInUser->id)->first();
+                $label = "Requester";
+            } else {
+                $obj = PhotoAccessRequest::where('uid', $id)->where('pid', $loggedInUser->id)->first();
+                $label = "Owner";
+            }
+            if ($obj) $obj->delete();
+
+            Log::info($label . " (" . $loggedInUser->dataid . ") withdrew photo access with (" . $dataid . ")");
+            $message = 'success|Photo access request withdrawn.';
+
+            User::retrieveUserObject($dataid, true);
+            User::retrieveUserObject($loggedInUser->dataid, true);
+            return [
+                'code' => '200',
+                'message' => $message
+            ];
+        } else {
+            Log::info("User (" . $loggedInUser->dataid . ") could not withdraw photo access with " . $dataid);
+            return [
+                'code' => '404',
+                'message' => 'Member was not found (id: ' . $dataid . ')'
+            ];
         }
     }
 
@@ -814,6 +1354,9 @@ class ProfileController extends Controller
         if ($type == "interests") {
             $members = $user->getInterestLists();
             return view('member.interestdata', compact('type', 'members'));
+        } else if ($type == "photoaccess") {
+            $members = $user->getPhotoAccessLists();
+            return view('member.photoaccessdata', compact('type', 'members'));
         } else {
             $members = $user->getTypeFilteredList($type);
             return view('member.filtereddata', compact('type', 'members'));
