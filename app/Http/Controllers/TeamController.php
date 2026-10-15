@@ -1580,9 +1580,9 @@ TEMPLATE;
         return response()->json([
             'code' => '200',
             'title' => $proposal->reference,
-            // Someone else's proposal: Share opens a chat with its owner (a wa.me link can't carry files, but its link preview shows the photo).
-            // (an admin shares the photos themselves — through the share sheet where the device allows — rather than opening the owner's chat)
-            'direct' => !$this->sharerIsAdmin() && $proposal->added_by != $loggedInUser->id && !empty(TeamMember::find($proposal->added_by)->contact_mobile_number ?? null),
+            // Share always goes through the share sheet with the photos attached (a wa.me chat link cannot carry picture files); the person
+            // sharing picks the contact. Where the device cannot share files, the wa.me text + link fallback below is used.
+            'direct' => false,
             'text' => $pieces['text'],
             'photos' => $pieces['photos'],
             // wa.me link used when the browser can't attach files.

@@ -256,8 +256,7 @@
                         <li><a href="{{url('faqs')}}" title="FAQ"><i class="fa fa-question-circle" aria-hidden="true"></i><span class="text-white">FAQ</span></a></li>
                         <li><a href="{{url('tandc')}}" title="Terms &amp; Conditions"><i class="fa fa-file-text-o" aria-hidden="true"></i><span class="text-white">Terms &amp; Conditions</span></a></li>
                         <li><a href="{{url('privacy')}}" title="Privacy Policy"><i class="fa fa-shield" aria-hidden="true"></i><span class="text-white">Privacy Policy</span></a></li>
-                        {{-- Team members (matchmaking partners): sign up to apply, sign in to the Team Dashboard. --}}
-                        <li><a href="{{ url('become-a-partner') }}" title="Team Member Sign Up"><i class="fa fa-handshake-o" aria-hidden="true"></i><span class="text-white">Team Member Sign Up</span></a></li>
+                        {{-- Team members (matchmaking partners): one link — the login page links to sign up, and the sign-up page links back to login. --}}
                         @if(Auth::guard('team')->check())
                         <li><a href="{{ route('team.dashboard') }}" title="Team Dashboard"><i class="fa fa-briefcase" aria-hidden="true"></i><span class="text-white">Team Dashboard</span></a></li>
                         @else
