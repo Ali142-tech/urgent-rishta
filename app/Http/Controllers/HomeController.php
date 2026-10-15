@@ -43,7 +43,7 @@ class HomeController extends Controller {
      */
     public function __construct() {
         $this->middleware(['auth', 'verified'])->except(['index', 'contactUsEmail',
-            'packagesView','storiesView', 'teamView', 'galleryView', 'partnersView', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
+            'packagesView','storiesView', 'teamView', 'galleryView', 'partnersView', 'cmsPage', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
             'contactUsView', 'states', 'cities', 'castes', 'sharePreview']);
     }
 
@@ -183,15 +183,20 @@ class HomeController extends Controller {
     }
 
     public function faqsView () {
-        return view('faqs');
+        return view('faqs', ['faqs' => \App\Faq::visible()->get()]);
     }
 
     public function termsAndConditionsView() {
-        return view('tandc');
+        return view('tandc', ['page' => \App\CmsPage::active()->where('slug', 'terms')->firstOrFail()]);
     }
 
     public function privacyPolicyView() {
-        return view('privacy');
+        return view('privacy', ['page' => \App\CmsPage::active()->where('slug', 'privacy')->firstOrFail()]);
+    }
+
+    /** Any page an admin created in Admin ▸ Content (shown at /p/{slug}); a hidden page is "not found". */
+    public function cmsPage($slug) {
+        return view('cms-page', ['page' => \App\CmsPage::active()->where('slug', $slug)->firstOrFail()]);
     }
 
     public function contactUsView() {

@@ -83,6 +83,18 @@
         </li>
 
 
+        <div class="ur-dash-nav__section-label">Content</div>
+        <li>
+            <a href="{{ route('admin.cms.faqs') }}" class="{{ request()->is('admin/cms/faqs*') ? 'is-active' : '' }}">
+                <i class="fa fa-question-circle"></i> FAQs
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('admin.cms') }}" class="{{ request()->is('admin/cms') || request()->is('admin/cms/pages*') ? 'is-active' : '' }}">
+                <i class="fa fa-file-text-o"></i> Pages
+            </a>
+        </li>
+
         <div class="ur-dash-nav__section-label">Growth</div>
         <li>
             <a href="{{ route('admin.partner-referrals') }}" class="{{ request()->is('admin/partner-referrals') ? 'is-active' : '' }}">

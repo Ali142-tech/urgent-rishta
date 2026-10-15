@@ -256,6 +256,13 @@
                         <li><a href="{{url('faqs')}}" title="FAQ"><i class="fa fa-question-circle" aria-hidden="true"></i><span class="text-white">FAQ</span></a></li>
                         <li><a href="{{url('tandc')}}" title="Terms &amp; Conditions"><i class="fa fa-file-text-o" aria-hidden="true"></i><span class="text-white">Terms &amp; Conditions</span></a></li>
                         <li><a href="{{url('privacy')}}" title="Privacy Policy"><i class="fa fa-shield" aria-hidden="true"></i><span class="text-white">Privacy Policy</span></a></li>
+                        @php
+                            // pages an admin created and ticked "show in the footer" (Admin ▸ Content ▸ Pages)
+                            try { $__footerPages = \App\CmsPage::active()->where('show_in_footer', true)->where('is_system', false)->orderBy('sort_order')->get(['slug', 'title']); } catch (\Throwable $e) { $__footerPages = collect(); }
+                        @endphp
+                        @foreach($__footerPages as $__fp)
+                        <li><a href="{{ url('p/' . $__fp->slug) }}" title="{{ $__fp->title }}"><i class="fa fa-file-text-o" aria-hidden="true"></i><span class="text-white">{{ $__fp->title }}</span></a></li>
+                        @endforeach
                         {{-- Team members (matchmaking partners): one link — the login page links to sign up, and the sign-up page links back to login. --}}
                         @if(Auth::guard('team')->check())
                         <li><a href="{{ route('team.dashboard') }}" title="Team Dashboard"><i class="fa fa-briefcase" aria-hidden="true"></i><span class="text-white">Team Dashboard</span></a></li>
