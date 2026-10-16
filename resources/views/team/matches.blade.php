@@ -313,7 +313,7 @@
                 <div class="ur-am-owner__body">
                     <div class="ur-am-owner__label">MATCHED PROFILE OWNER</div>
                     <div class="ur-am-owner__name">{{ $match->added_by_name }}@if(!empty($match->added_by_premium)) @include('team.partials.premium-badge')@endif</div>
-                    <div class="ur-am-owner__meta">{{ $match->added_by_dataid }}{{ $match->added_by_experience ? ' &bull; '.$match->added_by_experience : '' }}</div>
+                    <div class="ur-am-owner__meta">{{ $match->added_by_experience }}</div>
                 </div>
                 @if($match->added_by_experience)<span class="ur-am-owner__role">{{ $match->added_by_experience }}</span>@endif
                 <a class="ur-am-owner__whatsapp" href="{{ route('team.proposals.share.whatsapp', $match->dataid) }}" target="_blank" rel="noopener" title="Message {{ $match->added_by_name }}"><i class="fa fa-whatsapp"></i></a>

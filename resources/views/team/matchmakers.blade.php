@@ -156,7 +156,7 @@
             </div>
             <div class="ur-mk-card__body">
                 <div class="ur-mk-card__name">{{ $member->first_name }} {{ $member->last_name }}@if($member->isPremium()) @include('team.partials.premium-badge')@endif</div>
-                <div class="ur-mk-card__sub">{{ $member->dataid }} &bull; Verified Partner</div>
+                <div class="ur-mk-card__sub">Verified Partner</div>
 
                 @if($member->id === auth()->id())
                 <form method="POST" action="{{ route('team.my-profile.photo') }}" enctype="multipart/form-data" class="ur-mk-upload-form">

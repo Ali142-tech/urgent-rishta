@@ -41,7 +41,6 @@
             <div class="dropdown-menu dropdown-menu-right ur-dash-user-menu">
                 <div class="ur-dash-user-menu__head">
                     <div class="name">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</div>
-                    <div class="id">Partner ID: {{ auth()->user()->dataid }}</div>
                 </div>
                 <a href="{{ route('team.profile') }}"><i class="fa fa-user"></i> My Profile</a>
                 <a href="{{ route('team.password') }}"><i class="fa fa-key"></i> Change Password</a>

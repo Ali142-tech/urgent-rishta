@@ -274,7 +274,7 @@
                 @php($__owner = isset($proposal) ? (\App\TeamMember::find($proposal->added_by) ?: auth()->user()) : auth()->user())
                 <label>Profile owner / teammate</label>
                 <div class="ur-pp-owner-display" style="margin-bottom:14px;">
-                    {{ $__owner->first_name }} {{ $__owner->last_name }}{{ $__owner->experience ? ' — '.$__owner->experience : '' }} — {{ $__owner->dataid }}
+                    {{ $__owner->first_name }} {{ $__owner->last_name }}{{ $__owner->experience ? ' — '.$__owner->experience : '' }}
                 </div>
 
                 <label for="paste_box">Client details

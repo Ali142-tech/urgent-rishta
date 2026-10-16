@@ -65,7 +65,6 @@
         </p>
         <p class="ur-cf-owner">
             Owned by {{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif
-            @if($member->added_by_dataid) &bull; Login ID {{ $member->added_by_dataid }} @endif
             @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
         </p>
 
@@ -130,7 +129,6 @@
             <div><span>Presentation highlight</span><b>{{ $member->presentation_highlight ?: $notProvided }}</b></div>
             <div><span>Father</span><b>{{ $member->father_occupation ?: $notProvided }}</b></div>
             <div><span>Profile owner</span><b>{{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif</b></div>
-            <div><span>Owner login ID</span><b>{{ $member->added_by_dataid ?: $notProvided }}</b></div>
         </div>
         @if(!empty($member->profile_description))
             <p class="ur-cf-description">{{ $member->profile_description }}</p>
