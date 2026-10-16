@@ -169,7 +169,7 @@
             }
         @endphp
         @if($flashText)
-            <div class="login-flash {{ $flashType }}">{{ $flashText }}</div>
+            <div class="login-flash {{ $flashType }}">{!! \App\User::flashHtml($flashText) !!}</div>
         @endif
         @if ($errors->any())
             <div class="login-flash danger">
@@ -229,7 +229,7 @@
                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18" alt="">
                 Continue with Google
             </a>
-            <a class="shaadi-link" href="{{ route('login') }}">Already have an account? Log in</a>
+            <p class="shaadi-link">Already have an account? <a href="{{ route('login') }}" style="color:#123A2E; font-weight:700;">Log in</a></p>
         @endif
 
         {{-- STEP 2: religion + community + country (Shaadi-style) --}}

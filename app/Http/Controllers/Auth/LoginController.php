@@ -255,6 +255,10 @@ class LoginController extends Controller
 
         if (!$credentials || !Auth::attempt($credentials, $remember)) {
             $this->incrementLoginAttempts($request);
+            if ($this->closedAccountMatches($full, null, $request->password)) {
+                Session::flash('message', User::deletedAccountMessage());
+                return redirect()->route('login', ['mode' => 'password']);
+            }
             Session::flash('message', 'danger|Invalid mobile or password. Please try again.');
             return redirect()->route('login', ['mode' => 'password'])->withInput($request->only('country_code', 'mobile', 'remember'));
         }
@@ -286,6 +290,10 @@ class LoginController extends Controller
 
         if (!Auth::attempt($credentials, $remember)) {
             $this->incrementLoginAttempts($request);
+            if ($this->closedAccountMatches(null, trim($request->email), $request->password)) {
+                Session::flash('message', User::deletedAccountMessage());
+                return redirect()->route('login', ['mode' => 'email']);
+            }
             Session::flash('message', 'danger|Invalid email or password. Please try again.');
             return redirect()->route('login', ['mode' => 'email'])->withInput($request->only('email', 'remember'));
         }
@@ -380,6 +388,27 @@ class LoginController extends Controller
         }
 
         return redirect('member/profile');
+    }
+
+    /** The login details are right but the account has been closed (soft-deleted). */
+    private function closedAccountMatches(?string $mobile, ?string $email, ?string $password): bool
+    {
+        if (empty($password)) return false;
+        $q = User::onlyTrashed();
+        if (!empty($email)) {
+            $q->where('email', $email);
+        } elseif (!empty($mobile)) {
+            $digits = preg_replace('/\D+/', '', $mobile);
+            $q->where(function ($w) use ($mobile, $digits) {
+                $w->where('contact_mobile_number', $mobile)->orWhere('contact_mobile_number', $digits);
+            });
+        } else {
+            return false;
+        }
+        foreach ($q->get() as $u) {
+            if (\Illuminate\Support\Facades\Hash::check($password, $u->password)) return true;
+        }
+        return false;
     }
 
     private function findUserByMobile(string $normalized): ?User

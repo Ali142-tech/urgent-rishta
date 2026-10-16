@@ -40,6 +40,13 @@ class GoogleAuthController extends Controller
             return redirect()->route('login');
         }
 
+        if (User::onlyTrashed()->where(function ($q) use ($googleUser, $email) {
+                $q->where('google_id', $googleUser->getId())->orWhere('email', $email);
+            })->exists()) {
+            Session::flash('message', User::deletedAccountMessage());
+            return redirect()->route('login');
+        }
+
         $user = User::where('google_id', $googleUser->getId())
             ->orWhere('email', $email)
             ->first();

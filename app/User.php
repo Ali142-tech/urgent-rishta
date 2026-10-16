@@ -198,6 +198,33 @@ class User extends Authenticatable implements MustVerifyEmail {
         return $this->profile()->isAdmin();
     }
 
+    /** WhatsApp / phone of the team that restores or permanently removes a closed account. */
+    const SUPPORT_WHATSAPP_URL = 'https://wa.me/923040227000';
+    const SUPPORT_PHONE = '+92 304 0227000';
+
+    /** Flash message (type|text) shown when someone tries to use a closed (soft-deleted) account. */
+    public static function deletedAccountMessage(): string {
+        return 'danger|Your account has been deleted. Please contact us on WhatsApp ' . self::SUPPORT_PHONE
+            . ' (' . self::SUPPORT_WHATSAPP_URL . ') to restore it or to delete it permanently.';
+    }
+
+    /** True when a closed (soft-deleted) account already uses this email and/or mobile number. */
+    public static function deletedAccountExists(?string $email = null, ?string $mobile = null): bool {
+        if (empty($email) && empty($mobile)) return false;
+        return static::onlyTrashed()->where(function ($q) use ($email, $mobile) {
+            if (!empty($email)) $q->orWhere('email', $email);
+            if (!empty($mobile)) $q->orWhere('contact_mobile_number', $mobile);
+        })->exists();
+    }
+
+    /** Escapes a flash message and turns its WhatsApp URL into a clickable link. */
+    public static function flashHtml(string $text): string {
+        $safe = e($text);
+        if (!str_contains($text, self::SUPPORT_WHATSAPP_URL)) return $safe;
+        $safe = str_replace(' (' . e(self::SUPPORT_WHATSAPP_URL) . ')', '', $safe);
+        return $safe . ' <a href="' . e(self::SUPPORT_WHATSAPP_URL) . '" target="_blank" rel="noopener" style="font-weight:700;text-decoration:underline;color:inherit;"><i class="fa fa-whatsapp"></i> Chat on WhatsApp</a>';
+    }
+
     /**
      * User has an active admin-assigned package (e.g. Platinum, Diamond, Royal, Sovereign Matchmaking).
      * Package must exist in masterdata type PACKAGE and not be expired.

@@ -301,6 +301,11 @@ class RegisterController extends Controller
             $email = strtolower($google['email']);
         }
 
+        if (User::deletedAccountExists($email)) {
+            Session::flash('message', User::deletedAccountMessage());
+            return redirect()->route('register', ['mode' => 'contact'])->withInput();
+        }
+
         if (User::where('email', $email)->exists()) {
             if (!empty($google)) {
                 Session::flash('message', 'danger|This email ID is already registered. Please login instead.');
@@ -318,6 +323,11 @@ class RegisterController extends Controller
 
         if (!$this->validPhoneNumber($full)) {
             Session::flash('message', 'danger|Please enter a valid mobile number.');
+            return redirect()->route('register', ['mode' => 'contact'])->withInput();
+        }
+
+        if (User::deletedAccountExists(null, $full)) {
+            Session::flash('message', User::deletedAccountMessage());
             return redirect()->route('register', ['mode' => 'contact'])->withInput();
         }
 
@@ -393,6 +403,11 @@ class RegisterController extends Controller
         $google = Session::get('google_oauth');
         if (!empty($google['email'])) {
             $email = strtolower($google['email']);
+        }
+
+        if (User::deletedAccountExists($email, $full)) {
+            Session::flash('message', User::deletedAccountMessage());
+            return redirect()->route('register', ['mode' => 'contact'])->withInput();
         }
 
         if (User::where('email', $email)->exists() && empty($google)) {
@@ -658,6 +673,12 @@ class RegisterController extends Controller
 
         if (!$email || !$mobile || !Session::get('register_verified')) {
             Session::flash('message', 'danger|Registration session expired. Please start again.');
+            return redirect()->route('register');
+        }
+
+        if (User::deletedAccountExists($email, $mobile)) {
+            $this->forgetRegisterSession();
+            Session::flash('message', User::deletedAccountMessage());
             return redirect()->route('register');
         }
 

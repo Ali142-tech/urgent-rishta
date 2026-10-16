@@ -233,8 +233,8 @@
         text-align: center;
         margin-top: 18px;
         margin-bottom: 0;
-        font-size: 12px;
-        color: #999;
+        font-size: 14px;
+        color: #777;
     }
     .shaadi-login-card .footer-note a {
         color: #123A2E;
@@ -266,7 +266,7 @@
         @endphp
 
         @if($flashText)
-            <div class="login-flash {{ $flashType }}">{{ $flashText }}</div>
+            <div class="login-flash {{ $flashType }}">{!! \App\User::flashHtml($flashText) !!}</div>
         @endif
 
         @if ($errors->any())
@@ -342,6 +342,9 @@
                 <button type="submit" class="shaadi-btn-primary">Login</button>
             </form>
             <a class="shaadi-link" href="{{ route('login') }}">Login with Mobile Number</a>
+            <p class="footer-note">
+                New here? <a href="{{ url('register') }}">Create an account</a>
+            </p>
         @endif
     </div>
 </div>
