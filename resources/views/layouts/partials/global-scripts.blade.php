@@ -492,9 +492,31 @@
     }
 
     function deleteAccount(elem) {
-        swalConfirm("Delete Account?", "Are you sure you want to delete your account? You will not be able to revert this!", () => {
-            // Intentionally not wired to member/profile/account/terminate yet —
-            // left as a confirm-only prompt until real account deletion is implemented.
+        swalConfirm("Close your account?", "Your profile will be removed and you will be logged out. To use the site again you would need to contact us to restore it.", () => {
+            var oldHtml = elem.html();
+            elem.html("<i class='fa fa-refresh fa-spin'></i> Closing...");
+            elem.prop('disabled', true);
+            $.ajax({
+                type: "post",
+                url: "{{ url('member/profile/account/terminate') }}",
+                data: { '_token': '{{ csrf_token() }}' },
+                success: function(result) {
+                    var message = String(result.message || '').split("|");
+                    if (result.code == '200') {
+                        swalAlert('success', 'Account closed', message[1] || '', function() { window.location.href = "{{ url('/') }}"; });
+                        setTimeout(function() { window.location.href = "{{ url('/') }}"; }, 3000);
+                    } else {
+                        elem.html(oldHtml);
+                        elem.prop('disabled', false);
+                        showAlert('danger', message[1] || 'Could not close the account.', 5000);
+                    }
+                },
+                error: function() {
+                    elem.html(oldHtml);
+                    elem.prop('disabled', false);
+                    showAlert('danger', 'Could not close the account. Please try again.', 5000);
+                }
+            });
         });
     }
 

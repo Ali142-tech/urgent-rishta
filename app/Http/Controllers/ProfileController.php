@@ -257,31 +257,41 @@ class ProfileController extends Controller
         return User::retrieveUserObject()->unreadNotifications()->limit(5)->get()->toArray();
     }
 
-    public function accountTerminate()
+    /**
+     * A member closing their own account. Same soft delete the admin uses (users.deleted_at), so the row, photos and
+     * interests stay and an admin can restore it; the member is signed out and can no longer log in.
+     */
+    public function accountTerminate(Request $request)
     {
         $user = User::retrieveUserObject();
+        if (!$user) {
+            return response()->json(['code' => '401', 'message' => 'danger|Please log in again.'], 401);
+        }
+        if ($user->isAdmin()) {
+            return response()->json(['code' => '403', 'message' => 'danger|Admin accounts cannot be closed from here.']);
+        }
 
-        $message = null;
+        try {
+            $dataid = $user->dataid;
+            $label = $user->first_name . " " . $user->last_name . ", Email: " . $user->email;
 
-        if (request()->ajax()) {
-            try {
-                Auth::logout();
-                Log::info("User (Name: " . $user->first_name . " " . $user->last_name . ", Email: " . $user->email . ") deleted their account.");
-                $message = 'success|We are sorry to see you go. Account has been deleted. You will need to register again if you want to use this website.';
-            } catch (\Exception $e) {
-                Log::info("User (Name: " . $user->first_name . " " . $user->last_name . ", Email: " . $user->email . ") could not delete their account. Error: " . $e->getMessage());
-                $message = 'danger|There was an error deleting your account. Please try again later and contact admin if the error persists.';
-            }
-            return [
-                'code' => '200',
-                //'html' => $this->profile($request),//->renderSections()['main-content'],
-                'message' => $message
-            ];
-        } else return [
-            'code' => '200'
-        ];
+            $account = User::where('dataid', $dataid)->firstOrFail();
+            $account->active = 0;
+            $account->save();
+            $account->delete();
+
+            \Illuminate\Support\Facades\Cache::forget("u_" . $dataid);
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            Log::info("User (Name: " . $label . ") closed their account.");
+            return response()->json(['code' => '200', 'message' => 'success|Your account has been closed. We are sorry to see you go.']);
+        } catch (\Exception $e) {
+            Log::error("User (Email: " . $user->email . ") could not close their account. Error: " . $e->getMessage());
+            return response()->json(['code' => '500', 'message' => 'danger|There was an error closing your account. Please try again later and contact admin if the error persists.']);
+        }
     }
-
     public function updatePassword(Request $request)
     {
         $user = User::retrieveUserObject();
