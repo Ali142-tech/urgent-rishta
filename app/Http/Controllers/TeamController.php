@@ -430,15 +430,14 @@ class TeamController extends Controller
         AuditLog::record($loggedInUser, 'profile.shared', $match);
         Log::info('Team member (' . $loggedInUser->dataid . ') forwarded proposals ' . $proposal->reference . ' + ' . $match->reference . ' via WhatsApp');
 
-        // Both forms in full plus both public links (their previews show the photos) — the same message the share sheet
-        // sends. A chat link cannot attach picture files; the Forward both button sends those through the share sheet
-        // whenever the device supports it, and uses this link only when it does not.
+        // Both forms in full — the same message the share sheet sends — and never a link to either profile. A chat link cannot
+        // attach picture files; the Forward both button sends those through the share sheet whenever the device supports it.
         $a = $this->shareContentFor($proposal);
         $b = $this->shareContentFor($match);
         $text = "*POTENTIAL MATCH*\n\n"
-            . "*CLIENT — " . $proposal->reference . "*\n\n" . $a['intake'] . "\n\n" . $a['link']
+            . "*CLIENT — " . $proposal->reference . "*\n\n" . $a['intake']
             . "\n\n━━━━━━━━━━━━━━━\n\n"
-            . "*MATCHED PROFILE — " . $match->reference . "*\n\n" . $b['intake'] . "\n\n" . $b['link'];
+            . "*MATCHED PROFILE — " . $match->reference . "*\n\n" . $b['intake'];
         $matchOwner = TeamMember::find($match->added_by);
         $link = (!empty($matchOwner) && !empty($matchOwner->contact_mobile_number))
             ? User::whatsappLinkForNumber($matchOwner->contact_mobile_number, $text)
@@ -1447,10 +1446,8 @@ TEMPLATE;
             ? $proposal->raw_intake_text
             : $this->buildSyntheticIntakeText($proposal);
 
-        $text = "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . $this->shareLinkFor($proposal);
-        if ($request->boolean('with_photos')) {
-            $text .= "\n(client photos are viewable at this link)";
-        }
+        // The form only — a shared profile never carries a link to the profile.
+        $text = "*CLIENT PROFILE*\n\n" . $intakeText;
 
         $link = (!empty($addedByUser) && !empty($addedByUser->contact_mobile_number))
             ? User::whatsappLinkForNumber($addedByUser->contact_mobile_number, $text)
@@ -1473,27 +1470,6 @@ TEMPLATE;
         return $user instanceof TeamMember && $user->isAdmin();
     }
 
-    /**
-     * The public link that goes into a shared message. Anyone's link opens a preview with the owner's watermark; an admin's is
-     * a signed link (cannot be forged or edited) that opens the same preview with the original, un-watermarked picture.
-     */
-    private function shareLinkFor(Proposal $proposal): string
-    {
-        $url = \Illuminate\Support\Facades\URL::class;
-
-        if ($this->sharerIsAdmin()) {
-            return $url::signedRoute('share.proposal', ['dataid' => $proposal->reference, 'orig' => 1, 'v' => time()]);
-        }
-        // ('v' = now: every share is a new address, so WhatsApp never reuses a preview it cached earlier — e.g. an empty one from before this worked.)
-        // A private proposal is hidden from visitors, so a plain link to it would be a 404 for whoever receives it (no preview
-        // picture, nothing to open). Someone allowed to see it who shares it on purpose gets a signed link, which opens it.
-        if ($proposal->is_private) {
-            return $url::signedRoute('share.proposal', ['dataid' => $proposal->reference, 'share' => 1, 'v' => time()]);
-        }
-
-        return route('share.proposal', $proposal->reference);
-    }
-
     private function shareContentFor(Proposal $proposal): array
     {
         $proposal->loadMissing('photos');
@@ -1501,7 +1477,6 @@ TEMPLATE;
         $intakeText = !empty(trim((string) ($proposal->raw_intake_text ?? '')))
             ? $proposal->raw_intake_text
             : $this->buildSyntheticIntakeText($proposal);
-        $link = $this->shareLinkFor($proposal);
         $adminShare = $this->sharerIsAdmin();
 
         $photos = [];
@@ -1516,7 +1491,8 @@ TEMPLATE;
             }
         }
 
-        return ['intake' => $intakeText, 'link' => $link, 'text' => "*CLIENT PROFILE*\n\n" . $intakeText . "\n\n" . $link, 'photos' => array_values($photos)];
+        // No link to the profile goes out with a share: the message is the form, and the photos are attached as files.
+        return ['intake' => $intakeText, 'text' => "*CLIENT PROFILE*\n\n" . $intakeText, 'photos' => array_values($photos)];
     }
 
     /**
@@ -1540,9 +1516,9 @@ TEMPLATE;
         $b = $this->shareContentFor($match);
 
         $text = "*POTENTIAL MATCH*\n\n"
-            . "*CLIENT — " . $proposal->reference . "*\n\n" . $a['intake'] . "\n\n" . $a['link']
+            . "*CLIENT — " . $proposal->reference . "*\n\n" . $a['intake']
             . "\n\n━━━━━━━━━━━━━━━\n\n"
-            . "*MATCHED PROFILE — " . $match->reference . "*\n\n" . $b['intake'] . "\n\n" . $b['link'];
+            . "*MATCHED PROFILE — " . $match->reference . "*\n\n" . $b['intake'];
 
         return response()->json([
             'code' => '200',
