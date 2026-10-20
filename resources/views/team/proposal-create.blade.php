@@ -578,6 +578,11 @@
                         </div>
                     </div>
 
+                    {{-- The rest of the client intake form (religion, income, residence, family, partner languages): not shown as fields —
+                         the paste parser fills these hidden inputs and they are saved with the proposal. --}}
+                    @foreach(['religion', 'monthly_income', 'residential_area', 'house_size', 'father_details', 'mother_details', 'siblings', 'married_siblings', 'family_values', 'pref_languages'] as $__xf)
+                        <input type="hidden" name="{{ $__xf }}" form="af_form" value="{{ old($__xf) }}">
+                    @endforeach
                     {{-- Classification fields that are never auto-filled by the
                          paste parser — the team member picks them by hand. (Profile
                          category was dropped from this form on purpose.) --}}
@@ -847,7 +852,8 @@ function urCopyTemplate(event) {
         var target = norm(text);
         var options = Array.from(el.options);
         var match = options.find(function (o) { return norm(o.textContent) === target; })
-            || options.find(function (o) { return target.indexOf(norm(o.textContent)) !== -1 && norm(o.textContent).length > 2; })
+            || options.filter(function (o) { return target.indexOf(norm(o.textContent)) !== -1 && norm(o.textContent).length > 2; })
+                .sort(function (a, b) { return norm(b.textContent).length - norm(a.textContent).length; })[0]
             || options.find(function (o) { return norm(o.textContent).indexOf(target) !== -1 && target.length > 2; });
         if (match) { el.value = match.value; refreshSelect(el); return true; }
         if (el.dataset.other) return pickOrOther(el, text);
@@ -901,6 +907,36 @@ function urCopyTemplate(event) {
         if (ageInput) ageInput.value = age;
         ageToDob(age);
     }
+    // "28", "28 years", "12/03/1997", "28 / 12-03-1997", "12 March 1997" -> the age box AND the date of birth.
+    var MONTH_NUMBERS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+    function findDob(text) {
+        var m;
+        if ((m = text.match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{4})/))) {
+            var d = +m[1], mo = +m[2];
+            if (mo > 12 && d <= 12) { var t = d; d = mo; mo = t; }   // written month-first
+            return { d: d, m: mo, y: +m[3], raw: m[0] };
+        }
+        if ((m = text.match(/(\d{4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/))) return { d: +m[3], m: +m[2], y: +m[1], raw: m[0] };
+        if ((m = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})/)) && MONTH_NUMBERS[m[2].slice(0, 3).toLowerCase()]) return { d: +m[1], m: MONTH_NUMBERS[m[2].slice(0, 3).toLowerCase()], y: +m[3], raw: m[0] };
+        if ((m = text.match(/([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})/)) && MONTH_NUMBERS[m[1].slice(0, 3).toLowerCase()]) return { d: +m[2], m: MONTH_NUMBERS[m[1].slice(0, 3).toLowerCase()], y: +m[3], raw: m[0] };
+        return null;
+    }
+    function fillAgeOrDob(value) {
+        var text = String(value), dob = findDob(text), now = new Date();
+        if (dob && dob.y >= 1900 && dob.y <= now.getFullYear() && dob.m >= 1 && dob.m <= 12 && dob.d >= 1 && dob.d <= 31) {
+            setVal('day', String(dob.d).padStart(2, '0'));
+            setVal('month', String(dob.m).padStart(2, '0'));
+            setVal('year', String(dob.y));
+            var age = now.getFullYear() - dob.y;
+            if (now.getMonth() + 1 < dob.m || (now.getMonth() + 1 === dob.m && now.getDate() < dob.d)) age--;
+            if (ageInput && age >= 1 && age <= 110) ageInput.value = age;
+            return;
+        }
+        // no date: the age — the first number that can be one (18-99), else the first number
+        var nums = (text.match(/\d{1,3}/g) || []).map(Number);
+        var pick = nums.filter(function (n) { return n >= 18 && n <= 99; })[0] || nums[0];
+        if (pick) fillAgeFromYears(String(pick));
+    }
     function fillAgeLimit(value) {
         var nums = String(value).match(/\d{1,3}/g);
         if (!nums) return;
@@ -920,14 +956,68 @@ function urCopyTemplate(event) {
     }
 
     // ---------- section-aware label maps ----------
+    // "Nationality / Visa Status: British / Citizen" -> the nationality part
+    function fillNationality(v) {
+        var first = String(v).split(/\s*[\/,(\-]\s*/)[0];
+        selectFuzzy('con_of_citizenship', first || v);   // the visa / status part stays in the pasted text
+    }
+    // "Father's Name / Profession: Ahmed Khan / Businessman" -> kept whole in the details box
+    function fillEducation(v) { selectFuzzy('education', v); }
+    function skipPlaceholder(v) { return /traditional\s*\/\s*moderate\s*\/\s*liberal/i.test(v); }
+
     var SECTIONS = [
         { test: /personal\s*information/i, fields: {
             'gender': function (v) { setVal('gender', /female/i.test(v) ? 'female' : 'male'); },
             'name': fillName,
-            'age': fillAgeFromYears,
+            'full name': fillName,
+            'age': fillAgeOrDob,
+            'date of birth': fillAgeOrDob,
+            'dob': fillAgeOrDob,
+            'age / date of birth': fillAgeOrDob,
+            'age/date of birth': fillAgeOrDob,
             'marital status': function (v) { selectFuzzy('marital_status', MARITAL_SYNONYMS[String(v).trim().toLowerCase()] || v); },
             'height': function (v) { setVal('height', v); },
+            'religion': function (v) { setVal('religion', v); },
+            'sect': function (v) { setVal('sect', v); },
+            'caste': function (v) { selectFuzzy('caste', v); },
+            'cast': function (v) { selectFuzzy('caste', v); },
+            'education': fillEducation,
+            'qualification': fillEducation,
+            'profession / designation': function (v) { setVal('profession', v); },
+            'profession': function (v) { setVal('profession', v); },
+            'monthly income': function (v) { setVal('monthly_income', v); },
+            'income': function (v) { setVal('monthly_income', v); },
         }},
+        { test: /location\s*&?\s*(and\s*)?resid[ae]nce/i, fields: {
+            'country': function (v) { selectFuzzy('country', v); },
+            'city': function (v) { setVal('current_city', v); },
+            'current city': function (v) { setVal('current_city', v); },
+            'nationality / visa status': fillNationality,
+            'nationality': fillNationality,
+            'hometown': function (v) { setVal('city', v); },
+            'residential area / society': function (v) { setVal('residential_area', v); },
+            'house size / ownership': function (v) { setVal('house_size', v); },
+        }},
+        { test: /family\s*background/i, fields: {
+            "fathers name / profession": function (v) { setVal('father_details', v); },
+            "mothers name / profession": function (v) { setVal('mother_details', v); },
+            'brothers / sisters': function (v) { setVal('siblings', v); },
+            'married siblings': function (v) { setVal('married_siblings', v); },
+            'family values': function (v) { if (!skipPlaceholder(v)) setVal('family_values', v); },
+        }},
+        { test: /partner\s*preferences?/i, fields: {
+            'preferred age range': fillAgeLimit,
+            'marital status': function (v) { addManyToMulti('pref_marital_statuses[]', null, v, MARITAL_SYNONYMS); },
+            'education': function (v) { addManyToMulti('pref_educations[]', 'pref_education_other', v); parsePartnerRequirementsText(v); },
+            'profession': function (v) { addManyToMulti('pref_professions[]', 'pref_profession_other', v); },
+            'caste preference': function (v) { addManyToMulti('pref_castes[]', null, v); setVal('pref_caste_note', v); },
+            'preferred caste': function (v) { addManyToMulti('pref_castes[]', null, v); setVal('pref_caste_note', v); },
+            'caste': function (v) { addManyToMulti('pref_castes[]', null, v); setVal('pref_caste_note', v); },
+            'preferred city / country': function (v) { setVal('pref_city', v); },
+            'languages / interests': function (v) { setVal('pref_languages', v); },
+            'additional requirements': function (v) { setVal('partner_requirements', v); },
+        }},
+        { test: /photographs?\s*$|privacy\s*&?\s*confidentiality/i, fields: {} },
         { test: /education\s*details?/i, fields: {
             'qualification': function (v) {
                 if (!selectFuzzy('education', v)) appendVal('college_university', v);
@@ -993,14 +1083,42 @@ function urCopyTemplate(event) {
         }},
     ];
 
+    // How many letters apart two labels are — lets "eduction" / "qualifcation" still find their field.
+    function editDistance(a, b) {
+        var prev = [], i, j;
+        for (j = 0; j <= b.length; j++) prev[j] = j;
+        for (i = 1; i <= a.length; i++) {
+            var cur = [i];
+            for (j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+            prev = cur;
+        }
+        return prev[b.length];
+    }
+    // The handler for a label written any of the usual ways: exact, "a/b" spacing, or a small typo.
+    function findHandler(fields, label) {
+        var spaced = label.replace(/\s*\/\s*/g, ' / '), tight = label.replace(/\s*\/\s*/g, '/');
+        if (fields[label]) return fields[label];
+        if (fields[spaced]) return fields[spaced];
+        if (fields[tight]) return fields[tight];
+        if (label.length < 5) return null;
+        var best = null, bestDist = 99;
+        Object.keys(fields).forEach(function (key) {
+            if (key.length < 5) return;
+            var d = Math.min(editDistance(label, key), editDistance(spaced, key), editDistance(tight, key));
+            if (d < bestDist) { bestDist = d; best = key; }
+        });
+        return best !== null && bestDist <= (label.length >= 9 ? 2 : 1) ? fields[best] : null;
+    }
+
     function parseAndFill(rawText) {
         var lines = rawText.split(/\r?\n/);
         var currentSection = null;
         var filledCount = 0;
 
         lines.forEach(function (rawLine) {
-            // Strip leading emoji/number bullets (1️⃣, 2️⃣, numbers, symbols) before matching.
-            var line = rawLine.replace(/^[^a-zA-Z]*/, '').trim();
+            // WhatsApp bold / italic marks (*Education*, ~x~, `x`) and full-width colons are formatting, not part of the text.
+            // Then strip leading emoji/number bullets (1️⃣, 2️⃣, numbers, symbols) before matching.
+            var line = rawLine.replace(/[*~`]/g, '').replace(/[：﹕]/g, ':').replace(/^[^a-zA-Z]*/, '').trim();
             if (!line) return;
 
             var matchedSection = SECTIONS.find(function (s) { return s.test.test(line); });
@@ -1010,22 +1128,28 @@ function urCopyTemplate(event) {
             }
             if (!currentSection) return;
 
+            var label, value, handler = null;
             var colonIndex = line.indexOf(':');
-            if (colonIndex === -1) return;
-            var label = norm(line.substring(0, colonIndex));
-            var value = line.substring(colonIndex + 1).trim();
-            if (!value) return;
-
-            var handler = currentSection.fields[label];
-            if (handler) {
-                handler(value);
-                filledCount++;
+            if (colonIndex !== -1) {
+                label = norm(line.substring(0, colonIndex));
+                value = line.substring(colonIndex + 1).trim();
+                handler = findHandler(currentSection.fields, label);
             }
+            if (!handler) {
+                // "Education - MBA" / "Education = MBA": no colon, a dash or equals sign instead
+                var alt = line.match(/^(.{2,40}?)\s*(?:\s[-–—]\s|=)\s*(.+)$/);
+                if (alt) {
+                    var altHandler = findHandler(currentSection.fields, norm(alt[1]));
+                    if (altHandler) { handler = altHandler; value = alt[2].trim(); }
+                }
+            }
+            if (!handler || !value) return;
+            handler(value);
+            filledCount++;
         });
 
         return filledCount;
     }
-
     // ---------- free-text fallback ----------
     // parseAndFill() above only recognizes the structured "SECTION HEADER
     // / Label: value" shape (the client's WhatsApp template). Real pasted

@@ -36,6 +36,8 @@ class Proposal extends Model
         'profile_status', 'active', 'raw_intake_text',
         'pref_age_min', 'pref_age_max', 'pref_height', 'pref_city', 'pref_profession', 'pref_note',
         'pref_castes', 'pref_educations', 'pref_marital_statuses', 'pref_professions', 'pref_nationalities', 'pref_height_min', 'pref_height_max',
+        // the rest of the client intake form
+        'religion', 'monthly_income', 'residential_area', 'house_size', 'father_details', 'mother_details', 'siblings', 'married_siblings', 'family_values', 'pref_languages',
     ];
 
     protected $casts = [

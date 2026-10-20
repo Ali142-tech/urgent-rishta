@@ -132,7 +132,7 @@
     <p class="ur-adv-search__network">{{ number_format($totalNetworkCount) }} profile{{ $totalNetworkCount == 1 ? '' : 's' }} in the shared network</p>
 
     <form method="GET" action="{{ route('team.proposals.search') }}" class="ur-adv-search" id="search_form">
-        <div class="ur-adv-search__filters" id="more_filters_panel" style="{{ $hasMoreFilters ? '' : 'display:none;' }}">
+        <div class="ur-adv-search__filters" id="more_filters_panel">
             @php
                 $heightChoices = [];
                 for ($ft = 4; $ft <= 6; $ft++) { for ($in = 0; $in <= 11; $in++) { $heightChoices[$ft . "'" . $in . '"'] = $ft * 12 + $in; } }
@@ -209,7 +209,7 @@
             <button type="button" class="ur-adv-search__tab {{ $activeTab == 'keyword' ? 'is-active' : '' }}" data-tab="keyword">Search by keyword</button>
             <button type="button" class="ur-adv-search__tab {{ $activeTab == 'profession' ? 'is-active' : '' }}" data-tab="profession">Search by profession</button>
             <button type="button" class="ur-adv-search__tab {{ $activeTab == 'country' ? 'is-active' : '' }}" data-tab="country">Search by country</button>
-            <button type="button" class="ur-adv-search__more-btn {{ $hasMoreFilters ? 'is-active' : '' }}" id="more_filters_toggle"><i class="fa fa-sliders"></i> More filters</button>
+            <button type="button" class="ur-adv-search__more-btn is-active" id="more_filters_toggle"><i class="fa fa-sliders"></i> More filters</button>
         </div>
 
         <div class="ur-adv-search__row">

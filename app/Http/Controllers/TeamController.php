@@ -751,45 +751,84 @@ class TeamController extends Controller
     private function clientIntakeTemplate(): string
     {
         return <<<'TEMPLATE'
-Assalam o Alaikum! To create your profile, please fill in the details after each colon (:) and send this form back as it is. Please do not change the headings.
+Private • Verified • Professional Matchmaking
 
-1. PERSONAL INFORMATION:
-Name:
+01 | PERSONAL INFORMATION
+Full Name:
 Gender:
-Age:
-Marital Status:
+Age / Date of Birth:
 Height:
-
-2. EDUCATION DETAILS:
-Qualification:
-
-3. OCCUPATION DETAIL:
-Job/Business:
-
-4. RELIGION DETAILS:
+Marital Status:
+Religion:
 Sect:
 Caste:
+Education:
+Profession / Designation:
+Monthly Income:
 
-5. RESIDENCE DETAILS:
+02 | LOCATION & RESIDENCE
 Country:
 City:
-Current City:
-Nationality:
+Nationality / Visa Status:
+Hometown:
+Residential Area / Society:
+House Size / Ownership:
 
-6. YOUR REQUIREMENTS:
+03 | FAMILY BACKGROUND
+Father's Name / Profession:
+Mother's Name / Profession:
+Brothers / Sisters:
+Married Siblings:
+Family Values: Traditional / Moderate / Liberal
+
+04 | PARTNER PREFERENCES
+Preferred Age Range:
 Marital Status:
-Age Limit:
-Height:
-Qualification:
+Education:
 Profession:
-Caste:
-City:
-Nationality:
-Other Requirements:
+Preferred City / Country:
+Languages / Interests:
+Additional Requirements:
 
-Please also send 1-2 recent photos along with this form.
-(You may write more than one answer for the requirements, for example: Caste: Rajput, Arain)
+05 | PHOTOGRAPHS
+Please attach at least two recent photographs:
+
+1. Clear formal portrait
+2. Natural / Lifestyle photograph
+
+PRIVACY & CONFIDENTIALITY
+
+Your personal information and photographs are treated confidentially. Photographs will not be shared with prospective matches without your consent.
 TEMPLATE;
+    }
+
+    /** The extra intake-form details stored on each proposal (column => max length). */
+    private const FORM_EXTRA_FIELDS = [
+        'religion' => 100, 'monthly_income' => 100, 'residential_area' => 200, 'house_size' => 100,
+        'father_details' => 200, 'mother_details' => 200, 'siblings' => 100, 'married_siblings' => 100,
+        'family_values' => 60, 'pref_languages' => 200,
+    ];
+
+    private function formExtraRules(): array
+    {
+        $rules = [];
+        foreach (self::FORM_EXTRA_FIELDS as $field => $max) {
+            $rules[$field] = 'nullable|string|max:' . $max;
+        }
+        return $rules;
+    }
+
+    /** The extra details that were posted, trimmed; an emptied box clears the saved value. */
+    private function formExtras(Request $request): array
+    {
+        $out = [];
+        foreach (array_keys(self::FORM_EXTRA_FIELDS) as $field) {
+            if ($request->has($field)) {
+                $value = trim((string) $request->input($field));
+                $out[$field] = $value === '' ? null : $value;
+            }
+        }
+        return $out;
     }
 
     /**
@@ -943,6 +982,8 @@ TEMPLATE;
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
+        $request->validate($this->formExtraRules());
+
         if (!checkdate((int) $request->month, (int) $request->day, (int) $request->year)) {
             return back()->withInput()->withErrors(['day' => 'That date of birth is not a real date.']);
         }
@@ -980,7 +1021,7 @@ TEMPLATE;
             'pref_educations' => $this->multiValues($request, 'pref_educations'),
             'pref_marital_statuses' => $this->multiValues($request, 'pref_marital_statuses'),
             'pref_note' => $request->partner_requirements,
-        ]);
+        ] + $this->formExtras($request));
         $proposal = $proposal->fresh();   // picks up the generated reference
 
         // Up to two photos straight from the Add form (both optional).
@@ -1083,6 +1124,10 @@ TEMPLATE;
     {
         $member = Proposal::with('photos')->where('reference', $dataid)->first();
         if (!$member) {
+            // A notification can outlive its proposal (deleted, or made private since): say so instead of a bare 404.
+            if (request()->has('read')) {
+                return redirect()->route('team.notifications')->with('status', 'Proposal ' . $dataid . ' is no longer available.');
+            }
             abort(404);
         }
 
@@ -1162,7 +1207,7 @@ TEMPLATE;
 
         $section('Occupation Details', [
             'Job/Business' => $member->profession,
-            'Income' => $member->income,
+            'Monthly Income' => $member->monthly_income ?? $member->income,
         ]);
 
         $section('Residence Details', [
@@ -1174,6 +1219,11 @@ TEMPLATE;
 
         $section('Family Details', [
             'Family Status' => $member->family_status,
+            "Father's Name / Profession" => $member->father_details ?? null,
+            "Mother's Name / Profession" => $member->mother_details ?? null,
+            'Brothers / Sisters' => $member->siblings ?? null,
+            'Married Siblings' => $member->married_siblings ?? null,
+            'Family Values' => $member->family_values ?? null,
         ]);
 
         $section('Classification', [
@@ -1242,7 +1292,7 @@ TEMPLATE;
             'pref_height_max' => $editHeightMax,
             'pref_city' => $proposal->pref_city,
             'partner_requirements' => $proposal->pref_note,
-        ];
+        ] + collect(array_keys(self::FORM_EXTRA_FIELDS))->mapWithKeys(fn ($k) => [$k => $proposal->$k])->all();
         // Partner educations that are not in the pick-list were typed in: show them under "Other".
         $knownEducation = config('proposal_options.education');
         $savedEducations = array_map('strval', $proposal->pref_educations ?: []);
@@ -1313,6 +1363,8 @@ TEMPLATE;
             'partner_requirements' => 'nullable|string|max:2000',
         ]);
 
+        $request->validate($this->formExtraRules());
+
         if (!checkdate((int) $request->month, (int) $request->day, (int) $request->year)) {
             return back()->withInput()->withErrors(['day' => 'That date of birth is not a real date.']);
         }
@@ -1349,6 +1401,7 @@ TEMPLATE;
         }
         $changes['pref_profession'] = implode(', ', array_diff($changes['pref_professions'] ?? [], ['__any'])) ?: null;
         $changes['birthday'] = $request->year . '-' . $request->month . '-' . $request->day;
+        $changes += $this->formExtras($request);
         // The pasted original form: replaced only when text was actually provided.
         if ($request->filled('raw_intake_text')) {
             $changes['raw_intake_text'] = $request->raw_intake_text;
