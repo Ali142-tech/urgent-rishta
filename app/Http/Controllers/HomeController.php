@@ -44,7 +44,7 @@ class HomeController extends Controller {
     public function __construct() {
         $this->middleware(['auth', 'verified'])->except(['index', 'contactUsEmail',
             'packagesView','storiesView', 'teamView', 'galleryView', 'partnersView', 'cmsPage', 'faqsView', 'termsAndConditionsView', 'privacyPolicyView',
-            'contactUsView', 'states', 'cities', 'castes', 'sharePreview']);
+            'contactUsView', 'states', 'cities', 'castes', 'communities', 'sharePreview']);
     }
 
     /**

@@ -43,6 +43,18 @@ class Controller extends BaseController
     }
 
     /**
+     * Communities for the country a member lives in and their religion (country first, then religion) — see
+     * App\Services\CommunityOptions for how a country's own list and the common list are combined.
+     */
+    public function communities($country, $religion) {
+        if (request()->ajax()) {
+            return ['code' => '200', 'options' => \App\Services\CommunityOptions::for($country, $religion)->values()];
+        } else return [
+            'code' => '200'
+        ];
+    }
+
+    /**
      * Community/caste options for a given religion — same subtype-as-parent
      * convention as states()/cities() above (CASTE.subtype = RELIGION.dataid).
      * Castes with no subtype at all (currently just "Other", dataid 369)

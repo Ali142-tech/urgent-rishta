@@ -51,6 +51,7 @@ Route::get('home', [App\Http\Controllers\HomeController::class, 'home'])->name('
 Route::get('states/{id}', [App\Http\Controllers\HomeController::class, 'states']);
 Route::get('cities/{id}/{iscountry}', [App\Http\Controllers\HomeController::class, 'cities']);
 Route::get('castes/{id}', [App\Http\Controllers\HomeController::class, 'castes']);
+Route::get('communities/{country}/{religion}', [App\Http\Controllers\HomeController::class, 'communities']);
 // Public WhatsApp/link-preview card for a shared team proposal — see
 // HomeController::sharePreview()'s docblock for why this has to be a
 // separate, unauthenticated route rather than member/profile/{dataid}.

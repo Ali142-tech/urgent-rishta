@@ -26,7 +26,7 @@ class EnsureProfileComplete
     public function handle(Request $request, Closure $next): Response
     {
         // the public marketing pages stay open to everyone; the wizard guards the member area
-        if (Auth::guest() || $request->is('/', 'home', 'admin*', 'team*', 'states/*', 'cities/*', 'castes/*', 'member/profile/update/images/upload',
+        if (Auth::guest() || $request->is('/', 'home', 'admin*', 'team*', 'states/*', 'cities/*', 'castes/*', 'communities/*', 'member/profile/update/images/upload',
             'packages*', 'stories', 'gallery', 'partners', 'faqs', 'tandc', 'privacy', 'p/*', 'contact-us*', 'go/*', 'about*')) {
             return $next($request);
         }

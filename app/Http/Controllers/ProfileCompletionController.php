@@ -41,7 +41,7 @@ class ProfileCompletionController extends Controller
 
         // dependent lists for what is already saved (they reload by themselves as the member changes the parent)
         $dep = [
-            'castes' => $user->religion ? $this->casteOptions($user->religion) : [],
+            'castes' => $user->religion ? \App\Services\CommunityOptions::for($user->con_of_residence, $user->religion)->pluck('name', 'dataid')->all() : [],
             'states' => $user->con_of_residence ? $this->stateOptions($user->con_of_residence) : [],
             'cities' => $this->cityOptions($user->state, $user->con_of_residence),
         ];

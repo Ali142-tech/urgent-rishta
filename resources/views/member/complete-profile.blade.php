@@ -110,6 +110,7 @@
         .field input:hover, .field select:hover, .field textarea:hover { border-color:#C9BE9F; }
         .field input:focus, .field select:focus, .field textarea:focus { outline:0; border-color:var(--green); box-shadow:0 0 0 4px rgba(18,58,46,.10); }
         .field.has-error input, .field.has-error select, .field.has-error textarea { border-color:var(--err); background:#FFF8F7; }
+        .field.has-error .ur-ss__btn { border-color:var(--err) !important; background-color:#FFF8F7 !important; }
         .field .err { color:var(--err); font-size:12.5px; font-weight:600; margin-top:6px; display:none; }
         .field.has-error .err { display:block; }
         .field .note { font-size:12px; color:#8A938E; margin-top:6px; }
@@ -275,8 +276,8 @@
                                     <div class="field field--wide" data-field="{{ $name }}" data-required="1">
                                         <div class="lbl"><label>{{ $field['label'] }}</label><span class="tag tag--req">Required *</span></div>
                                         <div class="dob">
-                                            <select name="day"><option value="">Day</option>@for($d = 1; $d <= 31; $d++)<option value="{{ $d }}" {{ (int) ($dob['day'] ?? 0) === $d ? 'selected' : '' }}>{{ $d }}</option>@endfor</select>
-                                            <select name="month"><option value="">Month</option>@foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $mi => $mn)<option value="{{ $mi + 1 }}" {{ (int) ($dob['month'] ?? 0) === $mi + 1 ? 'selected' : '' }}>{{ $mn }}</option>@endforeach</select>
+                                            <select name="day" data-no-search><option value="">Day</option>@for($d = 1; $d <= 31; $d++)<option value="{{ $d }}" {{ (int) ($dob['day'] ?? 0) === $d ? 'selected' : '' }}>{{ $d }}</option>@endfor</select>
+                                            <select name="month" data-no-search><option value="">Month</option>@foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $mi => $mn)<option value="{{ $mi + 1 }}" {{ (int) ($dob['month'] ?? 0) === $mi + 1 ? 'selected' : '' }}>{{ $mn }}</option>@endforeach</select>
                                             <select name="year"><option value="">Year</option>@for($y = (int) date('Y') - 18; $y >= (int) date('Y') - 80; $y--)<option value="{{ $y }}" {{ (int) ($dob['year'] ?? 0) === $y ? 'selected' : '' }}>{{ $y }}</option>@endfor</select>
                                         </div>
                                         <div class="err"></div>
@@ -290,12 +291,12 @@
                                                 @foreach($field['choices'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach
                                             </select>
                                         @elseif($field['type'] === 'caste')
-                                            <select id="f_{{ $name }}" name="{{ $name }}"><option value="">Select an option</option>@foreach($dep['castes'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
-                                            <div class="note">The list follows the religion you chose.</div>
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-search><option value="">Select an option</option>@foreach($dep['castes'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
+                                            <div class="note">The list follows the country you live in and your religion.</div>
                                         @elseif($field['type'] === 'state')
-                                            <select id="f_{{ $name }}" name="{{ $name }}" data-cascade="city"><option value="">Select an option</option>@foreach($dep['states'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-cascade="city" data-search><option value="">Select an option</option>@foreach($dep['states'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
                                         @elseif($field['type'] === 'city')
-                                            <select id="f_{{ $name }}" name="{{ $name }}"><option value="">Select an option</option>@foreach($dep['cities'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-search><option value="">Select an option</option>@foreach($dep['cities'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
                                         @elseif($field['type'] === 'textarea')
                                             <textarea id="f_{{ $name }}" name="{{ $name }}" maxlength="{{ $field['max'] ?? 2000 }}" placeholder="{{ $field['placeholder'] ?? '' }}">{{ $val }}</textarea>
                                         @elseif($field['type'] === 'number')
@@ -399,6 +400,12 @@
         (options || []).forEach(function (x) { var op = document.createElement('option'); op.value = x.dataid; op.textContent = x.name; sel.appendChild(op); });
         sel.value = keep && (options || []).some(function (x) { return String(x.dataid) === String(keep); }) ? keep : '';
     }
+    // communities follow the country the member lives in, then their religion
+    function reloadCommunities() {
+        var rel = $('select[name="religion"]'), cty = $('select[name="con_of_residence"]'), caste = $('select[name="caste"]');
+        if (!rel || !caste || !rel.value) return;
+        ajax(BASE + '/communities/' + (cty && cty.value ? cty.value : '0') + '/' + rel.value).then(function (r) { fill(caste, r.options); });
+    }
     function stateField() { return $('[data-field="state"]'); }
     function loadCities(stateId, countryId) {
         var city = $('select[name="city"]');
@@ -419,8 +426,8 @@
     }
     document.addEventListener('change', function (e) {
         var t = e.target;
-        if (t.dataset && t.dataset.cascade === 'caste') { ajax(BASE + '/castes/' + t.value).then(function (r) { fill($('select[name="caste"]'), r.options); }); }
-        if (t.dataset && t.dataset.cascade === 'state') { loadStates(t.value); }
+        if (t.dataset && t.dataset.cascade === 'caste') { reloadCommunities(); }
+        if (t.dataset && t.dataset.cascade === 'state') { loadStates(t.value); reloadCommunities(); }
         if (t.dataset && t.dataset.cascade === 'city') { loadCities(t.value, $('select[name="con_of_residence"]').value); }
         var f = t.closest && t.closest('.field'); if (f) { f.classList.remove('has-error'); }
     });
@@ -503,5 +510,7 @@
     goStep(current);
 })();
 </script>
+<script src="{{ asset('js/ur-searchable-select.js') }}?v={{ filemtime(public_path('js/ur-searchable-select.js')) }}"></script>
+<script>URSearchableSelect.init(document, { minOptions: 8 });</script>
 </body>
 </html>

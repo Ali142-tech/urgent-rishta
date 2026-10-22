@@ -253,7 +253,7 @@ class RegisterController extends Controller
 
         $request->validate([
             'religion' => 'required|string|max:50',
-            'caste' => 'required|string|max:50',
+            'caste' => ['required', 'string', 'max:50', fn ($attr, $value, $fail) => \App\MasterData::where(['type' => 'CASTE', 'dataid' => $value])->exists() ?: $fail('Please select your community.')],
             'country' => 'required|string|max:50',
         ], [
             'religion.required' => 'Please select your religion.',
@@ -584,12 +584,17 @@ class RegisterController extends Controller
             return redirect()->route('register', ['mode' => 'build2']);
         }
 
+        // "Other — type my own": the typed text replaces the marker before validation
+        if ($request->input('profession') === '__other') {
+            $request->merge(['profession' => trim((string) $request->input('profession_other'))]);
+        }
+
         $request->validate([
             'education' => 'required|string|max:50',
             'profession' => 'required|string|max:100',
         ], [
             'education.required' => 'Please select your highest qualification.',
-            'profession.required' => 'Please enter your profession.',
+            'profession.required' => 'Please choose or type your profession.',
         ]);
 
         Session::put('register_education', $request->education);

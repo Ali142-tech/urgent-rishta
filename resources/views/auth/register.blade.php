@@ -238,6 +238,18 @@
             <form method="post" action="{{ route('register.community') }}" id="reg_community_form" style="margin-top:8px;">
                 @csrf
                 <div class="reg-field">
+                    <span class="reg-label">Living in</span>
+                    <div class="reg-field-outline">
+                        <span class="float-label">Country</span>
+                        <select name="country" id="reg_country" autocomplete="off" required>
+                            <option value="" disabled {{ old('country', $registerCountry) ? '' : 'selected' }}>Select</option>
+                            @foreach($countries as $country)
+                                <option value="{{ $country->dataid }}" @if(old('country', $registerCountry)==$country->dataid) selected @endif>{{ $country->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="reg-field">
                     <span class="reg-label">Your religion</span>
                     <div class="reg-field-outline">
                         <span class="float-label">Religion</span>
@@ -253,23 +265,8 @@
                     <span class="reg-label">Community</span>
                     <div class="reg-field-outline">
                         <span class="float-label">Community</span>
-                        <select name="caste" id="reg_caste" required>
-                            <option value="" disabled {{ old('caste', $registerCaste) ? '' : 'selected' }}>Select</option>
-                            @foreach($caste as $cst)
-                                <option value="{{ $cst->dataid }}" @if(old('caste', $registerCaste)==$cst->dataid) selected @endif>{{ $cst->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="reg-field">
-                    <span class="reg-label">Living in</span>
-                    <div class="reg-field-outline">
-                        <span class="float-label">Country</span>
-                        <select name="country" id="reg_country" autocomplete="off" required>
-                            <option value="" disabled {{ old('country', $registerCountry) ? '' : 'selected' }}>Select</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->dataid }}" @if(old('country', $registerCountry)==$country->dataid) selected @endif>{{ $country->name }}</option>
-                            @endforeach
+                        <select name="caste" id="reg_caste" data-search required>
+                            <option value="" disabled selected>Select country and religion first</option>
                         </select>
                     </div>
                 </div>
@@ -375,7 +372,7 @@
                     <span class="reg-label">State</span>
                     <div class="reg-field-outline">
                         <span class="float-label">State you live in</span>
-                        <select name="state" id="reg_build_state" required>
+                        <select name="state" id="reg_build_state" data-search required>
                             <option value="" disabled {{ old('state', $registerState) ? '' : 'selected' }}>Select</option>
                             @foreach(($states ?? collect()) as $st)
                                 <option value="{{ $st->dataid }}" @if(old('state', $registerState)==$st->dataid) selected @endif>{{ $st->name }}</option>
@@ -387,7 +384,7 @@
                     <span class="reg-label">City</span>
                     <div class="reg-field-outline">
                         <span class="float-label">City you live in</span>
-                        <select name="city" id="reg_build_city" required>
+                        <select name="city" id="reg_build_city" data-search required>
                             <option value="" disabled {{ old('city', $registerCity) ? '' : 'selected' }}>Select</option>
                         </select>
                     </div>
@@ -489,11 +486,30 @@
                         </select>
                     </div>
                 </div>
+                @php
+                    $professionList = config('proposal_options.profession', []);
+                    $savedProfession = trim((string) old('profession', $registerProfession));
+                    $professionIsOther = old('profession') === '__other' || ($savedProfession !== '' && !in_array($savedProfession, $professionList, true));
+                    $professionOtherText = old('profession_other', $professionIsOther && $savedProfession !== '__other' ? $savedProfession : '');
+                @endphp
                 <div class="reg-field">
                     <span class="reg-label">Profession</span>
                     <div class="reg-field-outline">
                         <span class="float-label">Your profession *</span>
-                        <input type="text" name="profession" id="reg_build_profession" value="{{ old('profession', $registerProfession) }}" required
+                        <select name="profession" id="reg_build_profession" data-search required>
+                            <option value="" disabled {{ ($savedProfession === '' && !$professionIsOther) ? 'selected' : '' }}>Select your profession</option>
+                            @foreach($professionList as $prof)
+                                <option value="{{ $prof }}" {{ (!$professionIsOther && $savedProfession === $prof) ? 'selected' : '' }}>{{ $prof }}</option>
+                            @endforeach
+                            <option value="__other" data-pinned="1" {{ $professionIsOther ? 'selected' : '' }}>Other — type my own</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="reg-field" id="reg_profession_other_wrap" style="{{ $professionIsOther ? '' : 'display:none;' }}">
+                    <span class="reg-label">Your profession</span>
+                    <div class="reg-field-outline">
+                        <span class="float-label">Type your profession *</span>
+                        <input type="text" name="profession_other" id="reg_profession_other" maxlength="100" value="{{ $professionOtherText }}" placeholder="e.g. Pharmacist, Pilot, Photographer"
                                style="width:100%;border:0;outline:none;background:transparent;font-size:15px;height:28px;padding:0;">
                     </div>
                 </div>
@@ -677,12 +693,37 @@
     // Muslim community names under e.g. Hindu/Christian.
     (function () {
         var religionSel = document.getElementById('reg_religion');
-        if (!religionSel) return;
-        religionSel.addEventListener('change', function () {
-            loadSelect('{{ url('castes') }}', this.value, $('#reg_caste'), '');
-        });
-        @if(old('religion', $registerReligion))
-        loadSelect('{{ url('castes') }}', '{{ old('religion', $registerReligion) }}', $('#reg_caste'), '{{ old('caste', $registerCaste) }}');
+        var countrySel = document.getElementById('reg_country');
+        var casteSel = document.getElementById('reg_caste');
+        if (!religionSel || !countrySel || !casteSel) return;
+        // Communities follow the country the member lives in, then their religion: reload whenever either changes
+        function reloadCommunities(selected) {
+            if (!countrySel.value || !religionSel.value) {
+                $(casteSel).empty().append($('<option />').val('').prop('disabled', true).prop('selected', true).text('Select country and religion first'));
+                if ($(casteSel).selectpicker) $(casteSel).selectpicker('refresh');
+                $(casteSel).trigger('change');
+                return;
+            }
+            // when the new list is in, tell the page (a restored choice is set without a change event, and the Continue button listens for one)
+            var mo = new MutationObserver(function () {
+                mo.disconnect();
+                setTimeout(function () {
+                    // the shared loader's "Choose one..." placeholder has no value, so it would count as a real choice: make it an empty, unselectable prompt
+                    var first = casteSel.options[0];
+                    if (first && first.textContent.trim() === 'Choose one...') {
+                        first.value = ''; first.disabled = true;
+                        if (casteSel.value === 'Choose one...' || casteSel.value === '') { casteSel.selectedIndex = 0; }
+                    }
+                    casteSel.dispatchEvent(new Event('change', { bubbles: true }));
+                }, 0);
+            });
+            mo.observe(casteSel, { childList: true });
+            loadSelect('{{ url('communities') }}', countrySel.value + '/' + religionSel.value, $(casteSel), selected || '');
+        }
+        religionSel.addEventListener('change', function () { reloadCommunities(''); });
+        countrySel.addEventListener('change', function () { reloadCommunities(''); });
+        @if(old('religion', $registerReligion) && old('country', $registerCountry))
+        reloadCommunities('{{ old('caste', $registerCaste) }}');
         @endif
     })();
 
@@ -812,15 +853,22 @@
         if (!btn) return;
         var edu = document.getElementById('reg_build_education');
         var prof = document.getElementById('reg_build_profession');
+        var otherWrap = document.getElementById('reg_profession_other_wrap');
+        var other = document.getElementById('reg_profession_other');
         function sync() {
-            var ok = edu && edu.value && prof && String(prof.value || '').trim().length > 0;
+            var isOther = prof && prof.value === '__other';
+            if (otherWrap) otherWrap.style.display = isOther ? '' : 'none';
+            if (other) other.required = !!isOther;
+            var profOk = prof && prof.value && (!isOther || (other && String(other.value || '').trim().length > 0));
+            var ok = edu && edu.value && profOk;
             btn.disabled = !ok;
         }
         if (edu) edu.addEventListener('change', sync);
         if (prof) {
             prof.addEventListener('input', sync);
-            prof.addEventListener('change', sync);
+            prof.addEventListener('change', function () { sync(); if (prof.value === '__other' && other) { setTimeout(function () { other.focus(); }, 50); } });
         }
+        if (other) { other.addEventListener('input', sync); other.addEventListener('change', sync); }
         sync();
     })();
 
@@ -949,5 +997,13 @@
         $(".selectpicker").select2();
     }
 })();
+</script>
+{{-- Long lists (country, community, city, education, year …) get a search box that also works on a phone. --}}
+<script src="{{ asset('js/ur-searchable-select.js') }}?v={{ filemtime(public_path('js/ur-searchable-select.js')) }}"></script>
+<script>
+    (function () {
+        ['reg_day', 'reg_month'].forEach(function (id) { var el = document.getElementById(id); if (el) el.setAttribute('data-no-search', ''); });
+        URSearchableSelect.init(document, { minOptions: 12 });
+    })();
 </script>
 @endsection
