@@ -735,6 +735,20 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
     margin-bottom: 8px;
 }
 
+/* Member Interests — tighter rows: smaller photo, less padding, the sent / updated dates on one slim line */
+#interest-data .ur-admin-card { padding: 12px 4px 10px; }
+#interest-data .ur-admin-duo-card__row { gap: 12px; }
+#interest-data .ur-admin-duo-card__side { gap: 12px; }
+#interest-data .ur-admin-duo-card__side .ur-admin-thumb { width: 58px; height: 58px; border-radius: 10px; }
+#interest-data .ur-admin-duo-card__name { font-size: 15px; line-height: 1.25; }
+#interest-data .ur-admin-duo-card__arrow { margin-bottom: 4px; font-size: 14px; }
+#interest-data .ur-admin-duo-card__statusmsg { margin-top: 4px; line-height: 1.3; }
+#interest-data .ur-admin-duo-card__foot { margin-top: 8px; padding-top: 7px; border-top: 1px dashed var(--ur-dash-border); font-size: 11px; }
+#interest-data .ur-admin-summary { margin-bottom: 6px; }
+#interest-data .ur-admin-pagination { margin-bottom: 8px !important; }
+#controls-form.ur-admin-filters { align-items: flex-end; }
+#interest-data ~ *, #controls-form .form-group { margin-bottom: 0; }
+.ur-admin-panel #controls-form .bootstrap-select > .dropdown-toggle { height: 36px; display: flex; align-items: center; }
 /* ---------------------------------------------------------- */
 /* Photo verification cards                                      */
 /* ---------------------------------------------------------- */
