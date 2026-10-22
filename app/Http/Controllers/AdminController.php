@@ -263,6 +263,20 @@ class AdminController extends Controller
         ));
     }
 
+    /** Choices for the Member Profiles filter dropdowns (country, profession, religion, caste, marital status, education). */
+    private function memberFilterLists(): array
+    {
+        $byName = fn ($type) => MasterData::where('type', $type)->orderBy('name')->get(['dataid', 'name']);
+        // Profession is free text on members: offer each spelling that is in real use (3+ members), once, alphabetically.
+        $professions = \Illuminate\Support\Facades\Cache::remember('admin_member_professions', 3600, fn () => User::where('admin', 0)->whereNull('added_by')
+            ->whereRaw("`profession` REGEXP '^[A-Za-z][A-Za-z .&/()-]{2,}$'")   // real words only: no '-', '.', '...', numbers
+            ->selectRaw('min(`profession`) as profession')->groupByRaw('lower(`profession`)')->havingRaw('count(*) >= 3')->orderBy('profession')->pluck('profession')->all());
+        return [
+            'filterCountries' => $byName('COUNTRY'), 'filterReligions' => $byName('RELIGION'), 'filterCastes' => $byName('CASTE'),
+            'filterMaritalStatuses' => $byName('MARITAL_STATUS'), 'filterEducations' => $byName('EDUCATION'), 'filterProfessions' => $professions,
+        ];
+    }
+
     function profiles()
     {
         $pageSize = 10;
@@ -315,7 +329,7 @@ class AdminController extends Controller
             'members' => $members,
             'packages' => MasterData::where('type', '=', 'PACKAGE')->get(),
             'selectedMember' => $selectedMember,
-        ]);
+        ] + $this->memberFilterLists());
 
         if (request()->ajax()) {
             return [
@@ -632,6 +646,26 @@ class AdminController extends Controller
                 $where = $where . ((empty($where) ? "" : " and ") . ($package == "null" ? "`u`.`package` IS NULL" : "`u`.`package`='" . addslashes($package) . "'"));
             }
 
+            // Dropdown filters: each is a masterdata id (or, for profession, the saved text) and is quoted like every other value here.
+            $dropdowns = ['country' => 'con_of_residence', 'religion' => 'religion', 'caste' => 'caste', 'marital_status' => 'marital_status', 'education' => 'education'];
+            foreach ($dropdowns as $input => $column) {
+                if ($request->filled($input)) {
+                    $where = $where . " and `u`.`" . $column . "`='" . addslashes($request->input($input)) . "'";
+                }
+            }
+            if ($request->filled('profession')) {
+                $where = $where . " and lower(`u`.`profession`)='" . addslashes(mb_strtolower($request->profession)) . "'";
+            }
+            if ($request->filled('age_from')) {
+                $where = $where . " and CAST(`u`.`age` AS UNSIGNED) >= " . (int) $request->age_from;
+            }
+            if ($request->filled('age_to')) {
+                $where = $where . " and CAST(`u`.`age` AS UNSIGNED) <= " . (int) $request->age_to;
+            }
+            $anyFilter = !empty($searchTerm) || !empty($gender) || !empty($status) || !empty($package)
+                || $request->filled(['country']) || $request->filled('profession') || $request->filled('religion') || $request->filled('caste')
+                || $request->filled('marital_status') || $request->filled('education') || $request->filled('age_from') || $request->filled('age_to');
+
             if (!empty($showOnly) && $showOnly != 'all' && !empty($showWithin)) {
                 $days = 7 * intval($showWithin);
                 $where = $where . ((empty($where) ? "" : " and ") . "DATEDIFF(NOW(), `u`.`" . ($showOnly == 'created' ? "created_at" : "updated_at") . "`) between 0 and " . $days);
@@ -642,7 +676,7 @@ class AdminController extends Controller
             $members = Profile::profiles($where, null, $orderBy, $pageSize, $pageSize * ($pageRequested - 1));
 
             $resultCount = Profile::profiles($where, null, null, null, null, true);
-            $total = empty($searchTerm) && empty($gender) ? User::where('admin', 0)->count() : $resultCount;
+            $total = $anyFilter ? $resultCount : User::where('admin', 0)->count();
 
             return [
                 'code' => '200',
@@ -651,10 +685,10 @@ class AdminController extends Controller
                     'pageSize' => $pageSize,
                     'total' => $total,
                     'numPages' => ceil($resultCount / $pageSize),
-                    'resultCount' => !empty($request->term) ? $resultCount : null,
+                    'resultCount' => $anyFilter ? $resultCount : null,
                     'members' => $members,
                     'packages' => MasterData::where('type', '=', 'PACKAGE')->get()
-                ])->renderSections()['member-data']
+                ] + $this->memberFilterLists())->renderSections()['member-data']
             ]; // only return whats in the main-content section
         } else return [
             'code' => '200'

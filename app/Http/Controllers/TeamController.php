@@ -1578,9 +1578,9 @@ TEMPLATE;
             'title' => $proposal->reference . ' + ' . $match->reference,
             'text' => $text,
             'photos' => array_values(array_merge($a['photos'], $b['photos'])),
-            // The message must reach the person who added the matched profile: open a chat with them (the phone's share sheet
-            // cannot pick a contact). Both forms and both photo links go in the text; the links' previews show the photos.
-            'direct' => !empty(TeamMember::find($match->added_by)->contact_mobile_number ?? null),
+            // Photos first: the share sheet carries both forms AND both profiles' pictures (pick the owner's chat there). Only when
+            // the phone cannot share files does the fallback link open a chat with the matched profile's owner, text only.
+            'direct' => false,
             // Two long forms don't fit comfortably as a photo caption: photos first, forms second.
             'two_step' => mb_strlen($text) > 3000,
             'fallback' => route('team.matches.forward', [$proposal->reference, $match->reference]),
