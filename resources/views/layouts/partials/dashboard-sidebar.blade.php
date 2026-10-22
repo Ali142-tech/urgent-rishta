@@ -21,6 +21,11 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('member.complete') }}" class="{{ request()->is('member/profile/complete*') ? 'is-active' : '' }}">
+                <i class="fa fa-pencil-square-o"></i> Edit Full Profile
+            </a>
+        </li>
+        <li>
             <a href="{{ route('searchresults') }}" class="{{ request()->is('member/searchresults*') ? 'is-active' : '' }}">
                 <i class="fa fa-search"></i> Search Profiles
             </a>

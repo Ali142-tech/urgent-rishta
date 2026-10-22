@@ -834,6 +834,8 @@ class RegisterController extends Controller
         // (not via the $payload mass-assignment above) since 'active' is
         // intentionally not in User::$fillable.
         $user->active = 1;
+        // a new account fills in the "Complete your profile" wizard (100%) before it can use the dashboard
+        $user->must_complete_profile = true;
 
         $user->save();
 

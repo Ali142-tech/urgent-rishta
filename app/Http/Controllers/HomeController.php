@@ -112,7 +112,10 @@ class HomeController extends Controller {
 
         $femalesProfiles=Profile::where('active', 1)->where('gender','female')->whereNotNull('images')->where('images', '!=', '')->orderBy('created_at','desc')->take(11)->get();
         $malesProfiles=Profile::where('active', 1)->where('gender','male')->whereNotNull('images')->where('images', '!=', '')->orderBy('created_at','desc')->take(10)->get();
-        $sampleProfiles=$femalesProfiles->merge($malesProfiles)->shuffle()->map(function ($profile) {
+        // country flag on each card: the residence country's 2-letter code (masterdata abbreviation), one lookup for all of them
+        $countryCodes = MasterData::where('type', 'COUNTRY')->pluck('abbreviation', 'dataid');
+        $sampleProfiles=$femalesProfiles->merge($malesProfiles)->shuffle()->map(function ($profile) use ($countryCodes) {
+            $profile->con_of_residence_code = $countryCodes[$profile->con_of_residence] ?? null;
             // a lightly blurred copy of the real photo (the card falls back to the old heavy blur when there is none)
             $profile->homepageFaceBlurredImage = $this->homepageLightBlur($profile);
             return $profile;

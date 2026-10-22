@@ -228,6 +228,10 @@ Route::get('member/profile',[App\Http\Controllers\ProfileController::class, 'pro
 Route::get('member/profile/pictures', [App\Http\Controllers\ProfileController::class, 'picturesPage'])->name('member.pictures');
 Route::get('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'preferencesPage'])->name('member.preferences');
 Route::post('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'updatePreferences'])->name('member.preferences.update');
+// "Complete your profile" wizard (new accounts are held here until 100%; everyone can use it to edit later)
+Route::get('member/profile/complete', [App\Http\Controllers\ProfileCompletionController::class, 'show'])->name('member.complete');
+Route::post('member/profile/complete/finish', [App\Http\Controllers\ProfileCompletionController::class, 'finish'])->name('member.complete.finish');
+Route::post('member/profile/complete/{step}', [App\Http\Controllers\ProfileCompletionController::class, 'save'])->name('member.complete.save');
 Route::get('member/profile/{id?}',[App\Http\Controllers\ProfileController::class, 'profile']);
 Route::get('member/profile/notifications/refresh', [App\Http\Controllers\ProfileController::class, 'notifications']);
 Route::post('member/profile/account/terminate', [App\Http\Controllers\ProfileController::class, 'accountTerminate']);

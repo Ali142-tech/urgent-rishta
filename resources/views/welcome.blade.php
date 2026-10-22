@@ -2133,8 +2133,13 @@ team, with senior-level involvement where applicable.</p>
                 slidesToShow: 3,
                 slidesToScroll: 1,
                 autoplay: true,
-                autoplaySpeed: 4500,
-                speed: 450,
+                autoplaySpeed: 3500,
+                speed: 600,
+                cssEase: 'ease-in-out',
+                pauseOnHover: false,      // keeps moving even while the mouse rests on the slider
+                pauseOnFocus: false,
+                pauseOnDotsHover: false,
+                swipeToSlide: true,
                 arrows: false,
                 dots: true,
                 adaptiveHeight: false,
@@ -2162,6 +2167,9 @@ team, with senior-level involvement where applicable.</p>
             $('.ur-profiles-next').on('click', function() {
                 $profiles.slick('slickNext');
             });
+            // after the visitor swipes, drags or uses the arrows, the slider carries on by itself
+            $profiles.on('afterChange', function () { $profiles.slick('slickPlay'); });
+            document.addEventListener('visibilitychange', function () { if (!document.hidden) { $profiles.slick('slickPlay'); } });
         }
     });
 
