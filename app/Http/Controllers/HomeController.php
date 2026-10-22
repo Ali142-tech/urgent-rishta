@@ -26,12 +26,12 @@ class HomeController extends Controller {
      * that command after updating this list so new entries get a face-blur
      * file generated before they can appear on the slider.
      */
-    const CURATED_PROFILE_DATAIDS = [
-        'I2M2LNKVV', 'NZHV8PEFM', '24L0ZK1T1', '285ABV24J', '9L7X195LS', '321US8KXU',
-        '6VVVCIJV2', 'R2QSYGYF9', 'I8RBBI61E', '3NY5HQ7AU', '7FN3BYRUL', 'RAD86075Z',
-        'TRQAEO4F7', 'JIU4JDXE1', 'H0BNEOCJI', 'KD7D6P5N5', '8L5L4JVAQ', 'G8IWL9735',
-        'ESTC23MRV', 'M9D7J1LAY', '7SUEWATKP',
-    ];
+    // const CURATED_PROFILE_DATAIDS = [
+    //     'I2M2LNKVV', 'NZHV8PEFM', '24L0ZK1T1', '285ABV24J', '9L7X195LS', '321US8KXU',
+    //     '6VVVCIJV2', 'R2QSYGYF9', 'I8RBBI61E', '3NY5HQ7AU', '7FN3BYRUL', 'RAD86075Z',
+    //     'TRQAEO4F7', 'JIU4JDXE1', 'H0BNEOCJI', 'KD7D6P5N5', '8L5L4JVAQ', 'G8IWL9735',
+    //     'ESTC23MRV', 'M9D7J1LAY', '7SUEWATKP',
+    // ];
 
     /** Where GenerateHomepageFaceBlur saves its output — public/homepage-blurred/<dataid>.jpg */
     const FACE_BLUR_DIR = 'homepage-blurred';
@@ -56,64 +56,69 @@ class HomeController extends Controller {
         return $this->index();
     }
 
+    /**
+     * Guest-facing photo for the homepage slider: the member's real picture, blurred just enough that the face cannot be
+     * recognised but the person, outfit and setting still show (the stored copy used before is blurred so hard it is only a
+     * colour wash). Made once per photo from the original and kept in public/homepage-blurred; null when the member has no
+     * photo, hides it, or the picture cannot be read — the card then uses its normal blurred image.
+     */
+    private function homepageLightBlur($profile): ?string
+    {
+        if (($profile->photo_visibility ?? null) === 'hidden') {
+            return null;
+        }
+        $first = !empty($profile->displaypic) ? $profile->displaypic : (is_array($profile->images) ? ($profile->images[0] ?? '') : explode(',', (string) $profile->images)[0]);
+        $name = basename((string) $first);
+        $source = public_path(trim(Profile::MEMBER_IMAGES_PATH, '/') . '/' . $name);
+        if ($name === '' || !is_file($source)) {
+            return null;
+        }
+
+        $relative = self::FACE_BLUR_DIR . '/' . $profile->dataid . '_' . substr(sha1($name . filemtime($source) . 'light2'), 0, 10) . '.jpg';
+        $target = public_path($relative);
+        if (!is_file($target)) {
+            try {
+                if (!is_dir(dirname($target))) {
+                    mkdir(dirname($target), 0755, true);
+                }
+                $manager = new \Intervention\Image\ImageManager(['driver' => extension_loaded('imagick') ? 'imagick' : 'gd']);
+                $image = $manager->make($source)->orientate();
+                // fit in 480 x 600 (never enlarged), then blur: strong enough to hide the face, light enough to read the photo
+                $image->resize(480, 600, function ($c) { $c->aspectRatio(); $c->upsize(); });
+                $image->blur(22);
+                $image->save($target, 82, 'jpg');
+            } catch (\Throwable $e) {
+                Log::warning('Homepage photo blur failed for ' . $profile->dataid . ': ' . $e->getMessage());
+                return null;
+            }
+        }
+
+        return '/' . $relative;
+    }
+
     public Function index() {
+
+    
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
 
-        // Real counts for the homepage trust strip / enquiry bar — "Verified
-        // Profiles" = admin-activated accounts, "Successful Matches" =
-        // interests both sides accepted (interest_back = 1).
+       
         $verifiedProfilesCount = User::where('active', 1)->count();
         $successfulMatchesCount = Interest::where('interest_back', 1)->count();
 
-        // Guest-facing "meet our members" slider — a client-curated, fixed
-        // list of specific profiles, shown in the exact order given rather
-        // than randomly sampled. Reuses member.partials.member-card with
-        // hideImage=true, so guests automatically get the same "register to
-        // view/interest" gating already built into that partial.
-        //
-        // Photo shown: the member's real photo with ONLY the face obscured
-        // (via GenerateHomepageFaceBlur, pre-generated to
-        // public/homepage-blurred/<dataid>.jpg using AWS Rekognition face
-        // detection + pixelation) — body/outfit/background stay sharp, per
-        // client request. If that file hasn't been generated yet for a
-        // given profile (e.g. list just updated, command not re-run), falls
-        // back to the site's existing whole-image blur rather than showing
-        // nothing/broken.
-        //
-        // Any dataid here that's currently inactive or has no uploaded photo
-        // is silently skipped (never shown broken/empty) rather than erroring —
-        // so if fewer than 21 show up on the live site, check those accounts'
-        // active/photo status there.
-        $quotedDataids = "'" . implode("','", array_map(function ($id) {
-            return addslashes($id);
-        }, self::CURATED_PROFILE_DATAIDS)) . "'";
-        $curatedProfilesPool = Profile::profiles("`u`.`active`=1 and `u`.`dataid` in ($quotedDataids)", "`images`<>''", null, null)->keyBy('dataid');
+        
 
-        // Logged-in members see only the opposite gender from this curated
-        // list (client request); guests (gender unknown) keep seeing the
-        // full mixed list exactly as before.
-        $viewerGender = Auth::check() ? Auth::user()->gender : null;
-        $oppositeGender = $viewerGender === 'male' ? 'female' : ($viewerGender === 'female' ? 'male' : null);
+        $femalesProfiles=Profile::where('active', 1)->where('gender','female')->whereNotNull('images')->where('images', '!=', '')->orderBy('created_at','desc')->take(11)->get();
+        $malesProfiles=Profile::where('active', 1)->where('gender','male')->whereNotNull('images')->where('images', '!=', '')->orderBy('created_at','desc')->take(10)->get();
+        $sampleProfiles=$femalesProfiles->merge($malesProfiles)->shuffle()->map(function ($profile) {
+            // a lightly blurred copy of the real photo (the card falls back to the old heavy blur when there is none)
+            $profile->homepageFaceBlurredImage = $this->homepageLightBlur($profile);
+            return $profile;
+        });
 
-        $sampleProfiles = collect(self::CURATED_PROFILE_DATAIDS)
-            ->map(function ($dataid) use ($curatedProfilesPool) {
-                return $curatedProfilesPool->get($dataid);
-            })
-            ->filter()
-            ->when($oppositeGender, function ($collection) use ($oppositeGender) {
-                return $collection->filter(fn ($profile) => $profile->gender === $oppositeGender);
-            })
-            ->values()
-            ->map(function ($profile) {
-                $faceBlurPath = self::FACE_BLUR_DIR . '/' . $profile->dataid . '.jpg';
-                if (file_exists(public_path($faceBlurPath))) {
-                    $profile->homepageFaceBlurredImage = '/' . $faceBlurPath . '?v=' . filemtime(public_path($faceBlurPath));
-                }
-                return $profile;
-            });
+           
 
         return view('welcome', compact('maritalstatuses', 'countries', 'mothertongues', 'caste', 'verifiedProfilesCount', 'successfulMatchesCount', 'sampleProfiles'));
     }

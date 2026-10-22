@@ -33,7 +33,7 @@
 use App\User;
 use Illuminate\Support\Str;
 $hideImage = $hideImage ?? false;
-$hiddenImageUrl = $hideImage ? $member->getBlurredProfileImage() : null;
+$hiddenImageUrl = $hideImage ? (!empty($member->homepageFaceBlurredImage) ? $member->homepageFaceBlurredImage : $member->getBlurredProfileImage()) : null;
 // Guests on the homepage slider only ever get the single pre-blurred
 // image (never the real gallery) — the carousel is member-card-images
 // only, so guest/hideImage mode stays a single static photo.

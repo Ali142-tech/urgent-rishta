@@ -514,7 +514,7 @@
     text-align: center;
     gap: 6px;
     padding: 20px;
-    background: linear-gradient(180deg, rgba(15,46,36,.35), rgba(15,46,36,.6));
+    background: linear-gradient(180deg, rgba(15,46,36,.12), rgba(15,46,36,.55));   /* light at the top so the photo shows, darker behind the text */
     cursor: pointer;
 }
 .member-card__lock-icon {
