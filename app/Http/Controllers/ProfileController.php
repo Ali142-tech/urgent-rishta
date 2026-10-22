@@ -152,11 +152,8 @@ class ProfileController extends Controller
         $canViewContactInfo = $dataid && !empty($ownerUser->added_by) && $loggedInUser
             ? $loggedInUser->canViewContactInfoOf($ownerUser)
             : false;
-        // Which of the 4 fields actually render once the gate above passes
-        // — admin-configurable, see AdminController::contactUnlockSettings().
-        $contactUnlockSettings = \App\ContactUnlockSetting::current();
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility', 'canViewContactInfo', 'contactUnlockSettings'));
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility', 'canViewContactInfo'));
     }
 
     /**

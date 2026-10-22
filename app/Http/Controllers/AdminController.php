@@ -986,39 +986,6 @@ class AdminController extends Controller
     }
 
     /**
-     * Which of the 4 contact fields actually render once a viewer passes
-     * User::canViewContactInfoOf() — the gate itself stays all-or-nothing
-     * (has this person earned access at all); this only prunes which
-     * fields show once that gate is open (member/profile.blade.php's
-     * Contact Info card, ProfileController::profile()).
-     */
-    function contactUnlockSettings()
-    {
-        return view('admin.dashboard.contact-unlock-settings', ['settings' => \App\ContactUnlockSetting::current()]);
-    }
-
-    function updateContactUnlockSettings(Request $request)
-    {
-        $loggedInUser = User::retrieveUserObject();
-
-        $validated = [
-            'unlock_email' => $request->boolean('unlock_email'),
-            'unlock_phone' => $request->boolean('unlock_phone'),
-            'unlock_name' => $request->boolean('unlock_name'),
-            'unlock_address' => $request->boolean('unlock_address'),
-        ];
-
-        $row = \App\ContactUnlockSetting::first() ?? new \App\ContactUnlockSetting();
-        $row->fill($validated);
-        $row->save();
-
-        Log::info("Admin (" . $loggedInUser->dataid . ") updated contact unlock settings: " . json_encode($validated));
-
-        Session::flash('message', 'success|Contact unlock settings updated.');
-        return redirect()->route('admin.contact-unlock-settings');
-    }
-
-    /**
      * Website Upgrade Brief §18 — admin-visible list of every match a
      * team member has marked successful, with the revenue-share split
      * editable "case by case" (§15).

@@ -87,8 +87,6 @@ Route::post('admin/appointments/{id}/status', [App\Http\Controllers\AdminControl
 // Photo & Identity Verification queue (Website Upgrade Brief §9)
 Route::get('admin/match-weights', [App\Http\Controllers\AdminController::class, 'matchWeights'])->name('admin.match-weights');
 Route::post('admin/match-weights', [App\Http\Controllers\AdminController::class, 'updateMatchWeights'])->name('admin.match-weights.update');
-Route::get('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'contactUnlockSettings'])->name('admin.contact-unlock-settings');
-Route::post('admin/contact-unlock-settings', [App\Http\Controllers\AdminController::class, 'updateContactUnlockSettings'])->name('admin.contact-unlock-settings.update');
 Route::get('admin/successful-matches', [App\Http\Controllers\AdminController::class, 'successfulMatches'])->name('admin.successful-matches');
 Route::post('admin/successful-matches/{id}/share', [App\Http\Controllers\AdminController::class, 'updateSuccessfulMatchShare'])->name('admin.successful-matches.share');
 Route::get('admin/audit-log', [App\Http\Controllers\AdminController::class, 'auditLog'])->name('admin.audit-log');

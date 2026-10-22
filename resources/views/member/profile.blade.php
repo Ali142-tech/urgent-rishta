@@ -1218,10 +1218,10 @@
                             <h3 class="ur-mp-detail-card__title"><i class="fa fa-id-card"></i> Contact Info</h3>
                             @if(!empty($canViewContactInfo))
                             <div class="ur-mp-detail-grid ur-mp-detail-grid--2">
-                                @if($contactUnlockSettings['unlock_name'] ?? true)<div><span>Full Name</span><b>{{ $profile->first_name }} {{ $profile->last_name }}</b></div>@endif
-                                @if($contactUnlockSettings['unlock_email'] ?? true)<div><span>Email</span><b>{{ $profile->email }}</b></div>@endif
-                                @if($contactUnlockSettings['unlock_phone'] ?? true)<div><span>Phone</span><b>{{ $profile->contact_mobile_number }}</b></div>@endif
-                                @if(!empty($profile->address) && ($contactUnlockSettings['unlock_address'] ?? true))<div><span>Address</span><b>{{ $profile->address }}</b></div>@endif
+                                <div><span>Full Name</span><b>{{ $profile->first_name }} {{ $profile->last_name }}</b></div>
+                                <div><span>Email</span><b>{{ $profile->email }}</b></div>
+                                <div><span>Phone</span><b>{{ $profile->contact_mobile_number }}</b></div>
+                                @if(!empty($profile->address))<div><span>Address</span><b>{{ $profile->address }}</b></div>@endif
                             </div>
                             @else
                             <p class="ur-mp-detail-card__locked-note"><i class="fa fa-lock"></i> Contact info is hidden.</p>

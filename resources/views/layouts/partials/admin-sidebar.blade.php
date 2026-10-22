@@ -76,11 +76,6 @@
                 <i class="fa fa-check-circle"></i> Successful Matches
             </a>
         </li>
-        <li>
-            <a href="{{ route('admin.contact-unlock-settings') }}" class="{{ request()->is('admin/contact-unlock-settings') ? 'is-active' : '' }}">
-                <i class="fa fa-unlock-alt"></i> Contact Unlock Settings
-            </a>
-        </li>
 
 
         <div class="ur-dash-nav__section-label">Content</div>
