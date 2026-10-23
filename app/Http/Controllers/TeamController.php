@@ -603,7 +603,9 @@ class TeamController extends Controller
             if ($member->logo) {
                 @unlink($logoDir . '/' . $member->logo);
             }
-            $logoName = time() . '_' . $member->id . '.' . $request->file('logo')->getClientOriginalExtension();
+            // our own extension from the file's real type — never the one the uploader chose ("logo.php" must not stay a script)
+            $logoExt = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'][$request->file('logo')->getMimeType()] ?? 'png';
+            $logoName = time() . '_' . $member->id . '.' . $logoExt;
             $request->file('logo')->move($logoDir, $logoName);
             $member->logo = $logoName;
         }

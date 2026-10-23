@@ -20,11 +20,16 @@
         .wrap { max-width:1260px; margin:0 auto; padding:22px 22px 60px; }
 
         /* header */
-        .bar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:22px; }
+        .bar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:22px; padding:12px 22px; border-radius:20px; background:linear-gradient(135deg, #0F2E24 0%, #1C5A47 100%); box-shadow:0 14px 34px rgba(15,46,36,.22), inset 0 -3px 0 rgba(201,151,77,.55); position:relative; overflow:hidden; }
+        .bar::after { content:""; position:absolute; right:-40px; top:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(201,151,77,.28), transparent 70%); pointer-events:none; }
+        .bar > * { position:relative; z-index:1; }
+        .brand__logo { height:62px; width:auto; display:block; }
+        .bar .btn--ghost { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); color:#fff; }
+        .bar .btn--ghost:hover { background:rgba(255,255,255,.2); border-color:#fff; }
         .brand { display:flex; align-items:center; gap:13px; text-decoration:none; color:inherit; }
         .brand__mark { width:48px; height:48px; border-radius:15px; background:linear-gradient(145deg, var(--green-soft), var(--green-deep)); color:#fff; display:grid; place-items:center; font-family:'Playfair Display', serif; font-weight:700; font-size:21px; letter-spacing:.02em; box-shadow:0 10px 22px rgba(18,58,46,.28), inset 0 0 0 2px rgba(201,151,77,.55); }
-        .brand__name { display:block; font-family:'Playfair Display', serif; font-weight:700; font-size:21px; letter-spacing:.08em; color:var(--green); line-height:1.1; }
-        .brand__tag { display:block; font-size:10.5px; letter-spacing:.22em; color:#8A7A57; font-weight:700; margin-top:3px; }
+        .brand__name { display:block; font-family:'Playfair Display', serif; font-weight:700; font-size:21px; letter-spacing:.08em; color:#fff; line-height:1.1; }
+        .brand__tag { display:block; font-size:10.5px; letter-spacing:.22em; color:#E9C98F; font-weight:700; margin-top:3px; }
         .bar__actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
         .btn { border:0; border-radius:12px; padding:11px 18px; font:inherit; font-weight:800; font-size:13.5px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:.15s; }
         .btn--ghost { background:#fff; border:1px solid var(--line); color:var(--green); }
@@ -144,9 +149,9 @@
             .score { width:100%; }
             .wrap { padding:16px 14px 50px; }
             .brand__tag { display:none; }
-            .bar { flex-direction:column; align-items:stretch; gap:14px; }
-            .brand__name { font-size:19px; letter-spacing:.06em; }
-            .brand__mark { width:42px; height:42px; font-size:18px; border-radius:13px; }
+            .bar { flex-direction:column; align-items:stretch; gap:12px; padding:14px 16px; border-radius:18px; }
+            .brand__name { font-size:18px; letter-spacing:.05em; }
+            .brand__logo { height:48px; }
             .bar__actions { justify-content:flex-start; gap:8px; }
             .bar__actions .btn { padding:9px 13px; font-size:12.5px; }
             .lockpill { flex:1 1 100%; justify-content:center; }
@@ -188,7 +193,7 @@
 <div class="wrap">
     <header class="bar">
         <a class="brand" href="{{ url('/') }}">
-            <span class="brand__mark">UR</span>
+            <img class="brand__logo" src="{{ asset('images/header_logo2.png') }}" alt="Urgent Rishta">
             <span><span class="brand__name">URGENT RISHTA</span><span class="brand__tag">PRIVATE · VERIFIED · PROFESSIONAL</span></span>
         </a>
         <div class="bar__actions">

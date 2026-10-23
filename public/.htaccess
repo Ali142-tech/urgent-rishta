@@ -4,6 +4,9 @@
     </IfModule>
 
     RewriteEngine On
+
+    # Uploaded pictures can never be run as scripts, whatever their name
+    RewriteRule ^(users|user|proposals|team-members|homepage-blurred)/.*\.(php|phtml|phar|php[0-9]*|pht|cgi|pl|py|sh)(/|$) - [F,NC,L]
 RewriteCond %{SERVER_PORT} 80
 RewriteRule ^(.*)$ https://www.urgentrishta.co/$1 [R,L]
 

@@ -83,9 +83,27 @@
         swal(title, message, type).then( callback );
     }
 
+    /** Keeps harmless markup (<div>, <b>, <a href>…) of a message but drops scripts, event handlers and javascript: links. */
+    function safeToastHtml(html) {
+        var tpl = document.createElement('template');
+        tpl.innerHTML = String(html == null ? '' : html);
+        tpl.content.querySelectorAll('script,style,iframe,object,embed,link,meta,base,form,svg,math').forEach(function (n) { n.remove(); });
+        tpl.content.querySelectorAll('*').forEach(function (n) {
+            Array.prototype.slice.call(n.attributes).forEach(function (a) {
+                var name = a.name.toLowerCase(), val = String(a.value).replace(/[\u0000-\u0020]+/g, '').toLowerCase();
+                if (name.indexOf('on') === 0 || name === 'srcdoc' || name === 'style' || ((name === 'href' || name === 'src' || name === 'xlink:href' || name === 'formaction') && /^(javascript|data|vbscript):/.test(val))) {
+                    n.removeAttribute(a.name);
+                }
+            });
+            if (n.tagName === 'A') { n.setAttribute('rel', 'noopener noreferrer'); }
+        });
+        return tpl.innerHTML;
+    }
+
     function showAlert(type, message, timeout, code) {
         var stack = document.getElementById('message_alert');
         if (!stack) return;
+        message = safeToastHtml(message);
 
         // Normalize the many type spellings used across the codebase
         // ('success', 'danger', 'error', 'warning', 'info', ...) to one
@@ -583,11 +601,11 @@
     $(document).ready(function() {
 
         @if($errors->any() && !(request()->is('login') || request()->is('login/*') || request()->is('register') || request()->is('register/*')))
-        showAlert("error", "{!! implode('', $errors->all('<div>:message</div>')) !!}")
+        showAlert("error", {!! json_encode(implode('', $errors->all('<div>:message</div>')), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!})
         @endif
 
         @if(session('message') && !(request()->is('login') || request()->is('login/*') || request()->is('register') || request()->is('register/*')))
-        var message = "{!! session('message') !!}".split("|");
+        var message = {!! json_encode((string) session('message'), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}.split("|");
         showAlert(message[0], message[1], message[2]);
         @endif
 
