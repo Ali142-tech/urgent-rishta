@@ -31,12 +31,32 @@ class ProfileCompletionController extends Controller
         foreach ($this->wizard->sections() as $section) {
             foreach ($section['fields'] as &$field) {
                 $values[$field['name']] = $this->wizard->valueOf($user, $field, $pref);
-                if (in_array($field['type'], ['select', 'country'], true)) {
+                if (in_array($field['type'], ['select', 'country', 'profession'], true)) {
                     $field['choices'] = $this->wizard->optionsOf($field);
+                    // an older answer that is not in the list (e.g. an income typed before) is kept as the member's current choice
+                    if (!empty($field['keepCurrent']) && !empty($values[$field['name']]) && !array_key_exists($values[$field['name']], $field['choices'])) {
+                        $field['choices'] = [$values[$field['name']] => $values[$field['name']] . ' (current)'] + $field['choices'];
+                    }
                 }
             }
             unset($field);
             $sections[] = $section;
+        }
+
+        // an older / typed qualification is shown as "Other (Please Specify)" with the member's own words
+        $educationOther = '';
+        if (!empty($values['education']) && !\App\Services\EducationOptions::inList($values['education'])) {
+            $educationOther = (string) MasterData::where(['type' => 'EDUCATION', 'dataid' => $values['education']])->value('name');
+            $values['education'] = \App\Services\EducationOptions::otherId();
+        }
+
+        // a profession that is not in the list (typed earlier, or from before) shows as "Other (Please Specify)" with the member's words
+        $professionOther = [];
+        foreach (['profession', 'father_profession', 'mother_profession'] as $pf) {
+            if (!empty($values[$pf]) && !\App\Services\ProfessionOptions::inList($values[$pf])) {
+                $professionOther[$pf] = (string) $values[$pf];
+                $values[$pf] = \App\Services\ProfessionOptions::OTHER_VALUE;
+            }
         }
 
         // dependent lists for what is already saved (they reload by themselves as the member changes the parent)
@@ -60,6 +80,11 @@ class ProfileCompletionController extends Controller
             'gated' => !empty($user->must_complete_profile),
             'user' => $user,
             'avatar' => $this->avatarOf($user),
+            'educationOther' => $educationOther,
+            'houseSizes' => $this->wizard->houseSizeSets(),
+            'professionOther' => $professionOther,
+            'professionOtherLabel' => \App\Services\ProfessionOptions::otherLabel(),
+            'educationOtherId' => \App\Services\EducationOptions::otherId(),
         ]);
     }
 
@@ -80,6 +105,15 @@ class ProfileCompletionController extends Controller
             'missing' => $status['missing'],
             'complete' => $status['complete'],
         ]);
+    }
+
+    /** Areas / societies other members of a city have used (suggestions for the "Area / society" box; the member can type their own). */
+    public function areas($city)
+    {
+        $names = User::where('city', (string) $city)->whereNotNull('society')->where('society', '!=', '')
+            ->selectRaw('society, count(*) as c')->groupBy('society')->orderByDesc('c')->orderBy('society')->limit(80)->pluck('society')
+            ->filter(fn ($n) => preg_match('/^[\p{L}\p{N} .,()&\/\'’\-]{2,60}$/u', $n))->values();
+        return response()->json(['areas' => $names]);
     }
 
     public function finish(Request $request)

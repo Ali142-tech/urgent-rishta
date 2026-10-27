@@ -288,15 +288,30 @@
                                         <div class="err"></div>
                                     </div>
                                 @else
-                                    <div class="field {{ $field['type'] === 'textarea' ? 'field--wide' : '' }}" data-field="{{ $name }}" data-required="{{ $field['required'] ? 1 : 0 }}" @if(!empty($field['requiredIfOptions'])) data-required-if-options="1" @endif>
+                                    <div class="field {{ $field['type'] === 'textarea' ? 'field--wide' : '' }} {{ (!empty($field['showWhen']) && !(str_starts_with($field['showWhen'][1], '!') ? ((string) ($values[$field['showWhen'][0]] ?? '') !== '' && (string) ($values[$field['showWhen'][0]] ?? '') !== substr($field['showWhen'][1], 1)) : (string) ($values[$field['showWhen'][0]] ?? '') === $field['showWhen'][1])) ? 'is-hidden' : '' }}" data-field="{{ $name }}" data-required="{{ ($field['required'] || !empty($field['requiredWhen'])) ? 1 : 0 }}" @if(!empty($field['showWhen'])) data-show-when="{{ $field['showWhen'][0] }}={{ $field['showWhen'][1] }}" @endif @if(!empty($field['requiredIfOptions'])) data-required-if-options="1" @endif>
                                         <div class="lbl"><label for="f_{{ $name }}">{{ $field['label'] }}</label><span class="tag {{ $isReq ? 'tag--req' : '' }}">{{ $isReq ? 'Required *' : 'Optional' }}</span></div>
                                         @if($field['type'] === 'select' || $field['type'] === 'country')
-                                            <select id="f_{{ $name }}" name="{{ $name }}" @if($name === 'religion') data-cascade="caste" @endif @if($name === 'con_of_residence') data-cascade="state" @endif>
+                                            <select id="f_{{ $name }}" name="{{ $name }}" @if($name === 'religion') data-cascade="caste" @endif @if($name === 'con_of_residence') data-cascade="state" @endif @if(!empty($field['regional'])) data-house-size @endif @if($name === 'education') data-edu-other="{{ $educationOtherId }}" data-search @endif>
+                                                <option value="">Select an option</option>
+                                                @foreach($field['choices'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }} @if($name === 'education' && (string) $ov === (string) $educationOtherId) data-pinned="1" @endif>{{ $ol }}</option>@endforeach
+                                            </select>
+                                            @if($name === 'education')
+                                                <input id="f_education_other" type="text" name="education_other" maxlength="60" value="{{ $educationOther }}" placeholder="Type your qualification, e.g. BS Textile Engineering" style="margin-top:10px; {{ (string) $val === (string) $educationOtherId ? '' : 'display:none;' }}">
+                                            @endif
+                                        @elseif($field['type'] === 'profession')
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-prof-other data-search>
                                                 <option value="">Select an option</option>
                                                 @foreach($field['choices'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach
+                                                <option value="__other" data-pinned="1" {{ (string) $val === '__other' ? 'selected' : '' }}>{{ $professionOtherLabel }}</option>
                                             </select>
+                                            <input id="f_{{ $name }}_other" type="text" name="{{ $name }}_other" maxlength="100" value="{{ $professionOther[$name] ?? '' }}" placeholder="Type your profession, e.g. Pharmacist" style="margin-top:10px; {{ (string) $val === '__other' ? '' : 'display:none;' }}">
+                                        @elseif($field['type'] === 'area')
+                                            <input id="f_{{ $name }}" type="text" name="{{ $name }}" maxlength="{{ $field['max'] ?? 150 }}" value="{{ $val }}" placeholder="{{ $field['placeholder'] ?? '' }}" list="area_suggestions" autocomplete="off">
+                                            <datalist id="area_suggestions"></datalist>
+                                            <div class="note">Pick a suggestion or type your own area.</div>
                                         @elseif($field['type'] === 'caste')
-                                            <select id="f_{{ $name }}" name="{{ $name }}" data-search><option value="">Select an option</option>@foreach($dep['castes'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-search data-caste-other><option value="">Select an option</option>@foreach($dep['castes'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach<option value="__other_caste" data-pinned="1">+ Add my caste (not in the list)</option></select>
+                                            <input id="f_caste_other" type="text" name="caste_other" maxlength="60" placeholder="Type your caste / community, e.g. Rajput" style="margin-top:10px; display:none;">
                                             <div class="note">The list follows the country you live in and your religion.</div>
                                         @elseif($field['type'] === 'state')
                                             <select id="f_{{ $name }}" name="{{ $name }}" data-cascade="city" data-search><option value="">Select an option</option>@foreach($dep['states'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
@@ -396,6 +411,48 @@
         if (focusName) { var el = document.querySelector('#pane_' + key + ' [name="' + focusName + '"]'); if (el) { setTimeout(function () { el.focus(); }, 250); } }
     };
 
+    // ---- house size: Marla / Kanal for Pakistan, square feet / metres elsewhere
+    var HOUSE_SIZES = @json($houseSizes);
+    function applyHouseSizes() {
+        var sel = $('select[name="residence_size"]'), cty = $('select[name="con_of_residence"]');
+        if (!sel || !cty) return;
+        var text = cty.options[cty.selectedIndex] ? cty.options[cty.selectedIndex].textContent.trim() : '';
+        var set = text === 'Pakistan' ? HOUSE_SIZES.pk : HOUSE_SIZES.intl, keep = sel.value;
+        sel.innerHTML = '<option value="">Select an option</option>' + set.map(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n; return o.outerHTML; }).join('');
+        sel.value = set.indexOf(keep) !== -1 ? keep : '';
+    }
+
+    // ---- area / society suggestions follow the chosen city
+    function loadAreas() {
+        var city = $('select[name="city"]'), dl = $('#area_suggestions');
+        if (!city || !dl) return;
+        if (!city.value) { dl.innerHTML = ''; return; }
+        ajax(BASE + '/member/profile/complete/areas/' + encodeURIComponent(city.value)).then(function (r) {
+            dl.innerHTML = (r.areas || []).map(function (a) { var o = document.createElement('option'); o.value = a; return o.outerHTML; }).join('');
+        });
+    }
+
+    // ---- fields that only apply while another answer says so (Business category -> only when the family runs a business)
+    function toggleConditional(changed) {
+        $$('[data-show-when]').forEach(function (wrap) {
+            var parts = wrap.dataset.showWhen.split('='), src = $('select[name="' + parts[0] + '"]');
+            if (!src || (changed && changed.name !== parts[0])) return;
+            var show = parts[1].charAt(0) === '!' ? (src.value !== '' && src.value !== parts[1].slice(1)) : src.value === parts[1];
+            wrap.classList.toggle('is-hidden', !show);
+            if (!show) { var ctl = wrap.querySelector('select, input'); if (ctl) ctl.value = ''; }
+        });
+    }
+
+    // ---- "Number of children" only applies once a marital status other than "Never Married" is chosen
+    function toggleChildren() {
+        var m = $('select[name="marital_status"]'), wrap = $('[data-field="children"]');
+        if (!m || !wrap) return;
+        var text = m.options[m.selectedIndex] ? m.options[m.selectedIndex].textContent : '';
+        var show = m.value !== '' && !/never\s*married/i.test(text);
+        wrap.classList.toggle('is-hidden', !show);
+        if (!show) { var inp = wrap.querySelector('input'); if (inp) inp.value = ''; }
+    }
+
     // ---- cascades: religion -> caste, country -> state -> city
     function ajax(url) { return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, credentials: 'same-origin' }).then(function (r) { return r.json(); }); }
     function fill(sel, options, placeholder) {
@@ -409,7 +466,10 @@
     function reloadCommunities() {
         var rel = $('select[name="religion"]'), cty = $('select[name="con_of_residence"]'), caste = $('select[name="caste"]');
         if (!rel || !caste || !rel.value) return;
-        ajax(BASE + '/communities/' + (cty && cty.value ? cty.value : '0') + '/' + rel.value).then(function (r) { fill(caste, r.options); });
+        ajax(BASE + '/communities/' + (cty && cty.value ? cty.value : '0') + '/' + rel.value).then(function (r) {
+            fill(caste, r.options);
+            var add = document.createElement('option'); add.value = '__other_caste'; add.textContent = '+ Add my caste (not in the list)'; add.setAttribute('data-pinned', '1'); caste.appendChild(add);
+        });
     }
     function stateField() { return $('[data-field="state"]'); }
     function loadCities(stateId, countryId) {
@@ -434,6 +494,13 @@
         if (t.dataset && t.dataset.cascade === 'caste') { reloadCommunities(); }
         if (t.dataset && t.dataset.cascade === 'state') { loadStates(t.value); reloadCommunities(); }
         if (t.dataset && t.dataset.cascade === 'city') { loadCities(t.value, $('select[name="con_of_residence"]').value); }
+        if (t.dataset && t.dataset.casteOther !== undefined) { var co = $('#f_caste_other'); if (co) { co.style.display = t.value === '__other_caste' ? '' : 'none'; if (t.value === '__other_caste') co.focus(); } }
+        if (t.dataset && t.dataset.profOther !== undefined) { var po = $('#f_' + t.name + '_other'); if (po) { po.style.display = t.value === '__other' ? '' : 'none'; if (t.value === '__other') po.focus(); } }
+        if (t.dataset && t.dataset.eduOther !== undefined) { var eo = $('#f_education_other'); if (eo) { eo.style.display = t.value === t.dataset.eduOther ? '' : 'none'; if (t.value === t.dataset.eduOther) eo.focus(); } }
+        if (t.name === 'marital_status') { toggleChildren(); }
+        if (t.tagName === 'SELECT') { toggleConditional(t); }
+        if (t.name === 'con_of_residence') { applyHouseSizes(); }
+        if (t.name === 'city') { loadAreas(); }
         var f = t.closest && t.closest('.field'); if (f) { f.classList.remove('has-error'); }
     });
     document.addEventListener('input', function (e) { var f = e.target.closest && e.target.closest('.field'); if (f) f.classList.remove('has-error'); });
@@ -466,7 +533,8 @@
             if (f.classList.contains('is-hidden')) return;
             var needed = f.dataset.required === '1' || (f.dataset.requiredIfOptions && f.dataset.hasOptions === '1');
             if (!needed) return;
-            var inputs = $$('input,select,textarea', f), empty = inputs.some(function (i) { return String(i.value).trim() === ''; });
+            // only the boxes the member can see count: the "Other, please type" box stays hidden (and empty) until "Other" is chosen
+            var inputs = $$('input,select,textarea', f).filter(function (i) { return i.tagName === 'SELECT' || i.offsetParent !== null; }), empty = inputs.some(function (i) { return String(i.value).trim() === ''; });
             if (empty) errors[f.dataset.field] = 'This field is required.';
         });
         return errors;
@@ -511,6 +579,9 @@
         send(current, true, this, function () { toast('Draft saved. You can finish the rest later.'); });
     });
 
+    toggleChildren();
+    toggleConditional();
+    (function () { var sel = $('select[name="residence_size"]'); var saved = sel ? sel.value : ''; applyHouseSizes(); if (sel && saved) { var has = Array.prototype.some.call(sel.options, function (o) { return o.value === saved; }); if (has) sel.value = saved; } loadAreas(); })();
     paint(STATUS);
     goStep(current);
 })();

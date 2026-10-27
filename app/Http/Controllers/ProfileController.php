@@ -87,7 +87,7 @@ class ProfileController extends Controller
         $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
-        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $education = \App\Services\EducationOptions::list(optional(User::retrieveUserObject())->education, false);   // the client's list (+ the member's own older one)
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
         // Only the own-profile "My Profile" page shows the completeness meter —
@@ -201,7 +201,7 @@ class ProfileController extends Controller
         $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
-        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $education = \App\Services\EducationOptions::list($preference->education_id ?? null, false);
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         // Religion->caste cascading isn't actually wired to a live route anywhere
         // in this app today (the JS for it on the My Profile page calls an
@@ -820,7 +820,9 @@ class ProfileController extends Controller
                 $user->gender = $request->gender;
                 $user->birthday = $request->year . '-' . $request->month . '-' . $request->day;
                 $user->marital_status = $request->marital_status;
-                $user->children = $request->children;
+                // children only apply to Married / Divorced / Widowed … — nothing is kept for "Never Married"
+                $maritalName = (string) optional(MasterData::where(['type' => 'MARITAL_STATUS', 'dataid' => $request->marital_status])->first())->name;
+                $user->children = preg_match('/never\s*married/i', $maritalName) ? null : ($request->children !== '' ? $request->children : null);
                 $user->area = $request->area;
                 $user->profile_for = $request->on_behalf;
                 $user->contact_mobile_number = $request->contact_mobile_number;

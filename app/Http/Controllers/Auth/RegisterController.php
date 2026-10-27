@@ -43,7 +43,7 @@ class RegisterController extends Controller
         $religions = MasterData::where('type', 'RELIGION')->orderByRaw("name = 'Other' ASC")->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();
         $mothertongues = MasterData::where('type', 'MOTHER_TONGUE')->orderByRaw("name = 'Other' ASC")->orderBy('name', 'ASC')->get();
-        $education = MasterData::where('type', 'EDUCATION')->orderBy('name', 'ASC')->get();
+        $education = \App\Services\EducationOptions::list();   // the client's list, in the client's order
         $countries = MasterData::where('type', 'COUNTRY')->orderBy('order', 'DESC')->orderBy('name', 'ASC')->get();
         $caste = MasterData::where('type', 'CASTE')->orderBy('name', 'ASC')->get();
         $googleOAuth = Session::get('google_oauth');
@@ -582,6 +582,16 @@ class RegisterController extends Controller
     {
         if (!Session::get('register_verified') || !Session::has('register_height')) {
             return redirect()->route('register', ['mode' => 'build2']);
+        }
+
+        // "Other (Please Specify)": the typed qualification becomes its own education row
+        $otherEducation = \App\Services\EducationOptions::otherId();
+        if ($otherEducation !== null && (string) $request->input('education') === $otherEducation) {
+            $resolved = \App\Services\EducationOptions::resolve($otherEducation, $request->input('education_other'));
+            if ($resolved === null) {
+                return back()->withInput()->withErrors(['education' => 'Please type your qualification (letters and numbers only).']);
+            }
+            $request->merge(['education' => $resolved]);
         }
 
         // "Other — type my own": the typed text replaces the marker before validation

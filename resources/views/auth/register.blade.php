@@ -478,16 +478,31 @@
                 <div class="reg-field">
                     <div class="reg-field-outline">
                         <span class="float-label">Your highest qualification *</span>
-                        <select name="education" id="reg_build_education" required>
-                            <option value="" disabled {{ old('education', $registerEducation) ? '' : 'selected' }}>Select</option>
+                        @php
+                            $eduOtherId = \App\Services\EducationOptions::otherId();
+                            $eduSaved = (string) old('education', $registerEducation);
+                            // an older / typed qualification is shown as "Other" with the member's own words
+                            $eduIsOther = $eduSaved !== '' && ($eduSaved === (string) $eduOtherId || !$education->contains(fn ($d) => (string) $d->dataid === $eduSaved));
+                            $eduOtherText = old('education_other', $eduIsOther && $eduSaved !== (string) $eduOtherId ? (string) \App\MasterData::where(['type' => 'EDUCATION', 'dataid' => $eduSaved])->value('name') : '');
+                        @endphp
+                        <select name="education" id="reg_build_education" data-search required>
+                            <option value="" disabled {{ $eduSaved !== '' ? '' : 'selected' }}>Select</option>
                             @foreach($education as $degree)
-                                <option value="{{ $degree->dataid }}" @if(old('education', $registerEducation)==$degree->dataid) selected @endif>{{ $degree->name }}</option>
+                                <option value="{{ $degree->dataid }}" @if((!$eduIsOther && $eduSaved==$degree->dataid) || ($eduIsOther && (string) $degree->dataid === (string) $eduOtherId)) selected @endif @if((string) $degree->dataid === (string) $eduOtherId) data-pinned="1" @endif>{{ $degree->name }}</option>
                             @endforeach
                         </select>
                     </div>
                 </div>
+                <div class="reg-field" id="reg_education_other_wrap" style="{{ $eduIsOther ? '' : 'display:none;' }}">
+                    <span class="reg-label">Your qualification</span>
+                    <div class="reg-field-outline">
+                        <span class="float-label">Type your qualification *</span>
+                        <input type="text" name="education_other" id="reg_education_other" maxlength="60" value="{{ $eduOtherText }}" placeholder="e.g. BS Textile Engineering"
+                               style="width:100%;border:0;outline:none;background:transparent;font-size:15px;height:28px;padding:0;">
+                    </div>
+                </div>
                 @php
-                    $professionList = config('proposal_options.profession', []);
+                    $professionList = \App\Services\ProfessionOptions::list();   // the client's list first, then the professions already on offer
                     $savedProfession = trim((string) old('profession', $registerProfession));
                     $professionIsOther = old('profession') === '__other' || ($savedProfession !== '' && !in_array($savedProfession, $professionList, true));
                     $professionOtherText = old('profession_other', $professionIsOther && $savedProfession !== '__other' ? $savedProfession : '');
@@ -501,7 +516,7 @@
                             @foreach($professionList as $prof)
                                 <option value="{{ $prof }}" {{ (!$professionIsOther && $savedProfession === $prof) ? 'selected' : '' }}>{{ $prof }}</option>
                             @endforeach
-                            <option value="__other" data-pinned="1" {{ $professionIsOther ? 'selected' : '' }}>Other — type my own</option>
+                            <option value="__other" data-pinned="1" {{ $professionIsOther ? 'selected' : '' }}>{{ \App\Services\ProfessionOptions::otherLabel() }}</option>
                         </select>
                     </div>
                 </div>
@@ -855,15 +870,23 @@
         var prof = document.getElementById('reg_build_profession');
         var otherWrap = document.getElementById('reg_profession_other_wrap');
         var other = document.getElementById('reg_profession_other');
+        var eduOtherWrap = document.getElementById('reg_education_other_wrap');
+        var eduOther = document.getElementById('reg_education_other');
+        var EDU_OTHER_ID = @json((string) \App\Services\EducationOptions::otherId());
         function sync() {
             var isOther = prof && prof.value === '__other';
             if (otherWrap) otherWrap.style.display = isOther ? '' : 'none';
             if (other) other.required = !!isOther;
             var profOk = prof && prof.value && (!isOther || (other && String(other.value || '').trim().length > 0));
-            var ok = edu && edu.value && profOk;
+            var eduIsOther = edu && edu.value === EDU_OTHER_ID;
+            if (eduOtherWrap) eduOtherWrap.style.display = eduIsOther ? '' : 'none';
+            if (eduOther) eduOther.required = !!eduIsOther;
+            var eduOk = edu && edu.value && (!eduIsOther || (eduOther && String(eduOther.value || '').trim().length > 0));
+            var ok = eduOk && profOk;
             btn.disabled = !ok;
         }
-        if (edu) edu.addEventListener('change', sync);
+        if (eduOther) { eduOther.addEventListener('input', sync); eduOther.addEventListener('change', sync); }
+        if (edu) edu.addEventListener('change', function () { sync(); if (edu.value === EDU_OTHER_ID && eduOther) { setTimeout(function () { eduOther.focus(); }, 50); } });
         if (prof) {
             prof.addEventListener('input', sync);
             prof.addEventListener('change', function () { sync(); if (prof.value === '__other' && other) { setTimeout(function () { other.focus(); }, 50); } });
@@ -1002,7 +1025,7 @@
 <script src="{{ asset('js/ur-searchable-select.js') }}?v={{ filemtime(public_path('js/ur-searchable-select.js')) }}"></script>
 <script>
     (function () {
-        ['reg_day', 'reg_month'].forEach(function (id) { var el = document.getElementById(id); if (el) el.setAttribute('data-no-search', ''); });
+        ['reg_day', 'reg_month', 'reg_year'].forEach(function (id) { var el = document.getElementById(id); if (el) el.setAttribute('data-no-search', ''); });
         URSearchableSelect.init(document, { minOptions: 12 });
     })();
 </script>

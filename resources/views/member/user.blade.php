@@ -858,6 +858,22 @@
                                             </div>
 
                                             <div class='clearfix'></div>
+                                            {{-- Number of children only applies to Married / Divorced / Widowed … — hidden for "Never Married" (or no status chosen) --}}
+                                            <script>
+                                                window.addEventListener('load', function () {
+                                                    var form = document.getElementById('form_basic_info'), wrap = document.getElementById('children_wrap');
+                                                    if (!form || !wrap || !window.jQuery) return;
+                                                    var sel = $(form).find('select[name="marital_status"]');
+                                                    function sync() {
+                                                        var text = $.trim(sel.find('option:selected').text());
+                                                        var show = sel.val() !== '' && sel.val() != null && !/never\s*married/i.test(text);
+                                                        $(wrap).toggle(show);
+                                                        if (!show) { $(wrap).find('input[name="children"]').val(''); }
+                                                    }
+                                                    sel.on('change', sync);
+                                                    sync();
+                                                });
+                                            </script>
                                             <form id="form_basic_info" class="form-default" role="form">
                                                 @csrf
                                                 <div class="row">
@@ -962,10 +978,10 @@
                                                     </div>
                                                 </div>
                                                 <div class="row">
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-6" id="children_wrap">
                                                         <div class="form-group has-feedback">
                                                             <label for="children" class="text-uppercase c-gray-light">Number Of Children</label>
-                                                            <input type="number" class="form-control no-resize" name="children" value="{{$profile->children}}" min="0" required="required">
+                                                            <input type="number" class="form-control no-resize" name="children" value="{{$profile->children}}" min="0">
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
                                                         </div>
@@ -1100,8 +1116,13 @@
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="form-group has-feedback">
-                                                            <label for="salary" class="text-uppercase c-gray-light">Annual Income</label>
-                                                            <input type="text" class="form-control no-resize" name="salary" value="{{$profile->salary}}" required="required">
+                                                            <label for="salary" class="text-uppercase c-gray-light">Monthly Income Range</label>
+                                                            @php($incomeRanges = app(\App\Services\ProfileWizard::class)->incomeRanges())
+                                                            <select name="salary" class="form-control form-control-sm selectpicker" data-placeholder="Choose an income range" data-hide-disabled="true">
+                                                                <option value="">Choose one</option>
+                                                                @if(!empty($profile->salary) && !array_key_exists($profile->salary, $incomeRanges))<option value="{{ $profile->salary }}" selected>{{ $profile->salary }} (current)</option>@endif
+                                                                @foreach($incomeRanges as $range)<option value="{{ $range }}" {{ $profile->salary == $range ? 'selected' : '' }}>{{ $range }}</option>@endforeach
+                                                            </select>
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
                                                         </div>

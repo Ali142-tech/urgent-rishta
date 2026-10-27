@@ -18,7 +18,7 @@ class EnsureProfileComplete
 {
     /** Pages the wizard itself needs (and logging out) must stay reachable while it is in force. */
     private const EXEMPT_ROUTE_NAMES = [
-        'member.complete', 'member.complete.save', 'member.complete.finish',
+        'member.complete', 'member.complete.save', 'member.complete.finish', 'member.complete.areas',
         'member.photos.required', 'member.photos.required.status', 'member.photos.selfie',
         'logout', 'verification.notice', 'verification.verify', 'verification.resend',
     ];
