@@ -28,6 +28,10 @@
     /* the labels stay visible (small caps) so every dropdown says what it is */
     #controls-form .ur-admin-filters__label { position: static !important; width: auto !important; height: auto !important; margin: 0 0 4px !important; clip: auto !important; overflow: visible !important; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #6B7570; white-space: nowrap; }
     #controls-form .ur-admin-filters__row3 { gap: 10px; }
+    /* the form lines its children to the right (align-items:flex-end); without a full width these two blocks shrank to their content and sat at the right edge on phones */
+    #controls-form .ur-admin-filters__row3, #controls-form .ur-admin-filters__extra, #controls-form .ur-pf-more { width: 100%; }
+    /* narrow screens: two-column labels (Marital status / Education ...) wrap instead of running into each other */
+    .ur-pf-grid .ur-admin-filters__label { white-space: normal !important; line-height: 1.25; }
     #controls-form .form-group { margin-bottom: 0; }
 
     /* bootstrap-select look */
@@ -358,6 +362,33 @@
             }
         })
     }
+
+    // Coming back (browser Back) to this page restores it as it was left (a "Copying..." button, a button that has since been used):
+    // reload it so every button shows its real state.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted && document.querySelector('.js-move-copying')) window.location.reload();
+    });
+
+    // "Share on WhatsApp": opens that member's own WhatsApp chat with their profile form (and links to their photos) already written.
+    document.addEventListener('click', function (e) {
+        var a = e.target.closest('a.js-admin-share');
+        if (!a) return;
+        e.preventDefault();
+        if (a.dataset.busy === '1') return;
+        a.dataset.busy = '1';
+        var original = a.innerHTML;
+        a.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Opening…';
+        function done() { a.dataset.busy = ''; a.innerHTML = original; }
+
+        fetch(a.dataset.payloadUrl, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.message || ('error ' + r.status)); return j; }); })
+            .then(function (p) {
+                var w = window.open(p.fallback, '_blank');
+                if (!w) window.location.href = p.fallback;   // popup blocked after the request
+            })
+            .catch(function (err) { showAlert('danger', (err && err.message) || 'Could not open WhatsApp.', 5000); })
+            .then(done, done);
+    });
 
     function deleteProfile(elem, id) {
         swalConfirm("Delete Profile?", "Are you sure you want to delete this profile? You will not be able to revert this!", () => {

@@ -29,7 +29,7 @@ class Proposal extends Model
     protected $table = 'proposals';
 
     protected $fillable = [
-        'reference', 'added_by',
+        'reference', 'added_by', 'source_user_id', 'is_draft',
         'is_private', 'gender', 'birthday', 'height', 'marital_status', 'education', 'profession', 'caste_id', 'sect',
         'con_of_residence', 'con_of_citizenship', 'current_city', 'city',
         'family_status', 'looking_from', 'presentation_highlight',

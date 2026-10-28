@@ -116,6 +116,8 @@
                 <a href="{{ url('admin/profile/preview/'.$member->dataid) }}?page={{ $currentPage }}">
                     <i class="fa fa-id-card"></i> Full Profile
                 </a>
+                @include('admin.dashboard.partials.share-profile', ['member' => $member, 'variant' => 'card'])
+                @include('admin.dashboard.partials.move-to-proposal', ['member' => $member, 'variant' => 'card'])
             </div>
         </div>
 

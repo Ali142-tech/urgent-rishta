@@ -344,6 +344,65 @@ class AdminController extends Controller
      * list+detail layout — clicking a row in the list fetches this instead
      * of a full page reload (see loadMemberDetail() in profiles.blade.php).
      */
+    /**
+     * "Move to Team Proposal": copies the member into the team's proposals (owned by the admin's own team
+     * account) with every Add Proposal field filled from their profile, then opens the proposal's edit
+     * page so the admin can complete what could not be matched. The member itself is left untouched.
+     */
+    function moveToTeamProposal($dataid, \App\Services\MemberToProposal $converter)
+    {
+        $user = User::where('dataid', $dataid)->first();
+        if (!$user || ($user->admin ?? 0) == 1) {
+            abort(404);
+        }
+
+        $proposal = $converter->existing($user);
+        if ($proposal) {
+            Session::flash('message', $proposal->is_draft
+                ? 'info|This member was already copied (' . $proposal->reference . ') but is not saved yet. Check the fields and save.'
+                : 'info|This member is already a team proposal (' . $proposal->reference . ').');
+        } else {
+            $owner = \App\TeamMember::provisionForAdmin(auth()->user());
+            $proposal = $converter->convert($user, $owner);
+            Log::info('Admin ' . auth()->user()->dataid . ' copied member ' . $user->dataid . ' to proposal ' . $proposal->reference);
+            Session::flash('message', 'info|Member details are filled in below (' . $proposal->reference . '). It is NOT saved yet: check the fields and press Save to add it to the team proposals.');
+        }
+
+        return redirect()->route('team.proposals.edit', $proposal->reference);
+    }
+
+    /**
+     * Share on WhatsApp: the member's complete profile written as the client form, plus their photos, for the
+     * admin to send to that member. `fallback` opens a WhatsApp chat with the member's own
+     * number, with the form and links to their photos already written in the message.
+     */
+    function shareMemberPayload($dataid, \App\Services\MemberShareForm $form)
+    {
+        $user = User::where('dataid', $dataid)->first();
+        if (!$user || ($user->admin ?? 0) == 1) {
+            return response()->json(['code' => '404', 'message' => 'Member not found.'], 404);
+        }
+        if (empty(trim((string) $user->contact_mobile_number))) {
+            return response()->json(['code' => '422', 'message' => 'This member has no WhatsApp number.'], 422);
+        }
+
+        $text = $form->text($user);
+        // a chat link cannot carry picture files, so the message carries the link to the member's profile page (photos included)
+        $profileUrl = url('member/profile/' . $user->dataid);
+        $text .= "\n\nYour profile:\n" . $profileUrl;
+        // the approved note goes first, so it is the first thing the member reads
+        $text = $form->closing($user) . "\n\n" . $text;
+        Log::info('Admin ' . auth()->user()->dataid . ' shared the profile form of member ' . $user->dataid . ' on WhatsApp');
+
+        return response()->json([
+            'code' => '200',
+            'title' => trim($user->first_name . ' ' . $user->last_name),
+            'text' => $text,
+            'profile_url' => $profileUrl,
+            'fallback' => User::whatsappLinkForNumber($user->contact_mobile_number, $text),
+        ], 200, [], JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+    }
+
     function profilePanel($dataid)
     {
         $quoted = "'" . addslashes($dataid) . "'";

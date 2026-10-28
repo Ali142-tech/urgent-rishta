@@ -1408,6 +1408,7 @@ TEMPLATE;
         if ($request->filled('raw_intake_text')) {
             $changes['raw_intake_text'] = $request->raw_intake_text;
         }
+        $changes['is_draft'] = false;   // saving a copied member makes it a real proposal
         $proposal->fill($changes)->save();
 
         // New images are ADDED to the existing ones (delete or reorder on the Manage photos page).

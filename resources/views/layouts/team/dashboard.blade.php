@@ -55,6 +55,9 @@
         .ur-toast--danger .ur-toast__bar { color: #B5674A; }
         .ur-toast--info .ur-toast__bar { color: #5B6560; }
         @keyframes urToastShrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+        /* always pinned to the top-right of the screen, whatever the page length or scroll position */
+        #message_alert.ur-toast-stack { position: fixed !important; top: 84px !important; right: 20px !important; bottom: auto !important; left: auto; }
+        @media (max-width: 500px) { #message_alert.ur-toast-stack { top: 70px !important; right: 10px !important; left: 10px; } }
         @media (max-width: 500px) { .ur-toast-stack { top: 70px; right: 10px; left: 10px; max-width: none; } }
 
         /* ---------- "Complete Client File" modal (openClientFile()) ---------- */

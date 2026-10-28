@@ -23,6 +23,11 @@ class PrivateProposalScope implements Scope
             return;
         }
 
+        // A member the admin copied but has not saved yet is a draft: only its own edit / save page can open it.
+        if (!request()->routeIs('team.proposals.edit', 'team.proposals.update')) {
+            $builder->where($model->qualifyColumn('is_draft'), false);
+        }
+
         $private = $model->qualifyColumn('is_private');
 
         $team = Auth::guard('team')->user();

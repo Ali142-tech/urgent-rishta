@@ -136,7 +136,9 @@ Route::get('admin/profile/listing/{type}/{id}', [App\Http\Controllers\AdminContr
 Route::get('admin/profile/package/modal/{id}', [App\Http\Controllers\AdminController::class, 'renderUpdatePackageModal']);
 Route::get('admin/profile/package/{id}', [App\Http\Controllers\AdminController::class, 'changePackagePage']);
 Route::get('admin/profile/pdf/{id}', [App\Http\Controllers\AdminController::class, 'downloadProfilePdf']);
-Route::get('admin/profile/preview/{dataid}', [App\Http\Controllers\AdminController::class, 'profilePreview']);
+Route::get('admin/profile/{dataid}/share-payload', [App\Http\Controllers\AdminController::class, 'shareMemberPayload']); // the member's profile form + photos, to send to them on WhatsApp
+Route::post('admin/profile/{dataid}/move-to-team-proposal', [App\Http\Controllers\AdminController::class, 'moveToTeamProposal']); // copy a member into the team's proposals
+Route::get('admin/profile/preview/{dataid}',[App\Http\Controllers\AdminController::class, 'profilePreview']);
 Route::post('admin/profile/{dataid}/photo-visibility', [App\Http\Controllers\AdminController::class, 'updatePhotoVisibility']);
 // admin package routes
 Route::post('admin/packages/',[App\Http\Controllers\AdminController::class, 'addPackage']); // add a new package in admin dashboard

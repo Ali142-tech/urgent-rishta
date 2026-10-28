@@ -84,6 +84,8 @@
             <a href="{{ url('admin/profile/package/'.$member->dataid) }}?page={{ request()->query('page', 1) }}" class="ur-btn ur-btn--outline"><i class="fa fa-archive"></i> Change Package</a>
             <a class="ur-btn ur-btn--outline" onclick="return resendVerificationEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-envelope"></i> Resend Verification Email</a>
             <a class="ur-btn ur-btn--outline" onclick="return sendPasswordResetEmail($(this), '{{ $member->dataid }}');"><i class="fa fa-unlock"></i> Password Reset</a>
+            @include('admin.dashboard.partials.share-profile', ['member' => $member, 'variant' => 'panel'])
+            @include('admin.dashboard.partials.move-to-proposal', ['member' => $member, 'variant' => 'panel'])
             <a class="ur-btn ur-btn--danger-outline" onclick="return deleteProfile($(this), '{{ $member->dataid }}');"><i class="fa fa-trash"></i> Delete Profile</a>
         </div>
     </div>
