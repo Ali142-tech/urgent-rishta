@@ -378,8 +378,12 @@ a.appointment-btn::before{
                                     </a>
                                     <div class="ur-mobile-actions d-lg-none">
                                         @auth
-                                        <a href="{{ url('member/profile') }}" class="ur-mobile-profile" aria-label="Profile">
-                                            <i class="fa fa-user"></i>
+                                        {{-- the member's own photo (a plain user icon only if there is none) --}}
+                                        @php($__me = User::retrieveUserObject())
+                                        {{-- the member's own photo; null (=> plain icon) only when they truly have none --}}
+                                        @php($__mobileAvatar = $__me ? $__me->profile()->getOwnPhotoUrl(true) : null)
+                                        <a href="{{ url('member/profile') }}" class="ur-mobile-profile{{ $__mobileAvatar ? ' ur-mobile-profile--photo' : '' }}" aria-label="Profile"@if($__mobileAvatar) style="background-image: url('{{ $__mobileAvatar }}')"@endif>
+                                            @unless($__mobileAvatar)<i class="fa fa-user"></i>@endunless
                                         </a>
                                         @endauth
                                         <div class="d-inline-block ur-nav-toggler-wrap">

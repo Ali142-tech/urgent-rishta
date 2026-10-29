@@ -534,3 +534,11 @@ body.ur-dash-body .ur-toast-stack {
 .ur-dash-sidebar--team .ur-dash-nav .ur-dash-nav__badge { min-width: 26px; text-align: center; background: #D9A85A; color: #0B3B2E; font-size: 12px; font-weight: 800; line-height: 1.2 !important; padding: 3px 8px; border-radius: 999px; }
 .ur-dash-sidebar--team .ur-dash-nav__link { font-size: 15px; font-weight: 700; }
 .ur-dash-sidebar--team .ur-dash-nav__link svg { width: 19px; height: 19px; flex: 0 0 19px; stroke: rgba(255,255,255,.62); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Team Dashboard sidebar: it scrolls as ONE column (not each menu list on its own, which cut items in half and drew
+   a gold scrollbar beside each list), and the scrollbar itself is hidden — wheel / touch scrolling still works. */
+.ur-dash-sidebar--team { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.ur-dash-sidebar--team::-webkit-scrollbar { display: none; }
+.ur-dash-sidebar--team .ur-dash-nav { overflow: visible; flex: 0 0 auto; }
+.ur-dash-sidebar--team .ur-dash-sidebar__status { margin-top: auto; }
+.ur-dash-sidebar--team > * { flex-shrink: 0; }

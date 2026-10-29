@@ -74,7 +74,8 @@ class ProfileCompletionController extends Controller
 
         $dob = !empty($values['birthday']) ? explode('-', $values['birthday']) : [null, null, null];
 
-        return view('member.complete-profile', [
+        // a new member still being gated sees the full-page wizard; once the profile is complete, "Edit Full Profile" opens the same wizard inside the dashboard
+        return view(!empty($user->must_complete_profile) ? 'member.complete-profile' : 'member.edit-profile', [
             'sections' => $sections, 'values' => $values, 'dep' => $dep, 'status' => $status, 'start' => $start,
             'dob' => ['year' => $dob[0] ?? null, 'month' => $dob[1] ?? null, 'day' => $dob[2] ?? null],
             'gated' => !empty($user->must_complete_profile),

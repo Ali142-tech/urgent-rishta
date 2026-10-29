@@ -69,7 +69,8 @@ class TeamAdminController extends Controller
             'matches_total' => \App\SuccessfulMatch::count(),
         ];
 
-        $members = TeamMember::approved()->orderBy('first_name')->get();
+        // the member table is paged (it grows long); the counts below are worked out for the 10 shown only
+        $members = TeamMember::approved()->orderBy('first_name')->paginate(10, ['*'], 'members_page')->withQueryString();
         foreach ($members as $member) {
             $member->proposals_count = Proposal::where('added_by', $member->id)->count();
             $member->active_proposals_count = Proposal::where('added_by', $member->id)->where('profile_status', 'active')->count();
@@ -98,10 +99,13 @@ class TeamAdminController extends Controller
         }
 
         if (!empty($request->keyword)) {
-            $keyword = '%' . $request->keyword . '%';
+            $keyword = '%' . preg_replace('/\s+/', ' ', trim((string) $request->keyword)) . '%';
             $query->where(function ($q) use ($keyword) {
                 $q->where('reference', 'like', $keyword)->orWhere('profession', 'like', $keyword)
-                    ->orWhere('city', 'like', $keyword)->orWhere('current_city', 'like', $keyword);
+                    ->orWhere('city', 'like', $keyword)->orWhere('current_city', 'like', $keyword)
+                    ->orWhere('religion', 'like', $keyword)->orWhere('sect', 'like', $keyword)
+                    ->orWhere('education', 'like', $keyword)->orWhere('con_of_residence', 'like', $keyword)
+                    ->orWhereIn('caste_id', \App\ProposalCaste::where('name', 'like', $keyword)->select('id'));
             });
         }
         if (!empty($request->matchmaker)) {

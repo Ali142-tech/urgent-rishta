@@ -21,7 +21,7 @@
                     <span>{{ $member->contact_mobile_number }}</span>
                 </div>
 
-                <div class="ur-tmx-field" id="tm_status_{{ $member->dataid }}">
+                <div class="ur-tmx-field" id="tm_status_{{ $member->dataid }}" data-label="Status">
                     @if($isMe)
                         <span class="ur-tmx-tag">{{ ucfirst($status) }} &middot; you</span>
                     @else
@@ -33,7 +33,7 @@
                     @endif
                 </div>
 
-                <div class="ur-tmx-field">
+                <div class="ur-tmx-field" data-label="Photos">
                     @if($member->isAdmin())
                         <span class="ur-tmx-tag">Originals (admin)</span>
                     @else
@@ -44,7 +44,7 @@
                     @endif
                 </div>
 
-                <div class="ur-tmx-field">
+                <div class="ur-tmx-field" data-label="Proposals &amp; private access">
                     @if($member->isAdmin())
                         <span class="ur-tmx-tag">Sees all (admin)</span>
                     @else

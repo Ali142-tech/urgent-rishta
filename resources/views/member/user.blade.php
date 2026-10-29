@@ -646,7 +646,7 @@
                                         <div class="ur-profile-completeness__fill" style="width: {{ $completeness['percent'] }}%;"></div>
                                     </div>
                                     @if($completeness['percent'] < 100)
-                                    <div class="ur-profile-completeness__hint">{{ $completeness['filled'] }} of {{ $completeness['total'] }} sections complete &mdash; fill in the rest to help us find better matches for you.</div>
+                                    <div class="ur-profile-completeness__hint">{{ $completeness['filled'] }} of {{ $completeness['total'] }} required details complete &mdash; fill in the rest to help us find better matches for you.</div>
                                     @endif
                                 </div>
                                 @endif

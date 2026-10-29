@@ -51,15 +51,20 @@
     .ur-tmx-actions .ur-tmx-btn { width: 100%; }
     .ur-tmx-empty { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 36px; text-align: center; color: #6B7570; }
 
+    /* when the fields stack (tablet / phone) each one gets a small caption, since the column headings are gone */
+    .ur-tmx-field[data-label]::before { content: attr(data-label); display: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #6B7570; }
     @media (max-width: 1280px) {
+        .ur-tmx-field[data-label]::before { display: block; }
         .ur-tmx-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .ur-tmx-person { grid-column: 1 / 3; }
         .ur-tmx-actions { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
     }
     @media (max-width: 760px) {
-        .ur-tmx-row { grid-template-columns: 1fr 1fr; gap: 14px; }
-        .ur-tmx-person, .ur-tmx-contact { grid-column: 1 / -1; }
-        .ur-tmx-field { grid-column: auto; }
+        .ur-tmx-row { grid-template-columns: 1fr; gap: 14px; }
+        .ur-tmx-card { padding: 16px; }
+        .ur-tmx-person, .ur-tmx-contact, .ur-tmx-field, .ur-tmx-actions { grid-column: 1 / -1; }
+        .ur-tmx-field select { height: 44px; font-size: 14px; }
+        .ur-tmx-actions { grid-template-columns: 1fr; }
         .ur-tmx-head h1 { font-size: 24px; }
         .ur-tmx-search { max-width: none; flex-basis: 100%; }
     }

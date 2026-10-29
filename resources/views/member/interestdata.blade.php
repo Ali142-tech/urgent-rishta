@@ -118,6 +118,10 @@
                         <span class="ur-interest-card__tag">Location <b>{{ $member->lbl_con_of_residence ?: 'N/A' }}</b></span>
                     </div>
                     <div class="ur-interest-card__actions">
+                        @if(empty($member->first_name) && empty($member->birthday))
+                        {{-- the member this interest was sent to has since left the site --}}
+                        <span class="ur-interest-card__gone"><i class="fa fa-user-times"></i> This profile is no longer available</span>
+                        @else
                         <a class="ur-interest-card__btn ur-interest-card__btn--ghost"
                            onclick="javascript:@auth window.open('{{url('/member/profile/'.$dataid)}}'); @endauth @guest return register_request(); @endguest">
                             <i class="fa fa-id-card"></i> Full Profile
@@ -147,6 +151,7 @@
                         </a>
                         @endif
                         @endauth
+                        @endif
                     </div>
                 </div>
             </div>

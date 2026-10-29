@@ -86,6 +86,27 @@ class Profile extends Model {
      * $watermarked: see getCardImages()'s docblock — same gate, same
      * watermark_ derivative, checked before the normal thumbnail path.
      */
+    /**
+     * The member's OWN photo for their own avatar (header button): the real thumbnail of their main photo, never the blurred
+     * copy or the gender silhouette that getProfileImage() may return. Null when they have no photo (or its file is missing),
+     * so the caller can show a plain icon instead.
+     */
+    public function getOwnPhotoUrl($tiny = true) {
+        $source = !empty($this->displaypic) ? $this->displaypic : null;
+        if ($source === null && !empty($this->images)) {
+            $images = is_array($this->images) ? $this->images : explode(',', $this->images);
+            $source = $images[0] ?? null;
+        }
+        $filename = $source ? (explode('/', $source)[2] ?? null) : null;
+        if (!$filename) return null;
+
+        foreach ([($tiny ? 'thumbnail_sm_' : 'thumbnail_') . $filename, 'thumbnail_' . $filename, $filename] as $candidate) {
+            $path = self::MEMBER_IMAGES_PATH . '/' . $candidate;
+            if (file_exists(public_path($path))) return $path;
+        }
+        return null;
+    }
+
     public function getProfileImage($tiny = null, $watermarked = false) {
         if ($this->photo_visibility === 'hidden') {
             return self::defaultImage($this->gender);
@@ -307,6 +328,19 @@ class Profile extends Model {
      * (users.r*, brother/sister) are intentionally left out.
      */
     public function profileCompleteness(): array {
+        // One number everywhere: the same count the profile wizard ("Edit Full Profile") shows and gates the dashboard with.
+        // (This method used to score ~12 loose "any field set" sections, so the reminder / My Profile / dashboard said 67% while the wizard said 35%.)
+        $owner = $this->user();
+        if ($owner) {
+            $status = app(\App\Services\ProfileWizard::class)->status($owner);
+            return [
+                'percent' => (int) $status['percent'],
+                'filled' => (int) $status['filled'],
+                'total' => (int) $status['total'],
+                'sections' => array_map(fn ($s) => (bool) $s['done'], $status['sections']),
+            ];
+        }
+
         $sections = [
             'Photo' => $this->getImageCount() > 0 || !empty($this->displaypic),
             'Introduction' => !empty($this->intro),

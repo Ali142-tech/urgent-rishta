@@ -1,0 +1,610 @@
+{{-- The "Complete / Edit your profile" wizard (steps, form, progress, scripts). Used twice:
+     member/complete-profile.blade.php  — full page, shown to a new member until the profile is complete ($embedded = false);
+     member/edit-profile.blade.php      — the same wizard INSIDE the member dashboard (sidebar + topbar), for a member who has
+                                          already completed it and comes back from the dashboard's "Edit Full Profile" ($embedded = true).
+     Every CSS rule is scoped under .ur-wiz so it cannot touch the dashboard around it. --}}
+@php($embedded = $embedded ?? false)
+<style>
+.ur-wiz { --green:#123A2E; --green-deep:#0B2A20; --green-soft:#1C5A47; --gold:#C9974D; --gold-soft:#F6E9D0; --cream:#FBF7EF; --line:#EADFCB; --ink:#1C2321; --muted:#6B7570; --ok:#1C9A6C; --err:#B5413A; --mint:#EAF4EF; }
+.ur-wiz * { box-sizing: border-box; }
+.ur-wiz .layout > * { min-width:0; }
+.ur-wiz { margin:0; background:
+            radial-gradient(900px 420px at 100% -80px, rgba(201,151,77,.14), transparent 60%),
+            radial-gradient(800px 380px at -10% 0, rgba(18,58,46,.08), transparent 60%), var(--cream);
+            color:var(--ink); font-family:'Manrope', system-ui, sans-serif; }
+.ur-wiz .wrap { max-width:1260px; margin:0 auto; padding:22px 22px 60px; }
+/* header */
+.ur-wiz .bar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:22px; padding:12px 22px; border-radius:20px; background:linear-gradient(135deg, #0F2E24 0%, #1C5A47 100%); box-shadow:0 14px 34px rgba(15,46,36,.22), inset 0 -3px 0 rgba(201,151,77,.55); position:relative; overflow:hidden; }
+.ur-wiz .bar::after { content:""; position:absolute; right:-40px; top:-60px; width:200px; height:200px; border-radius:50%; background:radial-gradient(circle, rgba(201,151,77,.28), transparent 70%); pointer-events:none; }
+.ur-wiz .bar > * { position:relative; z-index:1; }
+.ur-wiz .brand__logo { height:62px; width:auto; display:block; }
+.ur-wiz .bar .btn--ghost { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.28); color:#fff; }
+.ur-wiz .bar .btn--ghost:hover { background:rgba(255,255,255,.2); border-color:#fff; }
+.ur-wiz .brand { display:flex; align-items:center; gap:13px; text-decoration:none; color:inherit; }
+.ur-wiz .brand__mark { width:48px; height:48px; border-radius:15px; background:linear-gradient(145deg, var(--green-soft), var(--green-deep)); color:#fff; display:grid; place-items:center; font-family:'Playfair Display', serif; font-weight:700; font-size:21px; letter-spacing:.02em; box-shadow:0 10px 22px rgba(18,58,46,.28), inset 0 0 0 2px rgba(201,151,77,.55); }
+.ur-wiz .brand__name { display:block; font-family:'Playfair Display', serif; font-weight:700; font-size:21px; letter-spacing:.08em; color:#fff; line-height:1.1; }
+.ur-wiz .brand__tag { display:block; font-size:10.5px; letter-spacing:.22em; color:#E9C98F; font-weight:700; margin-top:3px; }
+.ur-wiz .bar__actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.ur-wiz .btn { border:0; border-radius:12px; padding:11px 18px; font:inherit; font-weight:800; font-size:13.5px; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; gap:8px; transition:.15s; }
+.ur-wiz .btn--ghost { background:#fff; border:1px solid var(--line); color:var(--green); }
+.ur-wiz .btn--ghost:hover { border-color:var(--green); }
+.ur-wiz .btn--gold { background:var(--gold-soft); border:1px solid #E8CC96; color:#7A5A12; }
+.ur-wiz .btn--gold:hover { background:#F1DDB6; }
+.ur-wiz .btn--green { background:linear-gradient(180deg, var(--green-soft), var(--green)); color:#fff; box-shadow:0 10px 20px rgba(18,58,46,.22); }
+.ur-wiz .btn--green:hover { filter:brightness(1.08); }
+.ur-wiz .btn[disabled] { opacity:.55; cursor:default; }
+.ur-wiz .lockpill { font-size:12px; font-weight:800; color:#7A5A12; background:var(--gold-soft); border:1px solid #E8CC96; border-radius:999px; padding:8px 13px; display:inline-flex; gap:7px; align-items:center; }
+.ur-wiz .layout { display:grid; grid-template-columns:318px minmax(0,1fr); gap:24px; align-items:start; }
+.ur-wiz .card { background:#fff; border:1px solid var(--line); border-radius:20px; box-shadow:0 14px 36px rgba(15,46,36,.07); }
+/* left rail */
+.ur-wiz .rail { position:sticky; top:16px; padding:22px 20px; }
+.ur-wiz .me { display:flex; align-items:center; gap:13px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+.ur-wiz .me__av { width:56px; height:56px; border-radius:50%; flex:none; overflow:hidden; background:linear-gradient(145deg, var(--gold), #A9732A); color:#fff; display:grid; place-items:center; font-weight:800; font-size:20px; position:relative; box-shadow:0 0 0 3px #fff, 0 0 0 5px rgba(201,151,77,.45); }
+.ur-wiz .me__av img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.ur-wiz .me__name { font-weight:800; font-size:16px; color:var(--green); line-height:1.25; }
+.ur-wiz .me__meta { font-size:12px; color:var(--muted); margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.ur-wiz .chip { font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; border-radius:999px; padding:3px 9px; }
+.ur-wiz .chip--draft { background:var(--gold-soft); color:#8A6411; }
+.ur-wiz .chip--done { background:#DDF3E8; color:#13734F; }
+.ur-wiz .pc { margin:16px 0 4px; display:flex; align-items:baseline; justify-content:space-between; }
+.ur-wiz .pc b { font-size:13px; }
+.ur-wiz .pc span { font-size:26px; font-weight:800; color:var(--ok); }
+.ur-wiz .bar-track { height:9px; background:#F0E8D6; border-radius:999px; overflow:hidden; }
+.ur-wiz .bar-fill { height:100%; width:0; background:linear-gradient(90deg, #35B98A, var(--ok)); border-radius:999px; transition:width .5s; }
+.ur-wiz .help { font-size:12.5px; line-height:1.55; color:var(--muted); margin:12px 0 16px; }
+.ur-wiz .steps { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
+.ur-wiz .steps li button { width:100%; text-align:left; background:transparent; border:0; border-radius:13px; padding:9px 10px; font:inherit; font-weight:700; font-size:13.5px; color:#3B4540; cursor:pointer; display:flex; align-items:center; gap:11px; }
+.ur-wiz .steps li button:hover { background:#F7F2E6; }
+.ur-wiz .steps li.is-active button { background:var(--mint); color:var(--green); box-shadow:inset 3px 0 0 var(--green); }
+.ur-wiz .steps .num { width:28px; height:28px; border-radius:9px; background:#F3EDDD; color:#7A7052; display:grid; place-items:center; font-size:11.5px; font-weight:800; flex:none; }
+.ur-wiz .steps li.is-active .num { background:var(--green); color:#fff; }
+.ur-wiz .steps li.is-done .num { background:#DDF3E8; color:#13734F; font-size:13px; }
+.ur-wiz .steps .cnt { margin-left:auto; font-size:11px; font-weight:800; color:#A39A7F; }
+.ur-wiz .elig { margin-top:16px; background:linear-gradient(180deg, #FFF9EC, #FFF4DE); border:1px solid #F0DDB2; border-radius:15px; padding:14px 15px; }
+.ur-wiz .elig b { display:flex; align-items:center; gap:8px; color:#7A5A12; font-size:13px; }
+.ur-wiz .elig p { margin:6px 0 0; font-size:12.5px; line-height:1.55; color:#8B7340; }
+/* main */
+.ur-wiz .main { overflow:hidden; }
+.ur-wiz .hero { padding:28px 34px 22px; background:linear-gradient(135deg, #F1F8F4 0%, #FFFDF8 60%, #FDF4E2 100%); border-bottom:1px solid var(--line); position:relative; }
+.ur-wiz .hero::after { content:""; position:absolute; right:-40px; top:-60px; width:220px; height:220px; border-radius:50%; background:radial-gradient(circle, rgba(201,151,77,.22), transparent 70%); }
+.ur-wiz .eyebrow { color:var(--ok); font-size:11.5px; letter-spacing:.16em; font-weight:800; text-transform:uppercase; position:relative; }
+.ur-wiz .hero h1 { font-family:'Playfair Display', serif; font-size:32px; margin:8px 0 8px; color:var(--green); position:relative; }
+.ur-wiz .hero p { color:var(--muted); font-size:14px; margin:0; line-height:1.6; max-width:700px; position:relative; }
+.ur-wiz .hero__in { display:flex; align-items:center; justify-content:space-between; gap:28px; position:relative; z-index:1; }
+.ur-wiz .score { flex:none; display:flex; align-items:center; gap:16px; background:#fff; border:1px solid var(--line); border-radius:20px; padding:14px 20px 14px 14px; box-shadow:0 10px 26px rgba(15,46,36,.09); }
+.ur-wiz .score__ring { --p:0; width:96px; height:96px; border-radius:50%; background:conic-gradient(var(--ok) calc(var(--p) * 1%), #EFE7D6 0); display:grid; place-items:center; transition:background .5s; }
+.ur-wiz .score__ring::before { content:''; grid-area:1/1; width:76px; height:76px; border-radius:50%; background:#fff; }
+.ur-wiz .score__num { grid-area:1/1; font-size:27px; font-weight:800; color:var(--green); line-height:1; position:relative; }
+.ur-wiz .score__num small { font-size:14px; font-weight:800; }
+.ur-wiz .score__lbl { font-size:11px; letter-spacing:.14em; font-weight:800; color:#8A7A57; text-transform:uppercase; }
+.ur-wiz .score__sum { font-size:15px; font-weight:800; color:var(--green); margin-top:4px; }
+.ur-wiz .score__sub { font-size:12.5px; color:var(--muted); margin-top:3px; }
+.ur-wiz .score__grade { display:inline-block; margin-top:8px; font-size:11px; font-weight:800; border-radius:999px; padding:4px 10px; background:var(--gold-soft); color:#8A6411; }
+.ur-wiz .score__grade.is-done { background:#DDF3E8; color:#13734F; }
+.ur-wiz .segs { display:grid; grid-auto-flow:column; grid-auto-columns:1fr; gap:7px; padding:14px 34px 0; }
+.ur-wiz .segs button { height:8px; border:0; border-radius:999px; background:#EDE5D2; cursor:pointer; padding:0; transition:.2s; }
+.ur-wiz .segs button.is-done { background:#7CCBA8; }
+.ur-wiz .segs button.is-active { background:var(--green); }
+.ur-wiz .body { padding:20px 34px 28px; }
+.ur-wiz .alert { border-radius:13px; padding:12px 15px; font-size:13.5px; font-weight:600; margin-bottom:18px; }
+.ur-wiz .alert--gate { background:#FFF6E6; border:1px solid #F0D79B; color:#7A5A12; display:flex; gap:10px; align-items:center; }
+.ur-wiz .alert--err { background:#FDECEC; border:1px solid #F4C6C3; color:var(--err); display:none; }
+.ur-wiz .sect__head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:4px; }
+.ur-wiz .sect__head h2 { font-size:22px; font-weight:800; color:var(--green); margin:0; }
+.ur-wiz .pill { font-size:11.5px; font-weight:800; color:#5C6862; background:#F1EEE5; border-radius:999px; padding:6px 12px; white-space:nowrap; }
+.ur-wiz .lead { color:var(--muted); font-size:13.5px; margin:0 0 22px; line-height:1.55; }
+.ur-wiz .grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:20px 22px; }
+.ur-wiz .field--wide { grid-column:1 / -1; }
+.ur-wiz .field .lbl { display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:7px; }
+.ur-wiz .field label { font-size:13.5px; font-weight:800; color:#26302B; }
+.ur-wiz .tag { font-size:12px; font-weight:700; color:#9AA39E; white-space:nowrap; }
+.ur-wiz .tag--req { color:var(--err); }
+.ur-wiz .field input, .ur-wiz .field select, .ur-wiz .field textarea { width:100%; border:1px solid #DDD3BE; border-radius:13px; background:#fff; padding:13px 15px; font:inherit; font-size:14.5px; color:var(--ink); transition:.15s; }
+.ur-wiz .field select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23123A2E' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 15px center; padding-right:38px; }
+.ur-wiz .field textarea { min-height:150px; resize:vertical; line-height:1.55; }
+.ur-wiz .field input::placeholder, .ur-wiz .field textarea::placeholder { color:#B2AC9C; }
+.ur-wiz .field input:hover, .ur-wiz .field select:hover, .ur-wiz .field textarea:hover { border-color:#C9BE9F; }
+.ur-wiz .field input:focus, .ur-wiz .field select:focus, .ur-wiz .field textarea:focus { outline:0; border-color:var(--green); box-shadow:0 0 0 4px rgba(18,58,46,.10); }
+.ur-wiz .field.has-error input, .ur-wiz .field.has-error select, .ur-wiz .field.has-error textarea { border-color:var(--err); background:#FFF8F7; }
+.ur-wiz .field.has-error .ur-ss__btn { border-color:var(--err) !important; background-color:#FFF8F7 !important; }
+.ur-wiz .field .err { color:var(--err); font-size:12.5px; font-weight:600; margin-top:6px; display:none; }
+.ur-wiz .field.has-error .err { display:block; }
+.ur-wiz .field .note { font-size:12px; color:#8A938E; margin-top:6px; }
+.ur-wiz .field.is-hidden { display:none; }
+.ur-wiz .dob { display:grid; grid-template-columns:1fr 1.3fr 1fr; gap:10px; }
+.ur-wiz .foot { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:30px; padding-top:22px; border-top:1px solid var(--line); flex-wrap:wrap; }
+.ur-wiz .foot__right { display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; }
+.ur-wiz .missing { margin-top:22px; background:#FFF9EE; border:1px dashed #E9D2A0; border-radius:15px; padding:15px 17px; font-size:13px; }
+.ur-wiz .missing b { color:var(--green); }
+.ur-wiz .missing ul { margin:10px 0 0; padding:0; list-style:none; display:flex; flex-wrap:wrap; gap:8px; }
+.ur-wiz .missing li button { background:#fff; border:1px solid #E9D2A0; border-radius:999px; padding:5px 12px; font:inherit; font-size:12px; font-weight:700; color:#7A5A12; cursor:pointer; }
+.ur-wiz .missing li button:hover { background:#FFF3D6; }
+.ur-wiz .toast { position:fixed; right:20px; bottom:20px; background:var(--green); color:#fff; padding:13px 19px; border-radius:13px; font-weight:700; font-size:14px; box-shadow:0 14px 30px rgba(0,0,0,.22); transform:translateY(20px); opacity:0; pointer-events:none; transition:.25s; z-index:50; }
+.ur-wiz .toast.show { transform:none; opacity:1; }
+.ur-wiz .step-pane { display:none; }
+.ur-wiz .step-pane.is-active { display:block; animation:rise .25s ease; }
+@keyframes rise { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+.ur-wiz .fineprint { text-align:center; color:#9A9279; font-size:12px; margin-top:26px; letter-spacing:.04em; }
+@media (max-width: 960px) {
+.ur-wiz .layout { grid-template-columns:1fr; }
+.ur-wiz .rail { position:static; }
+.ur-wiz .steps { grid-auto-flow:column; grid-auto-columns:max-content; overflow-x:auto; padding-bottom:4px; }
+.ur-wiz .steps li button { white-space:nowrap; }
+.ur-wiz .steps .cnt { display:none; }
+.ur-wiz .hero, .ur-wiz .body { padding-left:20px; padding-right:20px; }
+.ur-wiz .segs { padding-left:20px; padding-right:20px; }
+.ur-wiz .grid { grid-template-columns:1fr; }
+.ur-wiz .hero h1 { font-size:26px; }
+.ur-wiz .hero__in { flex-direction:column; align-items:flex-start; gap:18px; }
+.ur-wiz .score { width:100%; }
+.ur-wiz .wrap { padding:16px 14px 50px; }
+.ur-wiz .brand__tag { display:none; }
+.ur-wiz .bar { flex-direction:column; align-items:stretch; gap:12px; padding:14px 16px; border-radius:18px; }
+.ur-wiz .brand__name { font-size:18px; letter-spacing:.05em; }
+.ur-wiz .brand__logo { height:48px; }
+.ur-wiz .bar__actions { justify-content:flex-start; gap:8px; }
+.ur-wiz .bar__actions .btn { padding:9px 13px; font-size:12.5px; }
+.ur-wiz .lockpill { flex:1 1 100%; justify-content:center; }
+.ur-wiz .bar__actions form { margin-left:auto !important; }
+.ur-wiz .rail { padding:18px 16px; }
+.ur-wiz .steps { max-width:100%; margin:0 -4px; padding:0 4px 6px; -webkit-overflow-scrolling:touch; }
+.ur-wiz .steps li { flex:none; }
+.ur-wiz .steps li button { padding:8px 12px 8px 8px; background:#F8F4E9; }
+.ur-wiz .steps li.is-active button { box-shadow:none; background:var(--green); color:#fff; }
+.ur-wiz .steps li.is-active button, .ur-wiz .steps li.is-active button span { color:#fff !important; }
+.ur-wiz .steps li.is-active .num { background:rgba(255,255,255,.22); }
+.ur-wiz .steps li.is-active.is-done .num i, .ur-wiz .steps li.is-active .num i { color:#fff; }
+/* the step chips scroll sideways: hide the (gold, from the old theme) scrollbar that showed as a stray block under them */
+.ur-wiz .steps { scrollbar-width:none; -ms-overflow-style:none; }
+.ur-wiz .steps::-webkit-scrollbar { display:none; height:0; }
+.ur-wiz .steps li button { box-shadow:none; }
+.ur-wiz .elig { display:none; }
+.ur-wiz .main { border-radius:18px; }
+.ur-wiz .hero { padding:22px 18px 18px; }
+.ur-wiz .hero h1 { font-size:24px; overflow-wrap:anywhere; }
+.ur-wiz .score { padding:12px 14px; gap:12px; }
+.ur-wiz .score__ring { width:84px; height:84px; }
+.ur-wiz .score__ring::before { width:66px; height:66px; }
+.ur-wiz .score__num { font-size:23px; }
+.ur-wiz .segs { padding:12px 18px 0; gap:5px; }
+.ur-wiz .body { padding:16px 18px 22px; }
+.ur-wiz .sect__head { flex-direction:column; gap:8px; }
+.ur-wiz .sect__head h2 { font-size:20px; }
+.ur-wiz .field input, .ur-wiz .field select, .ur-wiz .field textarea { font-size:16px; }
+.ur-wiz .dob { grid-template-columns:.9fr 1.3fr 1.1fr; gap:8px; }
+.ur-wiz .dob select { padding:13px 26px 13px 11px; background-position:right 10px center; }
+.ur-wiz .foot { flex-direction:column-reverse; align-items:stretch; }
+.ur-wiz .foot .btn { width:100%; justify-content:center; }
+.ur-wiz .foot__right { margin-left:0; width:100%; }
+.ur-wiz .foot > span { display:none; }
+.ur-wiz .alert--gate { align-items:flex-start; }
+.ur-wiz .toast { left:14px; right:14px; bottom:14px; text-align:center; }
+}
+/* ---- inside the dashboard: no own page header / full-page background, sits in the dashboard's content area ---- */
+.ur-wiz.is-embedded { background:none; overflow:visible; }
+.ur-wiz.is-embedded .wrap { max-width:none; padding:0 0 24px; }
+.ur-wiz.is-embedded .rail { top:84px; }
+.ur-wiz .embedbar { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-bottom:20px; }
+.ur-wiz .embedbar h1 { font-family:'Playfair Display', serif; font-size:26px; font-weight:700; color:var(--green); margin:0 0 4px; }
+.ur-wiz .embedbar p { margin:0; font-size:13.5px; color:var(--muted); }
+@media (max-width: 575px) { .ur-wiz .embedbar h1 { font-size:22px; } .ur-wiz .embedbar .btn { width:100%; justify-content:center; } }
+</style>
+<div class="ur-wiz {{ $embedded ? 'is-embedded' : '' }}">
+@php($firstName = trim((string) $user->first_name))
+@php($fullName = trim($user->first_name . ' ' . $user->last_name))
+@php($initials = strtoupper(mb_substr((string) $user->first_name, 0, 1) . mb_substr((string) $user->last_name, 0, 1)))
+<div class="wrap">
+    @if($embedded)
+    <div class="embedbar">
+        <div>
+            <h1>Edit Full Profile</h1>
+            <p>Keep your profile complete and up to date so the right families can find you.</p>
+        </div>
+        <button type="button" class="btn btn--gold" id="save_draft"><i class="fa fa-floppy-o"></i> Save Draft</button>
+    </div>
+    @else
+    <header class="bar">
+        <a class="brand" href="{{ url('/') }}">
+            <img class="brand__logo" src="{{ asset('images/header_logo2.png') }}" alt="Urgent Rishta">
+            <span><span class="brand__name">URGENT RISHTA</span><span class="brand__tag">PRIVATE · VERIFIED · PROFESSIONAL</span></span>
+        </a>
+        <div class="bar__actions">
+            @if($gated)
+                <span class="lockpill"><i class="fa fa-lock"></i> Dashboard unlocks at 100%</span>
+            @else
+                <a class="btn btn--ghost" href="{{ url('member/profile') }}"><i class="fa fa-th-large"></i> Member Dashboard</a>
+            @endif
+            <button type="button" class="btn btn--gold" id="save_draft"><i class="fa fa-floppy-o"></i> Save Draft</button>
+            <form method="POST" action="{{ route('logout') }}" style="margin:0;">@csrf<button type="submit" class="btn btn--ghost"><i class="fa fa-power-off"></i> Log out</button></form>
+        </div>
+    </header>
+    @endif
+
+    <div class="layout">
+        <aside class="card rail">
+            <div class="me">
+                <div class="me__av"><span>{{ $initials ?: 'UR' }}</span>@if($avatar)<img src="{{ $avatar }}" alt="" onerror="this.remove()">@endif</div>
+                <div>
+                    <div class="me__name">{{ $fullName ?: 'New Member' }}</div>
+                    <div class="me__meta"><span class="chip {{ $status['complete'] ? 'chip--done' : 'chip--draft' }}" id="status_chip">{{ $status['complete'] ? 'Complete' : 'Draft' }}</span> <span>ID {{ $user->dataid }}</span></div>
+                </div>
+            </div>
+            <div class="pc"><b>Profile Completion</b><span><i id="pct_num" style="font-style:normal;">{{ $status['percent'] }}</i>%</span></div>
+            <div class="bar-track"><div class="bar-fill" id="pct_bar"></div></div>
+            <p class="help" id="rail_note">
+                @if($gated) Fill in every required detail to unlock your dashboard. You can save a draft and come back any time, and edit all of this later. @else Keep your profile complete and up to date so the right families can find you. @endif
+            </p>
+            <ul class="steps" id="steps">
+                @foreach($sections as $i => $section)
+                    @php($st = $status['sections'][$section['key']])
+                    <li data-step="{{ $section['key'] }}" class="{{ $st['done'] ? 'is-done' : '' }}">
+                        <button type="button" onclick="goStep('{{ $section['key'] }}')">
+                            <span class="num">{!! $st['done'] ? '<i class="fa fa-check"></i>' : sprintf('%02d', $i + 1) !!}</span>
+                            <span>{{ $section['title'] }}</span>
+                            <span class="cnt" id="cnt_{{ $section['key'] }}">{{ $st['filled'] }}/{{ $st['total'] }}</span>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+            <div class="elig">
+                <b><i class="fa fa-shield"></i> Matching Eligibility</b>
+                <p>Your profile is shown to other members and used for matching once it is complete, verified and approved by our team.</p>
+            </div>
+        </aside>
+
+        <main class="card main">
+            <div class="hero">
+              <div class="hero__in">
+                <div>
+                    <div class="eyebrow">Urgent Rishta · Member Profile Builder</div>
+                    <h1>{{ $gated ? 'Create Your Matrimonial Profile' : 'Edit Your Matrimonial Profile' }}</h1>
+                    <p>{{ $firstName ? 'Welcome, ' . $firstName . '. ' : '' }}{{ $gated ? 'Complete the sections below to unlock your dashboard. Save a draft whenever you like and finish the rest when convenient.' : 'Update any section below. Your changes are saved to your profile straight away.' }}</p>
+                </div>
+                <div class="score" aria-live="polite">
+                    <div class="score__ring" id="score_ring" style="--p:{{ $status['percent'] }}"><span class="score__num"><span id="score_num">{{ $status['percent'] }}</span><small>%</small></span></div>
+                    <div>
+                        <div class="score__lbl">Profile Score</div>
+                        <div class="score__sum" id="score_sum">{{ $status['filled'] }} of {{ $status['total'] }} required details</div>
+                        <div class="score__sub" id="score_sub">{{ $status['complete'] ? 'Everything required is filled in.' : ($status['total'] - $status['filled']) . ' remaining to reach 100%' }}</div>
+                        <span class="score__grade {{ $status['complete'] ? 'is-done' : '' }}" id="score_grade">{{ $status['complete'] ? 'Complete' : 'In progress' }}</span>
+                    </div>
+                </div>
+              </div>
+            </div>
+            <div class="segs" id="segs">
+                @foreach($sections as $section)<button type="button" data-step="{{ $section['key'] }}" onclick="goStep('{{ $section['key'] }}')" title="{{ $section['title'] }}"></button>@endforeach
+            </div>
+
+            <div class="body">
+                @if($gated)
+                    <div class="alert alert--gate"><i class="fa fa-lock"></i> <span>Your dashboard unlocks as soon as your profile reaches <b>100%</b>. Required fields are marked <b style="color:#B5413A">Required *</b>.</span></div>
+                @endif
+                <div class="alert alert--err" id="top_err"></div>
+
+                @foreach($sections as $i => $section)
+                    <section class="step-pane" id="pane_{{ $section['key'] }}" data-step="{{ $section['key'] }}">
+                        <div class="sect__head"><h2>{{ $section['title'] }}</h2><span class="pill">Section {{ $i + 1 }} of {{ count($sections) }}</span></div>
+                        <p class="lead">{{ $section['desc'] }}</p>
+                        <form class="grid" id="form_{{ $section['key'] }}" autocomplete="off" onsubmit="return false;">
+                            @foreach($section['fields'] as $field)
+                                @php($name = $field['name'])
+                                @php($val = $values[$name] ?? null)
+                                @php($isReq = $field['required'] || !empty($field['requiredIfOptions']))
+                                @if($field['type'] === 'dob')
+                                    <div class="field field--wide" data-field="{{ $name }}" data-required="1">
+                                        <div class="lbl"><label>{{ $field['label'] }}</label><span class="tag tag--req">Required *</span></div>
+                                        <div class="dob">
+                                            <select name="day" data-no-search><option value="">Day</option>@for($d = 1; $d <= 31; $d++)<option value="{{ $d }}" {{ (int) ($dob['day'] ?? 0) === $d ? 'selected' : '' }}>{{ $d }}</option>@endfor</select>
+                                            <select name="month" data-no-search><option value="">Month</option>@foreach(['January','February','March','April','May','June','July','August','September','October','November','December'] as $mi => $mn)<option value="{{ $mi + 1 }}" {{ (int) ($dob['month'] ?? 0) === $mi + 1 ? 'selected' : '' }}>{{ $mn }}</option>@endforeach</select>
+                                            <select name="year"><option value="">Year</option>@for($y = (int) date('Y') - 18; $y >= (int) date('Y') - 80; $y--)<option value="{{ $y }}" {{ (int) ($dob['year'] ?? 0) === $y ? 'selected' : '' }}>{{ $y }}</option>@endfor</select>
+                                        </div>
+                                        <div class="err"></div>
+                                    </div>
+                                @else
+                                    <div class="field {{ $field['type'] === 'textarea' ? 'field--wide' : '' }} {{ (!empty($field['showWhen']) && !(str_starts_with($field['showWhen'][1], '!') ? ((string) ($values[$field['showWhen'][0]] ?? '') !== '' && (string) ($values[$field['showWhen'][0]] ?? '') !== substr($field['showWhen'][1], 1)) : (string) ($values[$field['showWhen'][0]] ?? '') === $field['showWhen'][1])) ? 'is-hidden' : '' }}" data-field="{{ $name }}" data-required="{{ ($field['required'] || !empty($field['requiredWhen'])) ? 1 : 0 }}" @if(!empty($field['showWhen'])) data-show-when="{{ $field['showWhen'][0] }}={{ $field['showWhen'][1] }}" @endif @if(!empty($field['requiredIfOptions'])) data-required-if-options="1" @endif>
+                                        <div class="lbl"><label for="f_{{ $name }}">{{ $field['label'] }}</label><span class="tag {{ $isReq ? 'tag--req' : '' }}">{{ $isReq ? 'Required *' : 'Optional' }}</span></div>
+                                        @if($field['type'] === 'select' || $field['type'] === 'country')
+                                            <select id="f_{{ $name }}" name="{{ $name }}" @if($name === 'religion') data-cascade="caste" @endif @if($name === 'con_of_residence') data-cascade="state" @endif @if(!empty($field['regional'])) data-house-size @endif @if($name === 'education') data-edu-other="{{ $educationOtherId }}" data-search @endif>
+                                                <option value="">Select an option</option>
+                                                @foreach($field['choices'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }} @if($name === 'education' && (string) $ov === (string) $educationOtherId) data-pinned="1" @endif>{{ $ol }}</option>@endforeach
+                                            </select>
+                                            @if($name === 'education')
+                                                <input id="f_education_other" type="text" name="education_other" maxlength="60" value="{{ $educationOther }}" placeholder="Type your qualification, e.g. BS Textile Engineering" style="margin-top:10px; {{ (string) $val === (string) $educationOtherId ? '' : 'display:none;' }}">
+                                            @endif
+                                        @elseif($field['type'] === 'profession')
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-prof-other data-search>
+                                                <option value="">Select an option</option>
+                                                @foreach($field['choices'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach
+                                                <option value="__other" data-pinned="1" {{ (string) $val === '__other' ? 'selected' : '' }}>{{ $professionOtherLabel }}</option>
+                                            </select>
+                                            <input id="f_{{ $name }}_other" type="text" name="{{ $name }}_other" maxlength="100" value="{{ $professionOther[$name] ?? '' }}" placeholder="Type your profession, e.g. Pharmacist" style="margin-top:10px; {{ (string) $val === '__other' ? '' : 'display:none;' }}">
+                                        @elseif($field['type'] === 'area')
+                                            <input id="f_{{ $name }}" type="text" name="{{ $name }}" maxlength="{{ $field['max'] ?? 150 }}" value="{{ $val }}" placeholder="{{ $field['placeholder'] ?? '' }}" list="area_suggestions" autocomplete="off">
+                                            <datalist id="area_suggestions"></datalist>
+                                            <div class="note">Pick a suggestion or type your own area.</div>
+                                        @elseif($field['type'] === 'caste')
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-search data-caste-other><option value="">Select an option</option>@foreach($dep['castes'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach<option value="__other_caste" data-pinned="1">+ Add my caste (not in the list)</option></select>
+                                            <input id="f_caste_other" type="text" name="caste_other" maxlength="60" placeholder="Type your caste / community, e.g. Rajput" style="margin-top:10px; display:none;">
+                                            <div class="note">The list follows the country you live in and your religion.</div>
+                                        @elseif($field['type'] === 'state')
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-cascade="city" data-search><option value="">Select an option</option>@foreach($dep['states'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
+                                        @elseif($field['type'] === 'city')
+                                            <select id="f_{{ $name }}" name="{{ $name }}" data-search><option value="">Select an option</option>@foreach($dep['cities'] as $ov => $ol)<option value="{{ $ov }}" {{ (string) $val === (string) $ov ? 'selected' : '' }}>{{ $ol }}</option>@endforeach</select>
+                                        @elseif($field['type'] === 'textarea')
+                                            <textarea id="f_{{ $name }}" name="{{ $name }}" maxlength="{{ $field['max'] ?? 2000 }}" placeholder="{{ $field['placeholder'] ?? '' }}">{{ $val }}</textarea>
+                                        @elseif($field['type'] === 'number')
+                                            <input id="f_{{ $name }}" type="number" name="{{ $name }}" min="{{ $field['min'] ?? 0 }}" max="{{ $field['max'] ?? 99 }}" value="{{ $val }}" placeholder="{{ $field['placeholder'] ?? '' }}">
+                                        @else
+                                            <input id="f_{{ $name }}" type="text" name="{{ $name }}" maxlength="{{ $field['max'] ?? 255 }}" value="{{ $val }}" placeholder="{{ $field['placeholder'] ?? '' }}">
+                                        @endif
+                                        <div class="err"></div>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </form>
+
+                        <div class="foot">
+                            @if($i > 0)<button type="button" class="btn btn--ghost" onclick="goStep('{{ $sections[$i - 1]['key'] }}')"><i class="fa fa-arrow-left"></i> Previous Section</button>@else<span></span>@endif
+                            <div class="foot__right">
+                                @if($i < count($sections) - 1)
+                                    <button type="button" class="btn btn--green js-save" data-step="{{ $section['key'] }}" data-next="{{ $sections[$i + 1]['key'] }}">Save &amp; Next Section <i class="fa fa-arrow-right"></i></button>
+                                @else
+                                    <button type="button" class="btn btn--green js-save" data-step="{{ $section['key'] }}" data-last="1"><i class="fa fa-check"></i> {{ $gated ? 'Save & Finish' : 'Save Changes' }}</button>
+                                @endif
+                            </div>
+                        </div>
+                    </section>
+                @endforeach
+
+                <div class="missing" id="missing_box" style="display:none;">
+                    <b>Still needed for 100%</b>
+                    <ul id="missing_list"></ul>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div class="fineprint">Urgent Rishta · Private, clear, consent-based profiles. Your information is kept confidential.</div>
+</div>
+
+<form id="finish_form" method="POST" action="{{ route('member.complete.finish') }}" style="display:none;">@csrf</form>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+    var SECTIONS = {!! json_encode(collect($sections)->map(function ($s) { return ['key' => $s['key'], 'title' => $s['title']]; })->values()) !!};
+    var STATUS = @json($status);
+    var SAVE_URL = @json(url('member/profile/complete'));
+    var BASE = @json(url('/'));
+    var GATED = @json($gated);
+    var CSRF = document.querySelector('meta[name=csrf-token]').content;
+    var current = @json($start);
+
+    function $(s, r) { return (r || document).querySelector(s); }
+    function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
+    function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('show'); setTimeout(function () { t.classList.remove('show'); }, 2600); }
+    function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+    function paint(status) {
+        STATUS = status;
+        $('#pct_num').textContent = status.percent;
+        $('#pct_bar').style.width = status.percent + '%';
+        $('#score_ring').style.setProperty('--p', status.percent);
+        $('#score_num').textContent = status.percent;
+        $('#score_sum').textContent = status.filled + ' of ' + status.total + ' required details';
+        $('#score_sub').textContent = status.complete ? 'Everything required is filled in.' : (status.total - status.filled) + ' remaining to reach 100%';
+        var g = $('#score_grade'); g.textContent = status.complete ? 'Complete' : 'In progress'; g.classList.toggle('is-done', !!status.complete);
+        var chip = $('#status_chip');
+        chip.textContent = status.complete ? 'Complete' : 'Draft';
+        chip.className = 'chip ' + (status.complete ? 'chip--done' : 'chip--draft');
+        SECTIONS.forEach(function (s, i) {
+            var st = status.sections[s.key], li = $('#steps li[data-step="' + s.key + '"]');
+            li.classList.toggle('is-done', !!st.done);
+            li.querySelector('.num').innerHTML = st.done ? '<i class="fa fa-check"></i>' : pad(i + 1);
+            $('#cnt_' + s.key).textContent = st.filled + '/' + st.total;
+            var seg = $('#segs button[data-step="' + s.key + '"]');
+            seg.classList.toggle('is-done', !!st.done);
+        });
+        var box = $('#missing_box'), list = $('#missing_list');
+        list.innerHTML = '';
+        (status.missing || []).forEach(function (m) {
+            var li = document.createElement('li'), b = document.createElement('button');
+            b.type = 'button'; b.textContent = m.label; b.onclick = function () { goStep(m.section, m.name); };
+            li.appendChild(b); list.appendChild(li);
+        });
+        box.style.display = (status.missing && status.missing.length) ? '' : 'none';
+    }
+
+    window.goStep = function (key, focusName) {
+        current = key;
+        $$('.step-pane').forEach(function (p) { p.classList.toggle('is-active', p.dataset.step === key); });
+        $$('#steps li').forEach(function (li) {
+            li.classList.toggle('is-active', li.dataset.step === key);
+            // on phones the steps scroll sideways: bring the current one into view (scrolls the strip only, not the page)
+            if (li.dataset.step === key && li.parentNode && li.parentNode.scrollWidth > li.parentNode.clientWidth) {
+                li.parentNode.scrollLeft = li.offsetLeft - (li.parentNode.clientWidth - li.offsetWidth) / 2;
+            }
+        });
+        $$('#segs button').forEach(function (b) { b.classList.toggle('is-active', b.dataset.step === key); });
+        $('#top_err').style.display = 'none';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (focusName) { var el = document.querySelector('#pane_' + key + ' [name="' + focusName + '"]'); if (el) { setTimeout(function () { el.focus(); }, 250); } }
+    };
+
+    // ---- house size: Marla / Kanal for Pakistan, square feet / metres elsewhere
+    var HOUSE_SIZES = @json($houseSizes);
+    function applyHouseSizes() {
+        var sel = $('select[name="residence_size"]'), cty = $('select[name="con_of_residence"]');
+        if (!sel || !cty) return;
+        var text = cty.options[cty.selectedIndex] ? cty.options[cty.selectedIndex].textContent.trim() : '';
+        var set = text === 'Pakistan' ? HOUSE_SIZES.pk : HOUSE_SIZES.intl, keep = sel.value;
+        sel.innerHTML = '<option value="">Select an option</option>' + set.map(function (n) { var o = document.createElement('option'); o.value = n; o.textContent = n; return o.outerHTML; }).join('');
+        sel.value = set.indexOf(keep) !== -1 ? keep : '';
+    }
+
+    // ---- area / society suggestions follow the chosen city
+    function loadAreas() {
+        var city = $('select[name="city"]'), dl = $('#area_suggestions');
+        if (!city || !dl) return;
+        if (!city.value) { dl.innerHTML = ''; return; }
+        ajax(BASE + '/member/profile/complete/areas/' + encodeURIComponent(city.value)).then(function (r) {
+            dl.innerHTML = (r.areas || []).map(function (a) { var o = document.createElement('option'); o.value = a; return o.outerHTML; }).join('');
+        });
+    }
+
+    // ---- fields that only apply while another answer says so (Business category -> only when the family runs a business)
+    function toggleConditional(changed) {
+        $$('[data-show-when]').forEach(function (wrap) {
+            var parts = wrap.dataset.showWhen.split('='), src = $('select[name="' + parts[0] + '"]');
+            if (!src || (changed && changed.name !== parts[0])) return;
+            var show = parts[1].charAt(0) === '!' ? (src.value !== '' && src.value !== parts[1].slice(1)) : src.value === parts[1];
+            wrap.classList.toggle('is-hidden', !show);
+            if (!show) { var ctl = wrap.querySelector('select, input'); if (ctl) ctl.value = ''; }
+        });
+    }
+
+    // ---- "Number of children" only applies once a marital status other than "Never Married" is chosen
+    function toggleChildren() {
+        var m = $('select[name="marital_status"]'), wrap = $('[data-field="children"]');
+        if (!m || !wrap) return;
+        var text = m.options[m.selectedIndex] ? m.options[m.selectedIndex].textContent : '';
+        var show = m.value !== '' && !/never\s*married/i.test(text);
+        wrap.classList.toggle('is-hidden', !show);
+        if (!show) { var inp = wrap.querySelector('input'); if (inp) inp.value = ''; }
+    }
+
+    // ---- cascades: religion -> caste, country -> state -> city
+    function ajax(url) { return fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }, credentials: 'same-origin' }).then(function (r) { return r.json(); }); }
+    function fill(sel, options, placeholder) {
+        var keep = sel.value;
+        sel.innerHTML = '';
+        var o = document.createElement('option'); o.value = ''; o.textContent = placeholder || 'Select an option'; sel.appendChild(o);
+        (options || []).forEach(function (x) { var op = document.createElement('option'); op.value = x.dataid; op.textContent = x.name; sel.appendChild(op); });
+        sel.value = keep && (options || []).some(function (x) { return String(x.dataid) === String(keep); }) ? keep : '';
+    }
+    // communities follow the country the member lives in, then their religion
+    function reloadCommunities() {
+        var rel = $('select[name="religion"]'), cty = $('select[name="con_of_residence"]'), caste = $('select[name="caste"]');
+        if (!rel || !caste || !rel.value) return;
+        ajax(BASE + '/communities/' + (cty && cty.value ? cty.value : '0') + '/' + rel.value).then(function (r) {
+            fill(caste, r.options);
+            var add = document.createElement('option'); add.value = '__other_caste'; add.textContent = '+ Add my caste (not in the list)'; add.setAttribute('data-pinned', '1'); caste.appendChild(add);
+        });
+    }
+    function stateField() { return $('[data-field="state"]'); }
+    function loadCities(stateId, countryId) {
+        var city = $('select[name="city"]');
+        if (stateId) { ajax(BASE + '/cities/' + stateId + '/0').then(function (r) { fill(city, r.options); }); }
+        else if (countryId) { ajax(BASE + '/cities/' + countryId + '/1').then(function (r) { fill(city, r.options); }); }
+        else { fill(city, []); }
+    }
+    function loadStates(countryId) {
+        var state = $('select[name="state"]'), wrap = stateField();
+        if (!countryId) { fill(state, []); wrap.classList.remove('is-hidden'); return; }
+        ajax(BASE + '/states/' + countryId).then(function (r) {
+            fill(state, r.options);
+            var has = r.options && r.options.length;
+            wrap.classList.toggle('is-hidden', !has);
+            wrap.dataset.hasOptions = has ? '1' : '0';
+            loadCities(state.value, countryId);
+        });
+    }
+    document.addEventListener('change', function (e) {
+        var t = e.target;
+        if (t.dataset && t.dataset.cascade === 'caste') { reloadCommunities(); }
+        if (t.dataset && t.dataset.cascade === 'state') { loadStates(t.value); reloadCommunities(); }
+        if (t.dataset && t.dataset.cascade === 'city') { loadCities(t.value, $('select[name="con_of_residence"]').value); }
+        if (t.dataset && t.dataset.casteOther !== undefined) { var co = $('#f_caste_other'); if (co) { co.style.display = t.value === '__other_caste' ? '' : 'none'; if (t.value === '__other_caste') co.focus(); } }
+        if (t.dataset && t.dataset.profOther !== undefined) { var po = $('#f_' + t.name + '_other'); if (po) { po.style.display = t.value === '__other' ? '' : 'none'; if (t.value === '__other') po.focus(); } }
+        if (t.dataset && t.dataset.eduOther !== undefined) { var eo = $('#f_education_other'); if (eo) { eo.style.display = t.value === t.dataset.eduOther ? '' : 'none'; if (t.value === t.dataset.eduOther) eo.focus(); } }
+        if (t.name === 'marital_status') { toggleChildren(); }
+        if (t.tagName === 'SELECT') { toggleConditional(t); }
+        if (t.name === 'con_of_residence') { applyHouseSizes(); }
+        if (t.name === 'city') { loadAreas(); }
+        var f = t.closest && t.closest('.field'); if (f) { f.classList.remove('has-error'); }
+    });
+    document.addEventListener('input', function (e) { var f = e.target.closest && e.target.closest('.field'); if (f) f.classList.remove('has-error'); });
+
+    // does this country have states? (decides whether State is shown / required)
+    (function initState() {
+        var c = $('select[name="con_of_residence"]'), wrap = stateField();
+        if (!c || !wrap) return;
+        var sel = $('select[name="state"]'), has = sel.options.length > 1;
+        if (c.value && !has) { ajax(BASE + '/states/' + c.value).then(function (r) { var h = r.options && r.options.length; wrap.classList.toggle('is-hidden', !h); wrap.dataset.hasOptions = h ? '1' : '0'; if (!h) loadCities('', c.value); }); }
+        else { wrap.dataset.hasOptions = has ? '1' : '0'; }
+        var city = $('select[name="city"]');
+        if (c.value && !has && city.options.length <= 1) loadCities('', c.value);
+    })();
+
+    // ---- validate + save
+    function showErrors(form, errors) {
+        var first = null;
+        Object.keys(errors).forEach(function (name) {
+            var f = form.querySelector('[data-field="' + name + '"]');
+            if (!f) return;
+            f.classList.add('has-error'); f.querySelector('.err').textContent = errors[name];
+            if (!first) first = f;
+        });
+        if (first) { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+    function clientCheck(form) {
+        var errors = {};
+        $$('.field[data-required]', form).forEach(function (f) {
+            if (f.classList.contains('is-hidden')) return;
+            var needed = f.dataset.required === '1' || (f.dataset.requiredIfOptions && f.dataset.hasOptions === '1');
+            if (!needed) return;
+            // only the boxes the member can see count: the "Other, please type" box stays hidden (and empty) until "Other" is chosen
+            var inputs = $$('input,select,textarea', f).filter(function (i) { return i.tagName === 'SELECT' || i.offsetParent !== null; }), empty = inputs.some(function (i) { return String(i.value).trim() === ''; });
+            if (empty) errors[f.dataset.field] = 'This field is required.';
+        });
+        return errors;
+    }
+
+    function send(step, draft, btn, onOk) {
+        var form = $('#form_' + step);
+        $$('.field', form).forEach(function (f) { f.classList.remove('has-error'); });
+        if (!draft) {
+            var errs = clientCheck(form);
+            if (Object.keys(errs).length) { showErrors(form, errs); toast('Please fill the highlighted fields.'); return; }
+        }
+        var original = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving…';
+        var fd = new FormData(form);
+        if (draft) fd.append('_draft', '1');
+        fetch(SAVE_URL + '/' + step, { method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+                if (j.redirect) { window.location.href = j.redirect; return; }
+                paint(j);
+                if (!j.ok) { showErrors(form, j.errors); toast('Please fix the highlighted fields.'); return; }
+                onOk(j);
+            })
+            .catch(function () { toast('Could not save. Check your connection and try again.'); })
+            .then(function () { btn.disabled = false; btn.innerHTML = original; });
+    }
+
+    $$('.js-save').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            send(btn.dataset.step, false, btn, function (j) {
+                if (btn.dataset.last) {
+                    if (j.complete && GATED) { $('#finish_form').submit(); return; }
+                    toast(j.complete ? 'Profile saved. You are at 100%.' : 'Saved. A few required details are still missing.');
+                    return;
+                }
+                toast('Saved');
+                goStep(btn.dataset.next);
+            });
+        });
+    });
+    $('#save_draft').addEventListener('click', function () {
+        send(current, true, this, function () { toast('Draft saved. You can finish the rest later.'); });
+    });
+
+    toggleChildren();
+    toggleConditional();
+    (function () { var sel = $('select[name="residence_size"]'); var saved = sel ? sel.value : ''; applyHouseSizes(); if (sel && saved) { var has = Array.prototype.some.call(sel.options, function (o) { return o.value === saved; }); if (has) sel.value = saved; } loadAreas(); })();
+    paint(STATUS);
+    goStep(current);
+})();
+</script>
+<script src="{{ asset('js/ur-searchable-select.js') }}?v={{ filemtime(public_path('js/ur-searchable-select.js')) }}"></script>
+<script>URSearchableSelect.init(document, { minOptions: 8 });</script>
+</div>

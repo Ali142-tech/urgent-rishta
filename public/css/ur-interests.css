@@ -150,7 +150,13 @@
     border-color: #E7E2D6;
     color: #123A2E;
 }
-.ur-interest-card__btn--accept { background: #123A2E; color: #fff; }
+.ur-interest-card__btn--accept { background: #123A2E; border-color: #123A2E; color: #fff !important; }
+.ur-interest-card__btn--accept i { color: #fff !important; }
+.ur-interest-card__btn--accept:hover { background: #0D2C23; opacity: 1; }
+.ur-interest-card__btn--ghost, .ur-interest-card__btn--withdraw, .ur-interest-card__btn--decline { line-height: 1.2; }
+.ur-interest-card__btn--ghost i { color: #C9974D; }
+/* a member who has since left the site: nothing to open or to send an interest to */
+.ur-interest-card__gone { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; color: #6B7570; background: #F6F4EF; border: 1px dashed #E7E2D6; border-radius: 8px; padding: 8px 14px; }
 .ur-interest-card__btn--decline { background: #fff; border-color: #B5674A; color: #B5674A; }
 .ur-interest-card__btn--withdraw { background: #fff; border-color: #E7E2D6; color: #B5674A; }
 .ur-interest-card__btn--expressed { background: rgba(18,58,46,.08); color: #123A2E; cursor: default; }

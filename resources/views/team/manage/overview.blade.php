@@ -22,6 +22,13 @@
     .ur-td-card tr:last-child td { border-bottom: none; }
     .ur-td-pill { display: inline-block; border-radius: 999px; padding: 2px 10px; font-size: 11.5px; font-weight: 700; background: #E6F1EA; color: #123A2E; }
     .ur-td-pill--warn { background: #FCF3E3; color: #8A5A12; }
+    .ur-td-pager { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding: 12px 18px; border-top: 1px solid #E7E2D6; }
+    .ur-td-pager__info { font-size: 12.5px; color: #6B7570; }
+    .ur-td-pager nav { overflow-x: auto; }
+    .ur-td-pager .pagination { margin: 0; gap: 6px; flex-wrap: wrap; }
+    .ur-td-pager .page-link { display: inline-flex; align-items: center; justify-content: center; min-width: 34px; height: 34px; margin: 0; padding: 0 10px; border-radius: 8px !important; border: 1px solid #E7E2D6; background: #fff; color: #123A2E; font-size: 12.5px; font-weight: 700; }
+    .ur-td-pager .page-item.active .page-link { background: #0F5B43; border-color: #0F5B43; color: #fff; }
+    .ur-td-pager .page-item.disabled .page-link { opacity: .4; }
     .ur-td-empty { padding: 22px 18px; color: #6B7570; font-size: 13.5px; }
 </style>
 
@@ -58,6 +65,12 @@
         @endforeach
         </tbody>
     </table>
+    @if($members->hasPages())
+        <div class="ur-td-pager">
+            <span class="ur-td-pager__info">Showing {{ $members->firstItem() }}&ndash;{{ $members->lastItem() }} of {{ $members->total() }} members</span>
+            {{ $members->links() }}
+        </div>
+    @endif
     @endif
 </div>
 

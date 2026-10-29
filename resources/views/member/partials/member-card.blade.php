@@ -40,6 +40,11 @@ $hiddenImageUrl = $hideImage ? (!empty($member->homepageFaceBlurredImage) ? $mem
 // Royal+ photo blur is for MEMBERS looking at members: never for team proposals, and only when a real member is signed in
 // (a team member signed in on the team guard has no `users` row).
 $royalBlur = false;
+// Where a click on the photo / name opens the profile. A team proposal has no member page (member/profile/P-123 is a 404),
+// so it goes to its own team view (the admin's read-only list opens the public share card instead).
+$profileOpenUrl = !empty($member->team_card_role)
+    ? ($member->team_card_role === 'admin' ? route('share.proposal', $member->dataid) : route('team.proposals.view', $member->dataid))
+    : url('/member/profile/' . $member->dataid);
 if (!$hideImage && empty($member->team_card_role) && auth('web')->check()) {
     $__viewer = User::retrieveUserObject();
     $royalBlur = $__viewer ? $__viewer->photosBlurredFor($member) : false;
@@ -72,7 +77,7 @@ $packageIcon = match ($packageSlug) {
 <div class="member-card" id="block_{{$member->dataid}}">
     <div class="member-card__photo">
         @foreach($cardImages as $i => $cardImage)
-            <a class="member-card__slide {{ $i === 0 ? 'is-active' : '' }}" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+            <a class="member-card__slide {{ $i === 0 ? 'is-active' : '' }}" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
                 <span class="member-card__photo-bg" style="background-image:url('{{ $cardImage }}')@if($royalBlur); filter: blur(9px); transform: scale(1.15);@endif"></span>
                 <img @if($royalBlur) style="filter: blur(7px); transform: scale(1.06);" draggable="false" oncontextmenu="return false;" @endif src="{{ $cardImage }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
             </a>
@@ -89,7 +94,7 @@ $packageIcon = match ($packageSlug) {
              the same open-profile/register click so tapping the overlay
              itself still works like tapping the photo. --}}
         @if($hideImage)
-            <div class="member-card__lock-overlay" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+            <div class="member-card__lock-overlay" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
                 <div class="member-card__lock-icon"><i class="fa fa-lock"></i></div>
                 <div class="member-card__lock-title">Private Photo</div>
                 <div class="member-card__lock-sub">Upgrade your plan to view this profile</div>
@@ -123,7 +128,7 @@ $packageIcon = match ($packageSlug) {
             @if($member->isOnline())
                 <span class="member-card__online-dot" title="Online in the last month"></span>
             @endif
-            <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">{{$member->first_name}}</a>
+            <a onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">{{$member->first_name}}</a>
         </h3>
         @if($compatibility)
             <div class="member-card__compat">
@@ -186,7 +191,7 @@ $packageIcon = match ($packageSlug) {
                  register/open-profile action styled as an explicit unlock CTA. --}}
             <div class="member-card__locked-footer">
                 <p class="member-card__locked-note">Available to paid members only</p>
-                <a class="member-card__unlock-btn" onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+                <a class="member-card__unlock-btn" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
                     <i class="fa fa-lock"></i> Unlock Full Profile
                 </a>
             </div>
@@ -269,7 +274,7 @@ $packageIcon = match ($packageSlug) {
                     @endonce
                 @endif
             @else
-            <a onclick="javascript:@auth window.open('{{url('/member/profile/'.$member->dataid)}}'); @endauth @guest return register_request(); @endguest">
+            <a onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
                 <i class="fa fa-eye"></i> View Full Profile
             </a>
             @guest

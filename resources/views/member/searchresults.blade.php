@@ -288,13 +288,48 @@
     }
 
     @media (max-width: 575.98px) {
+        .ur-dash-home__welcome {
+            font-size: 23px;
+            line-height: 1.25;
+            margin-bottom: 16px;
+            overflow-wrap: anywhere;
+        }
+
         .ur-dash-home__actions {
             flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        /* in a column, flex:1 (basis 0) squashed both buttons to a thin strip, ignoring their height */
+        .ur-dash-home__btn {
+            flex: 0 0 auto;
+            width: 100%;
+            height: 52px;
+            font-size: 14.5px;
         }
 
         .ur-dash-home__completeness {
             flex-direction: column;
             text-align: center;
+            padding: 20px 18px;
+            gap: 14px;
+        }
+
+        /* (prefixed so they win over the base rules that come after this media block) */
+        .ur-dash-home__recommended .ur-dash-home__recommended-head {
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ur-dash-home__recommended .ur-dash-home__recommended-head h3 {
+            font-size: 17px;
+            line-height: 1.3;
+        }
+
+        .ur-dash-home__recommended .ur-dash-home__recommended-head a {
+            flex: 0 0 auto;
+            white-space: nowrap;
         }
     }
 
@@ -440,6 +475,84 @@
 
     .ur-search-page .select2-container .select2-selection--single .select2-selection__arrow {
         height: 40px !important;
+    }
+
+    /* ===== Filters modal polish: dropdowns fill their column (select2 had sized each to its text, so they looked tiny
+       and uneven), roomier fields, a modal that scrolls inside the screen with its header and buttons always in view. ===== */
+    .ur-filters-modal.modal-content { max-height: calc(100vh - 2rem); display: flex; flex-direction: column; }
+    .ur-filters-modal .modal-header { flex: 0 0 auto; }
+    .ur-filters-modal .modal-body { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .ur-filters-modal .modal-footer { flex: 0 0 auto; }
+    .ur-filters-modal .select2-container,
+    .ur-filters-modal .bootstrap-select { width: 100% !important; }
+    .ur-filters-modal .modal-header .close { color: #fff !important; opacity: .85; font-size: 28px; line-height: 1; padding: 0 4px; }
+    .ur-filters-modal .modal-header .close:hover { opacity: 1; }
+    .ur-filters-modal .form-group { margin-bottom: 18px; }
+    .ur-filters-modal .form-group > .form-control,
+    .ur-filters-modal .select2-container .select2-selection--single { width: 100% !important; }
+    .ur-filters-modal .form-control { padding: 0 14px !important; transition: border-color .15s ease, box-shadow .15s ease; }
+    .ur-filters-modal .form-control:focus,
+    .ur-filters-modal .select2-container--open .select2-selection--single,
+    .ur-filters-modal .select2-container--focus .select2-selection--single { border-color: var(--ur-gold) !important; box-shadow: 0 0 0 3px rgba(201, 151, 77, .18) !important; outline: none; }
+    .ur-filters-modal .select2-container .select2-selection--single .select2-selection__rendered { padding-right: 34px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ur-filters-modal .select2-container .select2-selection--single .select2-selection__placeholder { color: #9AA5A0 !important; }
+    .ur-filters-modal .select2-container .select2-selection--single .select2-selection__arrow { right: 8px !important; }
+    /* the browser's blue autofill tint (seen on Profession) */
+    .ur-filters-modal input.form-control:-webkit-autofill,
+    .ur-filters-modal input.form-control:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 1000px #fff inset !important; -webkit-text-fill-color: var(--ur-text) !important; }
+    .ur-filters-modal .ur-check-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border: 1px solid var(--ur-border); border-radius: 12px; background: var(--ur-bg); margin-bottom: 0; }
+    .ur-filters-modal .ur-check-row label { cursor: pointer; margin: 0 !important; }
+    .ur-filters-modal .ur-check-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #123A2E; cursor: pointer; }
+    @media (max-width: 575px) {
+        .ur-filters-modal .modal-header { padding: 16px 18px; }
+        .ur-filters-modal .modal-body { padding: 18px 18px 4px; }
+        .ur-filters-modal .modal-footer { padding: 12px 18px; }
+        .ur-filters-modal .ur-toggle-group { max-width: none !important; }
+    }
+
+    /* ===== Filters modal — refined look (overrides the rules above): soft cream canvas, each group in its own white card,
+       gold icon bubbles, rounder roomier fields, a glowing green header and a footer that floats above the scrolling body. ===== */
+    .ur-filters-modal.modal-content { border-radius: 22px; box-shadow: 0 30px 80px rgba(15, 46, 36, .32); background: #FBF9F4; }
+    .ur-filters-modal .modal-header {
+        position: relative; align-items: center; gap: 14px; padding: 22px 26px;
+        background: radial-gradient(120% 140% at 100% 0%, rgba(201, 151, 77, .32) 0%, rgba(201, 151, 77, 0) 55%), linear-gradient(135deg, #123A2E 0%, #0B2A20 100%);
+    }
+    .ur-filters-modal__icon { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 14px; display: inline-flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .18); color: #E9C27A; font-size: 19px; }
+    .ur-filters-modal .modal-title { font-size: 22px; letter-spacing: .01em; line-height: 1.2; }
+    .ur-filters-modal .modal-header p { color: rgba(255, 255, 255, .78); font-size: 12.5px; }
+    .ur-filters-modal .modal-header .close {
+        position: static; margin: 0 0 0 auto; padding: 0; width: 36px; height: 36px; border-radius: 50%; opacity: 1; font-size: 24px; line-height: 34px; text-align: center;
+        background: rgba(255, 255, 255, .14); color: #fff !important; transition: background .15s ease;
+    }
+    .ur-filters-modal .modal-header .close:hover { background: rgba(255, 255, 255, .28); }
+    .ur-filters-modal .modal-header .close span { color: #fff !important; opacity: 1; display: block; }
+    .ur-filters-modal .modal-body { padding: 20px 22px 6px; overflow-x: hidden; scrollbar-width: thin; scrollbar-color: #D9CFB8 transparent; }
+    .ur-filters-modal .modal-body::-webkit-scrollbar { width: 8px; height: 0; border: 0; }
+    .ur-filters-modal .modal-body::-webkit-scrollbar-track { background: transparent; }
+    .ur-filters-modal .modal-body::-webkit-scrollbar-thumb { background: #D9CFB8; border-radius: 8px; }
+    .ur-filter-section { background: #fff; border: 1px solid var(--ur-border); border-radius: 16px; padding: 18px 20px 6px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(15, 46, 36, .04); }
+    .ur-filter-section__title { gap: 10px; font-size: 12px; letter-spacing: .08em; color: var(--ur-green); border-bottom: 0; padding-bottom: 0; margin-bottom: 16px; }
+    .ur-filter-section__title i { width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: rgba(201, 151, 77, .16); color: #B07C3D; font-size: 13px; }
+    .ur-search-page .modal-body label.text-uppercase { font-size: 10.5px; letter-spacing: .07em; color: #6B7570; margin-bottom: 7px; }
+    .ur-search-page .form-control,
+    .ur-search-page .select2-container .select2-selection--single { min-height: 46px !important; height: 46px !important; border-radius: 12px !important; background: #FCFBF8 !important; }
+    .ur-search-page .select2-container .select2-selection--single .select2-selection__rendered { line-height: 44px !important; }
+    .ur-search-page .select2-container .select2-selection--single .select2-selection__arrow { height: 44px !important; }
+    .ur-filters-modal .form-control:hover,
+    .ur-filters-modal .select2-container .select2-selection--single:hover { border-color: #D9CFB8 !important; }
+    .ur-filters-modal .form-control:focus,
+    .ur-filters-modal .select2-container--open .select2-selection--single,
+    .ur-filters-modal .select2-container--focus .select2-selection--single { background: #fff !important; }
+    .ur-filters-modal .ur-toggle-pill { padding: 12px; font-size: 14px; background: #FCFBF8; }
+    .ur-filters-modal .ur-check-row { margin-bottom: 14px; background: #FCFBF8; }
+    .ur-filters-modal .modal-footer { background: #fff; border-top: 1px solid var(--ur-border); padding: 14px 22px; box-shadow: 0 -10px 24px rgba(15, 46, 36, .06); position: relative; z-index: 1; }
+    .ur-filters-modal .modal-footer .ur-btn-solid { box-shadow: 0 8px 20px rgba(18, 58, 46, .28); }
+    @media (max-width: 575px) {
+        .ur-filters-modal .modal-header { padding: 16px 16px; gap: 10px; }
+        .ur-filters-modal__icon { width: 40px; height: 40px; font-size: 16px; }
+        .ur-filters-modal .modal-title { font-size: 19px; }
+        .ur-filters-modal .modal-body { padding: 14px 12px 2px; }
+        .ur-filter-section { padding: 14px 14px 2px; }
     }
 
     .ur-search-page input[type="checkbox"],
@@ -676,6 +789,7 @@
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content ur-filters-modal">
                         <div class="modal-header">
+                            <span class="ur-filters-modal__icon" aria-hidden="true"><i class="fa fa-sliders"></i></span>
                             <div class="ur-filters-modal__title-wrap">
                                 <h5 class="modal-title" id="search_filters_modal_label">Search Filters</h5>
                                 <p>Narrow down your matches — combine as many as you like</p>

@@ -62,7 +62,8 @@
 
     .ur-mm-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
     .ur-mm-foot > span { font-size: 13px; color: #2E7D5B; }
-    .ur-mm-pager { display: flex; gap: 8px; }
+    .ur-mm-pager { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .ur-mm-pager__gap { min-width: 20px; text-align: center; color: #6B7570; font-weight: 700; }
     .ur-mm-pager button { min-width: 38px; height: 38px; border-radius: 10px; border: 1px solid #E7E2D6; background: #fff; color: #123A2E; font-weight: 700; font-size: 13px; cursor: pointer; }
     .ur-mm-pager button.is-active { background: #0F5B43; border-color: #0F5B43; color: #fff; }
     .ur-mm-pager button:disabled { opacity: .4; cursor: default; }
@@ -200,7 +201,15 @@
             pager.appendChild(b);
         }
         btn('&lsaquo;', page - 1, { disabled: page === 1 });
-        for (var p = 1; p <= pages; p++) btn(p, p, { active: p === page });
+        // 295 matches = 50 pages: show first, last and a window around the current page, with "…" for the gaps
+        var shown = [];
+        for (var p = 1; p <= pages; p++) { if (p === 1 || p === pages || Math.abs(p - page) <= 2) shown.push(p); }
+        var prev = 0;
+        shown.forEach(function (p) {
+            if (p - prev > 1) { var gap = document.createElement('span'); gap.className = 'ur-mm-pager__gap'; gap.innerHTML = '&hellip;'; pager.appendChild(gap); }
+            btn(p, p, { active: p === page });
+            prev = p;
+        });
         btn('&rsaquo;', page + 1, { disabled: page === pages });
     }
 

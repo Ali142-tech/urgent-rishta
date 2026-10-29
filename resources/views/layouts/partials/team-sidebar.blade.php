@@ -47,6 +47,8 @@
 
     @php($__sidebarUser = auth()->user())
     @php($__sidebarInitials = strtoupper(substr($__sidebarUser->first_name ?: '', 0, 1) . substr($__sidebarUser->last_name ?: '', 0, 1)))
+    {{-- The admin's own team account has no profile card (it is not a matchmaker profile); team members keep theirs. --}}
+    @unless($__sidebarUser->isAdmin())
     <div class="ur-dash-sidebar__profile">
         <div class="ur-dash-sidebar__profile-avatar">{{ $__sidebarInitials }}</div>
         <div>
@@ -57,6 +59,7 @@
             @endif
         </div>
     </div>
+    @endunless
 
     <div class="ur-dash-nav__section-label" style="padding-top:14px;">Workspace</div>
     <ul class="ur-dash-nav">
