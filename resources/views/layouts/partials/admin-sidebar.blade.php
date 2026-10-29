@@ -71,11 +71,6 @@
                 <i class="fa fa-sliders"></i> AI Match Weights
             </a>
         </li>
-        <li>
-            <a href="{{ route('admin.successful-matches') }}" class="{{ request()->is('admin/successful-matches') ? 'is-active' : '' }}">
-                <i class="fa fa-check-circle"></i> Successful Matches
-            </a>
-        </li>
 
 
         <div class="ur-dash-nav__section-label">Content</div>

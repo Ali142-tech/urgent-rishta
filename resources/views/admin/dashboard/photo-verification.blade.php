@@ -1,5 +1,9 @@
 @extends('layouts.admin.master')
 @section('admin-content')
+<style>
+    /* the gold Pace.js page bar also fires on every live-search request; this page has its own "Searching members..." loader */
+    .pace, .pace .pace-progress { display: none !important; }
+</style>
 <div class="ur-admin-header">
     <h2>Photo &amp; Identity Verification</h2>
     <p>Members with {{ $required }}+ uploaded photos, awaiting review before they show as "Verified".
@@ -8,7 +12,7 @@
 </div>
 
 <div class="ur-admin-panel">
-    <form method="get" action="{{ url('admin/photo-verification') }}" class="ur-admin-filters" style="margin-bottom:18px;">
+    <form method="get" action="{{ url('admin/photo-verification') }}" class="ur-admin-filters js-pv-search" style="margin-bottom:18px;">
         <div class="form-group form-group--grow">
             <label for="pv_search">Search</label>
             <input type="search" id="pv_search" name="search" class="form-control form-control-sm" placeholder="Search by email, name or member ID..." autocomplete="off" value="{{ $search ?? '' }}" />
@@ -17,13 +21,12 @@
             <label>&nbsp;</label>
             <div>
                 <button type="submit" class="ur-admin-btn ur-admin-btn--gold"><i class="fa fa-search"></i> Search</button>
-                @if(!empty($search))
-                <a href="{{ url('admin/photo-verification') }}" class="ur-admin-btn"><i class="fa fa-times"></i> Clear</a>
-                @endif
+                <a href="{{ url('admin/photo-verification') }}" class="ur-admin-btn js-pv-clear" @if(empty($search)) style="display:none;" @endif><i class="fa fa-times"></i> Clear</a>
             </div>
         </div>
     </form>
 
+    <div id="pv-pending">
     @if($pending->isEmpty())
         <div class="ur-admin-empty">
             @if(!empty($search))
@@ -86,9 +89,11 @@
     <div style="margin-top:10px;">
         {{ $pending->links() }}
     </div>
+    </div>
 
 </div>
 
+<div id="pv-rejected">
 <div class="ur-admin-header">
     <h2>Rejected — Locked Out of Login ({{ $rejected->total() }})</h2>
     <p>These accounts cannot log in until reopened here. Reopening clears their rejected photos and lets them log in once to resubmit.</p>
@@ -128,6 +133,7 @@
     <div style="margin-top:10px;">
         {{ $rejected->links() }}
     </div>
+</div>
 </div>
 
 <div id="pv_zoom_overlay" class="ur-pv-zoom" onclick="pvZoomClose(event)">
@@ -230,5 +236,49 @@
             }
         });
     }
+
+    // Live search: the lists update as you type (no need to press Search); the results are fetched from the same page and swapped in.
+    (function () {
+        var form = document.querySelector('.js-pv-search');
+        if (!form) return;
+        var input = form.querySelector('input[name=search]');
+        var clearBtn = form.querySelector('.js-pv-clear');
+        var submitBtn = form.querySelector('button[type=submit]');
+        var base = "{{ url('admin/photo-verification') }}";
+        var timer = null, xhr = null, last = input.value.trim();
+
+        function run() {
+            var term = input.value.trim().replace(/\s+/g, ' ');
+            var url = term ? base + '?search=' + encodeURIComponent(term) : base;
+            var pending = document.getElementById('pv-pending');
+            if (clearBtn) clearBtn.style.display = term ? '' : 'none';
+            last = term;
+            pending.innerHTML = '<div class="ur-admin-empty"><i class="fa fa-spinner fa-spin"></i> Searching members...</div>';
+            if (xhr) xhr.abort();
+            xhr = new XMLHttpRequest();
+            xhr.open('GET', url);
+            xhr.onload = function () {
+                if (xhr.status !== 200) return fail();
+                var doc = new DOMParser().parseFromString(xhr.responseText, 'text/html');
+                ['pv-pending', 'pv-rejected'].forEach(function (id) {
+                    var fresh = doc.getElementById(id), cur = document.getElementById(id);
+                    if (fresh && cur) cur.innerHTML = fresh.innerHTML;
+                });
+                window.history.replaceState(null, '', url);
+            };
+            xhr.onerror = fail;
+            xhr.send();
+        }
+        function fail() {
+            document.getElementById('pv-pending').innerHTML = '<div class="ur-admin-empty"><i class="fa fa-exclamation-triangle"></i> Could not load the members. Please try again.</div>';
+        }
+
+        input.addEventListener('input', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () { if (input.value.trim() !== last) run(); }, 350);
+        });
+        form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); run(); }); // Enter / Search button
+        if (clearBtn) clearBtn.addEventListener('click', function (e) { e.preventDefault(); input.value = ''; clearTimeout(timer); run(); input.focus(); });
+    })();
 </script>
 @endsection

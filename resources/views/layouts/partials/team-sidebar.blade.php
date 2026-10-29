@@ -138,6 +138,11 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('team.manage.successful-matches') }}" class="{{ request()->is('team/manage/successful-matches') ? 'is-active' : '' }}">
+                <i class="fa fa-check-circle"></i> Successful Matches
+            </a>
+        </li>
+        <li>
             <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
         </li>
         <li>

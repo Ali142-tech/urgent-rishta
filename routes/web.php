@@ -88,8 +88,8 @@ Route::post('admin/appointments/{id}/status', [App\Http\Controllers\AdminControl
 // Photo & Identity Verification queue (Website Upgrade Brief §9)
 Route::get('admin/match-weights', [App\Http\Controllers\AdminController::class, 'matchWeights'])->name('admin.match-weights');
 Route::post('admin/match-weights', [App\Http\Controllers\AdminController::class, 'updateMatchWeights'])->name('admin.match-weights.update');
-Route::get('admin/successful-matches', [App\Http\Controllers\AdminController::class, 'successfulMatches'])->name('admin.successful-matches');
-Route::post('admin/successful-matches/{id}/share', [App\Http\Controllers\AdminController::class, 'updateSuccessfulMatchShare'])->name('admin.successful-matches.share');
+// Successful Matches (+ revenue share) now lives in the admin's Team Dashboard (Team Management); old links land there.
+Route::redirect('admin/successful-matches', 'team/manage/successful-matches')->name('admin.successful-matches');
 Route::get('admin/audit-log', [App\Http\Controllers\AdminController::class, 'auditLog'])->name('admin.audit-log');
 // Admin ▸ Content (CMS): FAQs, Terms & Conditions, Privacy Policy — written by the admin, shown on the public pages.
 Route::get('admin/cms', [App\Http\Controllers\CmsAdminController::class, 'index'])->name('admin.cms');
@@ -186,6 +186,8 @@ Route::get('team/manage/applications', [App\Http\Controllers\TeamAdminController
 Route::post('team/manage/applications/{dataid}/approve', [App\Http\Controllers\TeamAdminController::class, 'approve'])->name('team.manage.applications.approve');
 Route::post('team/manage/applications/{dataid}/reject', [App\Http\Controllers\TeamAdminController::class, 'reject'])->name('team.manage.applications.reject');
 Route::get('team/manage/proposals', [App\Http\Controllers\TeamAdminController::class, 'proposals'])->name('team.manage.proposals');
+Route::get('team/manage/successful-matches', [App\Http\Controllers\TeamAdminController::class, 'successfulMatches'])->name('team.manage.successful-matches');
+Route::post('team/manage/successful-matches/{id}/share', [App\Http\Controllers\TeamAdminController::class, 'updateSuccessfulMatchShare'])->name('team.manage.successful-matches.share');
 Route::get('team/manage/private-proposals', [App\Http\Controllers\TeamAdminController::class, 'privateProposals'])->name('team.manage.private-proposals');
 Route::get('team/dashboard', [App\Http\Controllers\TeamController::class, 'dashboard'])->name('team.dashboard');
 Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, 'myProposals'])->name('team.proposals.mine');

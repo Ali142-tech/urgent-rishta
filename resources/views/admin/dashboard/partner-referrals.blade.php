@@ -98,7 +98,9 @@
                 <td>{{ $click->partner_name }}</td>
                 <td>
                     @if($click->user)
-                        <span class="ur-pr-tag ur-pr-tag--user">Member</span> {{ $click->user->dataid }} &mdash; {{ trim($click->user->first_name . ' ' . $click->user->last_name) }}
+                        <a href="{{ url('admin/profile/preview/' . $click->user->dataid) }}" target="_blank" rel="noopener" title="Open this member's full profile" style="color:inherit; text-decoration:none;">
+                            <span class="ur-pr-tag ur-pr-tag--user">Member</span> {{ $click->user->dataid }} &mdash; <span style="text-decoration:underline;">{{ trim($click->user->first_name . ' ' . $click->user->last_name) }}</span>
+                        </a>
                     @elseif($click->teamMember)
                         <span class="ur-pr-tag ur-pr-tag--user">Team</span> {{ $click->teamMember->dataid }} &mdash; {{ trim($click->teamMember->first_name . ' ' . $click->teamMember->last_name) }}
                     @elseif($click->user_id || $click->team_member_id)
@@ -116,5 +118,6 @@
     </table>
 </div>
 
-<div style="margin-top:18px;">{{ $clicks->links() }}</div>
+{{-- .ur-admin-panel carries the admin pagination reskin (green/gold); the reset keeps it from drawing a card around the links --}}
+<div class="ur-admin-panel" style="margin-top:18px; padding:0; border:0; background:none; box-shadow:none;">{{ $clicks->links() }}</div>
 @endsection

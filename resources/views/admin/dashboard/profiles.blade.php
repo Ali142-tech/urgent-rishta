@@ -28,6 +28,8 @@
     /* the labels stay visible (small caps) so every dropdown says what it is */
     #controls-form .ur-admin-filters__label { position: static !important; width: auto !important; height: auto !important; margin: 0 0 4px !important; clip: auto !important; overflow: visible !important; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #6B7570; white-space: nowrap; }
     #controls-form .ur-admin-filters__row3 { gap: 10px; }
+    /* the gold Pace.js page bar also fires on every search request; this page has its own "Searching profiles..." loader */
+    .pace, .pace .pace-progress { display: none !important; }
     /* the form lines its children to the right (align-items:flex-end); without a full width these two blocks shrank to their content and sat at the right edge on phones */
     #controls-form .ur-admin-filters__row3, #controls-form .ur-admin-filters__extra, #controls-form .ur-pf-more { width: 100%; }
     /* narrow screens: two-column labels (Marital status / Education ...) wrap instead of running into each other */
@@ -223,7 +225,31 @@
     function refreshProfiles(resetCurrentPage, newPage) {
         if (resetCurrentPage)
             $('#pagerequested').val(newPage?newPage:1);
-        renderPage("{{url('admin/profiles/refresh')}}", "post", $("#controls-form").serialize(), $("#member-data"));
+        // Show that the search is running (the list used to stay blank until the answer arrived); a newer search cancels the older one.
+        var $list = $("#member-data");
+        // Show that the search is running; a newer search cancels the older one.
+        $list.html('<div class="ur-admin-empty ur-pf-loading"><i class="fa fa-spinner fa-spin"></i> Searching profiles...</div>');
+        if (window.urProfilesXhr) window.urProfilesXhr.abort();
+        window.urProfilesXhr = $.ajax({
+            url: "{{url('admin/profiles/refresh')}}",
+            type: "post",
+            data: $("#controls-form").serialize(),
+            success: function (result) {
+                if (result.code == '200') {
+                    if (result.html) {
+                        $list.html(result.html);
+                        $("body, html, .body-wrap").animate({ scrollTop: 0 }, "slow");
+                    }
+                } else {
+                    $list.html('<div class="ur-admin-empty"><i class="fa fa-exclamation-triangle"></i> Could not load the profiles. Please try again.</div>');
+                    if (result.message) showAlert('danger', result.message, 5000);
+                }
+            },
+            error: function (xhr, status) {
+                if (status === 'abort') return;
+                $list.html('<div class="ur-admin-empty"><i class="fa fa-exclamation-triangle"></i> Could not load the profiles. Please try again.</div>');
+            }
+        });
 
         // Keep the address bar's ?page= in sync with what's actually being
         // shown. Without this, pagination clicks swap the list via AJAX but

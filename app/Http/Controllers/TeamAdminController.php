@@ -27,6 +27,36 @@ class TeamAdminController extends Controller
         });
     }
 
+    /** Every match a team member has marked successful, with the collaboration revenue share editable case by case. */
+    public function successfulMatches()
+    {
+        $matches = \App\SuccessfulMatch::with('proposal', 'counterpartProposal', 'partnerA', 'partnerB')
+            ->orderByDesc('matched_at')
+            ->paginate(25);
+
+        return view('team.manage.successful-matches', ['matches' => $matches]);
+    }
+
+    public function updateSuccessfulMatchShare(Request $request, $id)
+    {
+        $match = \App\SuccessfulMatch::find($id);
+        if (!$match) {
+            return ['code' => '404', 'message' => 'Successful match record was not found.'];
+        }
+
+        $validated = $request->validate([
+            'share_partner_a' => 'nullable|integer|min:0|max:100',
+            'share_partner_b' => 'nullable|integer|min:0|max:100',
+        ]);
+
+        $match->fill($validated);
+        $match->save();
+
+        Log::info('Team admin (' . Auth::guard('team')->user()->dataid . ') updated revenue share for successful match ' . $id);
+
+        return ['code' => '200', 'message' => 'Revenue share updated.'];
+    }
+
     /** The admin's Team Dashboard: headline numbers, each member's workload, latest proposals. */
     public function overview()
     {

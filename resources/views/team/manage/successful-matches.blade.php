@@ -1,9 +1,9 @@
 {{--
-    Website Upgrade Brief §18 — admin-visible list of every match a team
-    member has marked successful (see TeamController::markSuccessfulMatch()).
-    Collaboration share (§15) is editable here, case by case.
+    Team Management → Successful Matches (admin's own team account only, see TeamAdminController).
+    Every match a team member has marked successful (TeamController::markSuccessfulMatch()), with the
+    collaboration revenue share (§15) editable here, case by case. Moved here from the Admin dashboard.
 --}}
-@extends('layouts.admin.dashboard')
+@extends('layouts.team.dashboard')
 @section('dashboard-title', 'Successful Matches')
 @section('main-content')
 <style>
@@ -12,8 +12,12 @@
     .ur-sm-table th { background: #F6F4EF; color: #123A2E; font-weight: 700; }
     .ur-sm-table input[type=number] { width: 70px; border: 1px solid #E7E2D6; border-radius: 6px; height: 32px; padding: 0 8px; }
     .ur-sm-save { background: #C9974D; color: #fff; border: none; border-radius: 6px; height: 32px; padding: 0 12px; font-size: 12px; cursor: pointer; }
+    .ur-sm-wrap { overflow-x: auto; }
 </style>
 
+<h1 style="font-family:'Playfair Display', serif; color:#123A2E; font-weight:700; font-size:24px; margin:0 0 18px;">Successful Matches</h1>
+
+<div class="ur-sm-wrap">
 <table class="ur-sm-table">
     <thead>
         <tr>
@@ -44,10 +48,11 @@
             </td>
         </tr>
         @empty
-        <tr><td colspan="6">No successful matches recorded yet.</td></tr>
+        <tr><td colspan="7">No successful matches recorded yet.</td></tr>
         @endforelse
     </tbody>
 </table>
+</div>
 
 <div style="margin-top:20px;">{{ $matches->links() }}</div>
 
@@ -57,7 +62,7 @@
         var form = e.target;
         $.ajax({
             type: 'post',
-            url: '{{ url('admin/successful-matches') }}' + '/' + id + '/share',
+            url: '{{ url('team/manage/successful-matches') }}' + '/' + id + '/share',
             data: {
                 '_token': '{{ csrf_token() }}',
                 'share_partner_a': form.share_partner_a.value,
@@ -65,6 +70,9 @@
             },
             success: function(result) {
                 showAlert(result.code == '200' ? 'success' : 'danger', result.message, 3000);
+            },
+            error: function() {
+                showAlert('danger', 'Could not save. Please try again.', 5000);
             }
         });
         return false;

@@ -481,6 +481,7 @@ class AdminController extends Controller
                 $q->where('email', 'like', '%' . $search . '%')
                     ->orWhere('first_name', 'like', '%' . $search . '%')
                     ->orWhere('last_name', 'like', '%' . $search . '%')
+                    ->orWhereRaw("concat_ws(' ', trim(first_name), trim(last_name)) like ?", ['%' . preg_replace('/\s+/', ' ', $search) . '%']) // full name
                     ->orWhere('dataid', 'like', '%' . $search . '%');
             });
         };
@@ -672,9 +673,10 @@ class AdminController extends Controller
             // the fix applied to the public search (HomeController::search())
             // and API search (APIController::searchProfiles()).
             if (!empty($searchTerm)) {
-                $searchTerm = addslashes(strtolower($searchTerm));
+                $searchTerm = addslashes(strtolower(preg_replace('/\s+/', ' ', trim($searchTerm))));
                 $where = $where . " and (lower(`u`.`first_name`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`last_name`) LIKE '%" . $searchTerm . "%'" .
+                    " or lower(concat_ws(' ', trim(`u`.`first_name`), trim(`u`.`last_name`))) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`dataid`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`email`) LIKE '%" . $searchTerm . "%'" .
                     " or lower(`u`.`contact_mobile_number`) LIKE '%" . $searchTerm . "%'" .
@@ -820,16 +822,16 @@ class AdminController extends Controller
                 $query->where('i.interest_back', '=', $status);
             }
             if (!empty($searchTerm)) {
-                $searchTerm = strtolower($searchTerm);
-                $query = $query->where(function ($query) use ($searchTerm) {
-                    $query->orWhereRaw('lower(us.dataid) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.dataid) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(us.first_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(us.last_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.first_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.last_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(us.email) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.email) LIKE "%' . $searchTerm . '%"');
+                // trimmed, single-spaced, and bound as a parameter; the full name (first + last) is matched too, so "Humaira Riaz" is found
+                $like = '%' . strtolower(preg_replace('/\s+/', ' ', trim($searchTerm))) . '%';
+                $query = $query->where(function ($query) use ($like) {
+                    foreach (['us', 'ur'] as $a) {
+                        $query->orWhereRaw("lower($a.dataid) LIKE ?", [$like])
+                            ->orWhereRaw("lower($a.first_name) LIKE ?", [$like])
+                            ->orWhereRaw("lower($a.last_name) LIKE ?", [$like])
+                            ->orWhereRaw("lower(concat_ws(' ', trim($a.first_name), trim($a.last_name))) LIKE ?", [$like])
+                            ->orWhereRaw("lower($a.email) LIKE ?", [$like]);
+                    }
                 });
             }
 
@@ -917,16 +919,16 @@ class AdminController extends Controller
                 $query->where('p.allowed', '=', $status);
             }
             if (!empty($searchTerm)) {
-                $searchTerm = strtolower($searchTerm);
-                $query = $query->where(function ($query) use ($searchTerm) {
-                    $query->orWhereRaw('lower(us.dataid) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.dataid) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(us.first_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(us.last_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.first_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.last_name) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(us.email) LIKE "%' . $searchTerm . '%"')
-                        ->orWhereRaw('lower(ur.email) LIKE "%' . $searchTerm . '%"');
+                // trimmed, single-spaced, and bound as a parameter; the full name (first + last) is matched too, so "Humaira Riaz" is found
+                $like = '%' . strtolower(preg_replace('/\s+/', ' ', trim($searchTerm))) . '%';
+                $query = $query->where(function ($query) use ($like) {
+                    foreach (['us', 'ur'] as $a) {
+                        $query->orWhereRaw("lower($a.dataid) LIKE ?", [$like])
+                            ->orWhereRaw("lower($a.first_name) LIKE ?", [$like])
+                            ->orWhereRaw("lower($a.last_name) LIKE ?", [$like])
+                            ->orWhereRaw("lower(concat_ws(' ', trim($a.first_name), trim($a.last_name))) LIKE ?", [$like])
+                            ->orWhereRaw("lower($a.email) LIKE ?", [$like]);
+                    }
                 });
             }
 
@@ -1042,41 +1044,6 @@ class AdminController extends Controller
 
         Session::flash('message', 'success|Message sent to ' . $recipients->count() . ' team member(s).');
         return redirect()->route('admin.team-members');
-    }
-
-    /**
-     * Website Upgrade Brief §18 — admin-visible list of every match a
-     * team member has marked successful, with the revenue-share split
-     * editable "case by case" (§15).
-     */
-    function successfulMatches(Request $request)
-    {
-        $matches = \App\SuccessfulMatch::with('proposal', 'counterpartProposal', 'partnerA', 'partnerB')
-            ->orderByDesc('matched_at')
-            ->paginate(25);
-
-        return view('admin.dashboard.successful-matches', ['matches' => $matches]);
-    }
-
-    function updateSuccessfulMatchShare(Request $request, $id)
-    {
-        $loggedInUser = User::retrieveUserObject();
-        $match = \App\SuccessfulMatch::find($id);
-        if (!$match) {
-            return ['code' => '404', 'message' => 'Successful match record was not found.'];
-        }
-
-        $validated = $request->validate([
-            'share_partner_a' => 'nullable|integer|min:0|max:100',
-            'share_partner_b' => 'nullable|integer|min:0|max:100',
-        ]);
-
-        $match->fill($validated);
-        $match->save();
-
-        Log::info('Admin (' . $loggedInUser->dataid . ') updated revenue share for successful match ' . $id);
-
-        return ['code' => '200', 'message' => 'Revenue share updated.'];
     }
 
     /**
@@ -1998,7 +1965,14 @@ class AdminController extends Controller
 
         $query = User::onlyTrashed()->where('admin', 0);
         if ($search !== '') {
-            $query->where('email', 'like', '%' . $search . '%');
+            $like = '%' . preg_replace('/\s+/', ' ', $search) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->where('email', 'like', $like)
+                    ->orWhere('dataid', 'like', $like)
+                    ->orWhere('first_name', 'like', $like)
+                    ->orWhere('last_name', 'like', $like)
+                    ->orWhereRaw("concat_ws(' ', trim(first_name), trim(last_name)) like ?", [$like]); // full name
+            });
         }
         $query->orderBy('deleted_at', 'desc');
 
