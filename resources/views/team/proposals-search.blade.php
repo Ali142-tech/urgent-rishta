@@ -110,8 +110,20 @@
         .ur-search-card__photo::before { content: ''; position: absolute; inset: -16px; background: var(--ph) center / cover no-repeat; filter: blur(16px); transform: scale(1.06); }
         .ur-search-card__photo img { position: relative; z-index: 1; object-fit: contain; }
         .ur-search-card__ribbon { z-index: 2; }
-        .ur-adv-search__row { flex-direction: column; }
-        .ur-adv-search__submit, .ur-adv-search__clear { width: 100%; justify-content: center; }
+        /* Phone search form: compact, two fields per row (like a native filter sheet) instead of one tall field per row */
+        .ur-adv-search { padding: 14px; --ur-ms-h: 42px; --ur-ms-radius: 10px; }
+        .ur-adv-search__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .ur-adv-search__row .ur-adv-search__field { grid-column: 1 / -1; }
+        .ur-adv-search__submit { grid-column: 1 / -1; width: 100%; justify-content: center; border-radius: 12px; }
+        .ur-adv-search__clear, .ur-adv-search__more-btn { width: 100%; justify-content: center; margin: 0; border-radius: 12px; height: 42px; }
+        .ur-adv-search__filters { grid-template-columns: 1fr 1fr; gap: 12px 10px; margin-top: 14px; padding-top: 14px; }
+        .ur-adv-search__filters > div { min-width: 0; }
+        /* Gender+Marital, Age from+to and Height from+to sit side by side; the long lists (Education, Caste) and City take the full row */
+        .ur-adv-search__filters > div:nth-child(n+7) { grid-column: 1 / -1; }
+        .ur-adv-search__filters label { font-size: 12px; font-weight: 600; color: #6B7570; margin-bottom: 5px; }
+        .ur-adv-search__filters .form-control, .ur-adv-search__filters select { height: 42px; font-size: 14px; border-radius: 10px; padding: 0 10px; }
+        .ur-adv-search__filters .select2-container--default .select2-selection--multiple .select2-selection__choice { font-size: 12.5px; }
+        .ur-adv-search__hint { display: none; }
         .ur-adv-search__more-btn { margin-left: 0; }
     }
 </style>

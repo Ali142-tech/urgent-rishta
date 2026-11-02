@@ -1309,7 +1309,16 @@ TEMPLATE;
         ];
 
         // Current real photos (never the gender placeholder) for the two photo boxes.
-        $existingPhotos = $proposal->photos->isNotEmpty() ? $proposal->getCardImages(null, false) : [];
+        // The two boxes are ~470px wide, so they show the full-size file: the 300px thumbnail used on the cards looked blurred stretched that far.
+        $existingPhotos = $proposal->photos->map(function ($photo) {
+            foreach ([$photo->path, $photo->thumb_path] as $candidate) {
+                if (file_exists(public_path($candidate))) return $candidate;
+            }
+            return null;
+        })->filter()->values()->all();
+        if (!$existingPhotos) {
+            $existingPhotos = [];
+        }
 
         return view('team.proposal-create', compact(
             'proposal', 'editMulti', 'religions', 'maritalstatuses', 'education', 'countries', 'caste', 'sendTemplate', 'professionOptions', 'editExtra', 'nationalities',

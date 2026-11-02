@@ -54,6 +54,7 @@
     .ur-pp-step__line { flex: 1 1 40px; height: 1px; background: #E7E2D6; max-width: 80px; }
 
     .ur-pp-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 20px; margin-bottom: 20px; align-items: start; }
+    .ur-pp-grid > * { min-width: 0; }
     @media (max-width: 991px) { .ur-pp-grid { grid-template-columns: 1fr; } }
     .ur-pp-section-head { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; padding-top: 22px; border-top: 1px dashed #E7E2D6; }
     .ur-pp-section-head__icon { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 12px; background: #123A2E; display: flex; align-items: center; justify-content: center; }
@@ -99,7 +100,11 @@
     .ur-pp-review__badges { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
     .ur-pp-review__badges .ur-pp-badge { background: #fff; }
 
-    .ur-pp-review__grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    /* minmax(0,1fr): plain 1fr columns refuse to shrink below their widest select/input (a long option like "Intermediate / FA / FSc ..."), which pushed the fields out of the card */
+    .ur-pp-review__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ur-pp-review__grid > * { min-width: 0; }
+    .ur-pp-review__field .form-control, .ur-pp-review__field select, .ur-pp-review__field input { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; text-overflow: ellipsis; }
+    .ur-pp-review__field select { padding-right: 24px; }
     .ur-pp-review__field label { font-size: 11.5px; }
     .ur-pp-review__field .form-control, .ur-pp-review__field select { height: 38px; font-size: 12.5px; }
     .ur-pp-review__field.is-missing .form-control, .ur-pp-review__field.is-missing select { border-color: #E6968C; background: #FCEBE8; }
