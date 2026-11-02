@@ -589,6 +589,48 @@
             return false;
         }
     </script>
+    <style>
+        .ur-search-loader { position: fixed; inset: 0; z-index: 99998; display: none; align-items: center; justify-content: center; background: rgba(250,248,243,.72); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+        .ur-search-loader.is-on { display: flex; }
+        .ur-search-loader__box { background: #fff; border: 1px solid #E7E2D6; border-radius: 18px; padding: 26px 34px; text-align: center; box-shadow: 0 18px 50px rgba(18,58,46,.16); }
+        .ur-search-loader__ring { width: 42px; height: 42px; margin: 0 auto 12px; border-radius: 50%; border: 4px solid #F1E7CF; border-top-color: #C9974D; animation: urSearchSpin .8s linear infinite; }
+        .ur-search-loader__box strong { display: block; font-family: 'Playfair Display', serif; font-size: 18px; color: #123A2E; }
+        .ur-search-loader__box span { font-size: 12.5px; color: #6B7570; }
+        @keyframes urSearchSpin { to { transform: rotate(360deg); } }
+    </style>
+    <div class="ur-search-loader" id="ur_search_loader" role="status" aria-live="polite">
+        <div class="ur-search-loader__box"><div class="ur-search-loader__ring"></div><strong>Searching...</strong><span>Just a moment.</span></div>
+    </div>
+    <script>
+        (function () {
+            var box = document.getElementById('ur_search_loader');
+            if (!box) return;
+            function on() { box.classList.add('is-on'); }
+            function off() { box.classList.remove('is-on'); }
+            // Any GET search/filter form on a team page (own AJAX pages call preventDefault, so they are skipped).
+            document.addEventListener('submit', function (e) {
+                var f = e.target;
+                if (e.defaultPrevented || !f || f.tagName !== 'FORM') return;
+                if ((f.getAttribute('method') || 'get').toLowerCase() !== 'get') return;
+                if (f.hasAttribute('data-no-loader')) return;
+                on();
+            });
+            // Filter dropdowns that auto-submit via onchange="this.form.submit()" (no submit event fires for those)
+            document.addEventListener('change', function (e) {
+                var s = e.target, f = s && s.form;
+                if (!f || e.defaultPrevented) return;
+                if ((f.getAttribute('method') || 'get').toLowerCase() !== 'get') return;
+                if ((s.getAttribute('onchange') || '').indexOf('submit') !== -1) on();
+            });
+            // Pagination links and "clear filters" style links
+            document.addEventListener('click', function (e) {
+                if (e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey) return;
+                var a = e.target.closest ? e.target.closest('.pagination a, a.js-search-nav, a.ur-adv-search__clear, a.ur-tmx-btn--ghost') : null;
+                if (a && a.href && a.target !== '_blank') on();
+            });
+            window.addEventListener('pageshow', off);
+        })();
+    </script>
     @include('layouts.partials.global-scripts')
     @include('layouts.partials.app-scripts')
 </body>
