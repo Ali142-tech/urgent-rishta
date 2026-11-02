@@ -27,7 +27,7 @@
         </li>
         <li>
             <a href="{{ route('searchresults') }}" class="{{ request()->is('member/searchresults*') ? 'is-active' : '' }}">
-                <i class="fa fa-search"></i> Search Profiles
+                <i class="fa fa-search"></i> Advanced Search Profile
             </a>
         </li>
         <li>

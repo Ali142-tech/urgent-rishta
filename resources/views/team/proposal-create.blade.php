@@ -2,6 +2,7 @@
 @extends('layouts.team.dashboard')
 @section('dashboard-title', isset($proposal) ? 'Edit Proposal' : 'Add Proposal')
 @section('main-content')
+<link rel="stylesheet" href="/css/ur-multiselect.css?v={{ filemtime(public_path('css/ur-multiselect.css')) }}">
 <style>
     .ur-team-form { max-width: 100%; }
     .ur-team-form h1 { font-family: 'Playfair Display', serif; color: #123A2E; font-weight: 700; font-size: 24px; margin: 0 0 18px; }
@@ -1345,7 +1346,7 @@ function urCopyTemplate(event) {
         return m ? text.replace(m[0], ' ') : text;
     }
     if (window.jQuery && jQuery.fn.select2) {
-        jQuery('.ur-multi').each(function () { jQuery(this).select2({ width: '100%', placeholder: this.getAttribute('data-placeholder'), closeOnSelect: false }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); }); });
+        jQuery('.ur-multi').each(function () { jQuery(this).select2({ width: '100%', placeholder: this.getAttribute('data-placeholder'), closeOnSelect: false }).on('change', function () { if (typeof refreshExtractionSummary === 'function') refreshExtractionSummary(); }); var inst = jQuery(this).data('select2'); if (inst) inst.$dropdown.addClass('ur-ms-drop'); });
     }
     if (window.jQuery && jQuery.fn.select2) {
         // every other single-choice dropdown in the form gets the search box too

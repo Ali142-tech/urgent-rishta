@@ -628,12 +628,20 @@
                                 <h3 class="text-uppercase heading heading-6 strong-500 pull-left">
                                     <b>Profile Information</b>
                                 </h3>
-                                <!-- <div class="pull-right">
-                                    <a href="/home/profile/edit_full_profile" class="btn btn-base-1 btn-sm btn-shadow">
-                                        <i class="fa fa-edit"></i>
-                                        Edit All
-                                    </a>
-                                </div> -->
+                                <div class="ur-mp-fullprofile-wrap">
+                                    <a href="{{ route('member.complete') }}" class="ur-mp-fullprofile"><i class="fa fa-list-alt"></i> Full Profile</a>
+                                </div>
+                                <style>
+                                    /* the small per-section edit pencils are gone: everything is edited in the Full Profile form */
+                                    button[onclick^="edit_section"] { display: none !important; }
+                                    #profile_load .card-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+                                    #profile_load .card-title::before, #profile_load .card-title::after { display: none !important; }
+                                    #profile_load .card-title h3 { float: none !important; margin: 0; }
+                                    .ur-mp-fullprofile-wrap { margin-left: auto; }
+                                    .ur-mp-fullprofile { display: inline-flex !important; align-items: center; gap: 8px; width: auto !important; height: 40px; padding: 0 20px; border-radius: 999px; background: #123A2E; color: #fff !important; font-size: 13.5px; font-weight: 700; white-space: nowrap; text-decoration: none !important; box-shadow: 0 6px 16px rgba(18,58,46,.22); }
+                                    .ur-mp-fullprofile:hover { background: #0D2C23; }
+                                    .ur-mp-fullprofile i { color: #E9C27A; }
+                                </style>
                             </div>
                             <div class="card-body pt-2" style="padding: 1rem 0.5rem;">
                                 @if(!empty($completeness))
@@ -658,7 +666,53 @@
                                     <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('looking_for', this);">Looking For</a></li>
                                     <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('profile_scorer', this);">Profile Scorer</a></li>
                                     <li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('more', this);">More Details</a></li>
+                                    @if(!empty($fullOverview))<li class="nav-item"><a class="nav-link" href="javascript:void(0);" onclick="mpOwnShowGroup('full', this);">Full Profile Overview</a></li>@endif
                                 </ul>
+
+                                @if(!empty($fullOverview))
+                                <div class="ur-mp-tabgroup ur-fpo" data-mp-group="full" style="display:none;">
+                                    <style>
+                                        .ur-fpo__card { background: #fff; border: 1px solid #EADFCB; border-radius: 16px; padding: 18px; }
+                                        .ur-fpo__head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+                                        .ur-fpo__ico { width: 42px; height: 42px; border-radius: 12px; background: #123A2E; color: #E9C27A; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+                                        .ur-fpo__head h4 { margin: 0; font-size: 17px; font-weight: 800; color: #123A2E; }
+                                        .ur-fpo__head p { margin: 2px 0 0; font-size: 12.5px; color: #6B7570; }
+                                        .ur-fpo__text { display: block; width: 100%; min-height: 560px; padding: 16px 18px; border: 1px solid #EADFCB; border-radius: 12px; background: #FBF7EF; color: #1C2321; font-family: inherit; font-size: 14px; line-height: 1.75; resize: vertical; white-space: pre-wrap; }
+                                        .ur-fpo__actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+                                        .ur-fpo__btn { display: inline-flex; align-items: center; justify-content: center; gap: 9px; height: 50px; padding: 0 30px; border: 0; border-radius: 999px; font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none !important; }
+                                        .ur-fpo__btn--dark { background: linear-gradient(135deg, #1C5A47, #123A2E); color: #fff !important; box-shadow: 0 8px 20px rgba(18,58,46,.28); }
+                                        .ur-fpo__btn--dark:hover { background: #0D2C23; }
+                                        .ur-fpo__btn--dark i, .ur-fpo__btn--dark span { color: #fff !important; }
+                                        .ur-fpo__btn--dark i { color: #E9C27A !important; }
+                                        .ur-fpo__btn--light { background: #fff; color: #123A2E !important; border: 1.5px solid #123A2E; }
+                                        .ur-fpo__btn--light:hover { background: #F3F9F5; }
+                                        .ur-fpo__btn--light i, .ur-fpo__btn--light span { color: #123A2E !important; }
+                                        @media (max-width: 560px) { .ur-fpo__btn { width: 100%; } .ur-fpo__text { min-height: 480px; } }
+                                    </style>
+                                    <div class="ur-fpo__card">
+                                        <div class="ur-fpo__head">
+                                            <div class="ur-fpo__ico"><i class="fa fa-file-text-o"></i></div>
+                                            <div><h4>Full Profile Overview</h4><p>All your saved details in one form. To change anything, open the Full Profile form.</p></div>
+                                        </div>
+                                        <textarea id="ur_fpo_text" class="ur-fpo__text" readonly>{{ $fullOverview }}</textarea>
+                                        <div class="ur-fpo__actions">
+                                            <button type="button" class="ur-fpo__btn ur-fpo__btn--dark" id="ur_fpo_copy"><i class="fa fa-copy"></i> <span>Copy form</span></button>
+                                            <a href="{{ route('member.complete') }}" class="ur-fpo__btn ur-fpo__btn--light"><i class="fa fa-pencil-square-o"></i> Edit in Full Profile form</a>
+                                        </div>
+                                    </div>
+                                    <script>
+                                        (function () {
+                                            var b = document.getElementById('ur_fpo_copy'), t = document.getElementById('ur_fpo_text');
+                                            if (!b || !t) return;
+                                            b.addEventListener('click', function () {
+                                                var done = function () { var s = b.querySelector('span'); s.textContent = 'Copied!'; setTimeout(function () { s.textContent = 'Copy form'; }, 1800); };
+                                                if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(t.value).then(done); }
+                                                else { t.select(); document.execCommand('copy'); done(); }
+                                            });
+                                        })();
+                                    </script>
+                                </div>
+                                @endif
 
                                 {{-- No in-page Partner Preferences EDITOR exists — that's still a
                                      separate page (member/profile/preferences) — but if the member

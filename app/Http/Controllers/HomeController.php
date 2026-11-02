@@ -310,8 +310,8 @@ class HomeController extends Controller {
                 if (!empty($request->first_name)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`first_name`='".addslashes($request->first_name)."'");
                 }
-                if (!empty($request->profession)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`profession`='".addslashes($request->profession)."'");
+                if ($vals = array_values(array_diff($many($request->profession), ['__any']))) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`profession` IN (".$inList($vals).")");
                 }
                 if ($vals = $many($request->religion)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`religion` IN (".$inList($vals).")");

@@ -5,7 +5,7 @@
     signed out — same conditional already used by member/profile.blade.php.
 --}}
 @extends(auth()->check() ? 'layouts.dashboard' : 'layouts.master')
-@section('dashboard-title', 'Search Profiles')
+@section('dashboard-title', 'Advanced Search Profile')
 @section('main-content')
 <link rel="stylesheet" href="/css/ur-multiselect.css?v={{ filemtime(public_path('css/ur-multiselect.css')) }}">
 <script src="/js/ur-multiselect.js?v={{ filemtime(public_path('js/ur-multiselect.js')) }}"></script>
@@ -738,7 +738,7 @@
         @endif
 
         <div class="ur-dash-home__actions">
-            <button type="button" class="ur-dash-home__btn ur-dash-home__btn--solid" data-toggle="modal" data-target="#search_filters_modal"><i class="fa fa-search"></i> Search Profiles</button>
+            <button type="button" class="ur-dash-home__btn ur-dash-home__btn--solid" data-toggle="modal" data-target="#search_filters_modal"><i class="fa fa-search"></i> Advanced Search Profile</button>
             <a href="{{ route('member.recommended-matches') }}" class="ur-dash-home__btn ur-dash-home__btn--outline"><i class="fa fa-users"></i> View Recommended Matches</a>
         </div>
 
@@ -777,7 +777,7 @@
         {{-- Guests don't get the welcome banner above, so they need their own
              visible trigger for the same filters popup. --}}
         <div class="text-center" style="padding: 24px 0 6px;">
-            <button type="button" class="ur-dash-home__btn ur-dash-home__btn--solid" style="max-width: 280px; margin: 0 auto; display: inline-flex;" data-toggle="modal" data-target="#search_filters_modal"><i class="fa fa-search"></i> Search Profiles</button>
+            <button type="button" class="ur-dash-home__btn ur-dash-home__btn--solid" style="max-width: 280px; margin: 0 auto; display: inline-flex;" data-toggle="modal" data-target="#search_filters_modal"><i class="fa fa-search"></i> Advanced Search Profile</button>
         </div>
         @endguest
 
@@ -796,7 +796,7 @@
                         <div class="modal-header">
                             <span class="ur-filters-modal__icon" aria-hidden="true"><i class="fa fa-sliders"></i></span>
                             <div class="ur-filters-modal__title-wrap">
-                                <h5 class="modal-title" id="search_filters_modal_label">Search Filters</h5>
+                                <h5 class="modal-title" id="search_filters_modal_label">Advanced Search Filters</h5>
                                 <p>Narrow down your matches — combine as many as you like</p>
                             </div>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -840,7 +840,17 @@
                                     <div class="col-sm-6">
                                         <div class="form-group has-feedback">
                                             <label for="" class="text-uppercase"><i class="fa fa-briefcase"></i> Profession</label>
-                                            <input type="text" class="form-control form-control-sm" name="profession" id="filter_profession" value="{{request()->profession?request()->profession:''}}">
+                                            @php $selProf = array_map('strval', array_filter((array) request()->profession, fn ($v) => $v !== null && $v !== '')); @endphp
+                                            <select name="profession[]" id="filter_profession" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any profession" data-dropdown-parent="#search_filters_modal">
+                                                <option value="__any">Any</option>
+                                                @foreach(\App\Services\ProfessionOptions::list() as $prof)
+                                                <option value="{{ $prof }}" {{ in_array($prof, $selProf, true) ? 'selected="selected"' : '' }}>{{ $prof }}</option>
+                                                @endforeach
+                                                @foreach(array_diff($selProf, \App\Services\ProfessionOptions::list()) as $prof)
+                                                <option value="{{ $prof }}" selected="selected">{{ $prof }}</option>
+                                                @endforeach
+                                            </select>
+
                                         </div>
                                     </div>
                                     <div class="col-sm-6">
@@ -1037,5 +1047,13 @@
         $("#search-data").html('<div class="ur-loading"><div class="ur-loading__spinner"></div><p>Finding your matches&hellip;</p></div>');
         renderPage("{{url('member/searchresults/1')}}", "post", $("#search_form").serialize(), $("#search-data"));
     }
+</script>
+<script>
+    // "Any" in Profession = no profession filter. Picking it leaves "Any" as the only chip; picking a real profession drops "Any".
+    jQuery(document).on('select2:select', '#filter_profession', function (e) {
+        var id = e.params && e.params.data ? e.params.data.id : null, $s = jQuery(this);
+        if (id === '__any') { $s.val(['__any']).trigger('change'); $s.select2('close'); }
+        else { var v = ($s.val() || []).filter(function (x) { return x !== '__any'; }); $s.val(v).trigger('change'); }
+    });
 </script>
 @endsection

@@ -128,7 +128,7 @@
 </style>
 
 <div class="ur-rm-page">
-    <a href="{{ route('searchresults') }}" class="ur-rm-page__back"><i class="fa fa-angle-left"></i> Back to Search Profiles</a>
+    <a href="{{ route('searchresults') }}" class="ur-rm-page__back"><i class="fa fa-angle-left"></i> Back to Advanced Search Profile</a>
 
     <div class="ur-rm-page__head">
         <h1>Recommended Matches For You</h1>
@@ -167,7 +167,7 @@
     @endif
     @else
     <div class="block block--style-3 list z-depth-1-top">
-        <i>No recommended matches right now — check back soon, or try Search Profiles for a broader look.</i>
+        <i>No recommended matches right now — check back soon, or try Advanced Search Profile for a broader look.</i>
     </div>
     @endif
 </div>

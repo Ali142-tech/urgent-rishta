@@ -94,6 +94,7 @@ class ProfileController extends Controller
         // it's about nudging the logged-in member to finish their own profile,
         // not something shown while browsing someone else's.
         $completeness = $dataid ? null : $profile->profileCompleteness();
+        $fullOverview = $dataid ? null : trim(str_replace('*', '', app(\App\Services\MemberShareForm::class)->text(User::retrieveUserObject())));
 
         // Partner Preferences belong to whoever is LOGGED IN, not whoever's
         // profile we're viewing — needed both for the "Looking For" tab on
@@ -153,7 +154,7 @@ class ProfileController extends Controller
             ? $loggedInUser->canViewContactInfoOf($ownerUser)
             : false;
 
-        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility', 'canViewContactInfo'));
+        return view($dataid ? 'member.profile' : 'member.user', compact('profile', 'religions', 'maritalstatuses', 'mothertongues', 'education', 'countries', 'caste', 'completeness', 'fullOverview', 'hiddenPhotos', 'preference', 'preferenceLabels', 'hasPreferenceData', 'compatibility', 'canViewContactInfo'));
     }
 
     /**
