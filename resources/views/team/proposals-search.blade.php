@@ -41,7 +41,7 @@
     .ur-adv-search__field .select2-container--default.select2-container--focus .select2-selection--single, .ur-adv-search__field .select2-container--default.select2-container--open .select2-selection--single { border-color: #1F6B52; }
     .select2-dropdown { border: 1px solid #E7E2D6 !important; border-radius: 8px !important; box-shadow: 0 8px 24px rgba(15,46,36,.12); overflow: hidden; }
     .select2-container--default .select2-search--dropdown .select2-search__field { border: 1px solid #E7E2D6; border-radius: 6px; padding: 7px 10px; font-size: 13.5px; outline: none; }
-    .select2-container--default .select2-results__option { padding: 8px 12px !important; font-size: 13.5px; }
+    /* option padding / look comes from public/css/ur-multiselect.css (it leaves room for the tick box) */
     .select2-container--default .select2-results__option--highlighted[aria-selected] { background: #123A2E; color: #fff; }
     .ur-adv-search__row { display: flex; flex-wrap: wrap; gap: 12px; align-items: stretch; }
     .ur-adv-search__field { flex: 1; }

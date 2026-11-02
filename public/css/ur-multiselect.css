@@ -45,7 +45,7 @@
 .ur-ms-drop .select2-results__option[aria-selected=true] { background: #E6F1EA; color: #123A2E; font-weight: 600; }
 .ur-ms-drop .select2-results__options { max-height: 260px; }
 /* checkbox-style tick on every option; filled + tick when selected */
-.ur-ms-drop .select2-results__option[role=treeitem], .ur-ms-drop .select2-results__option[aria-selected] { position: relative; padding-left: 40px; }
+.ur-ms-drop .select2-results__option[role=treeitem], .ur-ms-drop .select2-results__option[aria-selected] { position: relative; padding-left: 40px !important; }
 .ur-ms-drop .select2-results__option[aria-selected]::before { content: ""; position: absolute; left: 12px; top: 50%; width: 17px; height: 17px; margin-top: -8.5px; box-sizing: border-box; border: 1.5px solid #C9BFA8; border-radius: 5px; background: #fff; }
 .ur-ms-drop .select2-results__option[aria-selected=true]::before { background: #123A2E; border-color: #123A2E; }
 .ur-ms-drop .select2-results__option[aria-selected=true]::after { content: ""; position: absolute; left: 18px; top: 50%; width: 4px; height: 8px; margin-top: -6px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }

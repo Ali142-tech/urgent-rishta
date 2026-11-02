@@ -36,7 +36,7 @@
 
     <div class="ur-dash-sidebar__brand-row">
         <div class="ur-dash-sidebar__brand-icon"><i class="fa fa-sliders"></i></div>
-        <a href="{{ url('/') }}" class="ur-dash-sidebar__brand">
+        <a href="{{ route('team.dashboard') }}" class="ur-dash-sidebar__brand">
             <img src="/images/header_logo2.png" alt="Urgent Rishta">
             <div>
                 <span>Urgent Rishta</span>
