@@ -14,6 +14,7 @@
 @section('dashboard-title', 'Advanced Search')
 @push('styles')
 <link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
+<link rel="stylesheet" href="/css/ur-multiselect.css?v={{ filemtime(public_path('css/ur-multiselect.css')) }}">
 @endpush
 @section('main-content')
 <style>
@@ -49,10 +50,11 @@
     .ur-adv-search__submit:hover { background: #0F2E24; }
     .ur-adv-search__clear { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 42px; border-radius: 999px; background: #fff; color: #6B7570; border: 1px solid #E7E2D6; padding: 0 18px; font-size: 13px; font-weight: 700; white-space: nowrap; text-decoration: none; }
     .ur-adv-search__clear:hover { background: #F6F4EF; color: #1C2321; border-color: #C9974D; text-decoration: none; }
+    /* multi-select dropdown look: public/css/ur-multiselect.css (shared by every search/filter box) */
     .ur-adv-search__hint { font-size: 12px; color: #9AA5A0; margin: 12px 0 0; }
     .ur-adv-search__network { font-size: 12px; color: #2E7D5B; font-weight: 700; text-align: right; margin: -4px 0 12px; }
 
-    .ur-adv-search__filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 0 0 16px; padding-bottom: 16px; border-bottom: 1px dashed #E7E2D6; }
+    .ur-adv-search__filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 18px 0 0; padding-top: 18px; border-top: 1px dashed #E7E2D6; }
     .ur-adv-search__filters label { font-size: 12px; font-weight: 600; color: #1C2321; margin-bottom: 4px; display: block; }
     .ur-adv-search__filters .form-control, .ur-adv-search__filters select { border: 1px solid #E7E2D6; border-radius: 8px; height: 38px; padding: 0 10px; width: 100%; font-size: 13px; }
 
@@ -118,7 +120,7 @@
     <div class="ur-team-page__head">
         <div>
             <h1>Advanced search</h1>
-            <p>Search the shared team-added network by keyword, profession or country — open "More filters" for the full filter set (gender, age, religion, caste and more).</p>
+            <p>Search the shared team-added network by keyword — open "More filters" for the full filter set (gender, age, height, education, caste and more).</p>
         </div>
     </div>
 
@@ -132,6 +134,16 @@
     <p class="ur-adv-search__network">{{ number_format($totalNetworkCount) }} profile{{ $totalNetworkCount == 1 ? '' : 's' }} in the shared network</p>
 
     <form method="GET" action="{{ route('team.proposals.search') }}" class="ur-adv-search" id="search_form">
+        {{-- keyword search first (the quick search), then the optional "More filters" set below it --}}
+        <div class="ur-adv-search__row">
+            <div class="ur-adv-search__field" data-panel="keyword">
+                <input type="text" class="form-control" name="keyword" placeholder="Search by name, profession or city…" value="{{ request('keyword') }}" autocomplete="off">
+            </div>
+            <button type="submit" class="ur-adv-search__submit"><i class="fa fa-search"></i> Search</button>
+            <a href="{{ route('team.proposals.search') }}" class="ur-adv-search__clear"><i class="fa fa-times"></i> Clear filters</a>
+            <button type="button" class="ur-adv-search__more-btn is-active" id="more_filters_toggle"><i class="fa fa-sliders"></i> More filters</button>
+        </div>
+
         <div class="ur-adv-search__filters" id="more_filters_panel">
             @php
                 $heightChoices = [];
@@ -148,10 +160,9 @@
             </div>
             <div>
                 <label>Marital Status</label>
-                <select name="marital_status" class="form-control">
-                    <option value="">Any</option>
+                <select name="marital_status[]" class="form-control ur-multi" multiple data-placeholder="Any">
                     @foreach($maritalstatuses as $maritalstatus)
-                        <option value="{{ $maritalstatus->dataid }}" {{ request('marital_status') == $maritalstatus->dataid ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
+                        <option value="{{ $maritalstatus->dataid }}" {{ in_array((string) $maritalstatus->dataid, array_map('strval', (array) request('marital_status')), true) ? 'selected' : '' }}>{{ $maritalstatus->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -183,19 +194,17 @@
             </div>
             <div>
                 <label>Education / Qualification</label>
-                <select name="education" class="form-control">
-                    <option value="">Any</option>
+                <select name="education[]" class="form-control ur-multi" multiple data-placeholder="Any">
                     @foreach($education as $degree)
-                        <option value="{{ $degree->dataid }}" {{ request('education') == $degree->dataid ? 'selected' : '' }}>{{ $degree->name }}</option>
+                        <option value="{{ $degree->dataid }}" {{ in_array((string) $degree->dataid, array_map('strval', (array) request('education')), true) ? 'selected' : '' }}>{{ $degree->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div>
                 <label>Caste</label>
-                <select name="caste" class="form-control">
-                    <option value="">Any</option>
+                <select name="caste[]" class="form-control ur-multi" multiple data-placeholder="Any">
                     @foreach($caste as $cst)
-                        <option value="{{ $cst->dataid }}" {{ request('caste') == $cst->dataid ? 'selected' : '' }}>{{ $cst->name }}</option>
+                        <option value="{{ $cst->dataid }}" {{ in_array((string) $cst->dataid, array_map('strval', (array) request('caste')), true) ? 'selected' : '' }}>{{ $cst->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -205,36 +214,6 @@
             </div>
         </div>
 
-        <div class="ur-adv-search__tabs">
-            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'keyword' ? 'is-active' : '' }}" data-tab="keyword">Search by keyword</button>
-            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'profession' ? 'is-active' : '' }}" data-tab="profession">Search by profession</button>
-            <button type="button" class="ur-adv-search__tab {{ $activeTab == 'country' ? 'is-active' : '' }}" data-tab="country">Search by country</button>
-            <button type="button" class="ur-adv-search__more-btn is-active" id="more_filters_toggle"><i class="fa fa-sliders"></i> More filters</button>
-        </div>
-
-        <div class="ur-adv-search__row">
-            <div class="ur-adv-search__field" data-panel="keyword" style="{{ $activeTab == 'keyword' ? '' : 'display:none;' }}">
-                <input type="text" class="form-control" name="keyword" placeholder="Search by name, profession or city…" value="{{ request('keyword') }}">
-            </div>
-            <div class="ur-adv-search__field" data-panel="profession" style="{{ $activeTab == 'profession' ? '' : 'display:none;' }}">
-                <select name="profession" class="form-control ur-adv-select" data-placeholder="Any profession">
-                    <option value="">Any profession</option>
-                    @foreach($professions as $prof)
-                        <option value="{{ $prof->dataid }}" {{ request('profession') == $prof->dataid ? 'selected' : '' }}>{{ $prof->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="ur-adv-search__field" data-panel="country" style="{{ $activeTab == 'country' ? '' : 'display:none;' }}">
-                <select name="country" class="form-control ur-adv-select" data-placeholder="Any country">
-                    <option value="">Any country</option>
-                    @foreach($countries as $country)
-                        <option value="{{ $country->dataid }}" {{ request('country') == $country->dataid ? 'selected' : '' }}>{{ $country->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <button type="submit" class="ur-adv-search__submit"><i class="fa fa-search"></i> Search</button>
-            <a href="{{ route('team.proposals.search') }}" class="ur-adv-search__clear"><i class="fa fa-times"></i> Clear filters</a>
-        </div>
 
         <p class="ur-adv-search__hint">Search runs against the standardized fields pulled from each pasted profile — every client's original pasted form stays unchanged in their private file.</p>
 
@@ -273,33 +252,8 @@
 <script>
 (function () {
     var form = document.getElementById('search_form');
-    var tabs = form.querySelectorAll('.ur-adv-search__tab');
-    var panels = form.querySelectorAll('.ur-adv-search__field');
     var moreBtn = document.getElementById('more_filters_toggle');
     var morePanel = document.getElementById('more_filters_panel');
-
-    function activateTab(name) {
-        tabs.forEach(function (t) { t.classList.toggle('is-active', t.dataset.tab === name); });
-        panels.forEach(function (p) {
-            var isTarget = p.dataset.panel === name;
-            p.style.display = isTarget ? '' : 'none';
-            // Clear the other two quick-search fields so switching tabs doesn't
-            // silently stack an old value on top of the new one.
-            if (!isTarget) {
-                var field = p.querySelector('input, select');
-                if (field) { field.value = ''; if (window.jQuery) jQuery(field).trigger('change'); }
-            }
-        });
-    }
-
-    // searchable lists: every profession / country shows when the dropdown opens, typing narrows them
-    if (window.jQuery && jQuery.fn.select2) {
-        jQuery('.ur-adv-select').select2({ width: '100%', minimumResultsForSearch: 0 });
-    }
-
-    tabs.forEach(function (tab) {
-        tab.addEventListener('click', function () { activateTab(tab.dataset.tab); });
-    });
 
     moreBtn.addEventListener('click', function () {
         var isOpen = morePanel.style.display !== 'none';
@@ -308,4 +262,5 @@
     });
 })();
 </script>
+<script src="/js/ur-multiselect.js?v={{ filemtime(public_path('js/ur-multiselect.js')) }}"></script>
 @endsection

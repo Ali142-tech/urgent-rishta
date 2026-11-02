@@ -4,8 +4,10 @@
 {{-- Needed for the mobile-only card view in memberdata.blade.php, which
      reuses member-card__* classes (not the outer boxed .member-card). --}}
 <link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
+<link rel="stylesheet" href="/css/ur-multiselect.css?v={{ filemtime(public_path('css/ur-multiselect.css')) }}">
 @endpush
 @section('admin-content')
+<script src="/js/ur-multiselect.js?v={{ filemtime(public_path('js/ur-multiselect.js')) }}"></script>
 <div class="ur-admin-header">
     <h2>Member Profiles</h2>
 </div>
@@ -88,16 +90,14 @@
             <div class="ur-admin-filters__row3">
                 <div class="form-group">
                     <label for="gender" class="ur-admin-filters__label">Gender</label>
-                    <select name="gender" class="form-control form-control-sm selectpicker" data-placeholder="Gender" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                        <option value="">Gender</option>
+                    <select name="gender[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any gender" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                         <option value="female">Female</option>
                         <option value="male">Male</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="package" class="ur-admin-filters__label">Package</label>
-                    <select name="package" class="form-control form-control-sm selectpicker" data-placeholder="Package" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                        <option value="">Package</option>
+                    <select name="package[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any package" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                         <option value="null">Unassigned</option>
                         @foreach($packages as $package)
                         <option value="{{$package->dataid}}">{{$package->name}}</option>
@@ -106,8 +106,7 @@
                 </div>
                 <div class="form-group">
                     <label for="status" class="ur-admin-filters__label">Status</label>
-                    <select name="status" class="form-control form-control-sm selectpicker" data-placeholder="Status" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                        <option value="">Status</option>
+                    <select name="status[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any status" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                         <option value="1">Active</option>
                         <option value="0">Pending</option>
                     </select>
@@ -118,43 +117,37 @@
                 <div class="ur-pf-grid">
                     <div class="form-group">
                         <label for="country" class="ur-admin-filters__label">Country</label>
-                        <select name="country" class="form-control form-control-sm selectpicker" data-live-search="true" data-size="8" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                            <option value="">Country</option>
+                        <select name="country[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any country" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterCountries as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="profession" class="ur-admin-filters__label">Profession</label>
-                        <select name="profession" class="form-control form-control-sm selectpicker" data-live-search="true" data-size="8" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                            <option value="">Profession</option>
+                        <select name="profession[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any profession" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterProfessions as $opt)<option value="{{ $opt }}">{{ $opt }}</option>@endforeach
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="religion" class="ur-admin-filters__label">Religion</label>
-                        <select name="religion" class="form-control form-control-sm selectpicker" data-live-search="true" data-size="8" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                            <option value="">Religion</option>
+                        <select name="religion[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any religion" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterReligions as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="caste" class="ur-admin-filters__label">Caste</label>
-                        <select name="caste" class="form-control form-control-sm selectpicker" data-live-search="true" data-size="8" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                            <option value="">Caste</option>
+                        <select name="caste[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any caste" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterCastes as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="marital_status" class="ur-admin-filters__label">Marital status</label>
-                        <select name="marital_status" class="form-control form-control-sm selectpicker" data-live-search="true" data-size="8" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                            <option value="">Marital status</option>
+                        <select name="marital_status[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any marital status" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterMaritalStatuses as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="education" class="ur-admin-filters__label">Education</label>
-                        <select name="education" class="form-control form-control-sm selectpicker" data-live-search="true" data-size="8" data-hide-disabled="true" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
-                            <option value="">Education</option>
+                        <select name="education[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any education" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterEducations as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
                         </select>
                     </div>
@@ -270,14 +263,19 @@
 
     var MORE_FILTERS = ['country', 'profession', 'religion', 'caste', 'marital_status', 'education', 'age_from', 'age_to'];
 
+    /* the form control for a filter (the multi-selects are named like "country[]"), and how many values it holds */
+    function ctl(form, n) { return form.elements[n + "[]"] || form.elements[n]; }
+    function vcount(el) { if (!el) return 0; var v = $(el).val(); return Array.isArray(v) ? v.length : (v ? 1 : 0); }
+
     /** Filters that are set get a green outline, and the counters beside "Filters" / "More filters" say how many. */
     function paintFilterState() {
         var form = document.getElementById('controls-form');
         if (!form) return;
         var all = ['gender', 'package', 'status'].concat(MORE_FILTERS), active = 0, more = 0;
         all.forEach(function (n) {
-            var el = form[n], on = !!(el && el.value);
+            var el = ctl(form, n), on = vcount(el) > 0;
             $(el).closest('.bootstrap-select').toggleClass('has-value', on);
+            $(el).next('.select2-container').toggleClass('has-value', on);
             if (on) { active++; if (MORE_FILTERS.indexOf(n) !== -1) more++; }
         });
         if (form.term.value) active++;
@@ -299,10 +297,10 @@
         if (!form || !btn) return;
         var hasFilter = !!(
             form.term.value ||
-            form.gender.value ||
-            form.package.value ||
-            form.status.value ||
-            MORE_FILTERS.some(function (n) { return form[n].value; })
+            vcount(ctl(form, 'gender')) ||
+            vcount(ctl(form, 'package')) ||
+            vcount(ctl(form, 'status')) ||
+            MORE_FILTERS.some(function (n) { return vcount(ctl(form, n)) > 0; })
         );
         btn.style.display = hasFilter ? '' : 'none';
         paintFilterState();
@@ -319,10 +317,10 @@
         var form = document.getElementById('controls-form');
         form.term.value = '';
         suppressFilterChange = true;
-        $(form.gender).val('').trigger('change');
-        $(form.package).val('').trigger('change');
-        $(form.status).val('').trigger('change');
-        MORE_FILTERS.forEach(function (n) { $(form[n]).val('').trigger('change'); });
+        ['gender', 'package', 'status'].concat(MORE_FILTERS).forEach(function (n) {
+            var el = ctl(form, n);
+            if (el) $(el).val(el.multiple ? null : '').trigger('change');
+        });
         suppressFilterChange = false;
         refreshProfiles(true);
     }
@@ -343,6 +341,13 @@
         if (rowElem) rowElem.classList.add('is-active');
 
         panel.innerHTML = '<div class="ur-admin-empty"><i class="fa fa-refresh fa-spin"></i> Loading...</div>';
+
+        // The list can be scrolled far down while the details open at the top (desktop) or below the list (phone):
+        // bring the details into view, leaving room for the fixed top bar.
+        var rect = panel.getBoundingClientRect();
+        if (rect.top < 76 || rect.top > window.innerHeight * 0.55) {
+            window.scrollTo({ top: Math.max(0, window.pageYOffset + rect.top - 84), behavior: 'smooth' });
+        }
 
         $.ajax({
             type: 'get',

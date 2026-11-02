@@ -7,6 +7,8 @@
 @extends(auth()->check() ? 'layouts.dashboard' : 'layouts.master')
 @section('dashboard-title', 'Search Profiles')
 @section('main-content')
+<link rel="stylesheet" href="/css/ur-multiselect.css?v={{ filemtime(public_path('css/ur-multiselect.css')) }}">
+<script src="/js/ur-multiselect.js?v={{ filemtime(public_path('js/ur-multiselect.js')) }}"></script>
 <?php use App\User; ?>
 {{-- Shared member-card component styling, kept in its own file so the
      exact same rules could be reused elsewhere without duplicating them. --}}
@@ -512,6 +514,9 @@
 
     /* ===== Filters modal — refined look (overrides the rules above): soft cream canvas, each group in its own white card,
        gold icon bubbles, rounder roomier fields, a glowing green header and a footer that floats above the scrolling body. ===== */
+    /* multi-select look inside this modal (shared component: public/css/ur-multiselect.css) */
+    .ur-filters-modal { --ur-ms-h: 46px; --ur-ms-radius: 12px; --ur-ms-bg: #FCFBF8; }
+    .ur-filters-modal .select2-container.ur-ms .select2-selection--multiple { font-size: 13px; }
     .ur-filters-modal.modal-content { border-radius: 22px; box-shadow: 0 30px 80px rgba(15, 46, 36, .32); background: #FBF9F4; }
     .ur-filters-modal .modal-header {
         position: relative; align-items: center; gap: 14px; padding: 22px 26px;
@@ -841,10 +846,9 @@
                                     <div class="col-sm-6">
                                         <div class="form-group has-feedback">
                                             <label for="" class="text-uppercase"><i class="fa fa-heart-o"></i> Marital Status</label>
-                                            <select name="marital_status" onchange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose a marital status" data-hide-disabled="true">
-                                                <option value="">Choose a marital status</option>
+                                            <select name="marital_status[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any marital status" data-dropdown-parent="#search_filters_modal">
                                                 @foreach($maritalstatuses as $maritalstatus)
-                                                <option value="{{$maritalstatus->dataid}}" {{request()->marital_status==$maritalstatus->dataid?'selected="selected"':''}}>{{$maritalstatus->name}}</option>
+                                                <option value="{{$maritalstatus->dataid}}" {{ in_array((string) $maritalstatus->dataid, array_map('strval', (array) request()->marital_status), true) ? 'selected="selected"' : '' }}>{{$maritalstatus->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -858,10 +862,9 @@
                                     <div class="col-sm-6">
                                         <div class="form-group has-feedback">
                                             <label for="" class="text-uppercase"><i class="fa fa-globe"></i> Country</label>
-                                            <select name="country" onchange="javascript:loadSelect('{{url('cities')}}', this.value+'/1', $('#city'), '{{request()->city}}');" class="form-control form-control-sm selectpicker" data-placeholder="Choose a country" data-hide-disabled="true">
-                                                <option value="">Choose a country</option>
+                                            <select name="country[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any country" data-dropdown-parent="#search_filters_modal" onchange="urCountryChanged(this)">
                                                 @foreach($countries as $country)
-                                                <option value="{{$country->dataid}}" {{request()->country==$country->dataid?'selected="selected"':''}}>{{$country->name}}</option>
+                                                <option value="{{$country->dataid}}" {{ in_array((string) $country->dataid, array_map('strval', (array) request()->country), true) ? 'selected="selected"' : '' }}>{{$country->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -883,10 +886,9 @@
                                     <div class="col-sm-4">
                                         <div class="form-group has-feedback">
                                             <label for="" class="text-uppercase"><i class="fa fa-book"></i> Religion</label>
-                                            <select name="religion" onchange="(this.value,this)" class="form-control form-control-sm selectpicker s_religion" data-placeholder="Choose a religion" data-hide-disabled="true">
-                                                <option value="">Choose a religion</option>
+                                            <select name="religion[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any religion" data-dropdown-parent="#search_filters_modal">
                                                 @foreach($religions as $religion)
-                                                <option value="{{$religion->dataid}}" {{request()->religion==$religion->dataid?'selected="selected"':''}}>{{$religion->name}}</option>
+                                                <option value="{{$religion->dataid}}" {{ in_array((string) $religion->dataid, array_map('strval', (array) request()->religion), true) ? 'selected="selected"' : '' }}>{{$religion->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -894,10 +896,9 @@
                                     <div class="col-sm-4">
                                         <div class="form-group has-feedback">
                                             <label for="" class="text-uppercase"><i class="fa fa-users"></i> Caste</label>
-                                            <select name="caste" class="form-control form-control-sm selectpicker" data-placeholder="Choose a caste" data-hide-disabled="true">
-                                                <option value="">Choose a caste</option>
+                                            <select name="caste[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any caste" data-dropdown-parent="#search_filters_modal">
                                                 @foreach($caste as $cst)
-                                                <option value="{{$cst->dataid}}" {{request()->caste==$cst->dataid?'selected="selected"':''}}>{{$cst->name}}</option>
+                                                <option value="{{$cst->dataid}}" {{ in_array((string) $cst->dataid, array_map('strval', (array) request()->caste), true) ? 'selected="selected"' : '' }}>{{$cst->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -905,10 +906,9 @@
                                     <div class="col-sm-4">
                                         <div class="form-group has-feedback">
                                             <label for="" class="text-uppercase"><i class="fa fa-comments-o"></i> Mother Tongue</label>
-                                            <select name="mother_tongue" onchange="(this.value,this)" class="form-control form-control-sm selectpicker" data-placeholder="Choose a language" data-hide-disabled="true">
-                                                <option value="">Choose a mother tongue</option>
+                                            <select name="mother_tongue[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any language" data-dropdown-parent="#search_filters_modal">
                                                 @foreach($mothertongues as $mothertongue)
-                                                <option value="{{$mothertongue->dataid}}" {{request()->mother_tongue==$mothertongue->dataid?'selected="selected"':''}}>{{$mothertongue->name}}</option>
+                                                <option value="{{$mothertongue->dataid}}" {{ in_array((string) $mothertongue->dataid, array_map('strval', (array) request()->mother_tongue), true) ? 'selected="selected"' : '' }}>{{$mothertongue->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -986,11 +986,26 @@
     $(document).ready(function() {
         //$('.carousel').carousel();
 
-        // preload city select
-        @if(!empty(request()->country))
-        loadSelect('{{url('cities')}}', '{{request()->country}}/1', $('#city'), '{{request()->city}}');
+        // preload city select (only when exactly one country is chosen — a city belongs to one country)
+        @php($__pickedCountries = array_values(array_filter((array) request()->country, fn ($c) => $c !== null && $c !== '')))
+        @if(count($__pickedCountries) === 1)
+        loadSelect('{{url('cities')}}', '{{ $__pickedCountries[0] }}/1', $('#city'), '{{request()->city}}');
+        @elseif(count($__pickedCountries) > 1)
+        urCountryChanged($('select[name="country[]"]')[0]);
         @endif
     });
+
+    // Country is a multi-select now; the City list belongs to ONE country, so it loads only while exactly one country is picked.
+    function urCountryChanged(sel) {
+        var picked = $(sel).val() || [];
+        var $city = $('#city');
+        if (picked.length === 1) {
+            loadSelect('{{url('cities')}}', picked[0] + '/1', $city, '');
+            return;
+        }
+        $city.empty().append($('<option />').val('').text(picked.length > 1 ? 'Pick just one country to choose a city' : 'Choose a country first'));
+        if ($city.data('select2')) $city.trigger('change.select2');
+    }
 
     $("#search_form").on("submit", function() {
         var elem = $("#apply_filters_button");

@@ -1,0 +1,49 @@
+/* ============================================================
+   Searchable multi-select dropdowns (select2 "multiple") used by every search / filter box.
+   Usage: <select multiple class="ur-multi" name="x[]" data-placeholder="Any"> ... </select>  (see public/js/ur-multiselect.js)
+   The box keeps ONE row height whatever is chosen: it shows the first value as a chip and a "+N" badge for the rest
+   (the full list is visible when the menu is open). Size it with --ur-ms-h / --ur-ms-radius on a wrapper.
+   ============================================================ */
+.select2-container.ur-ms { width: 100% !important; }
+.ur-ms.select2-container--default .select2-selection--multiple {
+    position: relative; display: flex; align-items: center; height: var(--ur-ms-h, 38px); min-height: var(--ur-ms-h, 38px); overflow: hidden;
+    border: 1px solid var(--ur-ms-border, #E7E2D6); border-radius: var(--ur-ms-radius, 8px); background: var(--ur-ms-bg, #fff);
+    padding: 0 34px 0 8px; cursor: pointer;
+}
+.ur-ms.select2-container--default .select2-selection--multiple::before {
+    content: ""; position: absolute; right: 12px; top: 50%; width: 7px; height: 7px; margin-top: -6px;
+    border-right: 1.6px solid #6B7570; border-bottom: 1.6px solid #6B7570; transform: rotate(45deg); pointer-events: none;
+}
+.ur-ms.select2-container--default .select2-selection--multiple::after {
+    content: attr(data-extra); position: absolute; right: 26px; top: 50%; transform: translateY(-50%);
+    background: #123A2E; color: #fff; border-radius: 999px; padding: 1px 7px; font-size: 11px; font-weight: 700;
+}
+.ur-ms.select2-container--default .select2-selection--multiple:not([data-extra])::after { content: none; }
+.ur-ms.select2-container--default.select2-container--focus .select2-selection--multiple,
+.ur-ms.select2-container--default.select2-container--open .select2-selection--multiple {
+    border-color: #C9974D; box-shadow: 0 0 0 3px rgba(201, 151, 77, .18); outline: none;
+}
+.ur-ms.select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; padding: 0; margin: 0; width: 100%; overflow: hidden;
+}
+.ur-ms.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    flex: 0 1 auto; min-width: 0; margin: 0; background: #E6F1EA; border: 0; border-radius: 999px; color: #123A2E;
+    font-size: 12px; font-weight: 600; padding: 2px 9px 2px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ur-ms.select2-container--default .select2-selection--multiple .select2-selection__choice:nth-child(n+2):not(.select2-search--inline) { display: none; }
+.ur-ms.select2-container--default .select2-selection--multiple .select2-selection__choice__remove { color: #6B7570; margin-right: 4px; }
+.ur-ms.select2-container--default .select2-search--inline { flex: 1 1 40px; min-width: 40px; margin: 0; float: none; }
+.ur-ms.select2-container--default .select2-search--inline .select2-search__field {
+    margin: 0; height: calc(var(--ur-ms-h, 38px) - 8px); font-size: 13.5px; width: 100% !important; background: transparent; border: 0; box-shadow: none;
+}
+.ur-ms.select2-container--default .select2-search--inline .select2-search__field::placeholder { color: #8A938E; opacity: 1; }
+
+/* the open menu */
+.ur-ms-drop.select2-dropdown { border: 1px solid #E7E2D6; border-radius: 10px; box-shadow: 0 14px 34px rgba(15, 46, 36, .16); overflow: hidden; z-index: 99999; }
+.ur-ms-drop .select2-results__option { font-size: 13.5px; padding: 8px 12px; }
+.ur-ms-drop .select2-results__option--highlighted[aria-selected] { background: #123A2E; color: #fff; }
+.ur-ms-drop .select2-results__option[aria-selected=true] { background: #E6F1EA; color: #123A2E; font-weight: 600; }
+.ur-ms-drop .select2-results__options { max-height: 260px; }
+
+/* a filter that has something chosen gets a green outline */
+.ur-ms.select2-container--default.has-value .select2-selection--multiple { border-color: #123A2E; background: #F3F9F5; }

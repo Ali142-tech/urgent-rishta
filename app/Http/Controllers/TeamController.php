@@ -226,15 +226,7 @@ class TeamController extends Controller
      */
     public function searchProposals(Request $request)
     {
-        // Default landing state: with no filters submitted at all, show a
-        // "Doctor" keyword search rather than the whole unfiltered pool.
-        // ?view=all (the sidebar's "Team Proposals" link) opts out of that.
-        $filterKeys = ['keyword', 'height_from', 'height_to', 'profession', 'country', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city', 'matchmaker'];
-        $hasAnyFilter = collect($filterKeys)->contains(fn ($key) => $request->filled($key));
-        if (!$hasAnyFilter && $request->query('view') !== 'all') {
-            $request->merge(['keyword' => 'Doctor']);
-        }
-
+        // With no filters submitted the page simply lists the whole pool (newest first) — no pre-filled keyword.
         $query = Proposal::query();
 
         if (!empty($request->aged_from)) {
@@ -258,14 +250,16 @@ class TeamController extends Controller
         if (!empty($request->country)) {
             $query->where('con_of_residence', $request->country);
         }
-        if (!empty($request->marital_status)) {
-            $query->where('marital_status', $request->marital_status);
+        // marital status, caste and education each accept several values (name[]=a&name[]=b => matches ANY of them); a single value still works
+        $many = fn ($v) => array_values(array_filter((array) $v, fn ($x) => $x !== null && $x !== ''));
+        if ($vals = $many($request->marital_status)) {
+            $query->whereIn('marital_status', $vals);
         }
-        if (!empty($request->caste)) {
-            $query->where('caste_id', $request->caste);
+        if ($vals = $many($request->caste)) {
+            $query->whereIn('caste_id', $vals);
         }
-        if (!empty($request->education)) {
-            $query->where('education', $request->education);
+        if ($vals = $many($request->education)) {
+            $query->whereIn('education', $vals);
         }
         if (!empty($request->current_city)) {
             $query->where('current_city', 'like', '%' . $request->current_city . '%');

@@ -692,30 +692,44 @@ class AdminController extends Controller
                     " or lower(`mcor`.`name`) LIKE '%" . $searchTerm . "%')";
             }
 
-            $gender = $request->gender;
-            if (!empty($gender)) {
-                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`gender`='" . addslashes($gender) . "'");
+            // Every dropdown filter accepts several values (name[]=a&name[]=b => any of them) and a single value still works;
+            // values are quoted with addslashes() like everything else in this raw-SQL string.
+            $many = fn ($v) => array_values(array_filter((array) $v, fn ($x) => $x !== null && $x !== ''));
+            $quoted = fn (array $vals) => implode(',', array_map(fn ($x) => "'" . addslashes((string) $x) . "'", $vals));
+
+            $gender = $many($request->gender);
+            if ($gender) {
+                $where = $where . " and `u`.`gender` IN (" . $quoted($gender) . ")";
             }
 
-            $status = $request->status;
-            if (!empty($status)) {
-                $where = $where . ((empty($where) ? "" : " and ") . "`u`.`active`='" . addslashes($status) . "'");
+            $status = $many($request->status);
+            if ($status) {
+                $where = $where . " and `u`.`active` IN (" . $quoted($status) . ")";
             }
 
-            $package = $request->package;
-            if (!empty($package)) {
-                $where = $where . ((empty($where) ? "" : " and ") . ($package == "null" ? "`u`.`package` IS NULL" : "`u`.`package`='" . addslashes($package) . "'"));
+            $package = $many($request->package);
+            if ($package) {
+                $named = array_values(array_filter($package, fn ($p) => $p !== 'null'));
+                $parts = [];
+                if (count($named) !== count($package)) $parts[] = "`u`.`package` IS NULL";
+                if ($named) $parts[] = "`u`.`package` IN (" . $quoted($named) . ")";
+                $where = $where . " and (" . implode(' or ', $parts) . ")";
             }
 
-            // Dropdown filters: each is a masterdata id (or, for profession, the saved text) and is quoted like every other value here.
+            // Dropdown filters: each is a masterdata id (or, for profession, the saved text).
             $dropdowns = ['country' => 'con_of_residence', 'religion' => 'religion', 'caste' => 'caste', 'marital_status' => 'marital_status', 'education' => 'education'];
+            $hasDropdown = false;
             foreach ($dropdowns as $input => $column) {
-                if ($request->filled($input)) {
-                    $where = $where . " and `u`.`" . $column . "`='" . addslashes($request->input($input)) . "'";
+                $vals = $many($request->input($input));
+                if ($vals) {
+                    $hasDropdown = true;
+                    $where = $where . " and `u`.`" . $column . "` IN (" . $quoted($vals) . ")";
                 }
             }
-            if ($request->filled('profession')) {
-                $where = $where . " and lower(`u`.`profession`)='" . addslashes(mb_strtolower($request->profession)) . "'";
+            $professions = $many($request->profession);
+            if ($professions) {
+                $hasDropdown = true;
+                $where = $where . " and lower(`u`.`profession`) IN (" . $quoted(array_map('mb_strtolower', $professions)) . ")";
             }
             if ($request->filled('age_from')) {
                 $where = $where . " and CAST(`u`.`age` AS UNSIGNED) >= " . (int) $request->age_from;
@@ -723,9 +737,8 @@ class AdminController extends Controller
             if ($request->filled('age_to')) {
                 $where = $where . " and CAST(`u`.`age` AS UNSIGNED) <= " . (int) $request->age_to;
             }
-            $anyFilter = !empty($searchTerm) || !empty($gender) || !empty($status) || !empty($package)
-                || $request->filled(['country']) || $request->filled('profession') || $request->filled('religion') || $request->filled('caste')
-                || $request->filled('marital_status') || $request->filled('education') || $request->filled('age_from') || $request->filled('age_to');
+            $anyFilter = !empty($searchTerm) || !empty($gender) || !empty($status) || !empty($package) || $hasDropdown
+                || $request->filled('age_from') || $request->filled('age_to');
 
             if (!empty($showOnly) && $showOnly != 'all' && !empty($showWithin)) {
                 $days = 7 * intval($showWithin);

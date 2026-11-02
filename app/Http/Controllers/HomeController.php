@@ -296,6 +296,11 @@ class HomeController extends Controller {
                 $where = $where . " and `u`.`package` IN (" . implode(',', $quoted) . ")";
             }
 
+            // religion, country, marital status, mother tongue and caste accept several values (name[]=a&name[]=b => any of them);
+            // a single value still works. Values are quoted with addslashes() like everything else in this raw SQL.
+            $many = fn ($v) => array_values(array_filter((array) $v, fn ($x) => $x !== null && $x !== ''));
+            $inList = fn (array $vals) => implode(',', array_map(fn ($x) => "'" . addslashes((string) $x) . "'", $vals));
+
             if (!empty($request->member_id)) { // if dataid only search on dataid
                 $where = $where.((empty($where) ? "" : " and ")."`u`.`dataid`='".addslashes($request->member_id)."'");
             } else {
@@ -308,8 +313,8 @@ class HomeController extends Controller {
                 if (!empty($request->profession)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`profession`='".addslashes($request->profession)."'");
                 }
-                if (!empty($request->religion)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`religion`='".addslashes($request->religion)."'");
+                if ($vals = $many($request->religion)) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`religion` IN (".$inList($vals).")");
                 }
                 if (!empty($request->city)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`city`='".addslashes($request->city)."'");
@@ -317,17 +322,17 @@ class HomeController extends Controller {
                 if (!empty($request->state)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`state`='".addslashes($request->state)."'");
                 }
-                if (!empty($request->country)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`con_of_residence`='".addslashes($request->country)."'");
+                if ($vals = $many($request->country)) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`con_of_residence` IN (".$inList($vals).")");
                 }
-                if (!empty($request->marital_status)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`marital_status`='".addslashes($request->marital_status)."'");
+                if ($vals = $many($request->marital_status)) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`marital_status` IN (".$inList($vals).")");
                 }
-                if (!empty($request->mother_tongue)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue`='".addslashes($request->mother_tongue)."'");
+                if ($vals = $many($request->mother_tongue)) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue` IN (".$inList($vals).")");
                 }
-                if (!empty($request->caste)) {
-                    $where = $where.((empty($where) ? "" : " and ")."`u`.`caste`='".addslashes($request->caste)."'");
+                if ($vals = $many($request->caste)) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`caste` IN (".$inList($vals).")");
                 }
                 if (!empty($request->withpics)) {
                     $having = "`images`<>''";
