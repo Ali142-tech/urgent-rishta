@@ -9,10 +9,12 @@
         : ($member->con_of_birth_code ?? null));
     $isNew = round((time() - strtotime($member->created_at)) / 604800) <= config('app.new_profile_duration');
     $isUpdated = !$isNew && round((time() - strtotime($member->updated_at)) / 604800) <= config('app.updated_profile_duration');
+    $__restricted = auth()->user()->isRestricted();   // temporary access: a plain silhouette instead of the client's photo, and no Share button
+    $__cardImg = $__restricted ? \App\Profile::defaultImage($member->gender) : $member->getProfileImage();
 @endphp
 <div class="ur-search-card">
-    <a class="ur-search-card__photo" style="--ph: url('{{ $member->getProfileImage() }}');" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">
-        <img src="{{ $member->getProfileImage() }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
+    <a class="ur-search-card__photo" style="--ph: url('{{ $__cardImg }}');" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">
+        <img src="{{ $__cardImg }}" alt="{{ $__restricted ? '' : $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
         @if($isNew)
             <span class="ur-search-card__ribbon ur-search-card__ribbon--new">New</span>
         @elseif($isUpdated)
@@ -84,9 +86,11 @@
                 <i class="fa fa-eye"></i> View file
             </a>
        
+            @unless($__restricted)
             <a class="ur-search-card__btn ur-search-card__btn--whatsapp js-share-proposal" data-payload-url="{{ route('team.proposals.share.payload', $member->dataid) }}" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
                 <i class="fa fa-whatsapp"></i> Share
             </a>
+            @endunless
         </div>
     </div>
 </div>

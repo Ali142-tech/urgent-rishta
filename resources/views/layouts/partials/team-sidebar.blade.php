@@ -46,6 +46,7 @@
     </div>
 
     @php($__sidebarUser = auth()->user())
+    @php($__restricted = $__sidebarUser->isRestricted())   {{-- temporary access: only the shared proposals are in the menu --}}
     @php($__sidebarInitials = strtoupper(substr($__sidebarUser->first_name ?: '', 0, 1) . substr($__sidebarUser->last_name ?: '', 0, 1)))
     {{-- The admin's own team account has no profile card (it is not a matchmaker profile); team members keep theirs. --}}
     @unless($__sidebarUser->isAdmin())
@@ -63,50 +64,62 @@
 
     <div class="ur-dash-nav__section-label" style="padding-top:14px;">Workspace</div>
     <ul class="ur-dash-nav">
+        @unless($__restricted)
         <li>
             <a href="{{ route('team.dashboard') }}" class="{{ request()->is('team/dashboard') ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Dashboard
             </a>
         </li>
+        @endunless
+        @unless($__restricted)
         <li>
             <a href="{{ route('team.proposals.create') }}" class="{{ request()->is('team/proposals/create') ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></svg> Paste Profile
             </a>
         </li>
+        @endunless
         <li>
             <a href="{{ route('team.proposals.search') }}" class="{{ request()->is('team/proposals/search') && request('view') !== 'all' ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7.5"/><path d="m21 21-4.3-4.3"/></svg> Advanced Search
             </a>
         </li>
+        @unless($__restricted)
         <li>
             <a href="{{ route('team.matches') }}" class="{{ request()->is('team/matches') ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.94 14.06 8 20l-1.94-5.94L0.12 12.12 6.06 10.2 8 4.26l1.94 5.94 5.94 1.92z" transform="translate(3 0)"/><path d="M19 3v4M17 5h4M19 17v4M17 19h4"/></svg> AI Match
                 @isset($sidebarAiMatchesCount)<span class="ur-dash-nav__badge">{{ $sidebarAiMatchesCount }}</span>@endisset
             </a>
         </li>
+        @endunless
+        @unless($__restricted)
         <li>
             <a href="{{ route('team.my-matches') }}" class="{{ request()->is('team/my-matches') ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/></svg> My Matches
                 @isset($sidebarMyMatchesCount)<span class="ur-dash-nav__badge">{{ $sidebarMyMatchesCount }}</span>@endisset
             </a>
         </li>
+        @endunless
         <li>
             <a href="{{ route('team.proposals.search', ['view' => 'all']) }}" class="{{ request()->is('team/proposals/search') && request('view') === 'all' ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg> Team Proposals
                 @isset($sidebarTeamProposalsCount)<span class="ur-dash-nav__badge">{{ $sidebarTeamProposalsCount }}</span>@endisset
             </a>
         </li>
+        @unless($__restricted)
         <li>
             <a href="{{ route('team.matchmakers') }}" class="{{ request()->is('team/matchmakers') ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg> Matchmakers
                 @isset($sidebarMatchmakersCount)<span class="ur-dash-nav__badge">{{ $sidebarMatchmakersCount }}</span>@endisset
             </a>
         </li>
+        @endunless
+        @unless($__restricted)
         <li>
             <a href="{{ route('team.proposals.mine') }}" class="{{ request()->is('team/proposals/mine') ? 'is-active' : '' }}">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg> My Clients
             </a>
         </li>
+        @endunless
        
 
     </ul>
@@ -146,12 +159,25 @@
             </a>
         </li>
         <li>
-            <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> Admin Dashboard</a>
-        </li>
-        <li>
-            <a href="{{ url('member/profile') }}"><i class="fa fa-user"></i> Member Dashboard</a>
+            <a href="{{ route('team.manage.temporary') }}" class="{{ request()->is('team/manage/temporary-access') ? 'is-active' : '' }}">
+                <i class="fa fa-clock-o"></i> Temporary Access
+            </a>
         </li>
     </ul>
+
+    <div class="ur-dash-nav__section-label" style="margin-top:18px;">Switch Dashboard</div>
+    <div class="ur-switch-dash">
+        <a href="{{ url('admin/dashboard') }}"><i class="fa fa-cogs"></i> <span>Admin Dashboard</span> <i class="fa fa-external-link ur-switch-dash__ext"></i></a>
+        <a href="{{ url('member/profile') }}"><i class="fa fa-user"></i> <span>Member Dashboard</span> <i class="fa fa-external-link ur-switch-dash__ext"></i></a>
+    </div>
+    <style>
+        .ur-switch-dash { margin: 6px 14px 4px; padding: 6px; border: 1px dashed rgba(233,194,122,.55); border-radius: 12px; display: flex; flex-direction: column; gap: 2px; }
+        .ur-switch-dash a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: #F3D9A0 !important; font-size: 13px; font-weight: 600; text-decoration: none; }
+        .ur-switch-dash a:hover { background: rgba(233,194,122,.16); color: #fff !important; }
+        .ur-switch-dash a span, .ur-switch-dash a i { color: inherit !important; }
+        .ur-switch-dash a span { flex: 1; }
+        .ur-switch-dash .ur-switch-dash__ext { font-size: 11px; opacity: .7; }
+    </style>
     @endif
     <div class="ur-dash-sidebar__status">
         <span class="ur-dash-sidebar__status-dot"></span> AI matching online

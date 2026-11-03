@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * Team management, inside the Team Dashboard — only for an admin's own team
@@ -27,6 +29,94 @@ class TeamAdminController extends Controller
         });
     }
 
+    // ---- Temporary Access ---------------------------------------------------------------------------------------------------
+
+    /** Short-visit accounts: the person signs in with the email + password the admin sends; the clock starts at their first sign-in. */
+    public function temporaryAccess()
+    {
+        $accounts = TeamMember::temporary()->orderByDesc('created_at')->get();
+        return view('team.manage.temporary-access', ['accounts' => $accounts, 'loginUrl' => url('team/login')]);
+    }
+
+    public function storeTemporary(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:190|unique:team_members,email',
+            'minutes' => 'required|in:15,30',
+        ], [
+            'email.unique' => 'That email already has an account. Use a different email for the temporary access.',
+        ]);
+
+        // readable characters only (no 0/O, 1/l/I) so it can be read out or typed from a WhatsApp message
+        $alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        $password = '';
+        for ($i = 0; $i < 10; $i++) {
+            $password .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+        }
+
+        $name = trim(preg_replace('/\s+/', ' ', $data['name']));
+        $first = Str::before($name, ' ');
+        $last = trim(Str::after($name, ' ')) === $name ? '' : trim(Str::after($name, ' '));
+
+        $account = TeamMember::create([
+            'dataid' => TeamMember::newDataid(),
+            'first_name' => $first,
+            'last_name' => $last,
+            'email' => strtolower(trim($data['email'])),
+            'contact_mobile_number' => '',
+            'password' => Hash::make($password),
+            'is_approved' => true,
+            'status' => 'active',
+            'application_status' => 'approved',
+            'approved_at' => now(),
+            'is_temporary' => true,
+            'temp_minutes' => (int) $data['minutes'],
+            'temp_link_expires_at' => now()->addHours(24),
+            'temp_created_by' => Auth::guard('team')->id(),
+        ]);
+
+        Log::info('Admin team account (' . Auth::guard('team')->user()->dataid . ') created temporary access ' . $account->dataid . ' (' . $data['minutes'] . ' min)');
+
+        // the password is shown ONCE (only its hash is kept), so it rides in the session for the next page only
+        return redirect()->route('team.manage.temporary')->with('temp_created', [
+            'name' => $name, 'email' => $account->email, 'password' => $password, 'minutes' => (int) $data['minutes'],
+        ]);
+    }
+
+    /** Gives a running, finished or unused account a fresh 15 / 30 minutes starting now. */
+    public function extendTemporary(Request $request, $dataid)
+    {
+        $minutes = in_array((int) $request->input('minutes'), [15, 30], true) ? (int) $request->input('minutes') : null;
+        $account = TeamMember::temporary()->where('dataid', $dataid)->firstOrFail();
+        $minutes = $minutes ?: (int) ($account->temp_minutes ?: 15);
+
+        $account->forceFill([
+            'status' => 'active',
+            'temp_minutes' => $minutes,
+            'temp_first_login_at' => $account->temp_first_login_at ?: now(),
+            'temp_expires_at' => now()->addMinutes($minutes),
+        ])->save();
+
+        return back()->with('message', 'success|' . trim($account->first_name . ' ' . $account->last_name) . ' now has ' . $minutes . ' more minutes.');
+    }
+
+    /** Ends the access right now. */
+    public function revokeTemporary($dataid)
+    {
+        $account = TeamMember::temporary()->where('dataid', $dataid)->firstOrFail();
+        $account->forceFill(['status' => 'suspended', 'temp_expires_at' => now()])->save();
+
+        return back()->with('message', 'success|Access ended for ' . trim($account->first_name . ' ' . $account->last_name) . '.');
+    }
+
+    public function destroyTemporary($dataid)
+    {
+        $account = TeamMember::temporary()->where('dataid', $dataid)->firstOrFail();
+        $account->delete();
+
+        return back()->with('message', 'success|Temporary account deleted.');
+    }
     /** Every match a team member has marked successful, with the collaboration revenue share editable case by case. */
     public function successfulMatches()
     {

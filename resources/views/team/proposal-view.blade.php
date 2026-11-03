@@ -71,7 +71,7 @@
 
 @php
     // Full-size sources for the lightbox (thumbnails only for the strip).
-    $galleryFull = json_decode($member->getLightGalleryImages(true), true) ?: [];
+    $galleryFull = auth()->user()->isRestricted() ? [] : (json_decode($member->getLightGalleryImages(true), true) ?: []);   // temporary access: no photos
     $galleryFull = array_values(array_filter($galleryFull, fn ($g) => file_exists(public_path($g['src']))));
 @endphp
 @if(count($galleryFull) > 2)

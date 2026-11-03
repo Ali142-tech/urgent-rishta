@@ -18,6 +18,7 @@
     $location = $member->lbl_city ?: ($member->lbl_con_of_residence ?: 'Location not provided');
     $nationality = $member->lbl_con_of_citizenship ?: $member->lbl_con_of_residence;
     $notProvided = 'Not provided';
+    $__restricted = auth()->user()->isRestricted();   // temporary access: no photos, no original pasted text, no sharing
 @endphp
 <div class="ur-cf-header">
     <div class="ur-cf-header__icon"><i class="fa fa-clipboard"></i></div>
@@ -33,6 +34,13 @@
 
 <div class="ur-cf-top">
     <div class="ur-cf-photos">
+        @if($__restricted)
+            <div class="ur-cf-photo-slot ur-cf-photo-slot--empty" style="grid-column: 1 / -1;">
+                <i class="fa fa-lock"></i>
+                <div class="ur-cf-photo-slot__caption">Photos are hidden with temporary access</div>
+                <div class="ur-cf-photo-slot__id">{{ $member->dataid }}</div>
+            </div>
+        @else
         @for ($i = 0; $i < 2; $i++)
             @if($hasRealPhotos && isset($photos[$i]))
                 <div class="ur-cf-photo-slot">
@@ -48,6 +56,7 @@
                 </div>
             @endif
         @endfor
+        @endif
     </div>
 
     <div class="ur-cf-info">
@@ -76,7 +85,7 @@
         </div>
 
         <div class="ur-cf-notice">
-            <p>{{ $hasRealPhotos ? 'Client photos are' : 'Client photo slots are' }} visible only to authorized matchmakers. The original pasted form remains unchanged beside this AI-organized profile.</p>
+            <p>@if($__restricted)Photos and contact details are not available with temporary access.@else{{ $hasRealPhotos ? 'Client photos are' : 'Client photo slots are' }} visible only to authorized matchmakers.@endif The original pasted form remains unchanged beside this AI-organized profile.</p>
             <i class="fa fa-shield"></i>
         </div>
     </div>
@@ -87,10 +96,11 @@
      empty gap under the (much shorter) photo panel. --}}
 <div class="ur-cf-tabbed">
     <div class="ur-cf-tabs" id="cf_tabs">
-        <button type="button" data-tab="original" class="is-active">Original pasted form</button>
-        <button type="button" data-tab="details">Profile details</button>
+        @unless($__restricted)<button type="button" data-tab="original" class="is-active">Original pasted form</button>@endunless
+        <button type="button" data-tab="details" @if($__restricted) class="is-active" @endif>Profile details</button>
     </div>
 
+    @unless($__restricted)
     <div class="ur-cf-panel is-active" data-panel="original">
         @if($intakeIsSynthesized)
             <p class="ur-cf-synthesized-note"><i class="fa fa-info-circle"></i> No original pasted text was recorded for this proposal — reconstructed below from every field on file, so it can still be copied and shared as one block of text.</p>
@@ -105,7 +115,9 @@
         @endif
     </div>
 
-    <div class="ur-cf-panel" data-panel="details">
+    @endunless
+
+    <div class="ur-cf-panel {{ $__restricted ? 'is-active' : '' }}" data-panel="details">
         <div class="ur-cf-fields-head">AI-organized profile fields</div>
         <div class="ur-cf-grid">
             <div><span>Gender</span><b>{{ $member->gender ? ucfirst($member->gender) : $notProvided }}</b></div>
@@ -162,7 +174,9 @@
                 </select>
             </label>
         @endif
+        @unless($__restricted)
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>
+        @endunless
         @if($hasRealPhotos)
             {{-- Tries the OS/browser native share sheet first (real photo
                  FILES attached, not just a link — same "attach to any

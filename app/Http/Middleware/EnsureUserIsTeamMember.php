@@ -42,6 +42,25 @@ class EnsureUserIsTeamMember
             return redirect()->route('team.login');
         }
 
+        // Temporary access: finished -> out for good; and only the shared proposals can be browsed (no photos / contacts / sharing / editing)
+        if ($member->is_temporary) {
+            if ($reason = $member->tempExpiredReason()) {
+                Auth::guard('team')->logout();
+                $request->session()->invalidate();
+                session()->flash('message', 'danger|' . $reason . ' Please ask the admin for new access.');
+                return $request->expectsJson() ? response()->json(['message' => 'expired'], 401) : redirect()->route('team.login');
+            }
+            $allowed = ['team.proposals.search', 'team.proposals.view', 'team.proposals.file', 'team.logout'];
+            if (!in_array($request->route() ? $request->route()->getName() : null, $allowed, true)) {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Not available with temporary access.'], 403);
+                }
+                session()->flash('message', 'warning|With temporary access you can only look through the shared proposals.');
+                return redirect()->route('team.proposals.search');
+            }
+            view()->share('tempSecondsLeft', $member->tempSecondsLeft());
+        }
+
         return $next($request);
     }
 }

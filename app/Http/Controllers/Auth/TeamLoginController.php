@@ -43,6 +43,8 @@ class TeamLoginController extends Controller
         $member = $this->findMember($login);
 
         if (!$member || !Hash::check($request->password, $member->password)) {
+            // what happened, never the password itself
+            Log::info('Team login failed: account ' . ($member ? 'found (' . $member->dataid . ', temporary=' . (int) $member->is_temporary . ')' : 'NOT found') . ', password length ' . strlen((string) $request->password) . ', db ' . \DB::connection()->getDatabaseName() . ', from ' . base_path());
             RateLimiter::hit($throttleKey, 300);
             Session::flash('message', 'danger|Those details don\'t match our records.');
             return redirect()->route('team.login')->withInput($request->only('login'));
@@ -55,10 +57,25 @@ class TeamLoginController extends Controller
         }
 
         RateLimiter::clear($throttleKey);
-        Auth::guard('team')->login($member, $request->boolean('remember'));
+
+        // a temporary account's clock starts at its first sign-in (the update only applies while it is still unset, so two quick
+        // sign-ins cannot start it twice)
+        if ($member->is_temporary && !$member->temp_first_login_at) {
+            $now = now();
+            TeamMember::whereKey($member->id)->whereNull('temp_first_login_at')->update([
+                'temp_first_login_at' => $now,
+                'temp_expires_at' => $now->copy()->addMinutes((int) ($member->temp_minutes ?: 15)),
+            ]);
+            $member = $member->fresh();
+        }
+
+        Auth::guard('team')->login($member, !$member->is_temporary && $request->boolean('remember'));
         $request->session()->regenerate();
 
         Log::info('Team member (' . $member->dataid . ') logged in');
+        if ($member->is_temporary) {
+            return redirect()->route('team.proposals.search');
+        }
         return redirect()->intended(route('team.dashboard'));
     }
 

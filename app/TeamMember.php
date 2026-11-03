@@ -29,6 +29,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     protected $fillable = [
         'dataid', 'first_name', 'last_name', 'email', 'contact_mobile_number', 'city', 'password', 'photo', 'logo', 'watermark_text', 'watermark_style', 'can_view_originals', 'is_private_member', 'can_view_private', 'proposal_prefix',
         'is_admin', 'is_approved', 'status', 'application_status', 'experience', 'about_me', 'approved_at',
+        'is_temporary', 'temp_minutes', 'temp_first_login_at', 'temp_expires_at', 'temp_link_expires_at', 'temp_created_by',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -40,6 +41,10 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         'can_view_originals' => 'boolean',
         'is_approved' => 'boolean',
         'approved_at' => 'datetime',
+        'is_temporary' => 'boolean',
+        'temp_first_login_at' => 'datetime',
+        'temp_expires_at' => 'datetime',
+        'temp_link_expires_at' => 'datetime',
     ];
 
     public static function newDataid(): string
@@ -85,19 +90,25 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
     /** Approved by an admin (whatever their current status). */
     public function scopeApproved($query)
     {
-        return $query->where('is_approved', true);
+        return $query->where('is_approved', true)->where('is_temporary', false);
     }
 
     /** Approved and not suspended/deactivated — allowed into the Team Dashboard. */
     public function scopeActive($query)
     {
-        return $query->where('is_approved', true)->where('status', 'active');
+        return $query->where('is_approved', true)->where('status', 'active')->where('is_temporary', false);
     }
 
     /** Applications waiting for an admin decision. */
     public function scopePending($query)
     {
-        return $query->where('application_status', 'pending');
+        return $query->where('application_status', 'pending')->where('is_temporary', false);
+    }
+
+    /** Accounts an admin made for a short visit (Team Dashboard > Temporary Access). */
+    public function scopeTemporary($query)
+    {
+        return $query->where('is_temporary', true);
     }
 
     /** The letters this member's new proposals start with ("P" -> P-199, "UR" -> UR-199). */
@@ -146,6 +157,49 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         return $this->isAdmin() || (bool) $this->can_view_originals;
     }
 
+    // ---- temporary access ------------------------------------------------------------------------------------------
+
+    /** Why a temporary account can no longer be used, or null while it still can. */
+    public function tempExpiredReason(): ?string
+    {
+        if (!$this->is_temporary) {
+            return null;
+        }
+        if ($this->temp_expires_at && $this->temp_expires_at->isPast()) {
+            return 'This temporary access has finished.';
+        }
+        if (!$this->temp_first_login_at && $this->temp_link_expires_at && $this->temp_link_expires_at->isPast()) {
+            return 'These sign-in details were not used in time and have expired.';
+        }
+        return null;
+    }
+
+    /** Seconds left on a running temporary account (0 once finished; null when it has not started or is not temporary). */
+    public function tempSecondsLeft(): ?int
+    {
+        if (!$this->is_temporary || !$this->temp_expires_at) {
+            return null;
+        }
+        return max(0, now()->diffInSeconds($this->temp_expires_at, false));
+    }
+
+    /** waiting (never signed in) / active / expired / revoked — for the admin list. */
+    public function tempState(): string
+    {
+        if ($this->status !== 'active') {
+            return 'revoked';
+        }
+        if ($this->tempExpiredReason()) {
+            return 'expired';
+        }
+        return $this->temp_first_login_at ? 'active' : 'waiting';
+    }
+
+    /** Temporary people only look at the shared proposals: no photos, no contact details, no sharing, no editing. */
+    public function isRestricted(): bool
+    {
+        return (bool) $this->is_temporary;
+    }
     public function isAdmin(): bool
     {
         return (bool) $this->is_admin;
@@ -170,6 +224,9 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         }
         if ($this->status !== 'active' || !$this->is_approved) {
             return 'danger|Your account is not active. Please contact support at 0304-0227000.';
+        }
+        if ($reason = $this->tempExpiredReason()) {
+            return 'danger|' . $reason . ' Please ask the admin for new access.';
         }
         return null;
     }

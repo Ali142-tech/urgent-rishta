@@ -16,8 +16,15 @@
         <div class="ur-dash-topbar__title">@yield('dashboard-title', 'Dashboard')</div>
     </div>
 
+    @php($__temp = auth()->user()->isRestricted())
     <div class="ur-dash-topbar__right">
+        @if($__temp && isset($tempSecondsLeft))
+        <div class="ur-temp-clock" id="ur_temp_clock" data-left="{{ $tempSecondsLeft }}" title="Your temporary access ends when this reaches zero"><i class="fa fa-clock-o"></i> <span id="ur_temp_clock_text">--:--</span> left</div>
+        @endif
+        @unless($__temp)
         <a href="{{ route('team.proposals.create') }}" class="ur-dash-topbar__add-btn"><i class="fa fa-plus"></i> <span class="ur-dash-topbar__add-btn-label text-white">Add profile</span></a>
+        @endunless
+        @unless($__temp)
         <div class="dropdown dropdown--style-2 dropdown--animated">
             <button type="button" class="ur-dash-bell" id="notifications" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="Notifications">
                 <i class="fa fa-bell-o"></i>
@@ -31,6 +38,7 @@
                 <a href="{{ route('team.notifications') }}" class="ur-bn-all">View all notifications</a>
             </div>
         </div>
+        @endunless
 
         <div class="dropdown dropdown--style-2 dropdown--animated">
             <button type="button" class="ur-dash-user" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -42,8 +50,10 @@
                 <div class="ur-dash-user-menu__head">
                     <div class="name">{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</div>
                 </div>
+                @unless($__temp)
                 <a href="{{ route('team.profile') }}"><i class="fa fa-user"></i> My Profile</a>
                 <a href="{{ route('team.password') }}"><i class="fa fa-key"></i> Change Password</a>
+                @endunless
                 <button type="button" class="is-danger" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                     <i class="fa fa-power-off"></i> Log Out
                 </button>
@@ -54,6 +64,33 @@
 <form id="logout-form" action="{{ route('team.logout') }}" method="POST" style="display: none;">
     @csrf
 </form>
+@if(auth()->user()->isRestricted() && isset($tempSecondsLeft))
+<style>
+    .ur-temp-clock { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; background: #FFF4DC; border: 1px solid #E9C27A; color: #7A5410; font-size: 13px; font-weight: 800; white-space: nowrap; }
+    .ur-temp-clock.is-low { background: #FDECEA; border-color: #E4A8A2; color: #A3281E; animation: urTempPulse 1s ease-in-out infinite; }
+    @keyframes urTempPulse { 50% { opacity: .55; } }
+</style>
+<script>
+    (function () {
+        var box = document.getElementById('ur_temp_clock'), txt = document.getElementById('ur_temp_clock_text');
+        if (!box || !txt) return;
+        var end = Date.now() + parseInt(box.getAttribute('data-left'), 10) * 1000, done = false;
+        function tick() {
+            var left = Math.max(0, Math.round((end - Date.now()) / 1000));
+            var m = Math.floor(left / 60), s = left % 60;
+            txt.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            box.classList.toggle('is-low', left <= 120);
+            if (left === 0 && !done) {
+                done = true;
+                // time is up: end the session (the server also refuses every request from now on)
+                document.getElementById('logout-form').submit();
+            }
+        }
+        tick();
+        setInterval(tick, 1000);
+    })();
+</script>
+@endif
 
 <style>
     .ur-dash-bell-menu { width: 360px; max-width: calc(100vw - 24px); }

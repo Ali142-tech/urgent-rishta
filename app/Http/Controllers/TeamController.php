@@ -1108,6 +1108,16 @@ TEMPLATE;
         $intakeIsSynthesized = empty(trim((string) ($member->raw_intake_text ?? '')));
         $intakeText = $intakeIsSynthesized ? $this->buildSyntheticIntakeText($member) : $member->raw_intake_text;
 
+        // temporary access: no photos and no original pasted text (it can carry phone numbers / emails) ever leave the server
+        if ($viewer->isRestricted()) {
+            $hasRealPhotos = false;
+            $photos = [];
+            $sharePhotos = [];
+            $intakeText = '';
+            $intakeIsSynthesized = false;
+            $canRunAiMatch = false;
+        }
+
         return compact('matchCount', 'canRunAiMatch', 'hasRealPhotos', 'photos', 'sharePhotos', 'intakeText', 'intakeIsSynthesized');
     }
 

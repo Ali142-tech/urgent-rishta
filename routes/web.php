@@ -188,6 +188,11 @@ Route::post('team/manage/applications/{dataid}/reject', [App\Http\Controllers\Te
 Route::get('team/manage/proposals', [App\Http\Controllers\TeamAdminController::class, 'proposals'])->name('team.manage.proposals');
 Route::get('team/manage/successful-matches', [App\Http\Controllers\TeamAdminController::class, 'successfulMatches'])->name('team.manage.successful-matches');
 Route::post('team/manage/successful-matches/{id}/share', [App\Http\Controllers\TeamAdminController::class, 'updateSuccessfulMatchShare'])->name('team.manage.successful-matches.share');
+Route::get('team/manage/temporary-access', [App\Http\Controllers\TeamAdminController::class, 'temporaryAccess'])->name('team.manage.temporary');
+Route::post('team/manage/temporary-access', [App\Http\Controllers\TeamAdminController::class, 'storeTemporary'])->name('team.manage.temporary.store');
+Route::post('team/manage/temporary-access/{dataid}/extend', [App\Http\Controllers\TeamAdminController::class, 'extendTemporary'])->name('team.manage.temporary.extend');
+Route::post('team/manage/temporary-access/{dataid}/revoke', [App\Http\Controllers\TeamAdminController::class, 'revokeTemporary'])->name('team.manage.temporary.revoke');
+Route::delete('team/manage/temporary-access/{dataid}', [App\Http\Controllers\TeamAdminController::class, 'destroyTemporary'])->name('team.manage.temporary.destroy');
 Route::get('team/manage/private-proposals', [App\Http\Controllers\TeamAdminController::class, 'privateProposals'])->name('team.manage.private-proposals');
 Route::get('team/dashboard', [App\Http\Controllers\TeamController::class, 'dashboard'])->name('team.dashboard');
 Route::get('team/proposals/mine', [App\Http\Controllers\TeamController::class, 'myProposals'])->name('team.proposals.mine');

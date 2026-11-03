@@ -46,6 +46,10 @@
     .mk-input input { width: 100%; height: 48px; border: 1px solid var(--mk-line); border-radius: 12px; padding: 0 14px 0 44px; font-size: 14.5px; font-family: inherit; color: var(--mk-ink); background: #fff; transition: border-color .15s, box-shadow .15s; }
     .mk-input input:focus { outline: none; border-color: var(--mk-gold); box-shadow: 0 0 0 3px rgba(201,151,77,.18); }
     .mk-input input::placeholder { color: #9AA5A0; }
+    .mk-input .mk-eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border: 0; border-radius: 10px; background: transparent; color: #8A938E; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .mk-input .mk-eye i { position: static; transform: none; color: inherit; font-size: 16px; pointer-events: none; }
+    .mk-input .mk-eye:hover, .mk-input .mk-eye.is-on { color: var(--mk-green); background: #F3F9F5; }
+    .mk-input #password { padding-right: 52px; }
     .mk-remember { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--mk-text); margin: 4px 0 22px 4px; cursor: pointer; }
     .mk-remember input { width: 17px; height: 17px; accent-color: var(--mk-green); margin: 0; }
     .mk-submit { width: 100%; height: 54px; border-radius: 999px; background: linear-gradient(180deg, #D2A35C, #C59652); color: #1C2321; border: 0; font-size: 15.5px; font-weight: 800; cursor: pointer; box-shadow: 0 12px 26px rgba(201,151,77,.32); transition: transform .15s, filter .15s; }
@@ -103,7 +107,7 @@
                     </div>
                     <div class="mk-field">
                         <label for="password">Password</label>
-                        <div class="mk-input"><i class="fa fa-lock"></i><input type="password" id="password" name="password" placeholder="Your password" required autocomplete="current-password"></div>
+                        <div class="mk-input"><i class="fa fa-lock"></i><input type="password" id="password" name="password" placeholder="Your password" required autocomplete="current-password"><button type="button" class="mk-eye" id="mk_eye" aria-label="Show password" aria-pressed="false" title="Show password"><i class="fa fa-eye"></i></button></div>
                     </div>
                     <label class="mk-remember"><input type="checkbox" name="remember" value="1"> Keep me signed in</label>
                     <button type="submit" class="mk-submit">Sign In</button>
@@ -114,4 +118,21 @@
         </div>
     </div>
 </div>
+<script>
+    // show / hide the typed password
+    (function () {
+        var b = document.getElementById('mk_eye'), p = document.getElementById('password');
+        if (!b || !p) return;
+        b.addEventListener('click', function () {
+            var show = p.type === 'password';
+            p.type = show ? 'text' : 'password';
+            b.classList.toggle('is-on', show);
+            b.setAttribute('aria-pressed', show ? 'true' : 'false');
+            b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+            b.title = show ? 'Hide password' : 'Show password';
+            b.querySelector('i').className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
+            p.focus();
+        });
+    })();
+</script>
 @endsection

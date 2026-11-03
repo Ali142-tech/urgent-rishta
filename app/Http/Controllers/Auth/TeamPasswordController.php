@@ -27,7 +27,7 @@ class TeamPasswordController extends Controller
         // Same answer whether or not the e-mail exists (and only approved, active members get a link),
         // so the form can't be used to find out who is registered.
         $member = TeamMember::where('email', $request->email)->first();
-        if ($member && $member->isActiveMember()) {
+        if ($member && $member->isActiveMember() && !$member->is_temporary) {
             Password::broker('team_members')->sendResetLink(['email' => $member->email]);
             Log::info('Team password reset link sent to ' . $member->dataid);
         }
