@@ -55,6 +55,10 @@ class TeamController extends Controller
             $member->added_by_dataid = $owner->dataid ?? null;
             $member->added_by_experience = $owner->experience ?? null;
             $member->added_by_premium = TeamMember::isPremiumId($member->added_by);
+            if (auth()->user()->isRestricted()) {   // temporary access: the owner's name is never sent
+                $member->added_by_name = $member->added_by_dataid = $member->added_by_experience = null;
+                $member->added_by_premium = false;
+            }
             $member->team_card_role = $member->added_by == $viewerId ? 'own' : 'other';
             $member->has_partner_preference = $member->hasPartnerPreferences();
         }
@@ -1093,6 +1097,10 @@ TEMPLATE;
         $member->added_by_dataid = $owner->dataid ?? null;
         $member->added_by_experience = $owner->experience ?? null;
         $member->added_by_premium = TeamMember::isPremiumId($member->added_by);
+        if ($viewer->isRestricted()) {   // temporary access: the owner's name is never sent
+            $member->added_by_name = $member->added_by_dataid = $member->added_by_experience = null;
+            $member->added_by_premium = false;
+        }
         $member->team_card_role = $member->added_by == $viewer->id ? 'own' : 'other';
         $member->has_partner_preference = $member->hasPartnerPreferences();
 

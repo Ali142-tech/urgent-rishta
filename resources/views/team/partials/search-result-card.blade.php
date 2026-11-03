@@ -40,10 +40,12 @@
             @endif
         </div>
 
+        @unless($__restricted)
           <div class="ur-search-card__owner " style="font-weight: bolder">
             <i class="fa fa-user-circle"></i> Owner: {{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif
             @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
         </div>
+        @endunless
 
         <div class="ur-search-card__meta">
             {{ ucfirst($member->gender) }}
@@ -86,6 +88,11 @@
                 <i class="fa fa-eye"></i> View file
             </a>
        
+            @if($__restricted)
+            <a class="ur-search-card__btn ur-search-card__btn--whatsapp" href="{{ \App\User::SUPPORT_WHATSAPP_URL }}?text={{ rawurlencode('Assalam o Alaikum, I am interested in proposal ' . $member->dataid . '. Please share more details.') }}" target="_blank" rel="noopener">
+                <i class="fa fa-whatsapp"></i> WhatsApp
+            </a>
+            @endif
             @unless($__restricted)
             <a class="ur-search-card__btn ur-search-card__btn--whatsapp js-share-proposal" data-payload-url="{{ route('team.proposals.share.payload', $member->dataid) }}" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
                 <i class="fa fa-whatsapp"></i> Share

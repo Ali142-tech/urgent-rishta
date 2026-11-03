@@ -72,10 +72,12 @@
             @if($nationality) &bull; {{ $nationality }} @endif
             @if(!empty($member->profession)) &bull; {{ $member->profession }} @if($member->lbl_city) in {{ $member->lbl_city }} @endif @endif
         </p>
+        @unless($__restricted)
         <p class="ur-cf-owner">
             Owned by {{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif
             @if($member->added_by_experience) &bull; {{ $member->added_by_experience }} @endif
         </p>
+        @endunless
 
         <div class="ur-cf-stats">
             <div><span>Age</span><b>{{ $age ? $age.' years' : 'Not provided' }}</b></div>
@@ -140,7 +142,9 @@
             <div><span>Profile category</span><b>{{ $member->profile_category ?: $notProvided }}</b></div>
             <div><span>Presentation highlight</span><b>{{ $member->presentation_highlight ?: $notProvided }}</b></div>
             <div><span>Father</span><b>{{ $member->father_occupation ?: $notProvided }}</b></div>
+            @unless($__restricted)
             <div><span>Profile owner</span><b>{{ $member->added_by_name }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge')@endif</b></div>
+            @endunless
         </div>
         @if(!empty($member->profile_description))
             <p class="ur-cf-description">{{ $member->profile_description }}</p>
@@ -173,6 +177,9 @@
                     @foreach(['active' => 'Active', 'on_hold' => 'On Hold', 'matched' => 'Matched', 'engaged' => 'Engaged', 'married' => 'Married', 'closed' => 'Closed'] as $__v => $__l)<option value="{{ $__v }}" {{ $member->profile_status === $__v ? 'selected' : '' }}>{{ $__l }}</option>@endforeach
                 </select>
             </label>
+        @endif
+        @if($__restricted)
+        <a href="{{ \App\User::SUPPORT_WHATSAPP_URL }}?text={{ rawurlencode('Assalam o Alaikum, I am interested in proposal ' . $member->dataid . '. Please share more details.') }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> WhatsApp admin</a>
         @endif
         @unless($__restricted)
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>

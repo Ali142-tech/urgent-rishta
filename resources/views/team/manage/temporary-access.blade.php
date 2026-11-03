@@ -199,12 +199,28 @@
             if (reload) setTimeout(function () { location.reload(); }, 800);
         }
         if (timers.length) { tick(); setInterval(tick, 1000); }
+        // loader while an account is created / extended / ended / deleted (the page reloads when the server is done)
+        function busy(text) {
+            var L = document.getElementById('ur_search_loader');
+            if (!L) return;
+            var t = L.querySelector('strong'); if (t) t.textContent = text;
+            L.classList.add('is-on');
+        }
+        window.addEventListener('pageshow', function () { var L = document.getElementById('ur_search_loader'); if (L) L.classList.remove('is-on'); });
+        document.querySelectorAll('form[method="POST"][action*="temporary-access"]:not(.js-ta-confirm)').forEach(function (f) {
+            f.addEventListener('submit', function (e) {
+                if (e.defaultPrevented) return;
+                var b = f.querySelector('button[type="submit"]');
+                busy(f.classList.contains('ur-ta-form') ? 'Creating account...' : 'Updating...');
+                if (b) setTimeout(function () { b.disabled = true; }, 0);   // no double submit (a disabled button still lets this submit go through)
+            });
+        });
         // confirm before ending / deleting
         document.querySelectorAll('form.js-ta-confirm').forEach(function (f) {
             f.addEventListener('submit', function (e) {
                 if (f.dataset.ok === '1') return;
                 e.preventDefault();
-                var go = function () { f.dataset.ok = '1'; f.submit(); };
+                var go = function () { f.dataset.ok = '1'; busy('Updating...'); f.submit(); };
                 if (typeof swalConfirm === 'function') swalConfirm(f.dataset.title, f.dataset.text, go); else if (confirm(f.dataset.title + '\n' + f.dataset.text)) go();
             });
         });

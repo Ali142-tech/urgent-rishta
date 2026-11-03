@@ -32,7 +32,7 @@ class PrivateProposalScope implements Scope
 
         $team = Auth::guard('team')->user();
         if ($team) {
-            if ($team->is_admin || $team->can_view_private) {
+            if ($team->is_admin || $team->can_view_private || $team->is_temporary) {   // temporary access can see private proposals too
                 return;
             }
             $builder->where(fn ($q) => $q->where($private, false)->orWhere($model->qualifyColumn('added_by'), $team->id));
