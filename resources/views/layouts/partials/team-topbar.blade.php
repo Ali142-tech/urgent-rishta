@@ -66,7 +66,7 @@
 </form>
 @if(auth()->user()->isRestricted() && isset($tempSecondsLeft))
 <style>
-    .ur-temp-clock { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; background: #FFF4DC; border: 1px solid #E9C27A; color: #7A5410; font-size: 13px; font-weight: 800; white-space: nowrap; }
+    .ur-temp-clock { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 999px; background: #FFF4DC; border: 1px solid #E9C27A; color: #7A5410; font-size: 13px; font-weight: 700; white-space: nowrap; }
     .ur-temp-clock.is-low { background: #FDECEA; border-color: #E4A8A2; color: #A3281E; animation: urTempPulse 1s ease-in-out infinite; }
     @keyframes urTempPulse { 50% { opacity: .55; } }
 </style>

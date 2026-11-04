@@ -12,7 +12,7 @@
 
     .ur-pw-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr); gap: 22px; align-items: start; }
     .ur-pw-card { background: #fff; border-radius: 22px; padding: 26px; box-shadow: 0 2px 14px rgba(15,46,36,.06); }
-    .ur-pw-card__label { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #8A938E; margin: 0 0 18px; }
+    .ur-pw-card__label { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8A938E; margin: 0 0 18px; }
     .ur-pw-field { margin-bottom: 18px; }
     .ur-pw-field label { display: block; font-size: 13.5px; font-weight: 700; color: #1C2321; margin: 0 0 7px; }
     .ur-pw-input { position: relative; }
@@ -37,7 +37,7 @@
     .ur-pw-save { height: 46px; padding: 0 30px; border-radius: 12px; background: #C9974D; color: #fff; border: 0; font-size: 14.5px; font-weight: 700; cursor: pointer; }
     .ur-pw-save:hover { background: #B88640; }
 
-    .ur-pw-tips h2 { font-size: 15.5px; font-weight: 800; color: #123A2E; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
+    .ur-pw-tips h2 { font-size: 15.5px; font-weight: 700; color: #123A2E; margin: 0 0 6px; display: flex; align-items: center; gap: 10px; }
     .ur-pw-tips h2 i { color: #1C9A6C; }
     .ur-pw-tips > p { font-size: 13px; color: #6B7570; line-height: 1.55; margin: 0 0 16px; }
     .ur-pw-tip { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid #F0ECE1; }

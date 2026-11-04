@@ -24,7 +24,7 @@
     <div class="ur-cf-header__icon"><i class="fa fa-clipboard"></i></div>
     <div class="ur-cf-header__text">
         <h2>Complete Client File</h2>
-        <p>Profile ID {{ $member->dataid }} &bull; Original and AI-organized data <span class="ur-cf-private-pill" style="{{ $member->is_private ? '' : 'display:none;' }} background:#3B2A4F; color:#fff; font-size:10.5px; font-weight:800; padding:2px 9px; border-radius:999px; margin-left:6px;"><i class="fa fa-lock"></i> Private</span></p>
+        <p>Profile ID {{ $member->dataid }} &bull; Original and AI-organized data <span class="ur-cf-private-pill" style="{{ $member->is_private ? '' : 'display:none;' }} background:#3B2A4F; color:#fff; font-size:10.5px; font-weight: 700; padding:2px 9px; border-radius:999px; margin-left:6px;"><i class="fa fa-lock"></i> Private</span></p>
     </div>
     @if($matchCount > 0)<span class="ur-cf-matches-pill">{{ $matchCount }} top AI match{{ $matchCount == 1 ? '' : 'es' }}</span>@endif
     @unless($asPage)

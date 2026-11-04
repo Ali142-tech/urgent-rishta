@@ -70,17 +70,19 @@
     .ur-search-card { display: flex; flex-direction: column; background: #123A2E; border: 1px solid #0F2E24; border-radius: 26px; overflow: hidden; color: #fff; box-shadow: 0 10px 26px rgba(0,0,0,.22); transition: box-shadow .2s ease, transform .2s ease; }
     .ur-search-card:hover { box-shadow: 0 16px 34px rgba(0,0,0,.32); transform: translateY(-2px); }
     .ur-search-card__head { display: flex; gap: 16px; align-items: flex-start; padding: 18px 18px 16px; background: #F6F4EF; color: #0F2E24; }
-    .ur-search-card__photo { position: relative; flex: 0 0 116px; width: 116px; height: 116px; border-radius: 18px; overflow: hidden; background: #DDE8E2; display: block; }
-    .ur-search-card__photo img { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; }
+    .ur-search-card__photo { position: relative; flex: 0 0 132px; width: 132px; height: 176px; border-radius: 18px; overflow: hidden; background: #DDE8E2; display: block; }
+    /* the whole photo is shown (never cropped); the empty sides are filled with a soft blurred copy of the same photo */
+    .ur-search-card__photo::before { content: ''; position: absolute; inset: -16px; background: var(--ph) center / cover no-repeat; filter: blur(14px) saturate(1.1) brightness(.92); transform: scale(1.06); }
+    .ur-search-card__photo img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
     .ur-search-card__headinfo { flex: 1; min-width: 0; }
     .ur-search-card__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin-bottom: 4px; }
-    .ur-search-card__id { font-weight: 800; color: #123A2E; font-size: 26px; line-height: 1.1; letter-spacing: -.2px; }
-    .ur-search-card__verified { display: inline-flex; align-items: center; gap: 5px; background: #C9F0D8; color: #0F3D2E; font-size: 12.5px; font-weight: 800; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+    .ur-search-card__id { font-weight: 700; color: #123A2E; font-size: 26px; line-height: 1.1; letter-spacing: -.2px; }
+    .ur-search-card__verified { display: inline-flex; align-items: center; gap: 5px; background: #C9F0D8; color: #0F3D2E; font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
     .ur-search-card__meta { font-size: 15px; line-height: 1.45; color: #1F3A30; }
     .ur-search-card__meta--sub { font-size: 14px; color: #4F6A5F; }
     .ur-search-card__flag { width: 20px !important; height: 14px !important; margin: 0 3px 2px 0 !important; vertical-align: middle; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0,0,0,.12); display: inline-block !important; }
     .ur-search-card__badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-    .ur-search-card__badge { font-size: 10.5px; font-weight: 800; padding: 3px 10px; border-radius: 999px; letter-spacing: .3px; text-transform: uppercase; }
+    .ur-search-card__badge { font-size: 10.5px; font-weight: 700; padding: 3px 10px; border-radius: 999px; letter-spacing: .3px; text-transform: uppercase; }
     .ur-search-card__badge--new { background: #C9974D; color: #0F2E24; }
     .ur-search-card__badge--updated { background: #123A2E; color: #fff; }
     .ur-search-card__badge--premium { background: #FBF0DA; color: #8A6218; }
@@ -129,13 +131,19 @@
     .ur-search-card__btn i, .ur-search-card__btn span { font-weight: 700 !important; }
     .ur-search-card__btn--dark, .ur-search-card__btn--whatsapp { background: linear-gradient(180deg, #D9AC63, #B88436); border-color: #B88436; }
     .ur-search-card__btn--dark:hover, .ur-search-card__btn--whatsapp:hover { background: linear-gradient(180deg, #E2B66E, #C9974D); border-color: #C9974D; }
+    /* Photo on top (Nov 2026): the whole photo gets the full card width, the ID / quick facts sit underneath */
+    .ur-search-card__head { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
+    .ur-search-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 4 / 5; max-height: 440px; border-radius: 0; box-shadow: none; }
+    .ur-search-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px; border-top: 3px double #C9974D; }
+
     @media (max-width: 900px) {
         .ur-search-results { grid-template-columns: 1fr; }
     }
     @media (max-width: 560px) {
         /* Phones: a smaller header photo and tighter panels so the card stays compact */
-        .ur-search-card__head { gap: 12px; padding: 14px; }
-        .ur-search-card__photo { flex-basis: 92px; width: 92px; height: 92px; border-radius: 14px; }
+        .ur-search-card__head { gap: 0; padding: 0; }
+        .ur-search-card__photo { flex-basis: auto; width: 100%; height: auto; border-radius: 0; }
+        .ur-search-card__headinfo { padding: 12px 14px; }
         .ur-search-card__id { font-size: 21px; }
         .ur-search-card__meta { font-size: 13.5px; }
         .ur-search-card__meta--sub { font-size: 12.5px; }

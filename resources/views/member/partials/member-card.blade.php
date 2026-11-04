@@ -149,7 +149,7 @@ if (!$hideImage) {
                 {{ ucfirst($member->gender) }}@if($__age !== null) &bull; {{ $__age }}@endif @if(!empty($member->lbl_marital_status)) &bull; {{ $member->lbl_marital_status }}@endif
                 @if(!empty($member->lbl_city))
                     &bull;
-                    @if(!empty($member->con_of_residence_code))
+                    @if(!empty($member->con_of_residence_code) && \App\Profile::countryFlagUrl($member->con_of_residence_code))
                         <img class="member-card__flag" src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code) }}" alt="" title="{{$member->lbl_con_of_residence}}" loading="lazy" onerror="this.style.display='none';">
                     @endif
                     {{ $member->lbl_city }}

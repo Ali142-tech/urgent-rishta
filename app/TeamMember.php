@@ -180,7 +180,7 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         if (!$this->is_temporary || !$this->temp_expires_at) {
             return null;
         }
-        return max(0, now()->diffInSeconds($this->temp_expires_at, false));
+        return max(0, (int) now()->diffInSeconds($this->temp_expires_at, false));
     }
 
     /** waiting (never signed in) / active / expired / revoked — for the admin list. */

@@ -339,7 +339,7 @@ class TeamController extends Controller
             $selected = $default->reference;
         }
 
-        return view('team.matches', $this->buildMatchCenterData($selected, $request));
+        return $this->matchCenterResponse($this->buildMatchCenterData($selected, $request), $request);
     }
 
     /**
@@ -349,7 +349,22 @@ class TeamController extends Controller
      */
     public function matchesForProposal($dataid)
     {
-        return view('team.matches', $this->buildMatchCenterData($dataid, request()));
+        return $this->matchCenterResponse($this->buildMatchCenterData($dataid, request()), request());
+    }
+
+    /** The AI Match page, or (?partial=1) just the next batch of match cards for "Load more". */
+    private function matchCenterResponse(array $data, Request $request)
+    {
+        if (!$request->boolean('partial')) {
+            return view('team.matches', $data);
+        }
+
+        return response()->json([
+            'html' => view('team.partials.ai-match-cards', $data + ['matchOffset' => ($data['page'] - 1) * $data['perPage']])->render(),
+            'count' => count($data['matches']),
+            'has_more' => $data['hasMore'],
+            'next_url' => $data['hasMore'] ? $request->fullUrlWithQuery(['partial' => 1, 'page' => $data['page'] + 1]) : null,
+        ]);
     }
 
     private function buildMatchCenterData(string $selectedReference, Request $request): array
@@ -400,6 +415,14 @@ class TeamController extends Controller
         }
         $matches = $matches->sortByDesc(fn ($m) => $m->compat['percent'] ?? 0)->values();
 
+        // only one batch of cards is rendered (and sent) at a time; "Load more" asks for the next page of the same list
+        $matchTotal = $matches->count();
+        $bestScore = $matchTotal ? ($matches->first()->compat['percent'] ?? 0) : 0;
+        $perPage = 6;
+        $page = $request->boolean('partial') ? max(1, (int) $request->query('page', 1)) : 1;   // a plain page load always starts at the first batch
+        $matches = $matches->slice(($page - 1) * $perPage, $perPage)->values();
+        $hasMore = $page * $perPage < $matchTotal;
+
         $proposalOwner = $owners->get($proposal->added_by);
         $proposalProfile->added_by_name = $proposalOwner ? trim($proposalOwner->first_name . ' ' . $proposalOwner->last_name) : 'Unknown';
         $proposalProfile->added_by_experience = $proposalOwner->experience ?? null;
@@ -408,7 +431,7 @@ class TeamController extends Controller
 
         $locations = $this->countryOptions();
 
-        return compact('proposal', 'proposalProfile', 'preference', 'candidateProposals', 'matches', 'minScore', 'locationFilter', 'locations');
+        return compact('proposal', 'proposalProfile', 'preference', 'candidateProposals', 'matches', 'minScore', 'locationFilter', 'locations', 'matchTotal', 'bestScore', 'perPage', 'page', 'hasMore');
     }
 
     /**
@@ -660,12 +683,17 @@ class TeamController extends Controller
      * are still active, and successful matches credited to them — plus
      * "Recommended for your clients". No management actions here.
      */
-    public function matchmakers()
+    public function matchmakers(Request $request)
     {
         $viewerId = auth()->id();
-        $members = TeamMember::active()
-            ->orderBy('first_name')
-            ->get();
+
+        // the roster is shown in batches ("Load more"); the per-member counts are only worked out for the batch being shown
+        $perPage = 9;
+        $partial = $request->boolean('partial');
+        $page = $partial ? max(1, (int) $request->query('page', 1)) : 1;
+        $memberTotal = TeamMember::active()->count();
+        $members = TeamMember::active()->orderBy('first_name')->orderBy('id')->skip(($page - 1) * $perPage)->take($perPage)->get();
+        $hasMore = $page * $perPage < $memberTotal;
 
         foreach ($members as $member) {
             $member->activeProposalsCount = Proposal::where('added_by', $member->id)->where('profile_status', 'active')->count();
@@ -675,6 +703,15 @@ class TeamController extends Controller
             // "Senior Partner" ribbon — experience is a single free-text field.
             $member->isSenior = stripos((string) $member->experience, 'senior') !== false;
             $member->hasRealPhoto = !empty($member->photo);
+        }
+
+        if ($partial) {
+            return response()->json([
+                'html' => view('team.partials.matchmaker-cards', compact('members'))->render(),
+                'count' => $members->count(),
+                'has_more' => $hasMore,
+                'next_url' => $hasMore ? $request->fullUrlWithQuery(['partial' => 1, 'page' => $page + 1]) : null,
+            ]);
         }
 
         // "Recommended for your clients": for each of MY clients with requirements
@@ -712,7 +749,7 @@ class TeamController extends Controller
         }
         $recommendations = $recommendations->sortByDesc('percent')->take(3)->values();
 
-        return view('team.matchmakers', compact('members', 'recommendations'));
+        return view('team.matchmakers', compact('members', 'recommendations', 'memberTotal', 'hasMore'));
     }
 
     /** "Upload my photo" / "Add photo" on the Matchmakers Directory — sets the team member's OWN profile photo. */

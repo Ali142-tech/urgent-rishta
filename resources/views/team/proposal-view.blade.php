@@ -27,7 +27,7 @@
     .ur-cf-page .ur-cf-photo-slot img { cursor: zoom-in; }
 
     .ur-pv-section { max-width: 1100px; background: #fff; border: 1px solid #E7E2D6; border-radius: 18px; padding: 20px 24px; margin-bottom: 18px; }
-    .ur-pv-section h2 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; color: #123A2E; font-size: 15px; line-height: 1.3 !important; margin: 0 0 12px; }
+    .ur-pv-section h2 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 700; color: #123A2E; font-size: 15px; line-height: 1.3 !important; margin: 0 0 12px; }
     .ur-pv-section--soft { background: #FCF6EA; border-color: #F0DDB0; }
     .ur-pv-section .ur-cf-grid div { background: #fff; }
     .ur-pv-description { font-size: 13.5px; color: #1C2321; line-height: 1.6; white-space: pre-line; margin: 0; }

@@ -7,7 +7,7 @@
     @stack('styles')
 </head>
 
-<body class="ur-dash-body pace-done">
+<body class="ur-dash-body ur-team-theme pace-done">
     <div class="pace pace-inactive">
         <div class="pace-progress" data-progress-text="100%" data-progress="99" style="transform: translate3d(100%, 0px, 0px);">
             <div class="pace-progress-inner"></div>
@@ -18,7 +18,7 @@
         /* Small square / round photo crops: most client photos are portrait (head at the top), so crop from the top instead of the middle — otherwise the face is cut off. */
         .ur-search-card__photo img, .ur-mm-photo, .ur-ov-client__photo, .ur-ov-mcell img, .ur-am-matching-for__photo, .ur-am-pair__photo,
         .ur-mc-profile__photo, .ur-mp-prop img, .ur-nt-avatar > img, .ur-mka-card__photo { object-position: center 12%; }
-        .ur-premium-badge { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: linear-gradient(135deg, #E9C27A, #C9974D); color: #3B2A0E !important; font-size: 10.5px; font-weight: 800; letter-spacing: .02em; line-height: 1.5; white-space: nowrap; text-transform: none; }
+        .ur-premium-badge { display: inline-flex; align-items: center; gap: 4px; vertical-align: middle; margin-left: 6px; padding: 2px 9px; border-radius: 999px; background: linear-gradient(135deg, #E9C27A, #C9974D); color: #3B2A0E !important; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; line-height: 1.5; white-space: nowrap; text-transform: none; }
         .ur-premium-badge i { color: #7A4F0C !important; font-size: 10px; margin: 0 !important; }
         /* ---------- Toast notifications (#message_alert / showAlert()) ---------- */
         .ur-toast-stack {
@@ -110,7 +110,7 @@
         .ur-cf-badge--royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); color: #fff; }
         .ur-cf-badge--abroad { background: #E4EEF7; color: #2C5F8A; }
         .ur-cf-badge--highlight { background: #FBE4E9; color: #A23B57; }
-        .ur-cf-info h3 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; font-size: 21px; line-height: 1.25 !important; color: #123A2E; margin: 0 0 6px; }
+        .ur-cf-info h3 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 700; font-size: 21px; line-height: 1.25 !important; color: #123A2E; margin: 0 0 6px; }
         .ur-cf-summary { font-size: 13.5px; color: #1C2321; margin: 0 0 4px; }
         .ur-cf-owner { font-size: 12.5px; color: #6B7570; margin: 0 0 16px; }
         .ur-cf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
@@ -127,7 +127,7 @@
         .ur-cf-tabs button.is-active { background: #123A2E; color: #fff; }
         .ur-cf-panel { display: none; }
         .ur-cf-panel.is-active { display: block; }
-        .ur-cf-fields-head { font-size: 15px; font-weight: 800; color: #123A2E; margin: 0 0 12px; line-height: 1.3 !important; }
+        .ur-cf-fields-head { font-size: 15px; font-weight: 700; color: #123A2E; margin: 0 0 12px; line-height: 1.3 !important; }
         .ur-cf-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
         .ur-cf-grid div { background: #fff; border: 1px solid #E7E2D6; border-radius: 12px; padding: 12px 14px; min-width: 0; }
         .ur-cf-grid div span { display: block; font-size: 11.5px; font-weight: 500; letter-spacing: 0; text-transform: none; color: #6B7570; margin: 0 0 4px; line-height: 1.3 !important; }
@@ -589,6 +589,18 @@
             return false;
         }
     </script>
+    <style>
+        /* One type scale for every team page (titles, subtitles, section headings, weights) — page styles can no longer drift apart. */
+        .ur-team-theme .ur-dash-main h1 { font-family: 'Playfair Display', Georgia, serif !important; font-weight: 700 !important; font-size: 28px !important; line-height: 1.2 !important; letter-spacing: 0 !important; }
+        .ur-team-theme .ur-dash-main h1 + p { font-size: 14px !important; font-weight: 400 !important; line-height: 1.6 !important; }
+        .ur-team-theme .ur-dash-main h1 + p:not(.ur-ov-sub):not(.ur-ta-sub) { color: #6B7570 !important; }
+        .ur-team-theme .ur-dash-main h2 { font-family: 'Playfair Display', Georgia, serif !important; font-weight: 700 !important; font-size: 19px !important; line-height: 1.3 !important; letter-spacing: 0 !important; }
+        .ur-team-theme .ur-dash-main b, .ur-team-theme .ur-dash-main strong { font-weight: 700; }
+        @media (max-width: 700px) {
+            .ur-team-theme .ur-dash-main h1 { font-size: 24px !important; }
+            .ur-team-theme .ur-dash-main h2 { font-size: 17px !important; }
+        }
+    </style>
     <style>
         .ur-search-loader { position: fixed; inset: 0; z-index: 99998; display: none; align-items: center; justify-content: center; background: rgba(250,248,243,.72); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
         .ur-search-loader.is-on { display: flex; }

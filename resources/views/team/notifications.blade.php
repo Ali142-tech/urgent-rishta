@@ -20,7 +20,7 @@
     .ur-nt-tabs a span { background: #F3EFE6; color: #123A2E; border-radius: 999px; min-width: 22px; padding: 1px 7px; font-size: 11px; text-align: center; }
     .ur-nt-tabs a.is-active span { background: rgba(255,255,255,.18); color: #fff; }
 
-    .ur-nt-day { font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #7B8781; margin: 22px 0 8px; }
+    .ur-nt-day { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #7B8781; margin: 22px 0 8px; }
     .ur-nt-list { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; overflow: hidden; }
     .ur-nt-row { position: relative; display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #F0ECE1; text-decoration: none !important; color: inherit !important; background: #fff; }
     .ur-nt-row:last-child { border-bottom: 0; }
@@ -41,7 +41,7 @@
     .ur-nt-text { font-size: 13px; color: #4B5651; line-height: 1.45 !important; margin: 0; overflow-wrap: anywhere; }
     .ur-nt-time { font-size: 11.5px; color: #8A938E; margin: 4px 0 0; }
     .ur-nt-go { flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #1C6B52; white-space: nowrap; }
-    .ur-nt-new { flex-shrink: 0; font-size: 10px; font-weight: 800; letter-spacing: .04em; background: #1C9A6C; color: #fff; border-radius: 999px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
+    .ur-nt-new { flex-shrink: 0; font-size: 10px; font-weight: 700; letter-spacing: .04em; background: #1C9A6C; color: #fff; border-radius: 999px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
 
     .ur-nt-empty { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 48px 20px; text-align: center; color: #6B7570; }
     .ur-nt-empty i { display: block; font-size: 34px; color: #C9D6CF; margin-bottom: 10px; }

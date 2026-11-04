@@ -32,10 +32,45 @@ class TeamAdminController extends Controller
     // ---- Temporary Access ---------------------------------------------------------------------------------------------------
 
     /** Short-visit accounts: the person signs in with the email + password the admin sends; the clock starts at their first sign-in. */
-    public function temporaryAccess()
+    public function temporaryAccess(Request $request)
     {
-        $accounts = TeamMember::temporary()->orderByDesc('created_at')->get();
-        return view('team.manage.temporary-access', ['accounts' => $accounts, 'loginUrl' => url('team/login')]);
+        // the same four states TeamMember::tempState() reports, as SQL so the list can be filtered and paginated
+        $state = function ($query, string $name) {
+            $now = now();
+            return match ($name) {
+                'ended' => $query->where('status', '!=', 'active'),
+                'active' => $query->where('status', 'active')->whereNotNull('temp_first_login_at')->where('temp_expires_at', '>', $now),
+                'waiting' => $query->where('status', 'active')->whereNull('temp_first_login_at')
+                    ->where(fn ($q) => $q->whereNull('temp_link_expires_at')->orWhere('temp_link_expires_at', '>', $now)),
+                'expired' => $query->where('status', 'active')->where(fn ($q) => $q
+                    ->where(fn ($w) => $w->whereNotNull('temp_first_login_at')->where(fn ($x) => $x->whereNull('temp_expires_at')->orWhere('temp_expires_at', '<=', $now)))
+                    ->orWhere(fn ($w) => $w->whereNull('temp_first_login_at')->whereNotNull('temp_link_expires_at')->where('temp_link_expires_at', '<=', $now))),
+            };
+        };
+
+        $counts = ['all' => TeamMember::temporary()->count()];
+        foreach (['active', 'waiting', 'expired', 'ended'] as $name) {
+            $counts[$name] = $state(TeamMember::temporary(), $name)->count();
+        }
+
+        $filter = in_array($request->query('status'), ['active', 'waiting', 'expired', 'ended'], true) ? $request->query('status') : 'all';
+        $search = trim((string) $request->query('q', ''));
+
+        $query = TeamMember::temporary();
+        if ($filter !== 'all') {
+            $state($query, $filter);
+        }
+        if ($search !== '') {
+            $like = '%' . addcslashes($search, '%_\\') . '%';
+            $query->where(fn ($q) => $q->where('first_name', 'like', $like)->orWhere('last_name', 'like', $like)->orWhere('email', 'like', $like));
+        }
+
+        $accounts = $query->orderByDesc('created_at')->paginate(8)->withQueryString();
+
+        return view('team.manage.temporary-access', [
+            'accounts' => $accounts, 'loginUrl' => url('team/login'),
+            'counts' => $counts, 'filter' => $filter, 'search' => $search,
+        ]);
     }
 
     public function storeTemporary(Request $request)

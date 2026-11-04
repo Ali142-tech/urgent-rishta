@@ -10,9 +10,9 @@
 @section('main-content')
 <style>
     .ur-mc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
-    .ur-mc-head h1 { font-family: 'Manrope', system-ui, sans-serif; color: #123A2E; font-weight: 800; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
+    .ur-mc-head h1 { font-family: 'Manrope', system-ui, sans-serif; color: #123A2E; font-weight: 700; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
     .ur-mc-head p { color: #4B5651; font-size: 14.5px; line-height: 1.5 !important; margin: 0; }
-    .ur-mc-add-btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 14px; background: #123A2E; color: #fff !important; font-size: 14px; font-weight: 800; line-height: 1 !important; text-decoration: none; white-space: nowrap; box-shadow: 0 8px 20px rgba(15,46,36,.18); }
+    .ur-mc-add-btn { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: 14px; background: #123A2E; color: #fff !important; font-size: 14px; font-weight: 700; line-height: 1 !important; text-decoration: none; white-space: nowrap; box-shadow: 0 8px 20px rgba(15,46,36,.18); }
     .ur-mc-add-btn:hover { background: #0F2E24; }
 
     .ur-mc-panel { background: #fff; border: 1px solid #E7E2D6; border-radius: 22px; padding: 18px 18px 14px; }
@@ -21,28 +21,28 @@
     .ur-mc-search i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #9AA5A0; font-size: 13px; }
     .ur-mc-search input { width: 100%; height: 46px; border: 1px solid #E7E2D6; border-radius: 14px; padding: 0 14px 0 40px; font-size: 14px; background: #fff; }
     .ur-mc-toolbar select { height: 46px; border: 1px solid #E7E2D6; border-radius: 14px; padding: 0 14px; font-size: 14px; background: #fff; flex: 0 0 auto; }
-    .ur-mc-count { margin-left: auto; background: #F3F0E8; color: #6B7570; font-size: 12px; font-weight: 800; line-height: 1 !important; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
+    .ur-mc-count { margin-left: auto; background: #F3F0E8; color: #6B7570; font-size: 12px; font-weight: 700; line-height: 1 !important; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
 
     .ur-mc-table-wrap { overflow-x: auto; overflow-y: visible; }
     .ur-mc-table { width: 100%; border-collapse: collapse; min-width: 760px; }
-    .ur-mc-table th { text-align: left; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; line-height: 1.2 !important; text-transform: uppercase; color: #8A958F; padding: 0 12px 10px; border-bottom: 1px solid #E7E2D6; white-space: nowrap; }
+    .ur-mc-table th { text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; line-height: 1.2 !important; text-transform: uppercase; color: #8A958F; padding: 0 12px 10px; border-bottom: 1px solid #E7E2D6; white-space: nowrap; }
     .ur-mc-table td { padding: 12px; height: auto !important; line-height: 1.3 !important; border-bottom: 1px solid #F0ECE0; font-size: 14px; color: #1C2321; vertical-align: middle; }
     .ur-mc-table tr:last-child td { border-bottom: none; }
 
     .ur-mc-profile { display: flex; align-items: center; gap: 12px; }
     .ur-mc-profile__photo { display: block; width: 40px !important; height: 40px !important; max-width: none; border-radius: 10px; object-fit: cover; flex: 0 0 40px; background: #F3F0E8; margin: 0 !important; padding: 0 !important; }
     .ur-mc-profile__text { display: block; }
-    .ur-mc-profile__id { display: block; font-weight: 800; color: #123A2E; font-size: 14px; line-height: 1.25 !important; margin: 0 !important; white-space: nowrap; }
+    .ur-mc-profile__id { display: block; font-weight: 700; color: #123A2E; font-size: 14px; line-height: 1.25 !important; margin: 0 !important; white-space: nowrap; }
     .ur-mc-profile__meta { display: block; font-size: 11.5px; line-height: 1.3 !important; margin: 2px 0 0 !important; color: #6B7570; white-space: nowrap; }
 
-    .ur-mc-status { display: inline-block; font-size: 11px; font-weight: 800; line-height: 1.2 !important; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
+    .ur-mc-status { display: inline-block; font-size: 11px; font-weight: 700; line-height: 1.2 !important; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
     .ur-mc-status--active { background: #E7F3EC; color: #205C3F; }
     .ur-mc-status--on_hold { background: #FCF0DE; color: #8A5A15; }
     .ur-mc-status--matched, .ur-mc-status--engaged { background: #E4EEF7; color: #2C5F8A; }
     .ur-mc-status--married { background: #FBF0DA; color: #8A6218; }
     .ur-mc-status--closed { background: #F0ECE0; color: #6B7570; }
 
-    .ur-mc-matches { font-weight: 800; color: #123A2E; }
+    .ur-mc-matches { font-weight: 700; color: #123A2E; }
     .ur-mc-actions { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
     .ur-mc-icon-btn { width: 34px; height: 34px; border-radius: 10px; border: 1px solid #E7E2D6; background: #fff; color: #123A2E; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
     .ur-mc-icon-btn:hover { background: #F6F4EF; }

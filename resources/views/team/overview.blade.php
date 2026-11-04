@@ -137,13 +137,13 @@
     .ur-ov-card__empty { margin: 0; padding: 22px; font-size: 13px; color: #6B7570; }
 
     .ur-ov-mhead, .ur-ov-mrow { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1.6fr) minmax(0, .8fr) 90px 44px; gap: 12px; align-items: center; }
-    .ur-ov-mhead { padding: 14px 22px 8px 26px; font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; color: #8A938E; }
+    .ur-ov-mhead { padding: 14px 22px 8px 26px; font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #8A938E; }
     .ur-ov-mrow { position: relative; margin: 0 16px 12px; padding: 14px 16px; background: #fff; border-radius: 14px; box-shadow: 0 1px 8px rgba(15,46,36,.07); text-decoration: none !important; color: inherit !important; transition: box-shadow .15s ease; }
     .ur-ov-mrow::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 3px; background: #1C9A6C; }
     .ur-ov-mrow:hover { box-shadow: 0 6px 18px rgba(15,46,36,.13); }
     .ur-ov-mcell { min-width: 0; display: flex; align-items: center; gap: 12px; }
     .ur-ov-mcell img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #F3EFE6; }
-    .ur-ov-mcell b { display: block; font-size: 14px; font-weight: 800; color: #123A2E; line-height: 1.25; }
+    .ur-ov-mcell b { display: block; font-size: 14px; font-weight: 700; color: #123A2E; line-height: 1.25; }
     .ur-ov-mcell small { display: block; font-size: 12px; color: #6B7570; line-height: 1.4; }
     .ur-ov-mcell--score { flex-direction: column; align-items: flex-start; gap: 6px; }
     .ur-ov-mcell--score b { font-size: 16px; }

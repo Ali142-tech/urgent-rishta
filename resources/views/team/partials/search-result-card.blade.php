@@ -50,12 +50,15 @@
 
             <div class="ur-search-card__meta">
                 {{ ucfirst($member->gender) }}@if($__age !== null) &bull; {{ $__age }}@endif @if(!empty($member->lbl_marital_status)) &bull; {{ $member->lbl_marital_status }}@endif
-                @if(!empty($member->lbl_city) || !empty($countryName))
+                {{-- the flag always belongs to the country named beside it (the country the client lives in); the city (their home town, often in another country) is listed under About Profile --}}
+                @if(!empty($countryName))
                     &bull;
-                    @if(!empty($countryCode))
-                        <img class="ur-search-card__flag" src="{{ \App\Profile::countryFlagUrl($countryCode, 80) }}" alt="" title="{{ $countryName }}" loading="lazy" onerror="this.style.display='none';">
+                    @if(!empty($countryCode) && \App\Profile::countryFlagUrl($countryCode, 80))
+                        <img class="ur-search-card__flag" src="{{ \App\Profile::countryFlagUrl($countryCode, 80) }}" alt="" loading="lazy" onerror="this.style.display='none';">
                     @endif
-                    {{ $member->lbl_city ?: $countryName }}
+                    {{ $countryName }}
+                @elseif(!empty($member->lbl_city))
+                    &bull; {{ $member->lbl_city }}
                 @endif
             </div>
             @if($__line2)

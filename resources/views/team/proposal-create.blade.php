@@ -60,7 +60,7 @@
     .ur-pp-section-head { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; padding-top: 22px; border-top: 1px dashed #E7E2D6; }
     .ur-pp-section-head__icon { flex: 0 0 36px; width: 36px; height: 36px; border-radius: 12px; background: #123A2E; display: flex; align-items: center; justify-content: center; }
     .ur-pp-section-head__icon i { color: #C9974D !important; font-size: 15px; }
-    .ur-pp-section-head__title { font-size: 16px; font-weight: 800; color: #123A2E !important; line-height: 1.2; }
+    .ur-pp-section-head__title { font-size: 16px; font-weight: 700; color: #123A2E !important; line-height: 1.2; }
     .ur-pp-section-head__sub { font-size: 12.5px; color: #6B7570 !important; margin-top: 2px; }
     .ur-pp-card { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 22px; }
     .ur-pp-card__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 16px; }
@@ -128,12 +128,12 @@
     .ur-pp-flow__grid p { font-size: 11.5px; color: #6B7570; margin: 0; }
 
     /* Paste Profile — polished look (matches the AI Partner Portal mockup) */
-    .ur-team-form .ur-pp-head h1 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
+    .ur-team-form .ur-pp-head h1 { font-family: 'Manrope', system-ui, sans-serif; font-weight: 700; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
     .ur-team-form .ur-pp-head p { font-size: 14.5px; color: #4B5651; line-height: 1.5 !important; }
     .ur-team-form .ur-pp-card { border-radius: 22px; padding: 24px; }
-    .ur-team-form .ur-pp-card__head h3 { font-family: 'Manrope', system-ui, sans-serif; font-size: 18px; font-weight: 800; line-height: 1.3 !important; margin: 0 0 4px; }
+    .ur-team-form .ur-pp-card__head h3 { font-family: 'Manrope', system-ui, sans-serif; font-size: 18px; font-weight: 700; line-height: 1.3 !important; margin: 0 0 4px; }
     .ur-team-form .ur-pp-card__head p { font-size: 13px; line-height: 1.4 !important; }
-    .ur-team-form .ur-pp-card > label, .ur-team-form .ur-pp-photos-head label { font-size: 14px; font-weight: 800; color: #1C2321; margin: 0 0 8px; }
+    .ur-team-form .ur-pp-card > label, .ur-team-form .ur-pp-photos-head label { font-size: 14px; font-weight: 700; color: #1C2321; margin: 0 0 8px; }
     .ur-team-form .ur-pp-owner-display { height: 48px; border-radius: 14px; background: #fff; font-size: 14.5px; padding: 0 16px; }
     .ur-team-form .ur-pp-textarea { min-height: 300px; border-radius: 14px; padding: 16px 18px; font-size: 14.5px; line-height: 1.7 !important; margin-bottom: 18px; resize: vertical; }
     .ur-team-form .ur-pp-photos-head { margin: 4px 0 10px; }
@@ -149,15 +149,15 @@
     .ur-pp-photo-empty b { font-size: 14px; color: #123A2E; line-height: 1.2 !important; }
     .ur-pp-photo-empty small { font-size: 11px; color: #9AA5A0; line-height: 1.2 !important; }
     .ur-pp-photo-slot__drop img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; }
-    .ur-team-form label.ur-pp-photo-slot__btn { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 36px; margin: 0; border-radius: 10px; background: rgba(15,63,48,.92); color: #fff; font-size: 12px; font-weight: 800; line-height: 1 !important; cursor: pointer; text-align: center; }
+    .ur-team-form label.ur-pp-photo-slot__btn { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; height: 36px; margin: 0; border-radius: 10px; background: rgba(15,63,48,.92); color: #fff; font-size: 12px; font-weight: 700; line-height: 1 !important; cursor: pointer; text-align: center; }
     .ur-team-form label.ur-pp-photo-slot__btn:hover { background: #0B3B2E; }
     .ur-team-form .ur-pp-meta-row { margin-top: 16px; font-size: 13px; color: #6B7570; }
-    .ur-team-form .ur-paste-box__fill-btn { border-radius: 14px; padding: 0 22px; height: 46px; font-size: 14.5px; font-weight: 800; box-shadow: 0 8px 20px rgba(15,46,36,.18); }
+    .ur-team-form .ur-paste-box__fill-btn { border-radius: 14px; padding: 0 22px; height: 46px; font-size: 14.5px; font-weight: 700; box-shadow: 0 8px 20px rgba(15,46,36,.18); }
     .ur-team-form .ur-pp-protect-box { border-radius: 14px; padding: 14px 16px; font-size: 13px; line-height: 1.5 !important; }
     @media (max-width: 560px) { .ur-pp-photo-grid { grid-template-columns: 1fr; } }
 
     .ur-pp-paste-meta { display: flex; justify-content: space-between; gap: 10px; margin: -8px 0 16px; font-size: 12px; }
-    .ur-pp-paste-meta #paste_char_count { font-weight: 800; color: #6B7570; }
+    .ur-pp-paste-meta #paste_char_count { font-weight: 700; color: #6B7570; }
     .ur-pp-paste-meta #paste_error { color: #B5674A; font-weight: 700; }
     .ur-pp-textarea.is-invalid { border-color: #E6968C; background: #FCF5F3; }
     .ur-pp-saving { position: fixed; inset: 0; z-index: 100000; background: rgba(15,46,36,.55); display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
@@ -172,7 +172,7 @@
     .ur-pp-manual__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
     .ur-pp-manual__head b { font-size: 13px; color: #1C2321; }
     .ur-pp-manual__head span { font-size: 11px; color: #9AA5A0; }
-    .ur-pp-manual__tag { display: inline-block; margin-left: 4px; padding: 2px 8px; border-radius: 999px; background: #FBF0DA; color: #8A6218; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
+    .ur-pp-manual__tag { display: inline-block; margin-left: 4px; padding: 2px 8px; border-radius: 999px; background: #FBF0DA; color: #8A6218; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; vertical-align: middle; }
     .ur-pp-manual__note { margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #FCF6EA; border: 1px solid #F0DDB0; font-size: 11.5px; line-height: 1.5; color: #6B5A33; }
 </style>
 
@@ -195,7 +195,7 @@
         <div class="ur-pp-head">
             <div>
                 @if(isset($proposal))
-                    <h1 style="margin:0 0 4px;">Edit Proposal <span style="font-size:12px; font-weight:800; background:#F3F0E8; color:#123A2E; padding:4px 11px; border-radius:999px; vertical-align:middle; margin-left:6px;">{{ $proposal->dataid }}</span></h1>
+                    <h1 style="margin:0 0 4px;">Edit Proposal <span style="font-size:12px; font-weight: 700; background:#F3F0E8; color:#123A2E; padding:4px 11px; border-radius:999px; vertical-align:middle; margin-left:6px;">{{ $proposal->dataid }}</span></h1>
                     <p>Update the original pasted form or any field below, then save. Click <b>Extract with AI</b> after changing the pasted text to refresh the fields from it.</p>
                 @else
                     <h1 style="margin:0 0 4px;">Paste Profile</h1>
@@ -210,7 +210,7 @@
             .ur-cft { background: #fff; border: 1px solid #E7E2D6; border-radius: 18px; padding: 20px; margin-bottom: 18px; box-shadow: 0 10px 28px rgba(15,46,36,.05); }
             .ur-cft__top { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
             .ur-cft__icon { flex: 0 0 44px; width: 44px; height: 44px; border-radius: 14px; background: #123A2E; color: #C9974D !important; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-            .ur-cft__title { margin: 0 !important; font-size: 17px !important; font-weight: 800 !important; line-height: 1.25 !important; color: #123A2E !important; }
+            .ur-cft__title { margin: 0 !important; font-size: 17px !important; font-weight: 700 !important; line-height: 1.25 !important; color: #123A2E !important; }
             .ur-cft__sub { margin: 3px 0 0 !important; font-size: 13px !important; line-height: 1.45 !important; color: #5B6560 !important; }
             .ur-cft__box { position: relative; }
             .ur-cft__text { width: 100%; height: 150px; resize: vertical; border: 1px solid #E7E2D6; border-radius: 12px; background: #FBF9F3; padding: 12px 14px; font-size: 13px; line-height: 1.55; color: #1C2321; font-family: inherit; }

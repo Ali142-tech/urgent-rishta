@@ -9,8 +9,8 @@
 <style>
     .ur-tmx { max-width: 1400px; }
     .ur-tmx-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-    .ur-tmx-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #C9974D; margin: 0 0 6px; }
-    .ur-tmx-head h1 { font-family: 'Manrope', system-ui, sans-serif; font-size: 30px; font-weight: 800; color: #123A2E; margin: 0 0 6px; line-height: 1.15 !important; }
+    .ur-tmx-eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #C9974D; margin: 0 0 6px; }
+    .ur-tmx-head h1 { font-family: 'Manrope', system-ui, sans-serif; font-size: 30px; font-weight: 700; color: #123A2E; margin: 0 0 6px; line-height: 1.15 !important; }
     .ur-tmx-head p { margin: 0; font-size: 14px; color: #5B6560; }
     .ur-tmx-pill { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #E7E2D6; border-radius: 999px; padding: 9px 18px; font-size: 13.5px; font-weight: 600; color: #123A2E; }
     .ur-tmx-pill i { width: 9px; height: 9px; border-radius: 50%; background: #1C9A6C; display: block; }
@@ -38,8 +38,8 @@
     .ur-tmx-card[hidden] { display: none; }
     .ur-tmx-row { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.25fr) 150px 170px 200px 160px; gap: 18px; align-items: start; }
     .ur-tmx-person { display: flex; gap: 14px; align-items: center; min-width: 0; }
-    .ur-tmx-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 14px; flex-shrink: 0; }
-    .ur-tmx-name { font-size: 14.5px; font-weight: 800; color: #1C2321; line-height: 1.3; overflow-wrap: anywhere; }
+    .ur-tmx-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+    .ur-tmx-name { font-size: 14.5px; font-weight: 700; color: #1C2321; line-height: 1.3; overflow-wrap: anywhere; }
     .ur-tmx-id { font-size: 12.5px; color: #8A938E; margin-top: 2px; letter-spacing: .02em; }
     .ur-tmx-contact { font-size: 13.5px; color: #4B5651; line-height: 1.5; min-width: 0; overflow-wrap: anywhere; padding-top: 2px; }
     .ur-tmx-contact span { display: block; color: #8A938E; }
@@ -52,7 +52,7 @@
     .ur-tmx-empty { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 36px; text-align: center; color: #6B7570; }
 
     /* when the fields stack (tablet / phone) each one gets a small caption, since the column headings are gone */
-    .ur-tmx-field[data-label]::before { content: attr(data-label); display: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #6B7570; }
+    .ur-tmx-field[data-label]::before { content: attr(data-label); display: none; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #6B7570; }
     @media (max-width: 1280px) {
         .ur-tmx-field[data-label]::before { display: block; }
         .ur-tmx-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }

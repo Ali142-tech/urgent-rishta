@@ -10,8 +10,8 @@
 @section('main-content')
 <style>
     .ur-mm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
-    .ur-mm-head h1 { font-family: 'Manrope', system-ui, sans-serif; color: #123A2E; font-weight: 800; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
-    .ur-mm-head p { color: #2E7D5B; font-size: 14px; line-height: 1.6 !important; margin: 0; max-width: 640px; }
+    .ur-mm-head h1 { font-family: 'Manrope', system-ui, sans-serif; color: #123A2E; font-weight: 700; font-size: 26px; line-height: 1.2 !important; margin: 0 0 6px; }
+    .ur-mm-head p { color: #6B7570; font-size: 14px; line-height: 1.6 !important; margin: 0; max-width: 640px; }
     .ur-mm-search { flex: 0 1 420px; position: relative; }
     .ur-mm-search i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #7B8781; font-size: 14px; }
     .ur-mm-search input { width: 100%; height: 44px; border: 1px solid #E7E2D6; border-radius: 12px; background: #fff; padding: 0 14px 0 38px; font-size: 13.5px; outline: none; }
@@ -23,7 +23,7 @@
     .ur-mm-stat__icon { width: 46px; height: 46px; border-radius: 50%; background: #F3EFE6; color: #123A2E; display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
     .ur-mm-stat:first-child .ur-mm-stat__icon { background: #1C6B52; color: #fff; }
     .ur-mm-stat span { display: block; font-size: 12.5px; color: #4B5651; line-height: 1.3 !important; margin: 0 0 6px; }
-    .ur-mm-stat b { display: block; font-family: 'Manrope', system-ui, sans-serif; font-size: 28px; font-weight: 800; line-height: 1 !important; color: #123A2E; }
+    .ur-mm-stat b { display: block; font-family: 'Manrope', system-ui, sans-serif; font-size: 28px; font-weight: 700; line-height: 1 !important; color: #123A2E; }
 
     .ur-mm-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
     .ur-mm-card { min-width: 0; display: flex; flex-direction: column; background: #fff; border: 1px solid #E7E2D6; border-radius: 18px; padding: 16px; box-shadow: 0 1px 3px rgba(15,46,36,.05); }
@@ -33,9 +33,9 @@
     .ur-mm-info { flex: 1; min-width: 0; }
     .ur-mm-matchrow { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .ur-mm-ring { --p: 0; width: 44px; height: 44px; border-radius: 50%; background: conic-gradient(#1C9A6C calc(var(--p) * 1%), #E3EEE8 0); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .ur-mm-ring b { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Manrope', system-ui, sans-serif; font-size: 11px; font-weight: 800; color: #123A2E; line-height: 1 !important; }
+    .ur-mm-ring b { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; font-family: 'Manrope', system-ui, sans-serif; font-size: 11px; font-weight: 700; color: #123A2E; line-height: 1 !important; }
     .ur-mm-matchrow span { font-size: 13px; font-weight: 700; color: #123A2E; }
-    .ur-mm-id { font-family: 'Manrope', system-ui, sans-serif; font-weight: 800; color: #123A2E; font-size: 17px; line-height: 1.25 !important; margin: 0 0 6px; }
+    .ur-mm-id { font-family: 'Manrope', system-ui, sans-serif; font-weight: 700; color: #123A2E; font-size: 17px; line-height: 1.25 !important; margin: 0 0 6px; }
     .ur-mm-line { font-size: 12.5px; color: #4B5651; line-height: 1.45 !important; margin: 0 0 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ur-mm-line i { width: 16px; color: #7B8781; }
     .ur-mm-tags { margin: 12px 0 0; flex: 1 1 auto; }
@@ -61,7 +61,7 @@
     .ur-mm-actions a.is-view:hover { background: #F2F8F5; }
 
     .ur-mm-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
-    .ur-mm-foot > span { font-size: 13px; color: #2E7D5B; }
+    .ur-mm-foot > span { font-size: 13px; color: #6B7570; }
     .ur-mm-pager { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .ur-mm-pager__gap { min-width: 20px; text-align: center; color: #6B7570; font-weight: 700; }
     .ur-mm-pager button { min-width: 38px; height: 38px; border-radius: 10px; border: 1px solid #E7E2D6; background: #fff; color: #123A2E; font-weight: 700; font-size: 13px; cursor: pointer; }

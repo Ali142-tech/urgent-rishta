@@ -12,7 +12,7 @@
     .ur-mp-hero { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; background: #fff; border: 1px solid #E7E2D6; border-radius: 20px; padding: 24px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(15,46,36,.05); }
     .ur-mp-photo { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 0 0 2px #E7E2D6; background: #F3EFE6; flex-shrink: 0; }
     .ur-mp-who { flex: 1; min-width: 220px; }
-    .ur-mp-who h1 { font-family: 'Manrope', system-ui, sans-serif; font-size: 26px; font-weight: 800; color: #123A2E; margin: 0 0 4px; line-height: 1.2 !important; }
+    .ur-mp-who h1 { font-family: 'Manrope', system-ui, sans-serif; font-size: 26px; font-weight: 700; color: #123A2E; margin: 0 0 4px; line-height: 1.2 !important; }
     .ur-mp-id { font-size: 13px; color: #8A938E; letter-spacing: .02em; }
     .ur-mp-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
     .ur-mp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 13px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #F3EFE6; color: #4B5651; }
@@ -29,12 +29,12 @@
     .ur-mp-stats { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
     .ur-mp-stat { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 16px 18px; }
     .ur-mp-stat span { display: block; font-size: 12px; color: #6B7570; margin-bottom: 8px; }
-    .ur-mp-stat b { display: block; font-family: 'Manrope', system-ui, sans-serif; font-size: 26px; font-weight: 800; color: #123A2E; line-height: 1 !important; }
+    .ur-mp-stat b { display: block; font-family: 'Manrope', system-ui, sans-serif; font-size: 26px; font-weight: 700; color: #123A2E; line-height: 1 !important; }
     .ur-mp-stat small { display: block; margin-top: 6px; font-size: 11.5px; color: #8A938E; }
 
     .ur-mp-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-bottom: 18px; }
     .ur-mp-card { background: #fff; border: 1px solid #E7E2D6; border-radius: 18px; padding: 20px 22px; }
-    .ur-mp-card h2 { font-size: 15px; font-weight: 800; color: #123A2E; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    .ur-mp-card h2 { font-size: 15px; font-weight: 700; color: #123A2E; margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
     .ur-mp-card h2 i { color: #C9974D; }
     .ur-mp-dl { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px 14px; margin: 0; }
     .ur-mp-dl dt { font-size: 12.5px; font-weight: 600; color: #8A938E; margin: 0; }

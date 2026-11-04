@@ -60,9 +60,9 @@
 
 .member-card__photo {
     position: relative;
-    flex: 0 0 116px;
-    width: 116px;
-    height: 116px;
+    flex: 0 0 132px;
+    width: 132px;
+    height: 176px;
     border-radius: 18px;
     background: #DDE8E2;
     overflow: hidden;
@@ -126,8 +126,8 @@
     z-index: 1;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    object-position: center top;
+    object-fit: contain;
+    object-position: center;
     display: block;
 }
 
@@ -527,7 +527,7 @@
 /* ---- phones ---- */
 @media (max-width: 420px) {
     .member-card__head { gap: 12px; padding: 14px 14px 14px; }
-    .member-card__photo { flex-basis: 92px; width: 92px; height: 92px; border-radius: 14px; }
+    .member-card__photo { flex-basis: 112px; width: 112px; height: 150px; border-radius: 14px; }
     .member-card__name { font-size: 1.35rem; }
     .member-card__facts { font-size: .86rem; }
     .member-card__facts--sub { font-size: .8rem; }
@@ -646,4 +646,22 @@
 @media (max-width: 420px) {
     .member-card__name { font-size: 1.25rem; }
     .member-card__footer a { font-size: .68rem; letter-spacing: .4px; }
+}
+
+/* =====================================================================================================
+   Photo on top (Nov 2026): the whole photo gets the full card width (never cropped, a soft blurred copy fills the
+   sides), and the ID / quick facts sit underneath it.
+   ===================================================================================================== */
+.member-card__head { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
+.member-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 4 / 5; max-height: 440px; border-radius: 0; box-shadow: none; }
+.member-card__photo img { object-fit: contain; object-position: center; }
+.member-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px 14px; border-top: 3px double #C9974D; }
+.member-card__nav { width: 30px; height: 30px; font-size: 18px; }
+.member-card__nav--prev { left: 8px; }
+.member-card__nav--next { right: 8px; }
+.member-card__lock-icon { width: 52px; height: 52px; font-size: 21px; }
+@media (max-width: 420px) {
+    .member-card__photo { width: 100%; height: auto; flex-basis: auto; border-radius: 0; }
+    .member-card__head { padding: 0; gap: 0; }
+    .member-card__headinfo { padding: 12px 14px 12px; }
 }
