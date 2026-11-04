@@ -133,7 +133,7 @@
     .ur-search-card__btn--dark:hover, .ur-search-card__btn--whatsapp:hover { background: linear-gradient(180deg, #E2B66E, #C9974D); border-color: #C9974D; }
     /* Photo on top (Nov 2026): the whole photo gets the full card width, the ID / quick facts sit underneath */
     .ur-search-card__head { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
-    .ur-search-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 4 / 5; max-height: 440px; border-radius: 0; box-shadow: none; }
+    .ur-search-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 5 / 4; max-height: 300px; border-radius: 0; box-shadow: none; }
     .ur-search-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px; border-top: 3px double #C9974D; }
 
     @media (max-width: 900px) {

@@ -107,7 +107,7 @@ if (!$hideImage) {
     if (!empty($l)) $__look[] = ['fa-map-marker', $l];
 }
 ?>
-<div class="member-card" id="block_{{$member->dataid}}">
+<div class="member-card{{ $hideImage ? ' member-card--teaser' : '' }}" id="block_{{$member->dataid}}">
     <div class="member-card__head">
         <div class="member-card__photo">
             @foreach($cardImages as $i => $cardImage)
@@ -124,6 +124,8 @@ if (!$hideImage) {
             @if($hideImage)
                 <div class="member-card__lock-overlay" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest" title="Upgrade your plan to view this profile">
                     <div class="member-card__lock-icon"><i class="fa fa-lock"></i></div>
+                    <div class="member-card__lock-title">Private Photo</div>
+                    <div class="member-card__lock-sub">Upgrade your plan to view this profile</div>
                 </div>
             @endif
         </div>

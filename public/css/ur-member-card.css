@@ -653,7 +653,7 @@
    sides), and the ID / quick facts sit underneath it.
    ===================================================================================================== */
 .member-card__head { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
-.member-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 4 / 5; max-height: 440px; border-radius: 0; box-shadow: none; }
+.member-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 5 / 4; max-height: 300px; border-radius: 0; box-shadow: none; }
 .member-card__photo img { object-fit: contain; object-position: center; }
 .member-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px 14px; border-top: 3px double #C9974D; }
 .member-card__nav { width: 30px; height: 30px; font-size: 18px; }
@@ -665,3 +665,12 @@
     .member-card__head { padding: 0; gap: 0; }
     .member-card__headinfo { padding: 12px 14px 12px; }
 }
+
+/* Homepage "Meet Our Members" teaser: the photo is only a blurred preview, so it stays a wide, short frame (as before)
+   instead of the tall portrait the real profile cards use. */
+.member-card--teaser .member-card__photo { aspect-ratio: 8 / 5; max-height: none; }
+.member-card--teaser .member-card__lock-overlay { flex-direction: column; gap: 6px; padding: 20px; text-align: center; background: linear-gradient(180deg, rgba(15, 46, 36, .12), rgba(15, 46, 36, .55)); }
+.member-card--teaser .member-card__lock-icon { width: 54px; height: 54px; font-size: 20px; margin-bottom: 2px; }
+.member-card__lock-title { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: .5px; text-transform: uppercase; }
+.member-card__lock-sub { color: rgba(255, 255, 255, .88); font-size: 12px; }
+.member-card--teaser .member-card__headinfo { padding-top: 12px; }
