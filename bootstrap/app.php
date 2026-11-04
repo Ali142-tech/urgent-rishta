@@ -12,11 +12,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // $middleware->trustProxies(at: '*');
+        // $middleware->trustHosts(at: ['*']);
         $middleware->trustProxies(at: '*');
-        $middleware->trustHosts(at: ['*']);
-        
         $middleware->web(append: [
             \App\Http\Middleware\MarkNotificationAsRead::class,
+            \App\Http\Middleware\EnsurePhotosUploaded::class,
+            \App\Http\Middleware\EnsureProfileComplete::class,
         ]);
         
         $middleware->api(prepend: [
@@ -24,6 +26,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'team_member' => \App\Http\Middleware\EnsureUserIsTeamMember::class,
             'auth' => \App\Http\Middleware\Authenticate::class,
             'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
             'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,

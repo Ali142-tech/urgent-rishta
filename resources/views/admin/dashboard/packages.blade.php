@@ -1,66 +1,50 @@
 @extends('layouts.admin.master')
 @section('admin-content')
-<section class="page-title page-title--style-1">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-12 text-center">
-                <h2 class="heading heading-3 strong-400 mb-0">Packages</h2>
-            </div>
-        </div>
-    </div>
-</section>
-<section class="slice sct-color-1">
-    <div class="container">
-        <div class="row">
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="block-wrapper">
-                        <div class="card card-primary card-outline">
-                            <div class="card-body">
-                                <h5 class="card-title">
-                                    <a onclick="return renderPackageModal();"><i class="fa fa-plus"></i> Add new</a>
-                                </h5>
+<div class="ur-admin-header">
+    <h2>Packages</h2>
+</div>
 
-                                <div class="card-text">
-                                    <table id="example" class="table table-striped table-bordered">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Description</th>
-                                                <th>Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($packages as $package)
-                                            <tr>
-                                                <td class="nowrap">
-                                                    @if($package->dataid!="99")
-                                                    <img src="/images/package_{{$package->dataid}}.png" alt="{{$package->name}}" title="{{$package->name}}" style="height:70px; width: 70px" />
-                                                    @endif
-                                                    {{$package->name}}</td>
-                                                <td>{{$package->description}}</td>
-                                                <td>
-                                                    <a onclick="return renderPackageModal('{{$package->dataid}}');"><i class="fa fa-pencil"></i></a>
-                                                    @if($package->dataid!="99")
-                                                    <a onclick="return deletePackage('{{$package->dataid}}');"><i class="fa fa-trash"></i></a>
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                            </div>
-                        </div><!-- /.card -->
-                    </div>
-                </div>
-            </div>
-            <!-- /.row -->
-        </div><!-- /.container-fluid -->
+<div class="ur-admin-panel">
+    <div class="ur-admin-toolbar">
+        <span>All Packages</span>
+        <a class="ur-admin-btn ur-admin-btn--gold" onclick="return renderPackageModal();"><i class="fa fa-plus"></i> Add New Package</a>
     </div>
-    <!-- /.content -->
-</section>
+
+    <div class="ur-admin-table-wrap">
+        <table class="ur-admin-table ur-admin-table--packages">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($packages as $package)
+                <tr>
+                    <td>
+                        <div class="ur-admin-package-name">
+                            @if($package->dataid!="99")
+                            <img src="/images/package_{{$package->dataid}}.png" alt="{{$package->name}}" title="{{$package->name}}" class="ur-admin-package-thumb" />
+                            @endif
+                            <span>{{$package->name}}</span>
+                        </div>
+                    </td>
+                    <td class="ur-admin-package-desc">{{$package->description}}</td>
+                    <td>
+                        <div class="ur-admin-row-actions">
+                            <a class="ur-admin-icon-link" onclick="return renderPackageModal('{{$package->dataid}}');" title="Edit"><i class="fa fa-pencil"></i></a>
+                            @if($package->dataid!="99")
+                            <a class="ur-admin-icon-link" onclick="return deletePackage('{{$package->dataid}}');" title="Delete"><i class="fa fa-trash"></i></a>
+                            @endif
+                        </div>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
 <script type="text/javascript">
 
 function deletePackage(id) {
@@ -92,8 +76,7 @@ function deletePackage(id) {
             url: id ? "{{ url('admin/packages/modal')}}"+"/"+id : "{{ url('admin/packages/modal')}}",
             success: function(result) {
                 if (result.code == '200') {
-                    $("#modal_dialog").html(result.html);
-                    $("#active_modal").modal("toggle");
+                    openAdminModal(result.html);
 
                     $("#package_form").on("submit", (e)=>{
                         e.preventDefault();

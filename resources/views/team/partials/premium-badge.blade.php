@@ -1,0 +1,2 @@
+{{-- "Premium Profile" — shown next to a team member who has added more than 100 proposals (TeamMember::isPremiumId()). --}}
+<span class="ur-premium-badge" title="Has added more than {{ \App\TeamMember::PREMIUM_AFTER_PROPOSALS }} proposals"><i class="fa fa-star"></i> Premium Profile</span>

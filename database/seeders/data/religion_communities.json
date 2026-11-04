@@ -1,0 +1,32 @@
+{
+    "740": {
+        "prefix": "HIN",
+        "names": ["Brahmin", "Rajput", "Kshatriya", "Vaishya", "Khatri", "Arora", "Agarwal", "Sindhi Hindu",
+            "Lohana", "Bhatia", "Maheshwari", "Yadav", "Jat", "Kayastha", "Kohli", "Meghwar", "Bheel", "Kolhi", "Sharma"]
+    },
+    "741": {
+        "prefix": "CHR",
+        "names": ["Roman Catholic", "Protestant", "Church of Pakistan", "Presbyterian", "Baptist", "Pentecostal",
+            "Seventh-day Adventist", "Anglican", "Salvation Army", "Punjabi Christian", "Goan Christian", "Anglo-Indian"]
+    },
+    "742": {
+        "prefix": "SIK",
+        "names": ["Jat Sikh", "Khatri Sikh", "Arora Sikh", "Ramgarhia", "Saini", "Ahluwalia", "Kamboj", "Mazhabi Sikh", "Ravidasia"]
+    },
+    "743": {
+        "prefix": "PAR",
+        "names": ["Parsi", "Irani Zoroastrian"]
+    },
+    "744": {
+        "prefix": "JAI",
+        "names": ["Digambar", "Svetambar", "Agarwal Jain", "Oswal", "Porwal"]
+    },
+    "745": {
+        "prefix": "BUD",
+        "names": ["Theravada", "Mahayana", "Newar Buddhist", "Tibetan Buddhist"]
+    },
+    "746": {
+        "prefix": "JEW",
+        "names": ["Ashkenazi", "Sephardi", "Mizrahi"]
+    }
+}

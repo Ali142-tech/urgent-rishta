@@ -12,6 +12,8 @@
 
 # User uploads & generated media (keep local / server only)
 /public/users/
+/public/proposals/
+/public/team-members/
 /public/user/
 /storage/app/public/
 /storage/clockwork/

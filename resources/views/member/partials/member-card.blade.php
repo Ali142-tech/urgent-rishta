@@ -1,0 +1,350 @@
+{{--
+    Shared member-card partial — one profile tile (photo, quick facts,
+    details, View Full Profile / Express Interest footer). Styled by
+    public/css/ur-member-card.css. Expects a single $member (a hydrated
+    Profile row, e.g. from Profile::profiles()).
+
+    Used by:
+      - member/searchdata.blade.php (the real search results grid)
+      - member/user.blade.php (the "Recommended Matches For You" grid on
+        the My Profile dashboard-home section)
+      - welcome.blade.php's "Meet Our Members" guest-facing slider, passing
+        hideImage=true so the real photo always shows blurred (whole image,
+        not just the face) regardless of whether the viewer is logged in —
+        never the sharp/identifiable original. Now that the photo also gets
+        the "Private Photo" lock overlay below, a fully-blurred backdrop
+        reads more consistently than the old face-only-pixelated version
+        (client's earlier request) — see $member->homepageFaceBlurredImage /
+        GenerateHomepageFaceBlur if that's ever wanted back.
+
+    Optional: $hideImage (bool, default false) — when true, shows the
+    pre-generated whole-image blur, or a generic gender silhouette if none
+    exists — never the sharp original.
+
+    Optional: $viewerPreference (App\PartnerPreference|null) — the LOGGED-IN
+    VIEWER's own partner preferences (not $member's), passed once per page
+    by the controller (never recomputed per-card — see HomeController::
+    search()/recommendedMatches()). When present, shows a "XX% Match" badge
+    using the same Profile::compatibilityWith() calculation as the single
+    profile page's Compatibility tab — a pure in-memory comparison against
+    already-loaded fields, no extra query per card. Client request (Sep 2026).
+--}}
+<?php
+use App\User;
+use Illuminate\Support\Str;
+$hideImage = $hideImage ?? false;
+$hiddenImageUrl = $hideImage ? (!empty($member->homepageFaceBlurredImage) ? $member->homepageFaceBlurredImage : $member->getBlurredProfileImage()) : null;
+// Guests on the homepage slider only ever get the single pre-blurred
+// image (never the real gallery) — the carousel is member-card-images
+// only, so guest/hideImage mode stays a single static photo.
+// Royal+ photo blur is for MEMBERS looking at members: never for team proposals, and only when a real member is signed in
+// (a team member signed in on the team guard has no `users` row).
+$royalBlur = false;
+// Where a click on the photo / name opens the profile. A team proposal has no member page (member/profile/P-123 is a 404),
+// so it goes to its own team view (the admin's read-only list opens the public share card instead).
+$profileOpenUrl = !empty($member->team_card_role)
+    ? ($member->team_card_role === 'admin' ? route('share.proposal', $member->dataid) : route('team.proposals.view', $member->dataid))
+    : url('/member/profile/' . $member->dataid);
+if (!$hideImage && empty($member->team_card_role) && auth('web')->check()) {
+    $__viewer = User::retrieveUserObject();
+    $royalBlur = $__viewer ? $__viewer->photosBlurredFor($member) : false;
+}
+$cardImages = $hideImage ? [$hiddenImageUrl] : $member->getCardImages(null, !empty($member->team_card_role) ? true : !empty($watermarked));
+$compatibility = (!$hideImage && !empty($viewerPreference)) ? $member->compatibilityWith($viewerPreference) : null;
+$compatTier = null;
+if ($compatibility) {
+    $compatTier = match (true) {
+        $compatibility['percent'] >= 85 => ['label' => 'Excellent Match', 'sub' => 'High compatibility across key factors'],
+        $compatibility['percent'] >= 70 => ['label' => 'Very Good Match', 'sub' => 'Strong alignment with your preferences'],
+        $compatibility['percent'] >= 50 => ['label' => 'Good Match', 'sub' => 'Solid compatibility with potential'],
+        $compatibility['percent'] >= 30 => ['label' => 'Fair Match', 'sub' => 'Some shared preferences'],
+        default => ['label' => 'Low Match', 'sub' => 'Few of your preferences matched'],
+    };
+}
+// Card shows only these 5 factor bars (client request, Sep 2026) — Education/
+// Mother Tongue/Children are still counted in the overall $compatibility['percent']
+// above if the viewer set them, just not shown as their own bar on the card.
+$compatCardFactors = ['Age', 'Location', 'Religion', 'Caste', 'Marital Status'];
+$compatCardChecks = $compatibility ? array_filter($compatibility['checks'], fn ($c) => in_array($c['factor'], $compatCardFactors, true)) : [];
+$packageSlug = !empty($member->lbl_package) ? Str::slug($member->lbl_package) : null;
+$packageIcon = match ($packageSlug) {
+    'platinum' => '<i class="fa fa-star"></i>',
+    'diamond' => '<i class="fa fa-diamond"></i>',
+    'royal', 'imperial' => '&#128081;', // crown emoji
+    default => '<i class="fa fa-diamond"></i>',
+};
+?>
+<?php
+// Dark profile card (client design, Nov 2026): light header (photo + ID + quick facts), "About Profile" / "Looking For" panels, action pills.
+$__team = !empty($member->team_card_role);
+$__age = !empty($member->birthday) ? date_diff(date_create($member->birthday), date_create('now'))->y : null;
+$__short = function ($items, $max = 2) {
+    $items = array_values(array_filter((array) $items, fn ($v) => $v !== null && $v !== ''));
+    if (!$items) return null;
+    return implode(', ', array_slice($items, 0, $max)) . (count($items) > $max ? ' +' . (count($items) - $max) : '');
+};
+$__factsLine2 = array_values(array_filter([$member->height ?: null, $member->sect ?: null, $member->lbl_caste ?: null]));
+$__loc = array_values(array_filter([$member->lbl_city ?: null, $member->lbl_con_of_residence ?: null]));
+$__about = [];
+if (!$hideImage && !empty($member->lbl_education)) $__about[] = ['fa-graduation-cap', $member->lbl_education];
+if (!empty($member->profession)) $__about[] = ['fa-briefcase', $member->profession];
+if (!$__team && !empty($member->lbl_religion)) $__about[] = ['fa-star-o', $member->lbl_religion];
+if ($__loc) $__about[] = ['fa-map-marker', implode(', ', array_unique($__loc))];
+$__look = [];
+if (!$hideImage) {
+    if ($__team) {
+        $a1 = $member->pref_age_min; $a2 = $member->pref_age_max;
+        $m = $__short($member->prefMaritalNames()); $e = $__short($member->prefEducationNames());
+        $l = $__short(array_filter([$member->pref_city ?: null, ...$member->prefNationalityNames()]));
+    } else {
+        $a1 = $member->rage_min ?? null; $a2 = $member->rage_max ?? null;
+        $m = $member->lbl_rmarital_status ?? null; $e = $member->lbl_reducation ?? null;
+        $l = $member->lbl_rcon_of_residence ?? ($member->lbl_rcon_pref ?? null);
+    }
+    if ($a1 || $a2) $__look[] = ['fa-calendar', 'Age ' . ($a1 && $a2 ? $a1 . '–' . $a2 : ($a1 ? $a1 . '+' : 'up to ' . $a2))];
+    if (!empty($m)) $__look[] = ['fa-heart-o', $m];
+    if (!empty($e)) $__look[] = ['fa-graduation-cap', $e];
+    if (!empty($l)) $__look[] = ['fa-map-marker', $l];
+}
+?>
+<div class="member-card{{ $hideImage ? ' member-card--teaser' : '' }}" id="block_{{$member->dataid}}">
+    <div class="member-card__head">
+        <div class="member-card__photo">
+            @foreach($cardImages as $i => $cardImage)
+                <a class="member-card__slide {{ $i === 0 ? 'is-active' : '' }}" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
+                    <span class="member-card__photo-bg" style="background-image:url('{{ $cardImage }}')@if($royalBlur); filter: blur(9px); transform: scale(1.15);@endif"></span>
+                    <img @if($royalBlur) style="filter: blur(7px); transform: scale(1.06);" draggable="false" oncontextmenu="return false;" @endif src="{{ $cardImage }}" alt="{{ $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';" />
+                </a>
+            @endforeach
+            @if(count($cardImages) > 1)
+                <button type="button" class="member-card__nav member-card__nav--prev" onclick="return cardCarouselNav(event, this, -1);" aria-label="Previous photo">&lsaquo;</button>
+                <button type="button" class="member-card__nav member-card__nav--next" onclick="return cardCarouselNav(event, this, 1);" aria-label="Next photo">&rsaquo;</button>
+            @endif
+            {{-- Homepage teaser slider only ($hideImage): the photo is already a real (never-sharp) blur; the lock makes the intent explicit. --}}
+            @if($hideImage)
+                <div class="member-card__lock-overlay" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest" title="Upgrade your plan to view this profile">
+                    <div class="member-card__lock-icon"><i class="fa fa-lock"></i></div>
+                    <div class="member-card__lock-title">Private Photo</div>
+                    <div class="member-card__lock-sub">Upgrade your plan to view this profile</div>
+                </div>
+            @endif
+        </div>
+        <div class="member-card__headinfo">
+            <div class="member-card__toprow">
+                <h3 class="member-card__name">
+                    @if($member->isOnline())
+                        <span class="member-card__online-dot" title="Online in the last month"></span>
+                    @endif
+                    @auth
+                        <a onclick="javascript:window.open('{{ $profileOpenUrl }}');">{{ $member->dataid }}</a>
+                        <i class="fa fa-clipboard member-card__id-copy" onclick="return copyMemberId(event, '{{$member->dataid}}');" title="Copy ID"></i>
+                    @endauth
+                    @guest
+                        <a onclick="return register_request();">{{ $member->first_name ?: 'Profile' }}</a>
+                    @endguest
+                </h3>
+                @if($member->photo_verification_status === 'verified')
+                    <span class="member-card__badge--verified"><i class="fa fa-check"></i> Verified</span>
+                @endif
+            </div>
+            <div class="member-card__facts">
+                {{ ucfirst($member->gender) }}@if($__age !== null) &bull; {{ $__age }}@endif @if(!empty($member->lbl_marital_status)) &bull; {{ $member->lbl_marital_status }}@endif
+                @if(!empty($member->lbl_city))
+                    &bull;
+                    @if(!empty($member->con_of_residence_code) && \App\Profile::countryFlagUrl($member->con_of_residence_code))
+                        <img class="member-card__flag" src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code) }}" alt="" title="{{$member->lbl_con_of_residence}}" loading="lazy" onerror="this.style.display='none';">
+                    @endif
+                    {{ $member->lbl_city }}
+                @endif
+            </div>
+            @if($__factsLine2)
+                <div class="member-card__facts member-card__facts--sub">{{ implode(' • ', $__factsLine2) }}</div>
+            @endif
+            <div class="member-card__chips">
+                @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
+                    <span class="member-card__ribbon member-card__ribbon--new">New</span>
+                @elseif(round((time() - strtotime($member->updated_at))/(604800)) <= config('app.updated_profile_duration'))
+                    <span class="member-card__ribbon member-card__ribbon--updated">Updated</span>
+                @endif
+                @if($packageSlug)
+                    <span class="member-card__badge--package member-card__badge--package-{{ $packageSlug }}">{!! $packageIcon !!} {{ $member->lbl_package }}</span>
+                @endif
+                <span class="ur-private-tag member-card__private" style="{{ !empty($member->is_private) ? '' : 'display:none;' }}"><i class="fa fa-lock"></i> Private</span>
+            </div>
+        </div>
+    </div>
+    <div class="member-card__body">
+        @if($compatibility)
+            <div class="member-card__compat">
+                <div class="member-card__compat-head">
+                    <div class="member-card__compat-score">{{ $compatibility['percent'] }}%</div>
+                    <div>
+                        <div class="member-card__compat-label">{{ $compatTier['label'] }}</div>
+                        <div class="member-card__compat-sub">{{ $compatTier['sub'] }}</div>
+                    </div>
+                </div>
+                <div class="member-card__compat-bars">
+                    @foreach($compatCardChecks as $check)
+                        <div class="member-card__compat-row">
+                            <span class="member-card__compat-row-label">{{ $check['factor'] }}</span>
+                            <span class="member-card__compat-row-track"><span class="member-card__compat-row-fill" style="width:{{ $check['score'] }}%"></span></span>
+                            <span class="member-card__compat-row-pct">{{ $check['score'] }}%</span>
+                        </div>
+                    @endforeach
+                </div>
+                {{-- AI Match Explanation (Website Upgrade Brief §6) — optional, only passed by team/matches.blade.php and the overview's AI Match preview. --}}
+                @if(!empty($matchExplanation ?? null))
+                    <div class="member-card__compat-explain">{{ $matchExplanation }}</div>
+                @endif
+            </div>
+        @endif
+        <div class="member-card__panels{{ $hideImage ? ' member-card__panels--one' : '' }}">
+            <div class="member-card__panel">
+                <h4>About Profile</h4>
+                <ul>
+                    @forelse($__about as [$ico, $txt])
+                        <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                    @empty
+                        <li class="is-empty"><span>Not provided</span></li>
+                    @endforelse
+                </ul>
+            </div>
+            @unless($hideImage)
+            <div class="member-card__panel member-card__panel--alt">
+                <h4>Looking For</h4>
+                <ul>
+                    @forelse($__look as [$ico, $txt])
+                        <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                    @empty
+                        <li class="is-empty"><span>Not specified</span></li>
+                    @endforelse
+                </ul>
+            </div>
+            @endunless
+        </div>
+        @if(!empty($addedByName ?? null))
+            <div class="ur-team-added-by"><i class="fa fa-user-circle"></i> Added by {{ $addedByName }}@if(!empty($member->added_by_premium)) @include('team.partials.premium-badge') @endif</div>
+        @endif
+    </div>
+    <div class="member-card__footer{{ !empty($member->team_card_role) ? ' member-card__footer--team' : '' }}">
+        @if($hideImage)
+            {{-- Homepage teaser slider — no Express Interest here (it's a
+                 sample card, not a real search result), just the same
+                 register/open-profile action styled as an explicit unlock CTA. --}}
+            <div class="member-card__locked-footer">
+                <p class="member-card__locked-note">Available to paid members only</p>
+                <a class="member-card__unlock-btn" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
+                    <i class="fa fa-lock"></i> Unlock Full Profile
+                </a>
+            </div>
+        @else
+            @if(!empty($member->team_card_role))
+                {{-- Team Dashboard card — not the regular Express Interest
+                     flow (team-added proposals are login-less shell
+                     records; see TeamController::store()). The whole
+                     team-added pool is open to every team member, so
+                     only ownership (not any request/approval step) decides
+                     whether Edit shows up. Opens team.proposals.view (the
+                     Team Dashboard shell), not member/profile/{dataid} (the
+                     Member Dashboard shell) — see TeamController::
+                     viewProposal(). --}}
+                @if($member->team_card_role === 'admin')
+                {{-- Admin's read-only Team Proposals list: team screens need a
+                     team login, so the admin opens the public share card. --}}
+                <a href="{{ route('share.proposal', $member->dataid) }}" target="_blank" rel="noopener">
+                    <i class="fa fa-eye"></i> View
+                </a>
+                @else
+                <a onclick="javascript:window.open('{{ route('team.proposals.view', $member->dataid) }}');">
+                    <i class="fa fa-eye"></i> View Full Profile
+                </a>
+                @endif
+                @if($member->team_card_role === 'own')
+                    <a class="is-interest" href="{{ route('team.proposals.edit', $member->dataid) }}">
+                        <i class="fa fa-pencil"></i> <span>Edit</span>
+                    </a>
+                    <a class="is-interest" href="#" onclick="return deleteProposal('{{ $member->dataid }}');">
+                        <i class="fa fa-trash"></i> <span>Delete</span>
+                    </a>
+                @endif
+                <a class="is-interest js-share-proposal" data-payload-url="{{ route('team.proposals.share.payload', $member->dataid) }}" href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener">
+                    <i class="fa fa-whatsapp"></i> <span>Share</span>
+                </a>
+                @if(auth('team')->check() && auth('team')->user()->is_admin)
+                    {{-- Admin only: make this proposal private / public again (TeamAdminController::setProposalPrivacy()). --}}
+                    <a class="is-interest js-privacy-toggle" href="#" data-ref="{{ $member->dataid }}" data-private="{{ $member->is_private ? '1' : '0' }}" onclick="return urTogglePrivacy(this);">
+                        <i class="fa {{ $member->is_private ? 'fa-unlock' : 'fa-lock' }}"></i> <span>{{ $member->is_private ? 'Make public' : 'Make private' }}</span>
+                    </a>
+                    @once
+                    <script>
+                    function urTogglePrivacy(btn) {
+                        var makePrivate = btn.dataset.private !== '1';
+                        var question = makePrivate
+                            ? 'Make ' + btn.dataset.ref + ' private?'
+                            : 'Make ' + btn.dataset.ref + ' public?';
+                        var detail = makePrivate
+                            ? 'Only admins, the team member who added it and members you allowed will be able to see it. Everyone else will no longer see it anywhere, including AI matches and share links.'
+                            : 'Every team member will be able to see this proposal again.';
+                        if (typeof swal === 'function') {
+                            swal({ title: question, text: detail, icon: 'warning', buttons: { cancel: 'Cancel', confirm: makePrivate ? 'Yes, make private' : 'Yes, make public' } })
+                                .then(function (ok) { if (ok) urSavePrivacy(btn, makePrivate); });
+                        } else if (confirm(question + '\n\n' + detail)) {
+                            urSavePrivacy(btn, makePrivate);
+                        }
+                        return false;
+                    }
+                    function urSavePrivacy(btn, makePrivate) {                        var form = new FormData();
+                        form.append('_token', '{{ csrf_token() }}');
+                        form.append('private', makePrivate ? '1' : '0');
+                        btn.style.opacity = .5;
+                        fetch('{{ url('team/manage/proposals') }}/' + btn.dataset.ref + '/privacy', { method: 'POST', body: form, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (res) {
+                                btn.style.opacity = 1;
+                                if (String(res.code) !== '200') { alert(res.message || 'Could not save.'); return; }
+                                btn.dataset.private = makePrivate ? '1' : '0';
+                                btn.querySelector('i').className = 'fa ' + (makePrivate ? 'fa-unlock' : 'fa-lock');
+                                btn.querySelector('span').textContent = makePrivate ? 'Make public' : 'Make private';
+                                var card = btn.closest('.member-card') || btn.closest('li') || btn.parentElement;
+                                var tag = card.querySelector('.ur-private-tag');
+                                if (tag) tag.style.display = makePrivate ? '' : 'none';
+                            })
+                            .catch(function () { btn.style.opacity = 1; alert('Something went wrong. Please try again.'); });
+                        return false;
+                    }
+                    </script>
+                    @endonce
+                @endif
+            @else
+            <a onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest">
+                <i class="fa fa-eye"></i> View Full Profile
+            </a>
+            @guest
+                <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return register_request();">
+                    <i class="fa fa-heart"></i> <span>Express Interest</span>
+                </a>
+            @endguest
+            @auth
+                @if (User::retrieveUserObject()->inList($member->dataid, 'interest'))
+                    @php
+                        $interest = User::retrieveUserObject()->getInterest($member->dataid);
+                    @endphp
+                    <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return {{$interest==-1? "false":"withdrawInterest($(this), 's')"}};">
+                        @if ($interest==1)
+                            <span class="c-green"><i class="fa fa-heart"></i> Interest Accepted</span>
+                        @elseif ($interest==-1)
+                            <span class="c-red"><i class="fa fa-heart"></i> Interest Declined</span>
+                        @else
+                            <span><i class="fa fa-heart"></i> Interest Expressed</span>
+                        @endif
+                    </a>
+                @else
+                    <a id="interest_{{$member->dataid}}" class="is-interest" onclick="return sendInterest($(this));">
+                        <span><i class="fa fa-heart"></i> Express Interest</span>
+                    </a>
+                @endif
+            @endauth
+            @endif
+        @endif
+    </div>
+</div>

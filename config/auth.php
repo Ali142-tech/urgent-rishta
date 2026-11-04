@@ -41,6 +41,11 @@ return [
             'provider' => 'users',
         ],
 
+        'team' => [
+            'driver' => 'session',
+            'provider' => 'team_members',
+        ],
+
         'api' => [
             'driver' => 'token',
             'provider' => 'users',
@@ -70,6 +75,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\User::class,
         ],
+        'team_members' => [
+            'driver' => 'eloquent',
+            'model' => App\TeamMember::class,
+        ],
 
         // 'users' => [
         //     'driver' => 'database',
@@ -93,6 +102,12 @@ return [
     */
 
     'passwords' => [
+        'team_members' => [
+            'provider' => 'team_members',
+            'table' => 'team_password_resets',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
         'users' => [
             'provider' => 'users',
             'table' => 'password_resets',

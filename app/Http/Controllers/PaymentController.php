@@ -72,6 +72,11 @@ class PaymentController extends Controller
             return redirect('home');
         }
 
+        // a payment can only be completed by the member who started it
+        if ($payment->user_id !== auth()->id()) {
+            abort(403);
+        }
+
         if ($payment->status !== 'paid') {
             $this->tryActivateFromStripeSession($payment, $request->query('session_id'));
         }
@@ -91,13 +96,15 @@ class PaymentController extends Controller
      */
     private function tryActivateFromStripeSession(Payment $payment, ?string $sessionId): void
     {
-        if (empty($sessionId) || empty(Config::get('services.stripe.secret'))) {
+        // The session id in the address bar is ignored unless it is the checkout session created for THIS payment: otherwise a
+        // cheap paid session could be used to "complete" an expensive package.
+        if (empty($sessionId) || empty(Config::get('services.stripe.secret')) || empty($payment->gateway_txid) || !hash_equals((string) $payment->gateway_txid, (string) $sessionId)) {
             return;
         }
         try {
             $stripe = new \Stripe\StripeClient(Config::get('services.stripe.secret'));
-            $session = $stripe->checkout->sessions->retrieve($sessionId, ['expand' => ['payment_intent']]);
-            if (($session->payment_status ?? '') !== 'paid') {
+            $session = $stripe->checkout->sessions->retrieve($payment->gateway_txid, ['expand' => ['payment_intent']]);
+            if (($session->payment_status ?? '') !== 'paid' || (string) ($session->client_reference_id ?? $payment->reference) !== (string) $payment->reference) {
                 return;
             }
             $payment->status = 'paid';
@@ -129,6 +136,13 @@ class PaymentController extends Controller
         $webhookSecret = (string) Config::get('services.stripe.webhook_secret');
         $payload = $request->getContent();
         $sigHeader = (string) $request->header('Stripe-Signature', '');
+
+        // Without the signing secret anyone could post a fake "payment completed" event and get a package for free:
+        // outside local development an unsigned webhook is refused.
+        if (empty($webhookSecret) && !app()->environment('local', 'testing')) {
+            Log::error('Stripe webhook refused: STRIPE_WEBHOOK_SECRET is not set');
+            return response('Webhook not configured', 503);
+        }
 
         try {
             $event = ! empty($webhookSecret)

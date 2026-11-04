@@ -27,7 +27,19 @@ return [
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_SES_REGION', env('AWS_DEFAULT_REGION', 'us-east-1')),
+    ],
+
+    // AWS Rekognition — automatic (AI) photo verification: compares a
+    // member's live selfie against their uploaded profile photo, replacing
+    // manual admin review. Reuses the same AWS credentials already
+    // configured for SES. similarity_threshold is the minimum face-match
+    // confidence (0-100) required to auto-verify.
+    'rekognition' => [
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
+        'similarity_threshold' => env('REKOGNITION_SIMILARITY_THRESHOLD', 80),
     ],
 
     // Stripe (Checkout + Webhooks)
@@ -36,6 +48,19 @@ return [
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
         'currency' => env('STRIPE_CURRENCY', 'usd'),
+    ],
+
+    // Google OAuth (Socialite)
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    // Calendar invites (.ics) emailed when an admin schedules an appointment.
+    'appointment_calendar' => [
+        'timezone' => env('APPOINTMENT_TIMEZONE', 'Asia/Karachi'),
+        'duration_minutes' => env('APPOINTMENT_DURATION_MINUTES', 30),
     ],
 
 ];

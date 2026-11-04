@@ -64,7 +64,7 @@ class VerificationController extends Controller
             Log::info("User is already verified");
         } else if ($user->markEmailAsVerified()) {
             event(new Verified($user));
-            Session::flash('message','success|Thank you for verifying your email address. Please contact Nimrah at 0307-0227000 for profile activation.');
+            Session::flash('message','success|Thank you for verifying your email address. Please contact UrgentRishta Team at 0304-0227000 for profile activation.');
             Log::info("User has been verified");
             User::retrieveUserObject($user->dataid, true);
         }
@@ -73,8 +73,12 @@ class VerificationController extends Controller
             return $response;
         }
 
+        // Not a bare view("auth.login") — that skips LoginController::
+        // showLoginForm(), which is the only place that builds $mode and
+        // the other variables login.blade.php requires, causing an
+        // "Undefined variable $mode" 500 on this exact fallback path.
         return $request->wantsJson()
                     ? new Response('', 204)
-                    : view("auth.login");
+                    : redirect()->route('login');
     }
 }
