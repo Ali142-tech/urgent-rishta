@@ -866,8 +866,28 @@ table.ur-admin-table .ur-btn--danger-outline:hover { color: var(--ur-dash-red); 
    so it gets the same rich visual as the live site without nesting a
    second bordered/shadowed box inside .ur-admin-card's own framing. */
 .ur-admin-mobile-card { display: none; margin: -20px; }
-.ur-admin-mobile-card .member-card__photo { border-radius: 14px 14px 0 0; }
+/* The shared card went dark/compact (ur-member-card.css); this admin-only mobile card keeps the original light layout. */
+.ur-admin-mobile-card { color: #1C2321; }
+.ur-admin-mobile-card .member-card__photo { position: relative; flex: none; width: 100%; height: auto; aspect-ratio: 8 / 5; border-radius: 14px 14px 0 0; background: #F6F4EF; }
+.ur-admin-mobile-card .member-card__photo-bg { filter: blur(20px) saturate(1.1) brightness(.92); }
+.ur-admin-mobile-card .member-card__photo img { object-fit: contain; object-position: center; }
+.ur-admin-mobile-card .member-card__ribbon { position: absolute; top: 12px; left: -34px; transform: rotate(-45deg); width: 130px; padding: 3px 0; text-align: center; border-radius: 0; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,.15); }
+.ur-admin-mobile-card .member-card__id-badge { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(15,46,36,.6); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 20px; }
+.ur-admin-mobile-card .member-card__badge--verified { position: absolute; bottom: 10px; left: 10px; z-index: 2; background: #1E7A46; color: #fff; font-size: 11px; padding: 4px 10px; }
+.ur-admin-mobile-card .member-card__badge--package { position: absolute; bottom: 10px; right: 10px; z-index: 2; padding: 4px 10px; }
+.ur-admin-mobile-card .member-card__body { padding: 16px 16px 4px; }
+.ur-admin-mobile-card .member-card__name { margin: 0 0 10px; font-size: 1.05rem; font-weight: 600; white-space: normal; color: #1C2321; }
+.ur-admin-mobile-card .member-card__quick { display: flex; flex-wrap: wrap; gap: 6px 16px; list-style: none; padding: 0; margin: 0 0 12px; font-size: .8rem; color: #6B7570; }
+.ur-admin-mobile-card .member-card__quick li i { color: #C9974D; margin-right: 5px; }
+.ur-admin-mobile-card .member-card__designation { display: flex; align-items: center; gap: 5px; font-size: .8rem; color: #6B7570; margin: 0 0 8px; }
+.ur-admin-mobile-card .member-card__designation i { color: #C9974D; }
+.ur-admin-mobile-card .member-card__details { display: grid; grid-template-columns: 1fr; gap: 8px 0; list-style: none; padding: 12px 0; margin: 0; border-top: 1px dashed #E7E2D6; border-bottom: 1px dashed #E7E2D6; }
+.ur-admin-mobile-card .member-card__details li { display: flex; justify-content: space-between; gap: 10px; font-size: .78rem; }
+.ur-admin-mobile-card .member-card__details li span { color: #6B7570; text-transform: uppercase; font-size: .65rem; }
+.ur-admin-mobile-card .member-card__details li b { color: #1C2321; font-weight: 600; text-align: right; }
 .ur-admin-mobile-card .member-card__footer { padding: 14px 20px 20px; }
+.ur-admin-mobile-card .member-card__footer a { min-height: 0; padding: 11px 8px; border-radius: 10px; font-size: .72rem; text-transform: uppercase; background: #fff; color: #123A2E !important; border: 1px solid #E7E2D6; }
+.ur-admin-mobile-card .member-card__footer a.is-interest { background: #C9974D; border-color: #C9974D; color: #fff !important; }
 
 @media (max-width: 767.98px) {
     .ur-admin-panel { padding: 16px; }
