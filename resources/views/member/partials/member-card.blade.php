@@ -83,7 +83,15 @@ $__short = function ($items, $max = 2) {
     if (!$items) return null;
     return implode(', ', array_slice($items, 0, $max)) . (count($items) > $max ? ' +' . (count($items) - $max) : '');
 };
-$__factsLine2 = array_values(array_filter([$member->height ?: null, $member->sect ?: null, $member->lbl_caste ?: null]));
+$__isNew = round((time() - strtotime($member->created_at)) / 604800) <= config('app.new_profile_duration');
+$__isUpdated = !$__isNew && round((time() - strtotime($member->updated_at)) / 604800) <= config('app.updated_profile_duration');
+$__faith = trim((string) ($member->lbl_religion ?? ''));
+$__faithSub = $member->sect ?: ($member->lbl_caste ?: null);
+$__factRows = [];
+$__factRows[] = [strtolower((string) $member->gender) === 'male' ? 'fa-mars' : 'fa-venus', ucfirst((string) $member->gender) . ($__age !== null ? ', ' . $__age . ' Years' : '')];
+if (!empty($member->lbl_marital_status)) $__factRows[] = ['fa-heart-o', $member->lbl_marital_status];
+if (!empty($member->height)) $__factRows[] = ['fa-arrows-v', $member->height];
+if ($__faith !== '' || $__faithSub) $__factRows[] = ['fa-moon-o', trim($__faith . ($__faithSub ? ' (' . $__faithSub . ')' : ''))];
 $__loc = array_values(array_filter([$member->lbl_city ?: null, $member->lbl_con_of_residence ?: null]));
 $__about = [];
 if (!$hideImage && !empty($member->lbl_education)) $__about[] = ['fa-graduation-cap', $member->lbl_education];
@@ -91,6 +99,7 @@ if (!empty($member->profession)) $__about[] = ['fa-briefcase', $member->professi
 if (!$__team && !empty($member->lbl_religion)) $__about[] = ['fa-star-o', $member->lbl_religion];
 if ($__loc) $__about[] = ['fa-map-marker', implode(', ', array_unique($__loc))];
 $__look = [];
+$__lookHas = false;
 if (!$hideImage) {
     if ($__team) {
         $a1 = $member->pref_age_min; $a2 = $member->pref_age_max;
@@ -101,10 +110,12 @@ if (!$hideImage) {
         $m = $member->lbl_rmarital_status ?? null; $e = $member->lbl_reducation ?? null;
         $l = $member->lbl_rcon_of_residence ?? ($member->lbl_rcon_pref ?? null);
     }
-    if ($a1 || $a2) $__look[] = ['fa-calendar', 'Age ' . ($a1 && $a2 ? $a1 . '–' . $a2 : ($a1 ? $a1 . '+' : 'up to ' . $a2))];
-    if (!empty($m)) $__look[] = ['fa-heart-o', $m];
-    if (!empty($e)) $__look[] = ['fa-graduation-cap', $e];
-    if (!empty($l)) $__look[] = ['fa-map-marker', $l];
+    $__lookHas = ($a1 || $a2 || !empty($m) || !empty($e) || !empty($l));
+    // always the same four rows; whatever the member did not fill in reads N/A
+    $__look[] = ['fa-calendar', ($a1 || $a2) ? 'Age ' . ($a1 && $a2 ? $a1 . '–' . $a2 : ($a1 ? $a1 . '+' : 'up to ' . $a2)) : 'N/A'];
+    $__look[] = ['fa-heart-o', !empty($m) ? $m : 'N/A'];
+    $__look[] = ['fa-graduation-cap', !empty($e) ? $e : 'N/A'];
+    $__look[] = ['fa-map-marker', !empty($l) ? $l : 'N/A'];
 }
 ?>
 <div class="member-card{{ $hideImage ? ' member-card--teaser' : '' }}" id="block_{{$member->dataid}}">
@@ -120,6 +131,8 @@ if (!$hideImage) {
                 <button type="button" class="member-card__nav member-card__nav--prev" onclick="return cardCarouselNav(event, this, -1);" aria-label="Previous photo">&lsaquo;</button>
                 <button type="button" class="member-card__nav member-card__nav--next" onclick="return cardCarouselNav(event, this, 1);" aria-label="Next photo">&rsaquo;</button>
             @endif
+            @if($__isNew)<span class="member-card__ribbon member-card__ribbon--new member-card__ribbon--photo">New</span>@endif
+            @if($member->photo_verification_status === 'verified')<span class="member-card__badge--verified"><i class="fa fa-check"></i> Verified</span>@endif
             {{-- Homepage teaser slider only ($hideImage): the photo is already a real (never-sharp) blur; the lock makes the intent explicit. --}}
             @if($hideImage)
                 <div class="member-card__lock-overlay" onclick="javascript:@auth window.open('{{ $profileOpenUrl }}'); @endauth @guest return register_request(); @endguest" title="Upgrade your plan to view this profile">
@@ -143,27 +156,29 @@ if (!$hideImage) {
                         <a onclick="return register_request();">{{ $member->first_name ?: 'Profile' }}</a>
                     @endguest
                 </h3>
-                @if($member->photo_verification_status === 'verified')
-                    <span class="member-card__badge--verified"><i class="fa fa-check"></i> Verified</span>
-                @endif
             </div>
-            <div class="member-card__facts">
-                {{ ucfirst($member->gender) }}@if($__age !== null) &bull; {{ $__age }}@endif @if(!empty($member->lbl_marital_status)) &bull; {{ $member->lbl_marital_status }}@endif
-                @if(!empty($member->lbl_city))
-                    &bull;
-                    @if(!empty($member->con_of_residence_code) && \App\Profile::countryFlagUrl($member->con_of_residence_code))
-                        <img class="member-card__flag" src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code) }}" alt="" title="{{$member->lbl_con_of_residence}}" loading="lazy" onerror="this.style.display='none';">
-                    @endif
-                    {{ $member->lbl_city }}
-                @endif
-            </div>
-            @if($__factsLine2)
-                <div class="member-card__facts member-card__facts--sub">{{ implode(' • ', $__factsLine2) }}</div>
+            {{-- Team dashboard only: the client's first name under the ID (never for temporary-access users, shown to admins on the member site too, never to ordinary members) --}}
+            @if(!$hideImage && !empty($member->first_name) && (($__team && auth('team')->check() && !auth('team')->user()->isRestricted()) || (auth('web')->check() && auth('web')->user()->isAdmin())))
+                <div class="member-card__realname">{{ $member->first_name }}</div>
             @endif
+            <ul class="member-card__factlist">
+                @foreach($__factRows as [$ico, $txt])
+                    <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                @endforeach
+                @if(!empty($member->lbl_city))
+                    <li>
+                        <i class="fa fa-map-marker"></i>
+                        <span>
+                            @if(!empty($member->con_of_residence_code) && \App\Profile::countryFlagUrl($member->con_of_residence_code))
+                                <img class="member-card__flag" src="{{ \App\Profile::countryFlagUrl($member->con_of_residence_code) }}" alt="" title="{{$member->lbl_con_of_residence}}" loading="lazy" onerror="this.style.display='none';">
+                            @endif
+                            {{ $member->lbl_city }}@if(!empty($member->lbl_con_of_residence)), {{ $member->lbl_con_of_residence }}@endif
+                        </span>
+                    </li>
+                @endif
+            </ul>
             <div class="member-card__chips">
-                @if(round((time() - strtotime($member->created_at))/(604800)) <= config('app.new_profile_duration'))
-                    <span class="member-card__ribbon member-card__ribbon--new">New</span>
-                @elseif(round((time() - strtotime($member->updated_at))/(604800)) <= config('app.updated_profile_duration'))
+                @if($__isUpdated)
                     <span class="member-card__ribbon member-card__ribbon--updated">Updated</span>
                 @endif
                 @if($packageSlug)
@@ -174,33 +189,13 @@ if (!$hideImage) {
         </div>
     </div>
     <div class="member-card__body">
-        @if($compatibility)
-            <div class="member-card__compat">
-                <div class="member-card__compat-head">
-                    <div class="member-card__compat-score">{{ $compatibility['percent'] }}%</div>
-                    <div>
-                        <div class="member-card__compat-label">{{ $compatTier['label'] }}</div>
-                        <div class="member-card__compat-sub">{{ $compatTier['sub'] }}</div>
-                    </div>
-                </div>
-                <div class="member-card__compat-bars">
-                    @foreach($compatCardChecks as $check)
-                        <div class="member-card__compat-row">
-                            <span class="member-card__compat-row-label">{{ $check['factor'] }}</span>
-                            <span class="member-card__compat-row-track"><span class="member-card__compat-row-fill" style="width:{{ $check['score'] }}%"></span></span>
-                            <span class="member-card__compat-row-pct">{{ $check['score'] }}%</span>
-                        </div>
-                    @endforeach
-                </div>
-                {{-- AI Match Explanation (Website Upgrade Brief §6) — optional, only passed by team/matches.blade.php and the overview's AI Match preview. --}}
-                @if(!empty($matchExplanation ?? null))
-                    <div class="member-card__compat-explain">{{ $matchExplanation }}</div>
-                @endif
-            </div>
+        {{-- The match % box was removed from every card (client request, Nov 2026). The AI Match explanation (team AI Match page / overview) still shows. --}}
+        @if(!empty($matchExplanation ?? null))
+            <div class="member-card__compat-explain member-card__compat-explain--solo">{{ $matchExplanation }}</div>
         @endif
         <div class="member-card__panels{{ $hideImage ? ' member-card__panels--one' : '' }}">
             <div class="member-card__panel">
-                <h4>About Profile</h4>
+                <h4><i class="fa fa-user"></i> About Profile</h4>
                 <ul>
                     @forelse($__about as [$ico, $txt])
                         <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
@@ -211,12 +206,12 @@ if (!$hideImage) {
             </div>
             @unless($hideImage)
             <div class="member-card__panel member-card__panel--alt">
-                <h4>Looking For</h4>
+                <h4><i class="fa fa-bullseye"></i> Looking For</h4>
                 <ul>
                     @forelse($__look as [$ico, $txt])
-                        <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                        <li class="{{ $txt === 'N/A' ? 'is-empty' : '' }}"><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
                     @empty
-                        <li class="is-empty"><span>Not specified</span></li>
+                        <li class="is-empty"><span>N/A</span></li>
                     @endforelse
                 </ul>
             </div>

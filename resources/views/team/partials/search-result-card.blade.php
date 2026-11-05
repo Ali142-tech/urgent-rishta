@@ -19,7 +19,11 @@
         if (!$items) return null;
         return implode(', ', array_slice($items, 0, $max)) . (count($items) > $max ? ' +' . (count($items) - $max) : '');
     };
-    $__line2 = array_values(array_filter([$member->height ?: null, $member->sect ?: null, $member->lbl_caste ?: null]));
+    $__faithSub = $member->sect ?: ($member->lbl_caste ?: null);
+    $__factRows = [[strtolower((string) $member->gender) === 'male' ? 'fa-mars' : 'fa-venus', ucfirst((string) $member->gender) . ($__age !== null ? ', ' . $__age . ' Years' : '')]];
+    if (!empty($member->lbl_marital_status)) $__factRows[] = ['fa-heart-o', $member->lbl_marital_status];
+    if (!empty($member->height)) $__factRows[] = ['fa-arrows-v', $member->height];
+    if (!empty($member->lbl_religion) || $__faithSub) $__factRows[] = ['fa-moon-o', trim((string) $member->lbl_religion . ($__faithSub ? ' (' . $__faithSub . ')' : ''))];
     $__loc = array_values(array_filter([$member->lbl_city ?: null, $member->lbl_con_of_residence ?: null]));
     $__about = [];
     if (!empty($member->lbl_education)) $__about[] = ['fa-graduation-cap', $member->lbl_education];
@@ -29,47 +33,52 @@
     $__a1 = $member->pref_age_min; $__a2 = $member->pref_age_max;
     $__m = $__short($member->prefMaritalNames()); $__e = $__short($member->prefEducationNames());
     $__l = $__short(array_filter([$member->pref_city ?: null, ...$member->prefNationalityNames()]));
-    if ($__a1 || $__a2) $__look[] = ['fa-calendar', 'Age ' . ($__a1 && $__a2 ? $__a1 . '–' . $__a2 : ($__a1 ? $__a1 . '+' : 'up to ' . $__a2))];
-    if ($__m) $__look[] = ['fa-heart-o', $__m];
-    if ($__e) $__look[] = ['fa-graduation-cap', $__e];
-    if ($__l) $__look[] = ['fa-map-marker', $__l];
+    // always the same four rows; whatever was not filled in reads N/A
+    $__look[] = ['fa-calendar', ($__a1 || $__a2) ? 'Age ' . ($__a1 && $__a2 ? $__a1 . '–' . $__a2 : ($__a1 ? $__a1 . '+' : 'up to ' . $__a2)) : 'N/A'];
+    $__look[] = ['fa-heart-o', $__m ?: 'N/A'];
+    $__look[] = ['fa-graduation-cap', $__e ?: 'N/A'];
+    $__look[] = ['fa-map-marker', $__l ?: 'N/A'];
 @endphp
 <div class="ur-search-card">
     <div class="ur-search-card__head">
         <a class="ur-search-card__photo" style="--ph: url('{{ $__cardImg }}');" href="{{ route('team.proposals.view', $member->dataid) }}" target="_blank" rel="noopener">
             <img src="{{ $__cardImg }}" alt="{{ $__restricted ? '' : $member->first_name }}" loading="lazy" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
+            @if($isNew)<span class="ur-search-card__badge ur-search-card__badge--new ur-search-card__badge--photo">New</span>@endif
+            @if($member->photo_verification_status === 'verified')<span class="ur-search-card__verified"><i class="fa fa-check"></i> Verified</span>@endif
         </a>
 
         <div class="ur-search-card__headinfo">
             <div class="ur-search-card__top">
                 <span class="ur-search-card__id">{{ $member->dataid }}</span>
-                @if($member->photo_verification_status === 'verified')
-                    <span class="ur-search-card__verified"><i class="fa fa-check"></i> Verified</span>
-                @endif
             </div>
-
-            <div class="ur-search-card__meta">
-                {{ ucfirst($member->gender) }}@if($__age !== null) &bull; {{ $__age }}@endif @if(!empty($member->lbl_marital_status)) &bull; {{ $member->lbl_marital_status }}@endif
-                {{-- the flag always belongs to the country named beside it (the country the client lives in); the city (their home town, often in another country) is listed under About Profile --}}
-                @if(!empty($countryName))
-                    &bull;
-                    @if(!empty($countryCode) && \App\Profile::countryFlagUrl($countryCode, 80))
-                        <img class="ur-search-card__flag" src="{{ \App\Profile::countryFlagUrl($countryCode, 80) }}" alt="" loading="lazy" onerror="this.style.display='none';">
-                    @endif
-                    {{ $countryName }}
-                @elseif(!empty($member->lbl_city))
-                    &bull; {{ $member->lbl_city }}
-                @endif
-            </div>
-            @if($__line2)
-                <div class="ur-search-card__meta ur-search-card__meta--sub">{{ implode(' • ', $__line2) }}</div>
+            @if(!$__restricted && !empty($member->first_name))
+                <div class="ur-search-card__realname">{{ $member->first_name }}</div>
             @endif
 
-            @if($isNew || $isUpdated || $category === 'premium' || $category === 'royal' || $isAbroad || $highlight === 'highly attractive' || !empty($member->is_private))
+            <ul class="ur-search-card__factlist">
+                @foreach($__factRows as [$ico, $txt])
+                    <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                @endforeach
+                {{-- the flag always belongs to the country named beside it (the country the client lives in); the city (their home town, often in another country) is listed under About Profile --}}
+                @if(!empty($countryName) || !empty($member->lbl_city))
+                    <li>
+                        <i class="fa fa-map-marker"></i>
+                        <span>
+                            @if(!empty($countryName))
+                                @if(!empty($countryCode) && \App\Profile::countryFlagUrl($countryCode, 80))
+                                    <img class="ur-search-card__flag" src="{{ \App\Profile::countryFlagUrl($countryCode, 80) }}" alt="" loading="lazy" onerror="this.style.display='none';">
+                                @endif
+                                {{ $countryName }}
+                            @else
+                                {{ $member->lbl_city }}
+                            @endif
+                        </span>
+                    </li>
+                @endif
+            </ul>
+            @if($isUpdated || $category === 'premium' || $category === 'royal' || $isAbroad || $highlight === 'highly attractive' || !empty($member->is_private))
             <div class="ur-search-card__badges">
-                @if($isNew)
-                    <span class="ur-search-card__badge ur-search-card__badge--new">New</span>
-                @elseif($isUpdated)
+                @if($isUpdated)
                     <span class="ur-search-card__badge ur-search-card__badge--updated">Updated</span>
                 @endif
                 @if(!empty($member->is_private))
@@ -100,7 +109,7 @@
 
     <div class="ur-search-card__panels">
         <div class="ur-search-card__panel">
-            <h4>About Profile</h4>
+            <h4><i class="fa fa-user"></i> About Profile</h4>
             <ul>
                 @forelse($__about as [$ico, $txt])
                     <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
@@ -110,12 +119,12 @@
             </ul>
         </div>
         <div class="ur-search-card__panel ur-search-card__panel--alt">
-            <h4>Looking For</h4>
+            <h4><i class="fa fa-bullseye"></i> Looking For</h4>
             <ul>
                 @forelse($__look as [$ico, $txt])
-                    <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                    <li class="{{ $txt === 'N/A' ? 'is-empty' : '' }}"><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
                 @empty
-                    <li class="is-empty"><span>Not specified</span></li>
+                    <li class="is-empty"><span>N/A</span></li>
                 @endforelse
             </ul>
         </div>

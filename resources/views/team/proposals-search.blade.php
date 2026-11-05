@@ -136,23 +136,60 @@
     .ur-search-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 5 / 4; max-height: 300px; border-radius: 0; box-shadow: none; }
     .ur-search-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px; border-top: 3px double #C9974D; }
 
+    /* Ivory & emerald (client design, Nov 2026) — same look as the shared member card (public/css/ur-member-card.css) */
+    .ur-search-card { background: linear-gradient(180deg, #FFFDF8 0%, #F7F1E3 100%); border: 2px solid #D4AE6A; border-radius: 22px; color: #1C2A24; box-shadow: 0 10px 26px rgba(15,46,36,.14), inset 0 0 0 4px #FBF6EA; }
+    .ur-search-card:hover { box-shadow: 0 16px 32px rgba(15,46,36,.22), inset 0 0 0 4px #FBF6EA; }
+    .ur-search-card__head { flex-direction: row; align-items: flex-start; gap: 16px; padding: 18px 18px 6px; background: transparent; border-bottom: 0; }
+    .ur-search-card__photo { flex: 0 0 42%; width: 42%; height: auto; aspect-ratio: 4 / 5; max-height: none; border-radius: 16px; box-shadow: 0 4px 12px rgba(15,46,36,.18); }
+    .ur-search-card__headinfo { flex: 1; width: auto; min-width: 0; padding: 0; border-top: 0; }
+    .ur-search-card__top { flex-wrap: nowrap; justify-content: flex-start; margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(201,151,77,.45); }
+    .ur-search-card__id { font-size: 19.5px; letter-spacing: .2px; white-space: nowrap; }
+    /* photo is as tall as the intro column beside it */
+    .ur-search-card__head { align-items: stretch; }
+    .ur-search-card__photo { aspect-ratio: auto; height: auto; align-self: stretch; min-height: 200px; }
+    .ur-search-card__realname { margin: -2px 0 8px; font-size: 14.5px; font-weight: 600; color: #4A4330; }
+    .ur-search-card__factlist { list-style: none; margin: 0; padding: 0; }
+    .ur-search-card__factlist li { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 7px; font-size: 14px; line-height: 1.3; color: #1C2A24; }
+    .ur-search-card__factlist li i { flex: 0 0 18px; width: 18px; margin-top: 1px; text-align: center; font-size: 16.5px; color: #B88436 !important; }
+    .ur-search-card__factlist li span { min-width: 0; overflow-wrap: anywhere; color: inherit !important; }
+    .ur-search-card__flag { width: 22px !important; height: 15px !important; }
+    .ur-search-card__badge--photo { position: absolute; top: 10px; left: 10px; z-index: 3; font-size: 11px; padding: 4px 12px; background: linear-gradient(180deg, #F1D38E, #D9AC63); color: #3A2A08; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+    .ur-search-card__photo .ur-search-card__verified { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 3; background: #0F4A35; border: 0; color: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 4px 12px; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+    .ur-search-card__photo .ur-search-card__verified i { color: #fff !important; }
+    .ur-search-card__owner { color: #6B6350; }
+    .ur-search-card__owner i { color: #B88436; }
+    .ur-search-card__panels { gap: 10px; padding: 10px 18px 2px; }
+    .ur-search-card__panel, .ur-search-card__panel--alt { background: linear-gradient(180deg, #FFFCF4, #F8F0DD); border: 1px solid rgba(201,151,77,.6); border-radius: 14px; padding: 12px 12px 4px; box-shadow: 0 2px 6px rgba(120,90,30,.08); }
+    .ur-search-card__panel h4 { display: flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 15px; color: #123A2E; border-bottom: 1px solid rgba(201,151,77,.55); margin: 0 0 4px; padding-bottom: 8px; }
+    .ur-search-card__panel h4 i { color: #B88436 !important; font-size: 15px; }
+    .ur-search-card__panel li { margin: 0; padding: 8px 0; font-size: 13.5px; color: #1C2A24; border-bottom: 1px solid rgba(201,151,77,.3); }
+    .ur-search-card__panel li:last-child { border-bottom: 0; }
+    .ur-search-card__panel li i { font-size: 15px; color: #B88436; }
+    .ur-search-card__panel li.is-empty span { color: #8C8470; }
+    .ur-search-card__actions { gap: 10px; padding: 12px 18px 18px; }
+    .ur-search-card__btn { flex: 1 1 calc(50% - 5px); min-height: 46px; border-radius: 999px; border: 1.5px solid #123A2E; background: #FFFDF8; color: #123A2E !important; font-size: 13px; letter-spacing: .3px; text-transform: none; box-sizing: border-box; }
+    .ur-search-card__btn:hover { background: #EFE7D2; border-color: #0A2A20; color: #123A2E !important; }
+    .ur-search-card__btn:first-child { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 16px; background: linear-gradient(180deg, #11634A, #0C4A38); border-color: #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15,46,36,.25); }
+    .ur-search-card__btn:first-child:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; color: #fff !important; }
+    .ur-search-card__btn--whatsapp { background: #FFFDF8; border-color: #123A2E; color: #123A2E !important; }
+    .ur-search-card__btn--whatsapp:hover { background: #EFE7D2; border-color: #0A2A20; color: #123A2E !important; }
+    .ur-search-card__btn--whatsapp i { color: #1E9B57 !important; }
     @media (max-width: 900px) {
         .ur-search-results { grid-template-columns: 1fr; }
     }
     @media (max-width: 560px) {
         /* Phones: a smaller header photo and tighter panels so the card stays compact */
-        .ur-search-card__head { gap: 0; padding: 0; }
-        .ur-search-card__photo { flex-basis: auto; width: 100%; height: auto; border-radius: 0; }
-        .ur-search-card__headinfo { padding: 12px 14px; }
-        .ur-search-card__id { font-size: 21px; }
-        .ur-search-card__meta { font-size: 13.5px; }
-        .ur-search-card__meta--sub { font-size: 12.5px; }
-        .ur-search-card__panels { gap: 10px; padding: 12px 12px 2px; }
-        .ur-search-card__panel { padding: 12px 10px 6px; border-radius: 16px; }
-        .ur-search-card__panel h4 { font-size: 14.5px; }
-        .ur-search-card__panel li { font-size: 12.5px; gap: 8px; }
-        .ur-search-card__actions { gap: 10px; padding: 12px 12px 16px; }
-        .ur-search-card__btn { min-height: 42px; font-size: 13px; padding: 8px 8px; }
+        .ur-search-card__head { gap: 12px; padding: 14px 14px 4px; }
+        .ur-search-card__photo { flex-basis: 42%; width: 42%; border-radius: 14px; }
+        .ur-search-card__id { font-size: 17px; letter-spacing: 0; }
+        .ur-search-card__factlist li { font-size: 12.5px; gap: 7px; margin-bottom: 6px; }
+        .ur-search-card__panels { gap: 8px; padding: 8px 12px 2px; }
+        .ur-search-card__panel { padding: 10px 10px 2px; }
+        .ur-search-card__panel h4 { font-size: 13.5px; gap: 5px; }
+        .ur-search-card__panel li { font-size: 12px; gap: 6px; }
+        .ur-search-card__actions { gap: 8px; padding: 10px 12px 14px; }
+        .ur-search-card__btn { min-height: 42px; font-size: 12.5px; padding: 8px 8px; }
+        .ur-search-card__btn:first-child { min-height: 48px; font-size: 15px; }
         /* Phone search form: compact, two fields per row (like a native filter sheet) instead of one tall field per row */
         .ur-adv-search { padding: 14px; --ur-ms-h: 42px; --ur-ms-radius: 10px; }
         .ur-adv-search__row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

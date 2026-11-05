@@ -674,3 +674,152 @@
 .member-card__lock-title { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: .5px; text-transform: uppercase; }
 .member-card__lock-sub { color: rgba(255, 255, 255, .88); font-size: 12px; }
 .member-card--teaser .member-card__headinfo { padding-top: 12px; }
+
+/* =====================================================================================================
+   Ivory & emerald card (client design, Nov 2026): cream card with a gold frame, photo on the left with NEW / VERIFIED
+   badges, icon fact list, emerald match box, cream "About Profile" / "Looking For" panels, emerald primary button.
+   Last block on purpose — it overrides the earlier dark / photo-on-top blocks.
+   ===================================================================================================== */
+.member-card {
+    background: linear-gradient(180deg, #FFFDF8 0%, #F7F1E3 100%);
+    border: 2px solid #D4AE6A;
+    border-radius: 22px;
+    color: #1C2A24;
+    box-shadow: 0 10px 26px rgba(15, 46, 36, .14), inset 0 0 0 4px #FBF6EA;
+}
+.member-card:hover { box-shadow: 0 16px 32px rgba(15, 46, 36, .22), inset 0 0 0 4px #FBF6EA; }
+
+/* header: photo left, details right */
+.member-card__head { flex-direction: row; align-items: flex-start; gap: 16px; padding: 18px 18px 6px; background: transparent; border-bottom: 0; }
+.member-card__photo { flex: 0 0 42%; width: 42%; height: auto; aspect-ratio: 4 / 5; max-height: none; border-radius: 16px; box-shadow: 0 4px 12px rgba(15, 46, 36, .18); }
+.member-card__nav { width: 24px; height: 24px; font-size: 16px; }
+.member-card__nav--prev { left: 5px; }
+.member-card__nav--next { right: 5px; }
+.member-card__headinfo { flex: 1; width: auto; min-width: 0; padding: 0; border-top: 0; }
+
+.member-card__toprow { flex-wrap: nowrap; justify-content: flex-start; margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(201, 151, 77, .45); }
+.member-card__name { font-size: 1.55rem; letter-spacing: .5px; }
+.member-card__id-copy { font-size: 16px !important; color: #B88436; margin-left: 10px; }
+
+.member-card__factlist { list-style: none; margin: 0; padding: 0; }
+.member-card__factlist li { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 7px; font-size: .9rem; line-height: 1.3; color: #1C2A24; }
+.member-card__factlist li i { flex: 0 0 18px; width: 18px; margin-top: 1px; text-align: center; font-size: 1.05rem; color: #B88436 !important; }
+.member-card__factlist li span { min-width: 0; overflow-wrap: anywhere; color: inherit !important; }
+.member-card__flag { width: 22px; height: 15px; margin: 0 4px 2px 0; }
+.member-card__chips { margin-top: 4px; }
+
+/* NEW (top-left) and VERIFIED (bottom) sit on the photo */
+.member-card__ribbon--photo { position: absolute; top: 10px; left: 10px; z-index: 3; font-size: .72rem; padding: 4px 12px; letter-spacing: .6px; background: linear-gradient(180deg, #F1D38E, #D9AC63); color: #3A2A08; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.member-card__photo .member-card__badge--verified { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 3; background: #0F4A35; border: 0; color: #fff; font-size: .66rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 4px 12px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+.member-card__photo .member-card__badge--verified i { color: #fff !important; }
+
+/* match box: emerald, big score in a gold-framed box, gold bars */
+.member-card__body { padding: 10px 18px 2px; }
+.member-card__compat { background: linear-gradient(135deg, #0E4635, #0A3427); border: 0; border-radius: 16px; padding: 14px; margin-bottom: 14px; box-shadow: inset 0 0 0 1px rgba(226, 182, 110, .25); }
+.member-card__compat-main { display: flex; align-items: center; gap: 14px; }
+.member-card__compat-box { flex: 0 0 auto; text-align: center; padding: 10px 12px; border: 1.5px solid #C9974D; border-radius: 16px; }
+.member-card__compat-score { font-family: 'Playfair Display', Georgia, serif; font-variant-numeric: lining-nums; font-size: 1.9rem; font-weight: 700; color: #E9C47E; line-height: 1; }
+.member-card__compat-label { margin-top: 5px; font-family: 'Playfair Display', Georgia, serif; font-size: .8rem; font-weight: 700; color: #fff; }
+.member-card__compat-side { flex: 1; min-width: 0; padding-left: 14px; border-left: 1px solid rgba(226, 182, 110, .3); }
+.member-card__compat-sub { margin: 0 0 6px; font-size: .78rem; color: #DDEBE4; }
+.member-card__compat-row { gap: 8px; }
+.member-card__compat-row-label { flex: 0 0 70px; font-size: .72rem; color: #E4EFE9; }
+.member-card__compat-row-track { height: 6px; background: rgba(255, 255, 255, .14); border-radius: 4px; }
+.member-card__compat-row-fill { background: linear-gradient(90deg, #E9C47E, #C9974D); border-radius: 4px; }
+.member-card__compat-row-pct { flex: 0 0 34px; font-size: .72rem; color: #fff; }
+.member-card__compat-explain { color: #CFE2D9; border-top-color: rgba(226, 182, 110, .3); }
+
+/* panels: cream with gold hairlines and ruled list items */
+.member-card__panel,
+.member-card__panel--alt { background: linear-gradient(180deg, #FFFCF4, #F8F0DD); border: 1px solid rgba(201, 151, 77, .6); border-radius: 14px; padding: 12px 12px 4px; box-shadow: 0 2px 6px rgba(120, 90, 30, .08); }
+.member-card__panel h4 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #123A2E; border-bottom: 1px solid rgba(201, 151, 77, .55); margin: 0 0 4px; padding-bottom: 8px; }
+.member-card__panel h4 i { color: #B88436 !important; font-size: 1.05rem; }
+.member-card__panel li { margin: 0; padding: 8px 0; font-size: .86rem; color: #1C2A24; border-bottom: 1px solid rgba(201, 151, 77, .3); }
+.member-card__panel li:last-child { border-bottom: 0; }
+.member-card__panel li i { font-size: 1rem; color: #B88436; }
+.member-card__panel li.is-empty span { color: #8C8470; }
+.ur-team-added-by { color: #6B6350; }
+.ur-team-added-by i { color: #B88436; }
+
+/* actions: emerald primary on its own row, outlined secondary buttons below */
+.member-card__footer { flex-wrap: wrap; gap: 10px; padding: 12px 18px 18px; }
+.member-card__footer a { flex: 1 1 calc(50% - 5px); min-height: 46px; border-radius: 999px; border: 1.5px solid #123A2E; background: #FFFDF8; color: #123A2E !important; font-size: .82rem; letter-spacing: .3px; text-transform: none; box-sizing: border-box; }
+.member-card__footer a:hover { background: #EFE7D2; border-color: #0A2A20; }
+.member-card__footer a.is-interest,
+.member-card__footer a.member-card__unlock-btn { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 1.02rem; background: linear-gradient(180deg, #11634A, #0C4A38); border: 1.5px solid #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15, 46, 36, .25); }
+.member-card__footer a.is-interest:hover,
+.member-card__footer a.member-card__unlock-btn:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; }
+.member-card__footer a.is-interest span { color: #fff !important; }
+.member-card__footer a.is-interest .c-green, .member-card__footer a.is-interest .c-red { color: #fff !important; }
+.member-card__locked-note { color: #6B6350; }
+
+/* team cards: "View Full Profile" is the primary, Edit / Delete / Share / Privacy are the outlined ones */
+.member-card__footer--team a.is-interest { order: 0; flex: 1 1 auto; min-height: 44px; font-size: .78rem; background: #FFFDF8; border: 1.5px solid #123A2E; color: #123A2E !important; box-shadow: none; }
+.member-card__footer--team a.is-interest span, .member-card__footer--team a.is-interest i { color: inherit !important; }
+.member-card__footer--team a.is-interest:hover { background: #EFE7D2; border-color: #0A2A20; }
+.member-card__footer--team a:first-child { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 1rem; background: linear-gradient(180deg, #11634A, #0C4A38); border-color: #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15, 46, 36, .25); }
+.member-card__footer--team a:first-child:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; }
+
+/* homepage teaser keeps the wide photo on top (its photo is only a locked preview) */
+.member-card--teaser .member-card__head { flex-direction: column; padding: 0; gap: 0; }
+.member-card--teaser .member-card__photo { flex: none; width: 100%; aspect-ratio: 8 / 5; border-radius: 20px 20px 0 0; box-shadow: none; }
+.member-card--teaser .member-card__headinfo { padding: 14px 18px 4px; }
+
+@media (max-width: 420px) {
+    .member-card__head { gap: 12px; padding: 14px 14px 4px; }
+    .member-card__photo { flex: 0 0 42%; width: 42%; border-radius: 14px; }
+    .member-card__name { font-size: 1.2rem; }
+    .member-card__id-copy { margin-left: 6px; font-size: 14px !important; }
+    .member-card__factlist li { font-size: .8rem; gap: 7px; margin-bottom: 6px; }
+    .member-card__body { padding: 8px 12px 2px; }
+    .member-card__compat { padding: 12px 10px; }
+    .member-card__compat-main { gap: 10px; }
+    .member-card__compat-box { padding: 8px 8px; }
+    .member-card__compat-score { font-size: 1.5rem; }
+    .member-card__compat-side { padding-left: 10px; }
+    .member-card__compat-row-label { flex-basis: 58px; font-size: .66rem; }
+    .member-card__panels { gap: 8px; }
+    .member-card__panel li { font-size: .78rem; gap: 6px; }
+    .member-card__footer { padding: 10px 12px 14px; gap: 8px; }
+    .member-card__footer a { min-height: 42px; font-size: .76rem; }
+    .member-card__footer a.is-interest, .member-card__footer a.member-card__unlock-btn { min-height: 48px; font-size: .95rem; }
+    .member-card--teaser .member-card__head { padding: 0; }
+    .member-card--teaser .member-card__photo { width: 100%; border-radius: 20px 20px 0 0; }
+}
+@media (max-width: 575px) {
+    .member-card__footer--team { display: flex; }
+    .member-card__footer--team a { flex: 1 1 calc(50% - 4px); width: auto; }
+    .member-card__footer--team a:first-child { flex: 1 1 100%; }
+}
+
+/* ivory polish: single-line panel headings, full "Marital Status" label, no photo badges over the teaser's lock */
+.member-card__panel h4 { white-space: nowrap; font-size: .95rem; gap: 6px; }
+.member-card__panel h4 i { font-size: .95rem; }
+.member-card__compat-row-label { flex-basis: 88px; }
+.member-card--teaser .member-card__ribbon--photo,
+.member-card--teaser .member-card__photo .member-card__badge--verified { display: none; }
+@media (max-width: 420px) {
+    .member-card__panel h4 { font-size: .86rem; gap: 5px; }
+    .member-card__compat-row-label { flex-basis: 74px; font-size: .62rem; }
+    .member-card__compat-row-pct { flex-basis: 30px; }
+}
+
+/* ivory fix: the 10-character ID + copy icon must fit in the narrow right column */
+.member-card__toprow { gap: 0; }
+.member-card__name { font-size: 1.22rem; letter-spacing: .2px; white-space: nowrap; }
+.member-card__id-copy { margin-left: 6px; font-size: 14px !important; }
+@media (max-width: 420px) {
+    .member-card__name { font-size: 1.05rem; letter-spacing: 0; }
+    .member-card__id-copy { margin-left: 4px; font-size: 13px !important; }
+}
+
+/* AI Match explanation on its own (the match % box is gone) */
+.member-card__compat-explain--solo { margin: 0 0 12px; padding: 10px 12px; border: 1px dashed rgba(201, 151, 77, .6); border-radius: 12px; background: #FBF4E2; color: #4A4330; font-size: .8rem; line-height: 1.45; }
+
+/* client's first name under the ID (team cards only) */
+.member-card__realname { margin: -2px 0 8px; font-size: .95rem; font-weight: 600; color: #4A4330; }
+
+/* photo is as tall as the intro column beside it (ID + facts) */
+.member-card:not(.member-card--teaser) .member-card__head { align-items: stretch; }
+.member-card:not(.member-card--teaser) .member-card__photo { aspect-ratio: auto; height: auto; align-self: stretch; min-height: 200px; }
+.member-card:not(.member-card--teaser) .member-card__headinfo { padding-bottom: 6px; }
