@@ -91,6 +91,8 @@ Route::post('admin/match-weights', [App\Http\Controllers\AdminController::class,
 // Successful Matches (+ revenue share) now lives in the admin's Team Dashboard (Team Management); old links land there.
 Route::redirect('admin/successful-matches', 'team/manage/successful-matches')->name('admin.successful-matches');
 Route::get('admin/audit-log', [App\Http\Controllers\AdminController::class, 'auditLog'])->name('admin.audit-log');
+Route::post('admin/audit-log/delete', [App\Http\Controllers\AdminController::class, 'auditLogDelete'])->name('admin.audit-log.delete');
+Route::post('admin/audit-log/clear', [App\Http\Controllers\AdminController::class, 'auditLogClear'])->name('admin.audit-log.clear');
 // Admin ▸ Content (CMS): FAQs, Terms & Conditions, Privacy Policy — written by the admin, shown on the public pages.
 Route::get('admin/cms', [App\Http\Controllers\CmsAdminController::class, 'index'])->name('admin.cms');
 Route::get('admin/cms/pages/create', [App\Http\Controllers\CmsAdminController::class, 'pageCreate'])->name('admin.cms.pages.create');
@@ -215,6 +217,7 @@ Route::get('team/matchmakers', [App\Http\Controllers\TeamController::class, 'mat
 Route::post('team/my-profile/photo', [App\Http\Controllers\TeamController::class, 'uploadMyPhoto'])->name('team.my-profile.photo');
 Route::get('team/proposals/create', [App\Http\Controllers\TeamController::class, 'create'])->name('team.proposals.create');
 Route::post('team/proposals', [App\Http\Controllers\TeamController::class, 'store'])->name('team.proposals.store');
+Route::post('team/proposals/extract', [App\Http\Controllers\TeamController::class, 'extractWithAi'])->middleware('throttle:20,1')->name('team.proposals.extract');
 Route::get('team/proposals/{dataid}/view', [App\Http\Controllers\TeamController::class, 'viewProposal'])->name('team.proposals.view');
 Route::get('team/proposals/{dataid}/file', [App\Http\Controllers\TeamController::class, 'proposalFilePanel'])->name('team.proposals.file');
 Route::get('team/proposals/{dataid}/edit', [App\Http\Controllers\TeamController::class, 'edit'])->name('team.proposals.edit');
@@ -234,7 +237,8 @@ Route::get('member/profile',[App\Http\Controllers\ProfileController::class, 'pro
 // any single path segment (dataids never contain '/'), so a static route sharing
 // its depth has to come first or it never gets a chance to match.
 Route::get('member/profile/pictures', [App\Http\Controllers\ProfileController::class, 'picturesPage'])->name('member.pictures');
-Route::get('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'preferencesPage'])->name('member.preferences');
+// The separate Partner Preferences page was retired (Nov 2026): partner preferences are edited inside Edit Full Profile, so old links land there.
+Route::get('member/profile/preferences', function () { return redirect()->route('member.complete'); })->name('member.preferences');
 Route::post('member/profile/preferences', [App\Http\Controllers\ProfileController::class, 'updatePreferences'])->name('member.preferences.update');
 // "Complete your profile" wizard (new accounts are held here until 100%; everyone can use it to edit later)
 Route::get('member/profile/complete', [App\Http\Controllers\ProfileCompletionController::class, 'show'])->name('member.complete');

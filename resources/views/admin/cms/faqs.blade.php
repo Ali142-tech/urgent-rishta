@@ -13,15 +13,15 @@
 </div>
 
 <div class="cms-table-wrap">
-    <table class="cms-table">
+    <table class="cms-table cms-table--faq">
         <thead><tr><th style="width:52px;">#</th><th>Question</th><th style="width:110px;">On the site</th><th style="width:330px;">Actions</th></tr></thead>
         <tbody>
             @forelse($faqs as $i => $faq)
             <tr>
-                <td class="cms-num">{{ $i + 1 }}</td>
+                <td class="cms-num"><span class="cms-numbadge">{{ $i + 1 }}</span></td>
                 <td class="cms-qa"><b>{{ $faq->question }}</b><small>{{ \Illuminate\Support\Str::limit(strip_tags($faq->answer), 110) }}</small></td>
-                <td><span class="cms-pill {{ $faq->is_active ? '' : 'cms-pill--off' }}">{{ $faq->is_active ? 'Shown' : 'Hidden' }}</span></td>
-                <td>
+                <td class="cms-faq-status"><span class="cms-pill {{ $faq->is_active ? '' : 'cms-pill--off' }}">{{ $faq->is_active ? 'Shown' : 'Hidden' }}</span></td>
+                <td class="cms-faq-act">
                     <div class="cms-row-actions">
                         <form method="POST" action="{{ route('admin.cms.faqs.move', [$faq, 'up']) }}">@csrf<button class="cms-mini cms-mini--icon" title="Move up" {{ $loop->first ? 'disabled' : '' }}><i class="fa fa-arrow-up"></i></button></form>
                         <form method="POST" action="{{ route('admin.cms.faqs.move', [$faq, 'down']) }}">@csrf<button class="cms-mini cms-mini--icon" title="Move down" {{ $loop->last ? 'disabled' : '' }}><i class="fa fa-arrow-down"></i></button></form>

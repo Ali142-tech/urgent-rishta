@@ -14,6 +14,7 @@ use App\TeamMember;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -764,6 +765,85 @@ class TeamController extends Controller
         return redirect()->back();
     }
 
+    /**
+     * "Extract with AI" on the proposal form: sends the pasted client details to OpenAI and returns the fields as JSON
+     * (the page fills the form from it and falls back to its built-in label matcher when this fails).
+     * The key lives only in the server .env (OPENAI_API_KEY) — it never reaches the browser.
+     */
+    public function extractWithAi(Request $request)
+    {
+        $request->validate(['text' => 'required|string|min:30|max:12000']);
+
+        $key = config('services.openai.key');
+        if (empty($key)) {
+            return response()->json(['ok' => false, 'message' => 'AI extraction is not set up on the server yet.'], 503);
+        }
+
+        $system = <<<'TXT'
+You read matrimonial (rishta) proposals written in English, Urdu or Roman Urdu and return the details as JSON.
+Return ONLY a JSON object with exactly these keys. Use null when the text does not say. Never invent facts.
+Write every value in English, short and clean (no sentences).
+
+About the person:
+"name": full name | "gender": "male" or "female" | "age": number | "date_of_birth": as written, if given
+"marital_status": e.g. Never Married, Divorced, Widowed, Annulled | "height": like 5'6" | "education": highest qualification only
+"college": institute name | "profession": job or business | "income": as written
+"religion": e.g. Muslim | "sect": e.g. Sunni | "caste": e.g. Rajput, Arain
+"country": country they live in now | "current_city": city they live in now | "nationality": their nationality | "hometown": city they are from
+"father_occupation" | "mother_occupation" | "brothers": count and note | "sisters": count and note | "siblings_married_note"
+"home_ownership": "Own" or "Rent" | "residence_size" | "address"
+
+What they are looking for in a partner:
+"pref_age_min": number | "pref_age_max": number | "pref_marital_status": e.g. "Never Married, Divorced" or "Any"
+"pref_height": like "5'6\" or above" | "pref_education": qualification names only, e.g. "Masters" (null if just "well educated") | "pref_profession": profession names only, e.g. "Doctor" | "pref_caste": or "Any"
+"pref_city": preferred city or country | "pref_nationality" | "partner_notes": any other requirement, one short line
+TXT;
+
+        try {
+            $response = Http::withToken($key)
+                ->timeout(45)
+                ->post('https://api.openai.com/v1/chat/completions', [
+                    'model' => config('services.openai.model', 'gpt-4o-mini'),
+                    'temperature' => 0,
+                    'response_format' => ['type' => 'json_object'],
+                    'messages' => [
+                        ['role' => 'system', 'content' => $system],
+                        ['role' => 'user', 'content' => $request->input('text')],
+                    ],
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('AI proposal extraction: request failed', ['error' => $e->getMessage()]);
+            return response()->json(['ok' => false, 'message' => 'Could not reach the AI service. Please try again.'], 502);
+        }
+
+        if (!$response->successful()) {
+            Log::warning('AI proposal extraction: OpenAI error', ['status' => $response->status(), 'body' => Str::limit($response->body(), 500)]);
+            return response()->json(['ok' => false, 'message' => 'The AI service returned an error (' . $response->status() . ').'], 502);
+        }
+
+        $data = json_decode((string) $response->json('choices.0.message.content'), true);
+        if (!is_array($data)) {
+            return response()->json(['ok' => false, 'message' => 'The AI answer could not be read. Please try again.'], 502);
+        }
+
+        // plain strings / numbers only
+        $clean = [];
+        foreach ($data as $k => $v) {
+            // the model sometimes writes the word "null" / "N/A" instead of a real null
+            if (is_scalar($v) && !is_bool($v) && trim((string) $v) !== '' && !preg_match('/^(null|none|n\/a|na|unknown|not (specified|mentioned|provided)|nil|-+)$/i', trim((string) $v))) {
+                $clean[(string) $k] = trim((string) $v);
+            }
+        }
+        if (isset($clean['gender']) && !preg_match('/^(fe)?male$/i', $clean['gender'])) {
+            unset($clean['gender']);
+        }
+
+        if (!$clean) {
+            return response()->json(['ok' => false, 'message' => 'The AI could not find any details in this text.'], 422);
+        }
+
+        return response()->json(['ok' => true, 'data' => $clean]);
+    }
     public function create()
     {
         $maritalstatuses = MasterData::where('type', 'MARITAL_STATUS')->orderBy('name', 'ASC')->get();

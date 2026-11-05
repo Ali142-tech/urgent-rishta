@@ -45,11 +45,6 @@
                 <i class="fa fa-lock"></i> Photo Access Requests
             </a>
         </li>
-        <li>
-            <a href="{{ url('member/profile/preferences') }}" class="{{ request()->is('member/profile/preferences') ? 'is-active' : '' }}">
-                <i class="fa fa-sliders"></i> Partner Preferences
-            </a>
-        </li>
 
         <div class="ur-dash-nav__divider"></div>
 

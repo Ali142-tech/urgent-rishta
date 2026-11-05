@@ -51,13 +51,13 @@
             <div class="ur-search-card__top">
                 <span class="ur-search-card__id">{{ $member->dataid }}</span>
             </div>
-            @if(!$__restricted && !empty($member->first_name))
-                <div class="ur-search-card__realname">{{ $member->first_name }}</div>
+            @if(!$__restricted && ($__fullName = trim((string) $member->first_name . ' ' . (string) $member->last_name)) !== '')
+                <div class="ur-search-card__realname">{{ $__fullName }}</div>
             @endif
 
             <ul class="ur-search-card__factlist">
                 @foreach($__factRows as [$ico, $txt])
-                    <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                    <li><i class="fa {{ $ico }}"></i><span title="{{ $txt }}">{{ $txt }}</span></li>
                 @endforeach
                 {{-- the flag always belongs to the country named beside it (the country the client lives in); the city (their home town, often in another country) is listed under About Profile --}}
                 @if(!empty($countryName) || !empty($member->lbl_city))
@@ -112,7 +112,7 @@
             <h4><i class="fa fa-user"></i> About Profile</h4>
             <ul>
                 @forelse($__about as [$ico, $txt])
-                    <li><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                    <li><i class="fa {{ $ico }}"></i><span title="{{ $txt }}">{{ $txt }}</span></li>
                 @empty
                     <li class="is-empty"><span>Not provided</span></li>
                 @endforelse
@@ -122,7 +122,7 @@
             <h4><i class="fa fa-bullseye"></i> Looking For</h4>
             <ul>
                 @forelse($__look as [$ico, $txt])
-                    <li class="{{ $txt === 'N/A' ? 'is-empty' : '' }}"><i class="fa {{ $ico }}"></i><span>{{ $txt }}</span></li>
+                    <li class="{{ $txt === 'N/A' ? 'is-empty' : '' }}"><i class="fa {{ $ico }}"></i><span title="{{ $txt }}">{{ $txt }}</span></li>
                 @empty
                     <li class="is-empty"><span>N/A</span></li>
                 @endforelse

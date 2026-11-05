@@ -1142,7 +1142,7 @@ class AdminController extends Controller
         $logs = \App\AuditLog::with('actor')
             ->when($action !== '', fn ($q) => $q->where('action', $action))
             ->orderByDesc('created_at')
-            ->paginate(30)
+            ->paginate(10)
             ->appends($request->query());
 
         return view('admin.dashboard.audit-log', [
@@ -1151,6 +1151,31 @@ class AdminController extends Controller
         ]);
     }
 
+    /** Deletes the audit log entries ticked on the page (ids[]). */
+    function auditLogDelete(Request $request)
+    {
+        $ids = array_filter(array_map('intval', (array) $request->input('ids', [])));
+        $deleted = $ids ? \App\AuditLog::whereIn('id', $ids)->delete() : 0;
+
+        Session::flash('message', $deleted
+            ? 'success|' . $deleted . ' audit log ' . ($deleted == 1 ? 'entry' : 'entries') . ' deleted.|5000'
+            : 'warning|Nothing was selected.|5000');
+
+        return redirect()->route('admin.audit-log', array_filter(['action' => trim((string) $request->input('action'))]));
+    }
+
+    /** Clears the whole audit log, or only one action's entries when a filter is active. */
+    function auditLogClear(Request $request)
+    {
+        $action = trim((string) $request->input('action'));
+        $deleted = \App\AuditLog::query()
+            ->when($action !== '', fn ($q) => $q->where('action', $action))
+            ->delete();
+
+        Session::flash('message', 'success|' . $deleted . ' audit log ' . ($deleted == 1 ? 'entry' : 'entries') . ' cleared.|5000');
+
+        return redirect()->route('admin.audit-log');
+    }
     /**
      * Admin view: all user appointments.
      */
@@ -2264,7 +2289,7 @@ class AdminController extends Controller
                 "    </div>" .
                 "    <div class='form-group'>" .
                 "        <label class='control-label font_dark text-uppercase strong-400'>Description</label>" .
-                "        <input type='text' name='description' class='form-control form-control-sm' required='required' data-placeholder='Add a package name' value='" . (!empty($package) ? $package->description : "") . "' />" .
+                "        <textarea name='description' rows='7' class='form-control form-control-sm' required='required' data-placeholder='Add a package description'>" . e(!empty($package) ? $package->description : "") . "</textarea>" .
                 "    </div>" .
                 "</form>";
             $buttons = "<button type='button' class='btn btn-primary' id='btn_submit' data-dismiss='modal' onclick='javascript:$(\"#package_form\").submit();'>" . (!empty($package) ? "Update" : "Add") . " Package</button>";

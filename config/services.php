@@ -57,6 +57,12 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    // Team proposal form: "Extract with AI" turns the pasted client details into the form fields (TeamController::extractWithAi()).
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+    ],
+
     // Calendar invites (.ics) emailed when an admin schedules an appointment.
     'appointment_calendar' => [
         'timezone' => env('APPOINTMENT_TIMEZONE', 'Asia/Karachi'),

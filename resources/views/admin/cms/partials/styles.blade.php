@@ -53,3 +53,45 @@
     .cms-qa b { display: block; color: #123A2E; font-size: 14px; }
     .cms-qa small { color: #8A938E; font-size: 12.5px; }
 </style>
+<style>
+    /* FAQs on phones: one card per question (number + status on top, question, then the action buttons) instead of a sideways-scrolling table */
+    @media (max-width: 767.98px) {
+        .cms-bar > div { width: 100%; }
+        .cms-bar > div .cms-btn, .cms-bar > .cms-btn { flex: 1 1 auto; justify-content: center; }
+        .cms-bar > .cms-btn { width: 100%; }
+        .cms-table-wrap:has(.cms-table--faq) { background: none; border: 0; border-radius: 0; overflow: visible; }
+        .cms-table--faq, .cms-table--faq tbody { display: block; width: 100%; min-width: 0; }
+        .cms-table--faq thead { display: none; }
+        .cms-table--faq tbody tr { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0 10px; background: #FBF8F1; border: 1px solid #E3D9C3; border-left: 4px solid #C9974D; border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(15,46,36,.06); }
+        .cms-table--faq tbody tr:hover td { background: transparent; }
+        .cms-table--faq tbody td { display: block; border: 0 !important; padding: 0 !important; width: auto !important; min-width: 0; }
+        .cms-table--faq td.cms-num { grid-column: 1; grid-row: 1; width: 28px; height: 28px; line-height: 28px; text-align: center; border-radius: 50%; background: #123A2E; color: #fff; font-size: 12px; }
+        .cms-table--faq td.cms-faq-status { grid-column: 2; grid-row: 1; justify-self: end; }
+        .cms-table--faq td.cms-qa { grid-column: 1 / -1; grid-row: 2; margin-top: 10px; word-break: break-word; }
+        .cms-table--faq td.cms-qa b { font-family: 'Playfair Display', Georgia, serif; font-size: 15.5px; line-height: 1.35; }
+        .cms-table--faq td.cms-qa small { margin-top: 6px; font-size: 12.5px; line-height: 1.5; }
+        .cms-table--faq td.cms-faq-act { grid-column: 1 / -1; grid-row: 3; margin-top: 12px; padding-top: 12px !important; border-top: 1px dashed #DCCFB4 !important; }
+        .cms-table--faq .cms-row-actions { display: grid; grid-template-columns: 40px 40px 1fr 1fr 1fr; gap: 6px; white-space: normal; }
+        .cms-table--faq .cms-row-actions form { display: block; }
+        .cms-table--faq .cms-row-actions .cms-mini { width: 100%; min-width: 0; padding: 0 6px !important; height: 38px; }
+        .cms-table--faq td[colspan] { display: block; grid-column: 1 / -1; text-align: center; }
+        .cms-form { padding: 18px 16px 0; }
+        .cms-savebar { margin: 0 -16px; padding: 12px 16px; }
+        .cms-savebar .cms-btn { width: 100%; justify-content: center; }
+    }
+</style>
+<style>
+    @media (max-width: 767.98px) {
+        .cms-table--faq tbody td.cms-num { display: flex !important; align-items: center; justify-content: center; width: 30px !important; min-width: 30px; height: 30px; line-height: 1; padding: 0 !important; border-radius: 50%; background: #123A2E !important; color: #fff !important; font-size: 12.5px; font-weight: 700; }
+        .cms-table--faq tbody tr:hover td.cms-num { background: #123A2E !important; }
+    }
+</style>
+<style>
+    /* the number sits in its own round badge (a span), so no table-cell rule can squash it into an oval */
+    .cms-table .cms-numbadge { display: inline-block; }
+    @media (max-width: 767.98px) {
+        .cms-table--faq tbody td.cms-num { display: block !important; width: auto !important; height: auto !important; background: none !important; border-radius: 0; color: inherit !important; padding: 0 !important; line-height: 1; }
+        .cms-table--faq tbody tr:hover td.cms-num { background: none !important; }
+        .cms-table--faq .cms-numbadge { display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 30px; height: 30px; min-width: 30px; border-radius: 50%; background: #123A2E; color: #fff; font-size: 12.5px; font-weight: 700; line-height: 1; padding: 0 !important; }
+    }
+</style>

@@ -11,6 +11,7 @@
 @section('dashboard-title', 'Team Proposals')
 @push('styles')
 <link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
+<link rel="stylesheet" href="/css/ur-team-card.css?v={{ filemtime(public_path('css/ur-team-card.css')) }}">
 @endpush
 @section('main-content')
 <style>

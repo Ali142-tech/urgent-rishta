@@ -330,7 +330,7 @@
                     Original text is preserved
                     <button type="button" class="ur-paste-box__fill-btn" id="paste_fill_btn"><i class="fa fa-magic"></i> Extract with AI</button>
                 </div>
-                <p class="ur-step-note">Currently matches known section headers/labels in the pasted text — full AI extraction is a planned upgrade, not live yet.</p>
+                <p class="ur-step-note">AI reads the pasted text and fills the form below. Check the highlighted fields before saving.</p>
 
                 <div class="ur-pp-protect-box">
                     <i class="fa fa-shield"></i>
@@ -1559,7 +1559,90 @@ function urCopyTemplate(event) {
         if (reviewCompact) reviewCompact.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
+    // A new "Extract" starts from an empty form, so values left over from an earlier paste can never survive into this one.
+    var EXTRACTED_FIELDS = ['gender', 'marital_status', 'height', 'education', 'education_other', 'profession', 'profession_other', 'caste', 'caste_other', 'sect', 'religion',
+        'country', 'country_other', 'current_city', 'con_of_citizenship', 'nationality_other', 'city', 'college_university', 'income', 'monthly_income',
+        'father_occupation', 'mother_occupation', 'siblings_brothers', 'siblings_sisters', 'siblings_married_note', 'family_residence', 'residence_size', 'address',
+        'day', 'month', 'year', 'pref_age_min', 'pref_age_max', 'pref_city', 'pref_caste_note', 'pref_qualification_note', 'pref_education_other', 'pref_profession_other',
+        'pref_nationality_other', 'partner_requirements'];
+    function clearExtractedFields() {
+        EXTRACTED_FIELDS.forEach(function (n) {
+            var el = document.querySelector('[name="' + n + '"]');
+            if (!el) return;
+            if (el.tagName === 'SELECT') {
+                el.value = '';
+                if (el.value !== '') el.selectedIndex = 0;
+                refreshSelect(el);
+            } else { el.value = ''; }
+        });
+        ['pref_height_min', 'pref_height_max'].forEach(function (n) {
+            var el = document.querySelector('select[name="' + n + '"]');
+            if (el) { el.value = 'any'; refreshSelect(el); }
+        });
+        ['pref_marital_statuses[]', 'pref_educations[]', 'pref_professions[]', 'pref_castes[]', 'pref_nationalities[]'].forEach(function (n) {
+            var el = document.querySelector('select[name="' + n + '"]');
+            if (el) { Array.from(el.options).forEach(function (o) { o.selected = false; }); refreshSelect(el); }
+        });
+        if (ageInput) ageInput.value = '';
+        if (nameInput) nameInput.value = '';
+        nameToParts('');
+    }
+    // Fills the form from the AI's JSON, using the same helpers as the label matcher above.
+    function applyAiResult(d) {
+        function has(k) { return d[k] !== undefined && d[k] !== null && String(d[k]).trim() !== ''; }
+        // the AI re-reads the whole text, so its partner choices replace the quick guess made first
+        ['pref_marital_statuses[]', 'pref_educations[]', 'pref_professions[]', 'pref_castes[]', 'pref_nationalities[]'].forEach(function (n) {
+            var el = document.querySelector('select[name="' + n + '"]');
+            if (el) { Array.from(el.options).forEach(function (o) { o.selected = false; }); refreshSelect(el); }
+        });
+        if (has('name')) fillName(d.name);
+        if (has('gender')) setVal('gender', /^f/i.test(d.gender) ? 'female' : 'male');
+        if (has('date_of_birth')) fillAgeOrDob(d.date_of_birth);
+        if (has('age') && !has('date_of_birth')) fillAgeOrDob(d.age);
+        if (has('marital_status')) selectFuzzy('marital_status', MARITAL_SYNONYMS[String(d.marital_status).trim().toLowerCase()] || d.marital_status);
+        if (has('height')) setVal('height', d.height);
+        if (has('education')) selectFuzzy('education', d.education);
+        if (has('college')) setVal('college_university', d.college);
+        if (has('profession')) setVal('profession', d.profession);
+        if (has('income')) setVal('income', d.income);
+        if (has('religion')) selectFuzzy('religion', d.religion);
+        if (has('sect')) setVal('sect', d.sect);
+        if (has('caste')) selectFuzzy('caste', d.caste);
+        if (has('country')) setVal('country', d.country);
+        if (has('nationality')) fillNationality(d.nationality);
+        if (has('current_city')) setVal('current_city', d.current_city);
+        if (has('hometown')) setVal('city', d.hometown);
+        if (has('father_occupation')) setVal('father_occupation', d.father_occupation);
+        if (has('mother_occupation')) setVal('mother_occupation', d.mother_occupation);
+        if (has('brothers')) setVal('siblings_brothers', d.brothers);
+        if (has('sisters')) setVal('siblings_sisters', d.sisters);
+        if (has('siblings_married_note')) setVal('siblings_married_note', d.siblings_married_note);
+        if (has('home_ownership')) setVal('family_residence', /own/i.test(d.home_ownership) ? 'Own' : (/rent/i.test(d.home_ownership) ? 'Rent' : 'Do not know'));
+        if (has('residence_size')) setVal('residence_size', d.residence_size);
+        if (has('address')) setVal('address', d.address);
+        if (has('pref_age_min')) setVal('pref_age_min', parseInt(d.pref_age_min, 10) || '');
+        if (has('pref_age_max')) setVal('pref_age_max', parseInt(d.pref_age_max, 10) || '');
+        if (has('pref_marital_status')) addManyToMulti('pref_marital_statuses[]', null, d.pref_marital_status, MARITAL_SYNONYMS);
+        if (has('pref_height')) fillPrefHeight(d.pref_height);
+        if (has('pref_education')) addManyToMulti('pref_educations[]', 'pref_education_other', d.pref_education);
+        if (has('pref_profession')) addManyToMulti('pref_professions[]', 'pref_profession_other', d.pref_profession);
+        if (has('pref_caste')) { addManyToMulti('pref_castes[]', null, d.pref_caste); setVal('pref_caste_note', d.pref_caste); }
+        if (has('pref_city')) setVal('pref_city', d.pref_city);
+        if (has('pref_nationality')) addManyToMulti('pref_nationalities[]', 'pref_nationality_other', d.pref_nationality);
+        if (has('partner_notes')) setVal('partner_requirements', d.partner_notes);
+    }
+
+    function finishExtract(text) {
+        if (rawTextHidden) rawTextHidden.value = text;
+        if (originalText) originalText.textContent = text;
+        if (step1) step1.classList.add('is-done');
+        if (step2) step2.classList.remove('is-active');
+        if (step2) step2.classList.add('is-done');
+        revealReviewCompact();
+    }
+
     document.getElementById('paste_fill_btn').addEventListener('click', function () {
+        var btn = this;
         var text = pasteBox.value;
         if (text.trim().length < 100) {
             pasteBox.classList.add('is-invalid');
@@ -1568,24 +1651,43 @@ function urCopyTemplate(event) {
             if (typeof showAlert === 'function') showAlert('danger', 'Paste at least 100 characters of client details first (including what they are looking for).', 4500);
             return;
         }
-        // Free-text detection of the partner fields first, so any explicit
-        // "Label: value" lines from the template (parseAndFill below) win.
+        if (btn.disabled) return;
+
+        if (!EDIT_MODE) clearExtractedFields();
+
+        // 1) instant pass with the built-in label matcher (also the fallback if the AI is unavailable)
         detectPartnerRequirementsFromPaste(text);
         var count = parseAndFill(text);
-        if (count === 0) {
-            // No recognized "SECTION / Label: value" structure at all —
-            // likely a free-flowing paragraph instead. Fall back to the
-            // heuristic extractor rather than reporting a flat zero.
-            count = parseFreeTextFallback(withoutPartnerPassage(text));
-        }
+        if (count === 0) count = parseFreeTextFallback(withoutPartnerPassage(text));
 
-        if (rawTextHidden) rawTextHidden.value = text;
-        if (originalText) originalText.textContent = text;
+        // 2) the AI re-reads the text and fills / corrects the form
+        var original = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="ur-btn-spinner"></span> Extracting...';
+        var restore = function () { btn.disabled = false; btn.innerHTML = original; };
 
-        if (step1) step1.classList.add('is-done');
-        if (step2) step2.classList.remove('is-active');
-        if (step2) step2.classList.add('is-done');
-        revealReviewCompact();
+        fetch(@json(route('team.proposals.extract')), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()), 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
+            body: JSON.stringify({ text: text })
+        })
+            .then(function (r) { return r.json().catch(function () { return { ok: false }; }); })
+            .then(function (res) {
+                restore();
+                if (res && res.ok && res.data) {
+                    applyAiResult(res.data);
+                    if (typeof showAlert === 'function') showAlert('success', 'Details extracted. Please check the highlighted fields.', 4000);
+                } else if (typeof showAlert === 'function') {
+                    showAlert('warning', ((res && res.message) || 'AI extraction failed') + ' The form was filled with the basic matcher instead; please check every field.', 7000);
+                }
+                finishExtract(text);
+            })
+            .catch(function () {
+                restore();
+                if (typeof showAlert === 'function') showAlert('warning', 'AI extraction could not be reached. The form was filled with the basic matcher instead; please check every field.', 7000);
+                finishExtract(text);
+            });
     });
 
     // Safety net — covers a submit with the owner/paste values never

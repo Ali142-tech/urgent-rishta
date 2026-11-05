@@ -4,6 +4,28 @@
 <style>
     /* the gold Pace.js page bar also fires on every live-search request; this page has its own "Searching..." loader */
     .pace, .pace .pace-progress { display: none !important; }
+
+    /* Phones: each deleted profile becomes its own card instead of a sideways-scrolling table */
+    @media (max-width: 767.98px) {
+        .ur-del-table, .ur-del-table tbody { display: block; width: 100%; }
+        .ur-del-table thead { display: none; }
+        .ur-del-table tbody tr { display: grid; grid-template-columns: 52px 1fr; column-gap: 12px; background: #FBF8F1; border: 1px solid #E3D9C3; border-left: 4px solid #C9974D; border-radius: 12px; padding: 12px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(15,46,36,.06); }
+        .ur-del-table tbody tr:hover { background: #FBF8F1; }
+        .ur-del-table tbody td { display: block; padding: 0 !important; border: 0 !important; font-size: 13px; color: #1C2321; word-break: break-word; }
+        .ur-del-table td.ur-del-c-thumb { grid-row: 1 / span 2; grid-column: 1; }
+        .ur-del-table td.ur-del-c-name { grid-column: 2; font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 16px; align-self: end; }
+        .ur-del-table td.ur-del-c-email { grid-column: 2; color: #2E6FDB; font-size: 12.5px; align-self: start; }
+        .ur-del-table td[data-label="Member ID"], .ur-del-table td[data-label="Deleted"] { grid-column: 1 / -1; display: flex !important; justify-content: space-between; gap: 10px; padding: 7px 0 !important; border-top: 1px dashed #DCCFB4 !important; }
+        .ur-del-table td[data-label="Member ID"] { margin-top: 10px; }
+        .ur-del-table td[data-label]::before { content: attr(data-label); color: #6B7570; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; }
+        .ur-del-table td.ur-del-c-email::before { content: none; }
+        .ur-del-table td.ur-del-c-act { grid-column: 1 / -1; padding-top: 10px !important; border-top: 1px dashed #DCCFB4 !important; }
+        .ur-admin-table-wrap:has(.ur-del-table) { border: 0 !important; background: none !important; box-shadow: none !important; padding: 0 !important; overflow: visible !important; }
+        .ur-del-table tbody td { min-width: 0; box-sizing: border-box; }
+        .ur-del-table .ur-admin-table__actions { display: flex !important; flex-direction: column; gap: 8px; width: 100%; margin: 0 !important; padding: 0 !important; }
+        .ur-del-table .ur-admin-table__actions .ur-btn { display: flex !important; align-items: center; justify-content: center; gap: 6px; width: 100% !important; max-width: 100%; box-sizing: border-box; margin: 0 !important; padding: 11px 10px !important; font-size: 12.5px !important; white-space: normal; text-align: center; }
+        .ur-admin-pagination { justify-content: center; }
+    }
 </style>
 <div class="ur-admin-header">
     <h2>Deleted Profiles</h2>
@@ -28,7 +50,7 @@
 
     @if($members->count() > 0)
     <div class="ur-admin-table-wrap">
-        <table class="ur-admin-table">
+        <table class="ur-admin-table ur-del-table">
             <thead>
                 <tr>
                     <th></th>
@@ -42,12 +64,12 @@
             <tbody>
                 @foreach($members as $member)
                 <tr id="deleted_{{ $member->dataid }}">
-                    <td><span class="ur-admin-table__thumb" style="background-image:url('{{ \App\Profile::defaultImage($member->gender) }}')"></span></td>
-                    <td>{{ $member->first_name }} {{ $member->last_name }}</td>
-                    <td>{{ $member->email }}</td>
-                    <td>{{ $member->dataid }}</td>
-                    <td>{{ \Illuminate\Support\Carbon::parse($member->deleted_at)->format('d/m/Y H:i') }}</td>
-                    <td>
+                    <td class="ur-del-c-thumb"><span class="ur-admin-table__thumb" style="background-image:url('{{ \App\Profile::defaultImage($member->gender) }}')"></span></td>
+                    <td class="ur-del-c-name">{{ $member->first_name }} {{ $member->last_name }}</td>
+                    <td class="ur-del-c-email" data-label="Email">{{ $member->email }}</td>
+                    <td data-label="Member ID">{{ $member->dataid }}</td>
+                    <td data-label="Deleted">{{ \Illuminate\Support\Carbon::parse($member->deleted_at)->format('d/m/Y H:i') }}</td>
+                    <td class="ur-del-c-act">
                         <div class="ur-admin-table__actions">
                             <a class="ur-btn ur-btn--dark" onclick="return restoreProfile('{{ $member->dataid }}');">
                                 <i class="fa fa-undo"></i> Restore

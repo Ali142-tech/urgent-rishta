@@ -121,6 +121,8 @@
             success: function (result) {
                 panel.innerHTML = (result.code == '200') ? result.html
                     : '<div class="ur-admin-empty"><i class="fa fa-exclamation-triangle"></i> Could not load this request.</div>';
+                // On phones the details sit below the whole list, so bring them into view after a row is tapped.
+                if (rowElem && window.innerWidth < 992 && panel.scrollIntoView) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
             },
             error: function () {
                 panel.innerHTML = '<div class="ur-admin-empty"><i class="fa fa-exclamation-triangle"></i> Could not load this request.</div>';

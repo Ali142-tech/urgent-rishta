@@ -702,3 +702,11 @@ body.homepage .footer-bottom a {
     body.homepage .ur-hero-a__cta-row { flex-direction: column; align-items: stretch; width: 100%; }
     body.homepage .ur-hero-a__btn { width: 100%; }
 }
+
+/* "Choose the Service" cards: the dark card still used the old pink (#FFE0EC) for its text, and the light card's grey was too faint. */
+body.homepage .ur-choice__desc { color: #3F4A45; }
+body.homepage .ur-choice__list li { color: #3F4A45; }
+body.homepage .ur-choice__list li i { color: #123A2E; }
+body.homepage .ur-choice__card--dark .ur-choice__desc,
+body.homepage .ur-choice__card--dark .ur-choice__list li { color: #EFE3C8; }
+body.homepage .ur-choice__card--dark .ur-choice__list li i { color: #C9974D; }

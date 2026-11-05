@@ -60,7 +60,7 @@
     .ur-am-tags span:last-child { background: #E7F3EC; color: #2E7D5B; }
 
     /* ---- Match card ---- */
-    .ur-am-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .ur-am-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 18px; }
     .ur-am-match-card { background: #fff; border: 1px solid #E7E2D6; border-radius: 16px; padding: 18px; }
     .ur-am-match-card__head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
     .ur-am-match-card__num { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; color: #9AA5A0; margin-bottom: 2px; }

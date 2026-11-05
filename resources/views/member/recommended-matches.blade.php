@@ -125,7 +125,14 @@
     .ur-rm-page__no-prefs a:hover {
         background: #B07C3D;
     }
+    /* page-change loader (shown while the next page of matches loads) */
+    .ur-rm-loader { position: fixed; inset: 0; z-index: 3000; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 14px; background: rgba(251, 248, 241, .82); backdrop-filter: blur(2px); color: #123A2E; font-weight: 700; font-size: 14px; }
+    .ur-rm-loader.is-on { display: flex; }
+    .ur-rm-loader__spin { width: 46px; height: 46px; border-radius: 50%; border: 4px solid rgba(201, 151, 77, .3); border-top-color: #123A2E; animation: urRmSpin .8s linear infinite; }
+    @keyframes urRmSpin { to { transform: rotate(360deg); } }
 </style>
+
+<div class="ur-rm-loader" id="ur_rm_loader"><div class="ur-rm-loader__spin"></div>Loading matches...</div>
 
 <div class="ur-rm-page">
     <a href="{{ route('searchresults') }}" class="ur-rm-page__back"><i class="fa fa-angle-left"></i> Back to Advanced Search Profile</a>
@@ -171,4 +178,18 @@
     </div>
     @endif
 </div>
+<script>
+(function () {
+    var loader = document.getElementById('ur_rm_loader');
+    if (!loader) return;
+    document.querySelectorAll('.ur-rm-page .pagination a.page-link').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;   // opening in a new tab: no loader
+            loader.classList.add('is-on');
+        });
+    });
+    // coming back with the Back button must not leave the loader up
+    window.addEventListener('pageshow', function () { loader.classList.remove('is-on'); });
+})();
+</script>
 @endsection

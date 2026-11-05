@@ -65,7 +65,7 @@
     .ur-adv-search__empty { background: #fff; border: 1px solid #E7E2D6; border-radius: 12px; padding: 30px; text-align: center; color: #6B7570; }
 
     /* ---------- Result cards ---------- */
-    .ur-search-results { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; align-items: start; }
+    .ur-search-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 18px; align-items: stretch; }
     /* Dark profile card (client design, Nov 2026) — same look as the shared member card (public/css/ur-member-card.css) */
     .ur-search-card { display: flex; flex-direction: column; background: #123A2E; border: 1px solid #0F2E24; border-radius: 26px; overflow: hidden; color: #fff; box-shadow: 0 10px 26px rgba(0,0,0,.22); transition: box-shadow .2s ease, transform .2s ease; }
     .ur-search-card:hover { box-shadow: 0 16px 34px rgba(0,0,0,.32); transform: translateY(-2px); }
@@ -146,7 +146,13 @@
     .ur-search-card__id { font-size: 19.5px; letter-spacing: .2px; white-space: nowrap; }
     /* photo is as tall as the intro column beside it */
     .ur-search-card__head { align-items: stretch; }
-    .ur-search-card__photo { aspect-ratio: auto; height: auto; align-self: stretch; min-height: 200px; }
+    .ur-search-card__photo { aspect-ratio: auto; height: auto; align-self: stretch; min-height: 200px; max-width: 220px; }
+    /* the image fills the frame instead of setting its height, so a tall photo can no longer stretch the card */
+    .ur-search-card__photo img { position: absolute; inset: 0; width: 100%; height: 100%; }
+    /* equal-height cards: the panels take the spare room, the buttons stay at the bottom, long values are cut at two lines */
+    .ur-search-card__panels { flex: 1; }
+    .ur-search-card__actions { margin-top: auto; }
+    .ur-search-card__panel li span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
     .ur-search-card__realname { margin: -2px 0 8px; font-size: 14.5px; font-weight: 600; color: #4A4330; }
     .ur-search-card__factlist { list-style: none; margin: 0; padding: 0; }
     .ur-search-card__factlist li { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 7px; font-size: 14px; line-height: 1.3; color: #1C2A24; }

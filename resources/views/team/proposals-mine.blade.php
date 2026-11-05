@@ -23,7 +23,9 @@
     .ur-mc-toolbar select { height: 46px; border: 1px solid #E7E2D6; border-radius: 14px; padding: 0 14px; font-size: 14px; background: #fff; flex: 0 0 auto; }
     .ur-mc-count { margin-left: auto; background: #F3F0E8; color: #6B7570; font-size: 12px; font-weight: 700; line-height: 1 !important; padding: 8px 14px; border-radius: 999px; white-space: nowrap; }
 
-    .ur-mc-table-wrap { overflow-x: auto; overflow-y: visible; }
+    .ur-mc-table-wrap { overflow: visible; }
+    /* only narrow screens scroll sideways; on desktop the row menu ("...") can open over the table instead of growing a scrollbar */
+    @media (max-width: 900px) { .ur-mc-table-wrap { overflow-x: auto; } }
     .ur-mc-table { width: 100%; border-collapse: collapse; min-width: 760px; }
     .ur-mc-table th { text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; line-height: 1.2 !important; text-transform: uppercase; color: #8A958F; padding: 0 12px 10px; border-bottom: 1px solid #E7E2D6; white-space: nowrap; }
     .ur-mc-table td { padding: 12px; height: auto !important; line-height: 1.3 !important; border-bottom: 1px solid #F0ECE0; font-size: 14px; color: #1C2321; vertical-align: middle; }
@@ -112,7 +114,7 @@
             @endif
         </div>
     @else
-        <div class="ur-mc-table-wrap" style="height:auto !important; max-height:none !important; overflow-y:visible !important;">
+        <div class="ur-mc-table-wrap" style="height:auto !important; max-height:none !important;">
             <table class="ur-mc-table" style="height:auto !important;">
                 <thead>
                     <tr style="height:auto !important;">

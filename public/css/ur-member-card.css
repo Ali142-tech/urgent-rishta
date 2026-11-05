@@ -1,20 +1,18 @@
 /*
- * Shared "member card" component — dark profile card (client design, Nov 2026).
- * Used everywhere a profile tile is shown: member search results, Recommended Matches,
- * the homepage "Meet Our Members" slider, the admin profile lists/previews and the
- * team proposal grids (member/partials/member-card.blade.php).
+ * Shared "member card" component — used by the search results grid
+ * (member/searchresults.blade.php + member/partials/member-card.blade.php)
+ * and the "Recommended Matches" grid on the My Profile dashboard-home
+ * section (member/user.blade.php). Pulled out of searchresults.blade.php's
+ * inline <style> so both pages render the exact same card without
+ * duplicating ~250 lines of CSS.
  *
- * Layout: light header (photo + ID + quick facts + Verified) -> "About Profile" and
- * "Looking For" panels -> action pills. The team Advanced Search card has its own
- * markup (team/partials/search-result-card.blade.php) and mirrors this look in
- * team/proposals-search.blade.php.
- *
- * Every custom property carries a literal fallback so the card renders correctly on
- * pages that never define the --ur-* brand tokens.
+ * Every custom property below carries a literal fallback (var(--x, #hex))
+ * so the card renders correctly even on a page that never defines the
+ * --ur-* brand tokens (they're only declared on .ur-search-page).
  */
 .member-results {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 22px;
 }
 
@@ -26,45 +24,26 @@
 }
 
 .member-card {
-    --mc-bg: #123A2E;
-    --mc-panel: #0F2E24;
-    --mc-panel-alt: #184A3A;
-    --mc-line: #24594A;
-    --mc-green: #E2B66E;
-    --mc-green-btn: #C9974D;
     display: flex;
     flex-direction: column;
-    background: var(--mc-bg);
-    border: 1px solid #0F2E24;
-    border-radius: 26px;
+    background: #fff;
+    border: 1px solid var(--ur-border, #E7E2D6);
+    border-radius: 16px;
     overflow: hidden;
-    color: #fff;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, .22);
+    box-shadow: 0 6px 18px rgba(15, 46, 36, .06);
     transition: box-shadow .25s ease, transform .25s ease;
 }
 
 .member-card:hover {
-    box-shadow: 0 16px 34px rgba(0, 0, 0, .32);
+    box-shadow: 0 14px 30px rgba(15, 46, 36, .12);
     transform: translateY(-3px);
-}
-
-/* ---- header: photo + ID + quick facts ---- */
-.member-card__head {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    padding: 18px 18px 16px;
-    background: #F6F4EF;
-    color: #0F2E24;
 }
 
 .member-card__photo {
     position: relative;
-    flex: 0 0 132px;
-    width: 132px;
-    height: 176px;
-    border-radius: 18px;
-    background: #DDE8E2;
+    width: 100%;
+    aspect-ratio: 8 / 5;
+    background: var(--ur-bg, #F6F4EF);
     overflow: hidden;
 }
 
@@ -75,7 +54,8 @@
     height: 100%;
 }
 
-/* Carousel slides — stacked, only .is-active shown (the selector must out-specify ".member-card__photo a"). */
+/* Carousel slides — stacked on top of each other, only .is-active shown.
+   Selector needs to out-specificity ".member-card__photo a" above. */
 .member-card__photo a.member-card__slide {
     position: absolute;
     inset: 0;
@@ -91,13 +71,13 @@
     top: 50%;
     transform: translateY(-50%);
     z-index: 3;
-    width: 22px;
-    height: 22px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     border: none;
-    background: rgba(0, 0, 0, .55);
+    background: rgba(15, 46, 36, 0.55);
     color: #fff;
-    font-size: 15px;
+    font-size: 18px;
     line-height: 1;
     cursor: pointer;
     display: flex;
@@ -107,17 +87,32 @@
     transition: background .2s ease;
 }
 
-.member-card__nav:hover { background: rgba(0, 0, 0, .85); }
-.member-card__nav--prev { left: 4px; }
-.member-card__nav--next { right: 4px; }
+.member-card__nav:hover {
+    background: rgba(15, 46, 36, 0.85);
+}
 
-/* Photos are only generated up to ~210px, so the photo is shown whole (`contain`) over a soft blurred copy of itself. */
+.member-card__nav--prev {
+    left: 8px;
+}
+
+.member-card__nav--next {
+    right: 8px;
+}
+
+/* Member photos are only ever generated up to ~210px on their longest
+   side, so forcing them to `cover` a much larger box upscales and
+   crops them hard (blurry, oddly zoomed faces). We show the photo
+   untouched (`contain`, never cropped/upscaled beyond native size)
+   and fill the rest of the box with a softly blurred copy of the
+   same photo instead of dead space, so every card still reads as a
+   uniform, deliberate frame regardless of the source image's size
+   or orientation. */
 .member-card__photo-bg {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center;
-    filter: blur(14px) saturate(1.1) brightness(.92);
+    filter: blur(20px) saturate(1.1) brightness(.92);
     transform: scale(1.15);
 }
 
@@ -131,38 +126,145 @@
     display: block;
 }
 
-.member-card__headinfo {
-    flex: 1;
-    min-width: 0;
+.member-card__ribbon {
+    position: absolute;
+    top: 12px;
+    left: -34px;
+    transform: rotate(-45deg);
+    width: 130px;
+    padding: 3px 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: #fff;
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-.member-card__toprow {
-    display: flex;
-    flex-wrap: wrap;
+.member-card__ribbon--new {
+    background: var(--ur-gold, #C9974D);
+    color: var(--ur-green-dark, #0F2E24);
+}
+
+.member-card__ribbon--updated {
+    background: var(--ur-green, #123A2E);
+}
+
+.member-card__id-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    display: inline-flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 4px 8px;
-    margin-bottom: 4px;
+    gap: 6px;
+    background: rgba(15, 46, 36, 0.6);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    padding: 4px 9px;
+    border-radius: 20px;
+    pointer-events: none;
+}
+
+.member-card__id-copy {
+    pointer-events: auto;
+    cursor: pointer;
+    opacity: .85;
+}
+
+.member-card__id-copy:hover {
+    opacity: 1;
+}
+
+/* Admin-verified badge — bottom-left over the photo so it never
+   collides with the diagonal New/Updated ribbon (top-left) or the
+   ID badge (top-right). */
+.member-card__badge--verified {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #1E7A46;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .2px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .15);
+    pointer-events: none;
+}
+
+/* Package/plan badge — bottom-right, the one corner left free by the
+   New/Updated ribbon (top-left), ID badge (top-right) and Verified
+   badge (bottom-left). Color-coded per tier so it reads at a glance. */
+.member-card__badge--package {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+    pointer-events: none;
+}
+
+.member-card__badge--package-platinum {
+    background: linear-gradient(135deg, #B8C0CC, #6D7686);
+}
+
+.member-card__badge--package-diamond {
+    background: linear-gradient(135deg, #4FC3F7, #0277BD);
+}
+
+.member-card__badge--package-royal {
+    background: linear-gradient(135deg, #9B59B6, #5B2C6F);
+}
+
+.member-card__badge--package-imperial {
+    background: linear-gradient(135deg, #2B2B2B, #000);
+    color: var(--ur-gold, #C9974D);
+    border: 1px solid var(--ur-gold, #C9974D);
+}
+
+.member-card__body {
+    padding: 16px 16px 4px;
+    flex: 1;
 }
 
 .member-card__name {
-    margin: 0;
-    font-size: 1.7rem;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -.2px;
-    min-width: 0;
-    white-space: nowrap;
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
 }
 
 .member-card__name a {
-    color: #123A2E;
+    color: var(--ur-text, #1C2321);
     cursor: pointer;
 }
 
-.member-card__name a:hover { color: #0A2A20; }
+.member-card__name a:hover {
+    color: var(--ur-green, #123A2E);
+}
 
-/* "Online" (logged in within the last month) */
+/* "Online" (logged in within the last month) — next to the name rather
+   than on the photo, since all 4 photo corners are already taken by the
+   New/Updated ribbon, ID badge, Verified badge and package badge. */
 .member-card__online-dot {
     display: inline-block;
     width: 9px;
@@ -170,185 +272,21 @@
     margin-right: 6px;
     border-radius: 50%;
     background: #2ECC71;
-    box-shadow: 0 0 0 2px #F6F4EF, 0 0 0 3px rgba(46, 204, 113, .35);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(46, 204, 113, .35);
     vertical-align: middle;
 }
 
-.member-card__id-copy {
-    margin-left: 6px;
-    font-size: 15px !important;
-    width: auto !important;
-    color: #5A7D6E;
-    cursor: pointer;
-    vertical-align: middle;
-}
-
-.member-card__id-copy:hover { color: #0F3D2E; }
-
-.member-card__badge--verified {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    background: #C9F0D8;
-    color: #0F3D2E;
-    font-size: .8rem;
-    font-weight: 800;
-    padding: 5px 12px;
-    border-radius: 999px;
-    white-space: nowrap;
-}
-
-.member-card__facts {
-    font-size: .95rem;
-    line-height: 1.45;
-    color: #1F3A30;
-}
-
-.member-card__facts--sub {
-    font-size: .88rem;
-    color: #4F6A5F;
-}
-
-.member-card__flag {
-    width: 20px;
-    height: 14px;
-    margin: 0 3px 2px 0;
-    vertical-align: middle;
-    object-fit: cover;
-    border-radius: 2px;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, .12);
-}
-
-.member-card__chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
-}
-
-.member-card__chips:empty { display: none; }
-
-/* New / Updated / plan / Private — small pills under the facts */
-.member-card__ribbon {
-    display: inline-block;
-    font-size: .66rem;
-    font-weight: 800;
-    letter-spacing: .4px;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 999px;
-    color: #fff;
-}
-
-.member-card__ribbon--new { background: #C9974D; color: #0F2E24; }
-.member-card__ribbon--updated { background: #123A2E; }
-
-.member-card__badge--package {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    color: #fff;
-    font-size: .66rem;
-    font-weight: 800;
-    letter-spacing: .3px;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 999px;
-}
-
-.member-card__badge--package-platinum { background: linear-gradient(135deg, #B8C0CC, #6D7686); }
-.member-card__badge--package-diamond { background: linear-gradient(135deg, #4FC3F7, #0277BD); }
-.member-card__badge--package-royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); }
-.member-card__badge--package-imperial { background: linear-gradient(135deg, #2B2B2B, #000); color: #C9974D; border: 1px solid #C9974D; }
-
-.member-card__private {
-    display: inline-block;
-    background: #3B2A4F;
-    color: #fff;
-    font-size: .66rem;
-    font-weight: 800;
-    padding: 3px 10px;
-    border-radius: 999px;
-}
-
-/* ---- body: panels ---- */
-.member-card__body {
-    padding: 16px 16px 4px;
-    flex: 1;
-}
-
-.member-card__panels {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.member-card__panels--one { grid-template-columns: 1fr; }
-
-.member-card__panel {
-    background: var(--mc-panel);
-    border: 1px solid var(--mc-line);
-    border-radius: 18px;
-    padding: 14px 14px 10px;
-    min-width: 0;
-}
-
-.member-card__panel--alt { background: var(--mc-panel-alt); border-color: #184A3A; }
-
-.member-card__panel h4 {
-    margin: 0 0 10px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--mc-green);
-}
-
-.member-card__panel ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-
-.member-card__panel li {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 9px;
-    font-size: .92rem;
-    line-height: 1.3;
-    color: #F6F4EF;
-}
-
-.member-card__panel li i {
-    flex: 0 0 18px;
-    width: 18px;
-    margin-top: 2px;
-    text-align: center;
-    font-size: 1rem;
-    color: #D9B26B;
-}
-
-.member-card__panel li span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    color: inherit;
-}
-
-.member-card__panel li.is-empty span { color: #9DB5AA; font-style: italic; }
-
-.ur-team-added-by {
-    margin-top: 12px;
-    font-size: .78rem;
-    color: #BFD3CA;
-}
-
-.ur-team-added-by i { color: var(--mc-green); margin-right: 4px; }
-
-/* ---- compatibility box (shown when the viewer has partner preferences saved) ---- */
+/* Compatibility box (client request, Sep 2026 — restyled from a simple
+   badge to a fuller breakdown per client-provided reference) — shown on
+   every card, not just the single profile page, whenever the logged-in
+   viewer has partner preferences saved. Brand colors (green/gold), not the
+   reference mockup's maroon — and labeled "Compatibility Score", matching
+   what the single profile page already calls it, not "AI Match" (this
+   isn't AI/ML-driven, so that label would overclaim). */
 .member-card__compat {
-    background: #0F2E24;
-    border: 1px solid var(--mc-line);
-    border-radius: 14px;
+    background: var(--ur-bg, #F6F4EF);
+    border: 1px solid var(--ur-border, #E7E2D6);
+    border-radius: 10px;
     padding: 10px 12px;
     margin-bottom: 12px;
 }
@@ -361,18 +299,18 @@
 .member-card__compat-score {
     font-size: 1.3rem;
     font-weight: 800;
-    color: var(--mc-green);
+    color: var(--ur-green, #123A2E);
     line-height: 1;
     flex-shrink: 0;
 }
 .member-card__compat-label {
-    font-size: .8rem;
+    font-size: .78rem;
     font-weight: 700;
-    color: #F6F4EF;
+    color: var(--ur-green, #123A2E);
 }
 .member-card__compat-sub {
-    font-size: .7rem;
-    color: #A9C2B8;
+    font-size: .68rem;
+    color: var(--ur-text-muted, #6B7570);
     margin-top: 1px;
 }
 .member-card__compat-bars {
@@ -387,8 +325,8 @@
 }
 .member-card__compat-row-label {
     flex: 0 0 78px;
-    font-size: .66rem;
-    color: #A9C2B8;
+    font-size: .65rem;
+    color: var(--ur-text-muted, #6B7570);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -397,36 +335,138 @@
     flex: 1;
     height: 5px;
     border-radius: 3px;
-    background: #24594A;
+    background: var(--ur-border, #E7E2D6);
     overflow: hidden;
 }
 .member-card__compat-row-fill {
     display: block;
     height: 100%;
-    background: var(--mc-green);
+    background: var(--ur-gold, #C9974D);
     border-radius: 3px;
 }
 .member-card__compat-row-pct {
     flex: 0 0 30px;
     text-align: right;
-    font-size: .66rem;
+    font-size: .65rem;
     font-weight: 700;
-    color: #F6F4EF;
+    color: var(--ur-text, #1C2321);
 }
+
 .member-card__compat-explain {
-    font-size: .7rem;
-    color: #A9C2B8;
+    font-size: .68rem;
+    color: var(--ur-text-muted, #6B7570);
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px dashed var(--mc-line);
+    border-top: 1px dashed var(--ur-border, #E7E2D6);
     line-height: 1.4;
 }
 
-/* ---- footer: action pills ---- */
+.member-card__quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 12px;
+    font-size: .8rem;
+    color: var(--ur-text-muted, #6B7570);
+}
+
+.member-card__quick li i {
+    color: var(--ur-gold, #C9974D);
+    margin-right: 5px;
+}
+
+.member-card__flag {
+    width: 16px;
+    height: 12px;
+    margin-left: 4px;
+    vertical-align: middle;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0,0,0,.08);
+}
+
+.member-card__designation {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .8rem;
+    color: var(--ur-text-muted, #6B7570);
+    margin: -6px 0 12px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.member-card__designation i {
+    color: var(--ur-gold, #C9974D);
+}
+
+.member-card__details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0 10px;
+    list-style: none;
+    padding: 12px 0;
+    margin: 0;
+    border-top: 1px dashed var(--ur-border, #E7E2D6);
+    border-bottom: 1px dashed var(--ur-border, #E7E2D6);
+}
+
+.member-card__details li {
+    display: flex;
+    flex-direction: column;
+    font-size: .78rem;
+    overflow: hidden;
+}
+
+.member-card__details li span {
+    color: var(--ur-text-muted, #6B7570);
+    text-transform: uppercase;
+    font-size: .65rem;
+    letter-spacing: .3px;
+    margin-bottom: 2px;
+}
+
+.member-card__details li b {
+    color: var(--ur-text, #1C2321);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Below ~480px, 3 equal columns leave too little width per value (e.g.
+   "Soni / Muslim", "Never Married") and they get ellipsis-truncated —
+   stack each as its own full-width row instead, label left / value right. */
+@media (max-width: 480px) {
+    .member-card__details {
+        grid-template-columns: 1fr;
+        gap: 8px 0;
+    }
+    .member-card__details li {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        min-width: 0;
+    }
+    .member-card__details li span { margin-bottom: 0; white-space: nowrap; flex-shrink: 0; }
+    .member-card__details li b {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        text-align: right;
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
 .member-card__footer {
     display: flex;
-    gap: 12px;
-    padding: 14px 16px 18px;
+    gap: 10px;
+    padding: 14px 16px 16px;
 }
 
 .member-card__footer a {
@@ -434,65 +474,72 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     text-align: center;
-    min-height: 48px;
-    padding: 10px 12px;
-    border-radius: 999px;
-    font-size: .92rem;
+    padding: 11px 8px;
+    border-radius: 10px;
+    font-size: .72rem;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
     cursor: pointer;
-    transition: background-color .2s ease, border-color .2s ease;
-    border: 1.5px solid rgba(226, 182, 110, .55);
-    color: #F6F4EF !important;
-    background: transparent;
-    text-decoration: none;
+    transition: background-color .2s ease, color .2s ease, border-color .2s ease;
+    border: 1px solid var(--ur-border, #E7E2D6);
+    color: var(--ur-green, #123A2E);
+    background: #fff;
 }
 
-.member-card__footer a i,
-.member-card__footer a span { color: inherit !important; }
-
 .member-card__footer a:hover {
-    background: rgba(255, 255, 255, .07);
-    border-color: var(--mc-green);
+    background: var(--ur-bg, #F6F4EF);
+    border-color: var(--ur-gold, #C9974D);
 }
 
 .member-card__footer a.is-interest {
-    border-color: var(--mc-green-btn);
-    background: var(--mc-green-btn);
-    color: #0F2E24 !important;
+    border-color: var(--ur-gold, #C9974D);
+    background: var(--ur-gold, #C9974D);
+    color: #fff;
 }
 
-.member-card__footer a.is-interest:hover {
-    background: #B07C3D;
-    border-color: #B07C3D;
-}
-
-/* Force white text even for the accepted/declined states, whose inner <span class="c-green"/"c-red"> otherwise override the colour. */
-.member-card__footer a.is-interest span { color: #0F2E24 !important; }
-
-/* ---- homepage "Meet Our Members" teaser ($hideImage): lock on the small photo + a "paid members only" footer ---- */
+/* Homepage "Meet Our Members" teaser ($hideImage) — lock overlay on the
+   photo + a matching "paid members only" footer, instead of the normal
+   View Full Profile / Express Interest pair. */
 .member-card__lock-overlay {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    z-index: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 46, 36, .38);
+    text-align: center;
+    gap: 6px;
+    padding: 20px;
+    background: linear-gradient(180deg, rgba(15,46,36,.12), rgba(15,46,36,.55));   /* light at the top so the photo shows, darker behind the text */
     cursor: pointer;
 }
 .member-card__lock-icon {
-    width: 38px;
-    height: 38px;
+    width: 54px;
+    height: 54px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 46, 36, .88);
-    border: 2px solid #C9974D;
-    color: #C9974D;
-    font-size: 16px;
+    background: rgba(15,46,36,.85);
+    border: 2px solid var(--ur-gold, #C9974D);
+    color: var(--ur-gold, #C9974D);
+    font-size: 20px;
+    margin-bottom: 2px;
+}
+.member-card__lock-title {
+    color: #fff;
+    font-weight: 800;
+    font-size: 14px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+}
+.member-card__lock-sub {
+    color: rgba(255,255,255,.88);
+    font-size: 12px;
 }
 
 .member-card__locked-footer {
@@ -505,321 +552,47 @@
 .member-card__locked-note {
     margin: 0;
     text-align: center;
-    font-size: .74rem;
-    color: #A9C2B8;
+    font-size: .7rem;
+    color: var(--ur-text-muted, #6B7570);
 }
 .member-card__footer a.member-card__unlock-btn {
     flex: none;
-    background: var(--mc-green-btn);
-    border-color: var(--mc-green-btn);
-    color: #0F2E24 !important;
+    background: var(--ur-green, #123A2E);
+    border-color: var(--ur-green, #123A2E);
+    color: #fff;
 }
 .member-card__footer a.member-card__unlock-btn:hover {
+    background: var(--ur-green-dark, #0F2E24);
+    border-color: var(--ur-green-dark, #0F2E24);
+}
+
+/* Force white text even for the accepted/declined states, whose
+   inner <span class="c-green"/"c-red"> otherwise override the
+   color with !important. */
+.member-card__footer a.is-interest span {
+    color: #fff !important;
+}
+
+.member-card__footer a.is-interest:hover {
     background: #B07C3D;
     border-color: #B07C3D;
 }
 
-/* Team Dashboard cards carry up to five actions (View, Edit, Delete, Share, Make private): View gets its own row, the rest share the next one. */
-.member-card__footer--team { flex-wrap: wrap; }
-.member-card__footer--team a { flex: 1 1 auto; white-space: nowrap; padding: 10px 14px; }
-.member-card__footer--team a:first-child { flex: 1 1 100%; }
-
-/* ---- phones ---- */
 @media (max-width: 420px) {
-    .member-card__head { gap: 12px; padding: 14px 14px 14px; }
-    .member-card__photo { flex-basis: 112px; width: 112px; height: 150px; border-radius: 14px; }
-    .member-card__name { font-size: 1.35rem; }
-    .member-card__facts { font-size: .86rem; }
-    .member-card__facts--sub { font-size: .8rem; }
-    .member-card__body { padding: 12px 12px 2px; }
-    .member-card__panels { gap: 10px; }
-    .member-card__panel { padding: 12px 10px 6px; border-radius: 16px; }
-    .member-card__panel h4 { font-size: .95rem; }
-    .member-card__panel li { font-size: .82rem; gap: 8px; }
-    .member-card__footer { flex-direction: row; gap: 10px; padding: 12px 12px 16px; }
-    .member-card__footer a { min-height: 44px; font-size: .82rem; padding: 8px 6px; gap: 6px; }
+    .member-card__footer {
+        flex-direction: column;
+    }
 }
 
-/* Phones: team cards get a neat two-column grid of actions. */
+/* Team Dashboard cards carry up to five actions (View, Edit, Delete, Share, Make private): View gets its own row, the rest share the next one. */
+.member-card__footer--team { flex-wrap: wrap; }
+.member-card__footer--team a { flex: 1 1 auto; white-space: nowrap; padding: 10px 12px; }
+.member-card__footer--team a:first-child { flex: 1 1 100%; }
+
+/* Phones: team cards get a neat two-column grid instead of the generic stacked column above (which made View Full Profile tall and pushed the other buttons off to the side). */
 @media (max-width: 575px) {
-    .member-card__footer--team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 14px 14px; }
-    .member-card__footer--team a { flex: none; width: 100%; min-height: 40px; padding: 7px 6px; font-size: .76rem; gap: 5px; box-sizing: border-box; white-space: nowrap; }
+    .member-card__footer--team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; flex-direction: row; padding: 12px 14px 14px; }
+    .member-card__footer--team a { flex: none; width: 100%; min-height: 36px; padding: 7px 6px; border-radius: 8px; font-size: .66rem; gap: 5px; box-sizing: border-box; white-space: nowrap; }
     .member-card__footer--team a:first-child { grid-column: 1 / -1; }
     .member-card__footer--team a:last-child:nth-child(even) { grid-column: 1 / -1; }
 }
-
-/* =====================================================================================================
-   Classic refinement (Nov 2026): serif ID + headings, slim gold hairlines, calmer buttons.
-   Kept as one block at the end so it is easy to find or drop.
-   ===================================================================================================== */
-.member-card {
-    border-radius: 20px;
-    border: 1px solid rgba(201, 151, 77, .55);
-    box-shadow: 0 8px 22px rgba(15, 46, 36, .18);
-}
-.member-card:hover { box-shadow: 0 14px 30px rgba(15, 46, 36, .26); transform: translateY(-2px); }
-
-.member-card__head {
-    padding: 16px 16px 14px;
-    background: #FBF8F1;
-    border-bottom: 3px double #C9974D;
-}
-.member-card__photo { border-radius: 14px; box-shadow: 0 0 0 2px #C9974D, 0 0 0 5px #FBF8F1; }
-
-.member-card__name,
-.member-card__name a {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif !important;
-    font-weight: 700 !important;
-    letter-spacing: .6px;
-    font-variant-numeric: lining-nums;
-    color: #123A2E !important;
-}
-.member-card__name { font-size: 1.45rem; }
-.member-card__name a:hover { color: #0A2A20 !important; }
-.member-card__id-copy { font-size: 13px !important; color: #9A7A45; }
-
-.member-card__badge--verified {
-    background: transparent;
-    border: 1px solid #1E7A46;
-    color: #1E7A46;
-    font-size: .66rem;
-    font-weight: 700;
-    letter-spacing: .6px;
-    text-transform: uppercase;
-    padding: 3px 10px;
-}
-.member-card__facts { font-size: .88rem; color: #2A3B34; }
-.member-card__facts--sub { font-size: .82rem; color: #7A6A4A; font-style: italic; }
-.member-card__flag { width: 18px; height: 12px; }
-.member-card__chips { margin-top: 6px; }
-.member-card__ribbon, .member-card__badge--package, .member-card__private { font-size: .6rem; padding: 2px 9px; letter-spacing: .6px; }
-
-.member-card__body { padding: 14px 14px 2px; }
-.member-card__panels { gap: 10px; }
-.member-card__panel,
-.member-card__panel--alt {
-    background: rgba(255, 255, 255, .035);
-    border: 1px solid rgba(201, 151, 77, .35);
-    border-radius: 12px;
-    padding: 12px 12px 6px;
-}
-.member-card__panel h4 {
-    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
-    font-variant-numeric: lining-nums;
-    font-size: .98rem;
-    font-weight: 700;
-    letter-spacing: .4px;
-    color: #E2B66E;
-    margin: 0 0 10px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(201, 151, 77, .3);
-}
-.member-card__panel li { font-size: .84rem; margin-bottom: 8px; gap: 9px; }
-.member-card__panel li i { font-size: .9rem; color: #C9974D; }
-.member-card__panel li.is-empty span { font-style: italic; }
-
-.member-card__compat { border-radius: 12px; border-color: rgba(201, 151, 77, .35); background: rgba(0, 0, 0, .14); padding: 9px 12px; }
-.member-card__compat-score { font-family: 'Playfair Display', Georgia, serif; color: #E2B66E; font-size: 1.25rem; }
-.member-card__compat-row-fill { background: #C9974D; }
-
-.member-card__footer { gap: 10px; padding: 12px 14px 16px; }
-.member-card__footer a {
-    min-height: 42px;
-    border-radius: 10px;
-    border: 1px solid rgba(226, 182, 110, .6);
-    font-size: .74rem;
-    letter-spacing: .7px;
-    text-transform: uppercase;
-}
-.member-card__footer a,
-.member-card__footer a i,
-.member-card__footer a span { font-weight: 700 !important; }
-.member-card__footer a.is-interest,
-.member-card__footer a.member-card__unlock-btn {
-    background: linear-gradient(180deg, #D9AC63, #B88436);
-    border-color: #B88436;
-    color: #0F2E24 !important;
-}
-.member-card__footer a.is-interest:hover,
-.member-card__footer a.member-card__unlock-btn:hover { background: linear-gradient(180deg, #E2B66E, #C9974D); border-color: #C9974D; }
-
-@media (max-width: 420px) {
-    .member-card__name { font-size: 1.25rem; }
-    .member-card__footer a { font-size: .68rem; letter-spacing: .4px; }
-}
-
-/* =====================================================================================================
-   Photo on top (Nov 2026): the whole photo gets the full card width (never cropped, a soft blurred copy fills the
-   sides), and the ID / quick facts sit underneath it.
-   ===================================================================================================== */
-.member-card__head { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
-.member-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 5 / 4; max-height: 300px; border-radius: 0; box-shadow: none; }
-.member-card__photo img { object-fit: contain; object-position: center; }
-.member-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px 14px; border-top: 3px double #C9974D; }
-.member-card__nav { width: 30px; height: 30px; font-size: 18px; }
-.member-card__nav--prev { left: 8px; }
-.member-card__nav--next { right: 8px; }
-.member-card__lock-icon { width: 52px; height: 52px; font-size: 21px; }
-@media (max-width: 420px) {
-    .member-card__photo { width: 100%; height: auto; flex-basis: auto; border-radius: 0; }
-    .member-card__head { padding: 0; gap: 0; }
-    .member-card__headinfo { padding: 12px 14px 12px; }
-}
-
-/* Homepage "Meet Our Members" teaser: the photo is only a blurred preview, so it stays a wide, short frame (as before)
-   instead of the tall portrait the real profile cards use. */
-.member-card--teaser .member-card__photo { aspect-ratio: 8 / 5; max-height: none; }
-.member-card--teaser .member-card__lock-overlay { flex-direction: column; gap: 6px; padding: 20px; text-align: center; background: linear-gradient(180deg, rgba(15, 46, 36, .12), rgba(15, 46, 36, .55)); }
-.member-card--teaser .member-card__lock-icon { width: 54px; height: 54px; font-size: 20px; margin-bottom: 2px; }
-.member-card__lock-title { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: .5px; text-transform: uppercase; }
-.member-card__lock-sub { color: rgba(255, 255, 255, .88); font-size: 12px; }
-.member-card--teaser .member-card__headinfo { padding-top: 12px; }
-
-/* =====================================================================================================
-   Ivory & emerald card (client design, Nov 2026): cream card with a gold frame, photo on the left with NEW / VERIFIED
-   badges, icon fact list, emerald match box, cream "About Profile" / "Looking For" panels, emerald primary button.
-   Last block on purpose — it overrides the earlier dark / photo-on-top blocks.
-   ===================================================================================================== */
-.member-card {
-    background: linear-gradient(180deg, #FFFDF8 0%, #F7F1E3 100%);
-    border: 2px solid #D4AE6A;
-    border-radius: 22px;
-    color: #1C2A24;
-    box-shadow: 0 10px 26px rgba(15, 46, 36, .14), inset 0 0 0 4px #FBF6EA;
-}
-.member-card:hover { box-shadow: 0 16px 32px rgba(15, 46, 36, .22), inset 0 0 0 4px #FBF6EA; }
-
-/* header: photo left, details right */
-.member-card__head { flex-direction: row; align-items: flex-start; gap: 16px; padding: 18px 18px 6px; background: transparent; border-bottom: 0; }
-.member-card__photo { flex: 0 0 42%; width: 42%; height: auto; aspect-ratio: 4 / 5; max-height: none; border-radius: 16px; box-shadow: 0 4px 12px rgba(15, 46, 36, .18); }
-.member-card__nav { width: 24px; height: 24px; font-size: 16px; }
-.member-card__nav--prev { left: 5px; }
-.member-card__nav--next { right: 5px; }
-.member-card__headinfo { flex: 1; width: auto; min-width: 0; padding: 0; border-top: 0; }
-
-.member-card__toprow { flex-wrap: nowrap; justify-content: flex-start; margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(201, 151, 77, .45); }
-.member-card__name { font-size: 1.55rem; letter-spacing: .5px; }
-.member-card__id-copy { font-size: 16px !important; color: #B88436; margin-left: 10px; }
-
-.member-card__factlist { list-style: none; margin: 0; padding: 0; }
-.member-card__factlist li { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 7px; font-size: .9rem; line-height: 1.3; color: #1C2A24; }
-.member-card__factlist li i { flex: 0 0 18px; width: 18px; margin-top: 1px; text-align: center; font-size: 1.05rem; color: #B88436 !important; }
-.member-card__factlist li span { min-width: 0; overflow-wrap: anywhere; color: inherit !important; }
-.member-card__flag { width: 22px; height: 15px; margin: 0 4px 2px 0; }
-.member-card__chips { margin-top: 4px; }
-
-/* NEW (top-left) and VERIFIED (bottom) sit on the photo */
-.member-card__ribbon--photo { position: absolute; top: 10px; left: 10px; z-index: 3; font-size: .72rem; padding: 4px 12px; letter-spacing: .6px; background: linear-gradient(180deg, #F1D38E, #D9AC63); color: #3A2A08; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
-.member-card__photo .member-card__badge--verified { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 3; background: #0F4A35; border: 0; color: #fff; font-size: .66rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 4px 12px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
-.member-card__photo .member-card__badge--verified i { color: #fff !important; }
-
-/* match box: emerald, big score in a gold-framed box, gold bars */
-.member-card__body { padding: 10px 18px 2px; }
-.member-card__compat { background: linear-gradient(135deg, #0E4635, #0A3427); border: 0; border-radius: 16px; padding: 14px; margin-bottom: 14px; box-shadow: inset 0 0 0 1px rgba(226, 182, 110, .25); }
-.member-card__compat-main { display: flex; align-items: center; gap: 14px; }
-.member-card__compat-box { flex: 0 0 auto; text-align: center; padding: 10px 12px; border: 1.5px solid #C9974D; border-radius: 16px; }
-.member-card__compat-score { font-family: 'Playfair Display', Georgia, serif; font-variant-numeric: lining-nums; font-size: 1.9rem; font-weight: 700; color: #E9C47E; line-height: 1; }
-.member-card__compat-label { margin-top: 5px; font-family: 'Playfair Display', Georgia, serif; font-size: .8rem; font-weight: 700; color: #fff; }
-.member-card__compat-side { flex: 1; min-width: 0; padding-left: 14px; border-left: 1px solid rgba(226, 182, 110, .3); }
-.member-card__compat-sub { margin: 0 0 6px; font-size: .78rem; color: #DDEBE4; }
-.member-card__compat-row { gap: 8px; }
-.member-card__compat-row-label { flex: 0 0 70px; font-size: .72rem; color: #E4EFE9; }
-.member-card__compat-row-track { height: 6px; background: rgba(255, 255, 255, .14); border-radius: 4px; }
-.member-card__compat-row-fill { background: linear-gradient(90deg, #E9C47E, #C9974D); border-radius: 4px; }
-.member-card__compat-row-pct { flex: 0 0 34px; font-size: .72rem; color: #fff; }
-.member-card__compat-explain { color: #CFE2D9; border-top-color: rgba(226, 182, 110, .3); }
-
-/* panels: cream with gold hairlines and ruled list items */
-.member-card__panel,
-.member-card__panel--alt { background: linear-gradient(180deg, #FFFCF4, #F8F0DD); border: 1px solid rgba(201, 151, 77, .6); border-radius: 14px; padding: 12px 12px 4px; box-shadow: 0 2px 6px rgba(120, 90, 30, .08); }
-.member-card__panel h4 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #123A2E; border-bottom: 1px solid rgba(201, 151, 77, .55); margin: 0 0 4px; padding-bottom: 8px; }
-.member-card__panel h4 i { color: #B88436 !important; font-size: 1.05rem; }
-.member-card__panel li { margin: 0; padding: 8px 0; font-size: .86rem; color: #1C2A24; border-bottom: 1px solid rgba(201, 151, 77, .3); }
-.member-card__panel li:last-child { border-bottom: 0; }
-.member-card__panel li i { font-size: 1rem; color: #B88436; }
-.member-card__panel li.is-empty span { color: #8C8470; }
-.ur-team-added-by { color: #6B6350; }
-.ur-team-added-by i { color: #B88436; }
-
-/* actions: emerald primary on its own row, outlined secondary buttons below */
-.member-card__footer { flex-wrap: wrap; gap: 10px; padding: 12px 18px 18px; }
-.member-card__footer a { flex: 1 1 calc(50% - 5px); min-height: 46px; border-radius: 999px; border: 1.5px solid #123A2E; background: #FFFDF8; color: #123A2E !important; font-size: .82rem; letter-spacing: .3px; text-transform: none; box-sizing: border-box; }
-.member-card__footer a:hover { background: #EFE7D2; border-color: #0A2A20; }
-.member-card__footer a.is-interest,
-.member-card__footer a.member-card__unlock-btn { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 1.02rem; background: linear-gradient(180deg, #11634A, #0C4A38); border: 1.5px solid #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15, 46, 36, .25); }
-.member-card__footer a.is-interest:hover,
-.member-card__footer a.member-card__unlock-btn:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; }
-.member-card__footer a.is-interest span { color: #fff !important; }
-.member-card__footer a.is-interest .c-green, .member-card__footer a.is-interest .c-red { color: #fff !important; }
-.member-card__locked-note { color: #6B6350; }
-
-/* team cards: "View Full Profile" is the primary, Edit / Delete / Share / Privacy are the outlined ones */
-.member-card__footer--team a.is-interest { order: 0; flex: 1 1 auto; min-height: 44px; font-size: .78rem; background: #FFFDF8; border: 1.5px solid #123A2E; color: #123A2E !important; box-shadow: none; }
-.member-card__footer--team a.is-interest span, .member-card__footer--team a.is-interest i { color: inherit !important; }
-.member-card__footer--team a.is-interest:hover { background: #EFE7D2; border-color: #0A2A20; }
-.member-card__footer--team a:first-child { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 1rem; background: linear-gradient(180deg, #11634A, #0C4A38); border-color: #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15, 46, 36, .25); }
-.member-card__footer--team a:first-child:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; }
-
-/* homepage teaser keeps the wide photo on top (its photo is only a locked preview) */
-.member-card--teaser .member-card__head { flex-direction: column; padding: 0; gap: 0; }
-.member-card--teaser .member-card__photo { flex: none; width: 100%; aspect-ratio: 8 / 5; border-radius: 20px 20px 0 0; box-shadow: none; }
-.member-card--teaser .member-card__headinfo { padding: 14px 18px 4px; }
-
-@media (max-width: 420px) {
-    .member-card__head { gap: 12px; padding: 14px 14px 4px; }
-    .member-card__photo { flex: 0 0 42%; width: 42%; border-radius: 14px; }
-    .member-card__name { font-size: 1.2rem; }
-    .member-card__id-copy { margin-left: 6px; font-size: 14px !important; }
-    .member-card__factlist li { font-size: .8rem; gap: 7px; margin-bottom: 6px; }
-    .member-card__body { padding: 8px 12px 2px; }
-    .member-card__compat { padding: 12px 10px; }
-    .member-card__compat-main { gap: 10px; }
-    .member-card__compat-box { padding: 8px 8px; }
-    .member-card__compat-score { font-size: 1.5rem; }
-    .member-card__compat-side { padding-left: 10px; }
-    .member-card__compat-row-label { flex-basis: 58px; font-size: .66rem; }
-    .member-card__panels { gap: 8px; }
-    .member-card__panel li { font-size: .78rem; gap: 6px; }
-    .member-card__footer { padding: 10px 12px 14px; gap: 8px; }
-    .member-card__footer a { min-height: 42px; font-size: .76rem; }
-    .member-card__footer a.is-interest, .member-card__footer a.member-card__unlock-btn { min-height: 48px; font-size: .95rem; }
-    .member-card--teaser .member-card__head { padding: 0; }
-    .member-card--teaser .member-card__photo { width: 100%; border-radius: 20px 20px 0 0; }
-}
-@media (max-width: 575px) {
-    .member-card__footer--team { display: flex; }
-    .member-card__footer--team a { flex: 1 1 calc(50% - 4px); width: auto; }
-    .member-card__footer--team a:first-child { flex: 1 1 100%; }
-}
-
-/* ivory polish: single-line panel headings, full "Marital Status" label, no photo badges over the teaser's lock */
-.member-card__panel h4 { white-space: nowrap; font-size: .95rem; gap: 6px; }
-.member-card__panel h4 i { font-size: .95rem; }
-.member-card__compat-row-label { flex-basis: 88px; }
-.member-card--teaser .member-card__ribbon--photo,
-.member-card--teaser .member-card__photo .member-card__badge--verified { display: none; }
-@media (max-width: 420px) {
-    .member-card__panel h4 { font-size: .86rem; gap: 5px; }
-    .member-card__compat-row-label { flex-basis: 74px; font-size: .62rem; }
-    .member-card__compat-row-pct { flex-basis: 30px; }
-}
-
-/* ivory fix: the 10-character ID + copy icon must fit in the narrow right column */
-.member-card__toprow { gap: 0; }
-.member-card__name { font-size: 1.22rem; letter-spacing: .2px; white-space: nowrap; }
-.member-card__id-copy { margin-left: 6px; font-size: 14px !important; }
-@media (max-width: 420px) {
-    .member-card__name { font-size: 1.05rem; letter-spacing: 0; }
-    .member-card__id-copy { margin-left: 4px; font-size: 13px !important; }
-}
-
-/* AI Match explanation on its own (the match % box is gone) */
-.member-card__compat-explain--solo { margin: 0 0 12px; padding: 10px 12px; border: 1px dashed rgba(201, 151, 77, .6); border-radius: 12px; background: #FBF4E2; color: #4A4330; font-size: .8rem; line-height: 1.45; }
-
-/* client's first name under the ID (team cards only) */
-.member-card__realname { margin: -2px 0 8px; font-size: .95rem; font-weight: 600; color: #4A4330; }
-
-/* photo is as tall as the intro column beside it (ID + facts) */
-.member-card:not(.member-card--teaser) .member-card__head { align-items: stretch; }
-.member-card:not(.member-card--teaser) .member-card__photo { aspect-ratio: auto; height: auto; align-self: stretch; min-height: 200px; }
-.member-card:not(.member-card--teaser) .member-card__headinfo { padding-bottom: 6px; }

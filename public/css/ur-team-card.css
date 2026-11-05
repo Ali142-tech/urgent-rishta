@@ -1,0 +1,829 @@
+/*
+ * Shared "member card" component — dark profile card (client design, Nov 2026).
+ * Used everywhere a profile tile is shown: member search results, Recommended Matches,
+ * the homepage "Meet Our Members" slider, the admin profile lists/previews and the
+ * team proposal grids (member/partials/team-card.blade.php).
+ *
+ * Layout: light header (photo + ID + quick facts + Verified) -> "About Profile" and
+ * "Looking For" panels -> action pills. The team Advanced Search card has its own
+ * markup (team/partials/search-result-card.blade.php) and mirrors this look in
+ * team/proposals-search.blade.php.
+ *
+ * Every custom property carries a literal fallback so the card renders correctly on
+ * pages that never define the --ur-* brand tokens.
+ */
+.member-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 22px;
+}
+
+@media (max-width: 767px) {
+    .member-results {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+.team-card {
+    --mc-bg: #123A2E;
+    --mc-panel: #0F2E24;
+    --mc-panel-alt: #184A3A;
+    --mc-line: #24594A;
+    --mc-green: #E2B66E;
+    --mc-green-btn: #C9974D;
+    display: flex;
+    flex-direction: column;
+    background: var(--mc-bg);
+    border: 1px solid #0F2E24;
+    border-radius: 26px;
+    overflow: hidden;
+    color: #fff;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .22);
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+
+.team-card:hover {
+    box-shadow: 0 16px 34px rgba(0, 0, 0, .32);
+    transform: translateY(-3px);
+}
+
+/* ---- header: photo + ID + quick facts ---- */
+.team-card__head {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 18px 18px 16px;
+    background: #F6F4EF;
+    color: #0F2E24;
+}
+
+.team-card__photo {
+    position: relative;
+    flex: 0 0 132px;
+    width: 132px;
+    height: 176px;
+    border-radius: 18px;
+    background: #DDE8E2;
+    overflow: hidden;
+}
+
+.team-card__photo a {
+    display: block;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Carousel slides — stacked, only .is-active shown (the selector must out-specify ".team-card__photo a"). */
+.team-card__photo a.team-card__slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+}
+
+.team-card__photo a.team-card__slide.is-active {
+    display: block;
+}
+
+.team-card__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0, 0, 0, .55);
+    color: #fff;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background .2s ease;
+}
+
+.team-card__nav:hover { background: rgba(0, 0, 0, .85); }
+.team-card__nav--prev { left: 4px; }
+.team-card__nav--next { right: 4px; }
+
+/* Photos are only generated up to ~210px, so the photo is shown whole (`contain`) over a soft blurred copy of itself. */
+.team-card__photo-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(14px) saturate(1.1) brightness(.92);
+    transform: scale(1.15);
+}
+
+.team-card__photo img {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    display: block;
+}
+
+.team-card__headinfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.team-card__toprow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 8px;
+    margin-bottom: 4px;
+}
+
+.team-card__name {
+    margin: 0;
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -.2px;
+    min-width: 0;
+    white-space: nowrap;
+}
+
+.team-card__name a {
+    color: #123A2E;
+    cursor: pointer;
+}
+
+.team-card__name a:hover { color: #0A2A20; }
+
+/* "Online" (logged in within the last month) */
+.team-card__online-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: #2ECC71;
+    box-shadow: 0 0 0 2px #F6F4EF, 0 0 0 3px rgba(46, 204, 113, .35);
+    vertical-align: middle;
+}
+
+.team-card__id-copy {
+    margin-left: 6px;
+    font-size: 15px !important;
+    width: auto !important;
+    color: #5A7D6E;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.team-card__id-copy:hover { color: #0F3D2E; }
+
+.team-card__badge--verified {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #C9F0D8;
+    color: #0F3D2E;
+    font-size: .8rem;
+    font-weight: 800;
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.team-card__facts {
+    font-size: .95rem;
+    line-height: 1.45;
+    color: #1F3A30;
+}
+
+.team-card__facts--sub {
+    font-size: .88rem;
+    color: #4F6A5F;
+}
+
+.team-card__flag {
+    width: 20px;
+    height: 14px;
+    margin: 0 3px 2px 0;
+    vertical-align: middle;
+    object-fit: cover;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .12);
+}
+
+.team-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.team-card__chips:empty { display: none; }
+
+/* New / Updated / plan / Private — small pills under the facts */
+.team-card__ribbon {
+    display: inline-block;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+    color: #fff;
+}
+
+.team-card__ribbon--new { background: #C9974D; color: #0F2E24; }
+.team-card__ribbon--updated { background: #123A2E; }
+
+.team-card__badge--package {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+.team-card__badge--package-platinum { background: linear-gradient(135deg, #B8C0CC, #6D7686); }
+.team-card__badge--package-diamond { background: linear-gradient(135deg, #4FC3F7, #0277BD); }
+.team-card__badge--package-royal { background: linear-gradient(135deg, #9B59B6, #5B2C6F); }
+.team-card__badge--package-imperial { background: linear-gradient(135deg, #2B2B2B, #000); color: #C9974D; border: 1px solid #C9974D; }
+
+.team-card__private {
+    display: inline-block;
+    background: #3B2A4F;
+    color: #fff;
+    font-size: .66rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+
+/* ---- body: panels ---- */
+.team-card__body {
+    padding: 16px 16px 4px;
+    flex: 1;
+}
+
+.team-card__panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.team-card__panels--one { grid-template-columns: 1fr; }
+
+.team-card__panel {
+    background: var(--mc-panel);
+    border: 1px solid var(--mc-line);
+    border-radius: 18px;
+    padding: 14px 14px 10px;
+    min-width: 0;
+}
+
+.team-card__panel--alt { background: var(--mc-panel-alt); border-color: #184A3A; }
+
+.team-card__panel h4 {
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--mc-green);
+}
+
+.team-card__panel ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.team-card__panel li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 9px;
+    font-size: .92rem;
+    line-height: 1.3;
+    color: #F6F4EF;
+}
+
+.team-card__panel li i {
+    flex: 0 0 18px;
+    width: 18px;
+    margin-top: 2px;
+    text-align: center;
+    font-size: 1rem;
+    color: #D9B26B;
+}
+
+.team-card__panel li span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: inherit;
+}
+
+.team-card__panel li.is-empty span { color: #9DB5AA; font-style: italic; }
+
+.ur-team-added-by {
+    margin-top: 12px;
+    font-size: .78rem;
+    color: #BFD3CA;
+}
+
+.ur-team-added-by i { color: var(--mc-green); margin-right: 4px; }
+
+/* ---- compatibility box (shown when the viewer has partner preferences saved) ---- */
+.team-card__compat {
+    background: #0F2E24;
+    border: 1px solid var(--mc-line);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+}
+.team-card__compat-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.team-card__compat-score {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--mc-green);
+    line-height: 1;
+    flex-shrink: 0;
+}
+.team-card__compat-label {
+    font-size: .8rem;
+    font-weight: 700;
+    color: #F6F4EF;
+}
+.team-card__compat-sub {
+    font-size: .7rem;
+    color: #A9C2B8;
+    margin-top: 1px;
+}
+.team-card__compat-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.team-card__compat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.team-card__compat-row-label {
+    flex: 0 0 78px;
+    font-size: .66rem;
+    color: #A9C2B8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.team-card__compat-row-track {
+    flex: 1;
+    height: 5px;
+    border-radius: 3px;
+    background: #24594A;
+    overflow: hidden;
+}
+.team-card__compat-row-fill {
+    display: block;
+    height: 100%;
+    background: var(--mc-green);
+    border-radius: 3px;
+}
+.team-card__compat-row-pct {
+    flex: 0 0 30px;
+    text-align: right;
+    font-size: .66rem;
+    font-weight: 700;
+    color: #F6F4EF;
+}
+.team-card__compat-explain {
+    font-size: .7rem;
+    color: #A9C2B8;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--mc-line);
+    line-height: 1.4;
+}
+
+/* ---- footer: action pills ---- */
+.team-card__footer {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px 18px;
+}
+
+.team-card__footer a {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-size: .92rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease;
+    border: 1.5px solid rgba(226, 182, 110, .55);
+    color: #F6F4EF !important;
+    background: transparent;
+    text-decoration: none;
+}
+
+.team-card__footer a i,
+.team-card__footer a span { color: inherit !important; }
+
+.team-card__footer a:hover {
+    background: rgba(255, 255, 255, .07);
+    border-color: var(--mc-green);
+}
+
+.team-card__footer a.is-interest {
+    border-color: var(--mc-green-btn);
+    background: var(--mc-green-btn);
+    color: #0F2E24 !important;
+}
+
+.team-card__footer a.is-interest:hover {
+    background: #B07C3D;
+    border-color: #B07C3D;
+}
+
+/* Force white text even for the accepted/declined states, whose inner <span class="c-green"/"c-red"> otherwise override the colour. */
+.team-card__footer a.is-interest span { color: #0F2E24 !important; }
+
+/* ---- homepage "Meet Our Members" teaser ($hideImage): lock on the small photo + a "paid members only" footer ---- */
+.team-card__lock-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 46, 36, .38);
+    cursor: pointer;
+}
+.team-card__lock-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(15, 46, 36, .88);
+    border: 2px solid #C9974D;
+    color: #C9974D;
+    font-size: 16px;
+}
+
+.team-card__locked-footer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+.team-card__locked-note {
+    margin: 0;
+    text-align: center;
+    font-size: .74rem;
+    color: #A9C2B8;
+}
+.team-card__footer a.team-card__unlock-btn {
+    flex: none;
+    background: var(--mc-green-btn);
+    border-color: var(--mc-green-btn);
+    color: #0F2E24 !important;
+}
+.team-card__footer a.team-card__unlock-btn:hover {
+    background: #B07C3D;
+    border-color: #B07C3D;
+}
+
+/* Team Dashboard cards carry up to five actions (View, Edit, Delete, Share, Make private): View gets its own row, the rest share the next one. */
+.team-card__footer--team { flex-wrap: wrap; }
+.team-card__footer--team a { flex: 1 1 auto; white-space: nowrap; padding: 10px 14px; }
+.team-card__footer--team a:first-child { flex: 1 1 100%; }
+
+/* ---- phones ---- */
+@media (max-width: 420px) {
+    .team-card__head { gap: 12px; padding: 14px 14px 14px; }
+    .team-card__photo { flex-basis: 112px; width: 112px; height: 150px; border-radius: 14px; }
+    .team-card__name { font-size: 1.35rem; }
+    .team-card__facts { font-size: .86rem; }
+    .team-card__facts--sub { font-size: .8rem; }
+    .team-card__body { padding: 12px 12px 2px; }
+    .team-card__panels { gap: 10px; }
+    .team-card__panel { padding: 12px 10px 6px; border-radius: 16px; }
+    .team-card__panel h4 { font-size: .95rem; }
+    .team-card__panel li { font-size: .82rem; gap: 8px; }
+    .team-card__footer { flex-direction: row; gap: 10px; padding: 12px 12px 16px; }
+    .team-card__footer a { min-height: 44px; font-size: .82rem; padding: 8px 6px; gap: 6px; }
+}
+
+/* Phones: team cards get a neat two-column grid of actions. */
+@media (max-width: 575px) {
+    .team-card__footer--team { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 12px 14px 14px; }
+    .team-card__footer--team a { flex: none; width: 100%; min-height: 40px; padding: 7px 6px; font-size: .76rem; gap: 5px; box-sizing: border-box; white-space: nowrap; }
+    .team-card__footer--team a:first-child { grid-column: 1 / -1; }
+    .team-card__footer--team a:last-child:nth-child(even) { grid-column: 1 / -1; }
+}
+
+/* =====================================================================================================
+   Classic refinement (Nov 2026): serif ID + headings, slim gold hairlines, calmer buttons.
+   Kept as one block at the end so it is easy to find or drop.
+   ===================================================================================================== */
+.team-card {
+    border-radius: 20px;
+    border: 1px solid rgba(201, 151, 77, .55);
+    box-shadow: 0 8px 22px rgba(15, 46, 36, .18);
+}
+.team-card:hover { box-shadow: 0 14px 30px rgba(15, 46, 36, .26); transform: translateY(-2px); }
+
+.team-card__head {
+    padding: 16px 16px 14px;
+    background: #FBF8F1;
+    border-bottom: 3px double #C9974D;
+}
+.team-card__photo { border-radius: 14px; box-shadow: 0 0 0 2px #C9974D, 0 0 0 5px #FBF8F1; }
+
+.team-card__name,
+.team-card__name a {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif !important;
+    font-weight: 700 !important;
+    letter-spacing: .6px;
+    font-variant-numeric: lining-nums;
+    color: #123A2E !important;
+}
+.team-card__name { font-size: 1.45rem; }
+.team-card__name a:hover { color: #0A2A20 !important; }
+.team-card__id-copy { font-size: 13px !important; color: #9A7A45; }
+
+.team-card__badge--verified {
+    background: transparent;
+    border: 1px solid #1E7A46;
+    color: #1E7A46;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+}
+.team-card__facts { font-size: .88rem; color: #2A3B34; }
+.team-card__facts--sub { font-size: .82rem; color: #7A6A4A; font-style: italic; }
+.team-card__flag { width: 18px; height: 12px; }
+.team-card__chips { margin-top: 6px; }
+.team-card__ribbon, .team-card__badge--package, .team-card__private { font-size: .6rem; padding: 2px 9px; letter-spacing: .6px; }
+
+.team-card__body { padding: 14px 14px 2px; }
+.team-card__panels { gap: 10px; }
+.team-card__panel,
+.team-card__panel--alt {
+    background: rgba(255, 255, 255, .035);
+    border: 1px solid rgba(201, 151, 77, .35);
+    border-radius: 12px;
+    padding: 12px 12px 6px;
+}
+.team-card__panel h4 {
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-variant-numeric: lining-nums;
+    font-size: .98rem;
+    font-weight: 700;
+    letter-spacing: .4px;
+    color: #E2B66E;
+    margin: 0 0 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(201, 151, 77, .3);
+}
+.team-card__panel li { font-size: .84rem; margin-bottom: 8px; gap: 9px; }
+.team-card__panel li i { font-size: .9rem; color: #C9974D; }
+.team-card__panel li.is-empty span { font-style: italic; }
+
+.team-card__compat { border-radius: 12px; border-color: rgba(201, 151, 77, .35); background: rgba(0, 0, 0, .14); padding: 9px 12px; }
+.team-card__compat-score { font-family: 'Playfair Display', Georgia, serif; color: #E2B66E; font-size: 1.25rem; }
+.team-card__compat-row-fill { background: #C9974D; }
+
+.team-card__footer { gap: 10px; padding: 12px 14px 16px; }
+.team-card__footer a {
+    min-height: 42px;
+    border-radius: 10px;
+    border: 1px solid rgba(226, 182, 110, .6);
+    font-size: .74rem;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+.team-card__footer a,
+.team-card__footer a i,
+.team-card__footer a span { font-weight: 700 !important; }
+.team-card__footer a.is-interest,
+.team-card__footer a.team-card__unlock-btn {
+    background: linear-gradient(180deg, #D9AC63, #B88436);
+    border-color: #B88436;
+    color: #0F2E24 !important;
+}
+.team-card__footer a.is-interest:hover,
+.team-card__footer a.team-card__unlock-btn:hover { background: linear-gradient(180deg, #E2B66E, #C9974D); border-color: #C9974D; }
+
+@media (max-width: 420px) {
+    .team-card__name { font-size: 1.25rem; }
+    .team-card__footer a { font-size: .68rem; letter-spacing: .4px; }
+}
+
+/* =====================================================================================================
+   Photo on top (Nov 2026): the whole photo gets the full card width (never cropped, a soft blurred copy fills the
+   sides), and the ID / quick facts sit underneath it.
+   ===================================================================================================== */
+.team-card__head { flex-direction: column; align-items: stretch; gap: 0; padding: 0; }
+.team-card__photo { flex: none; width: 100%; height: auto; aspect-ratio: 5 / 4; max-height: 300px; border-radius: 0; box-shadow: none; }
+.team-card__photo img { object-fit: contain; object-position: center; }
+.team-card__headinfo { width: 100%; box-sizing: border-box; padding: 14px 16px 14px; border-top: 3px double #C9974D; }
+.team-card__nav { width: 30px; height: 30px; font-size: 18px; }
+.team-card__nav--prev { left: 8px; }
+.team-card__nav--next { right: 8px; }
+.team-card__lock-icon { width: 52px; height: 52px; font-size: 21px; }
+@media (max-width: 420px) {
+    .team-card__photo { width: 100%; height: auto; flex-basis: auto; border-radius: 0; }
+    .team-card__head { padding: 0; gap: 0; }
+    .team-card__headinfo { padding: 12px 14px 12px; }
+}
+
+/* Homepage "Meet Our Members" teaser: the photo is only a blurred preview, so it stays a wide, short frame (as before)
+   instead of the tall portrait the real profile cards use. */
+.team-card--teaser .team-card__photo { aspect-ratio: 8 / 5; max-height: none; }
+.team-card--teaser .team-card__lock-overlay { flex-direction: column; gap: 6px; padding: 20px; text-align: center; background: linear-gradient(180deg, rgba(15, 46, 36, .12), rgba(15, 46, 36, .55)); }
+.team-card--teaser .team-card__lock-icon { width: 54px; height: 54px; font-size: 20px; margin-bottom: 2px; }
+.team-card__lock-title { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: .5px; text-transform: uppercase; }
+.team-card__lock-sub { color: rgba(255, 255, 255, .88); font-size: 12px; }
+.team-card--teaser .team-card__headinfo { padding-top: 12px; }
+
+/* =====================================================================================================
+   Ivory & emerald card (client design, Nov 2026): cream card with a gold frame, photo on the left with NEW / VERIFIED
+   badges, icon fact list, emerald match box, cream "About Profile" / "Looking For" panels, emerald primary button.
+   Last block on purpose — it overrides the earlier dark / photo-on-top blocks.
+   ===================================================================================================== */
+.team-card {
+    background: linear-gradient(180deg, #FFFDF8 0%, #F7F1E3 100%);
+    border: 2px solid #D4AE6A;
+    border-radius: 22px;
+    color: #1C2A24;
+    box-shadow: 0 10px 26px rgba(15, 46, 36, .14), inset 0 0 0 4px #FBF6EA;
+}
+.team-card:hover { box-shadow: 0 16px 32px rgba(15, 46, 36, .22), inset 0 0 0 4px #FBF6EA; }
+
+/* header: photo left, details right */
+.team-card__head { flex-direction: row; align-items: flex-start; gap: 16px; padding: 18px 18px 6px; background: transparent; border-bottom: 0; }
+.team-card__photo { flex: 0 0 42%; width: 42%; height: auto; aspect-ratio: 4 / 5; max-height: none; border-radius: 16px; box-shadow: 0 4px 12px rgba(15, 46, 36, .18); }
+.team-card__nav { width: 24px; height: 24px; font-size: 16px; }
+.team-card__nav--prev { left: 5px; }
+.team-card__nav--next { right: 5px; }
+.team-card__headinfo { flex: 1; width: auto; min-width: 0; padding: 0; border-top: 0; }
+
+.team-card__toprow { flex-wrap: nowrap; justify-content: flex-start; margin: 0 0 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(201, 151, 77, .45); }
+.team-card__name { font-size: 1.55rem; letter-spacing: .5px; }
+.team-card__id-copy { font-size: 16px !important; color: #B88436; margin-left: 10px; }
+
+.team-card__factlist { list-style: none; margin: 0; padding: 0; }
+.team-card__factlist li { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 7px; font-size: .9rem; line-height: 1.3; color: #1C2A24; }
+.team-card__factlist li i { flex: 0 0 18px; width: 18px; margin-top: 1px; text-align: center; font-size: 1.05rem; color: #B88436 !important; }
+.team-card__factlist li span { min-width: 0; overflow-wrap: anywhere; color: inherit !important; }
+.team-card__flag { width: 22px; height: 15px; margin: 0 4px 2px 0; }
+.team-card__chips { margin-top: 4px; }
+
+/* NEW (top-left) and VERIFIED (bottom) sit on the photo */
+.team-card__ribbon--photo { position: absolute; top: 10px; left: 10px; z-index: 3; font-size: .72rem; padding: 4px 12px; letter-spacing: .6px; background: linear-gradient(180deg, #F1D38E, #D9AC63); color: #3A2A08; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.team-card__photo .team-card__badge--verified { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 3; background: #0F4A35; border: 0; color: #fff; font-size: .66rem; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; padding: 4px 12px; box-shadow: 0 2px 6px rgba(0, 0, 0, .3); }
+.team-card__photo .team-card__badge--verified i { color: #fff !important; }
+
+/* match box: emerald, big score in a gold-framed box, gold bars */
+.team-card__body { padding: 10px 18px 2px; }
+.team-card__compat { background: linear-gradient(135deg, #0E4635, #0A3427); border: 0; border-radius: 16px; padding: 14px; margin-bottom: 14px; box-shadow: inset 0 0 0 1px rgba(226, 182, 110, .25); }
+.team-card__compat-main { display: flex; align-items: center; gap: 14px; }
+.team-card__compat-box { flex: 0 0 auto; text-align: center; padding: 10px 12px; border: 1.5px solid #C9974D; border-radius: 16px; }
+.team-card__compat-score { font-family: 'Playfair Display', Georgia, serif; font-variant-numeric: lining-nums; font-size: 1.9rem; font-weight: 700; color: #E9C47E; line-height: 1; }
+.team-card__compat-label { margin-top: 5px; font-family: 'Playfair Display', Georgia, serif; font-size: .8rem; font-weight: 700; color: #fff; }
+.team-card__compat-side { flex: 1; min-width: 0; padding-left: 14px; border-left: 1px solid rgba(226, 182, 110, .3); }
+.team-card__compat-sub { margin: 0 0 6px; font-size: .78rem; color: #DDEBE4; }
+.team-card__compat-row { gap: 8px; }
+.team-card__compat-row-label { flex: 0 0 70px; font-size: .72rem; color: #E4EFE9; }
+.team-card__compat-row-track { height: 6px; background: rgba(255, 255, 255, .14); border-radius: 4px; }
+.team-card__compat-row-fill { background: linear-gradient(90deg, #E9C47E, #C9974D); border-radius: 4px; }
+.team-card__compat-row-pct { flex: 0 0 34px; font-size: .72rem; color: #fff; }
+.team-card__compat-explain { color: #CFE2D9; border-top-color: rgba(226, 182, 110, .3); }
+
+/* panels: cream with gold hairlines and ruled list items */
+.team-card__panel,
+.team-card__panel--alt { background: linear-gradient(180deg, #FFFCF4, #F8F0DD); border: 1px solid rgba(201, 151, 77, .6); border-radius: 14px; padding: 12px 12px 4px; box-shadow: 0 2px 6px rgba(120, 90, 30, .08); }
+.team-card__panel h4 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; color: #123A2E; border-bottom: 1px solid rgba(201, 151, 77, .55); margin: 0 0 4px; padding-bottom: 8px; }
+.team-card__panel h4 i { color: #B88436 !important; font-size: 1.05rem; }
+.team-card__panel li { margin: 0; padding: 8px 0; font-size: .86rem; color: #1C2A24; border-bottom: 1px solid rgba(201, 151, 77, .3); }
+.team-card__panel li:last-child { border-bottom: 0; }
+.team-card__panel li i { font-size: 1rem; color: #B88436; }
+.team-card__panel li.is-empty span { color: #8C8470; }
+.ur-team-added-by { color: #6B6350; }
+.ur-team-added-by i { color: #B88436; }
+
+/* actions: emerald primary on its own row, outlined secondary buttons below */
+.team-card__footer { flex-wrap: wrap; gap: 10px; padding: 12px 18px 18px; }
+.team-card__footer a { flex: 1 1 calc(50% - 5px); min-height: 46px; border-radius: 999px; border: 1.5px solid #123A2E; background: #FFFDF8; color: #123A2E !important; font-size: .82rem; letter-spacing: .3px; text-transform: none; box-sizing: border-box; }
+.team-card__footer a:hover { background: #EFE7D2; border-color: #0A2A20; }
+.team-card__footer a.is-interest,
+.team-card__footer a.team-card__unlock-btn { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 1.02rem; background: linear-gradient(180deg, #11634A, #0C4A38); border: 1.5px solid #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15, 46, 36, .25); }
+.team-card__footer a.is-interest:hover,
+.team-card__footer a.team-card__unlock-btn:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; }
+.team-card__footer a.is-interest span { color: #fff !important; }
+.team-card__footer a.is-interest .c-green, .team-card__footer a.is-interest .c-red { color: #fff !important; }
+.team-card__locked-note { color: #6B6350; }
+
+/* team cards: "View Full Profile" is the primary, Edit / Delete / Share / Privacy are the outlined ones */
+.team-card__footer--team a.is-interest { order: 0; flex: 1 1 auto; min-height: 44px; font-size: .78rem; background: #FFFDF8; border: 1.5px solid #123A2E; color: #123A2E !important; box-shadow: none; }
+.team-card__footer--team a.is-interest span, .team-card__footer--team a.is-interest i { color: inherit !important; }
+.team-card__footer--team a.is-interest:hover { background: #EFE7D2; border-color: #0A2A20; }
+.team-card__footer--team a:first-child { order: -1; flex: 1 1 100%; min-height: 52px; font-size: 1rem; background: linear-gradient(180deg, #11634A, #0C4A38); border-color: #C9974D; color: #fff !important; box-shadow: 0 4px 10px rgba(15, 46, 36, .25); }
+.team-card__footer--team a:first-child:hover { background: linear-gradient(180deg, #157A5B, #0F5A44); border-color: #E2B66E; }
+
+/* homepage teaser keeps the wide photo on top (its photo is only a locked preview) */
+.team-card--teaser .team-card__head { flex-direction: column; padding: 0; gap: 0; }
+.team-card--teaser .team-card__photo { flex: none; width: 100%; aspect-ratio: 8 / 5; border-radius: 20px 20px 0 0; box-shadow: none; }
+.team-card--teaser .team-card__headinfo { padding: 14px 18px 4px; }
+
+@media (max-width: 420px) {
+    .team-card__head { gap: 12px; padding: 14px 14px 4px; }
+    .team-card__photo { flex: 0 0 42%; width: 42%; border-radius: 14px; }
+    .team-card__name { font-size: 1.2rem; }
+    .team-card__id-copy { margin-left: 6px; font-size: 14px !important; }
+    .team-card__factlist li { font-size: .8rem; gap: 7px; margin-bottom: 6px; }
+    .team-card__body { padding: 8px 12px 2px; }
+    .team-card__compat { padding: 12px 10px; }
+    .team-card__compat-main { gap: 10px; }
+    .team-card__compat-box { padding: 8px 8px; }
+    .team-card__compat-score { font-size: 1.5rem; }
+    .team-card__compat-side { padding-left: 10px; }
+    .team-card__compat-row-label { flex-basis: 58px; font-size: .66rem; }
+    .team-card__panels { gap: 8px; }
+    .team-card__panel li { font-size: .78rem; gap: 6px; }
+    .team-card__footer { padding: 10px 12px 14px; gap: 8px; }
+    .team-card__footer a { min-height: 42px; font-size: .76rem; }
+    .team-card__footer a.is-interest, .team-card__footer a.team-card__unlock-btn { min-height: 48px; font-size: .95rem; }
+    .team-card--teaser .team-card__head { padding: 0; }
+    .team-card--teaser .team-card__photo { width: 100%; border-radius: 20px 20px 0 0; }
+}
+@media (max-width: 575px) {
+    .team-card__footer--team { display: flex; }
+    .team-card__footer--team a { flex: 1 1 calc(50% - 4px); width: auto; }
+    .team-card__footer--team a:first-child { flex: 1 1 100%; }
+}
+
+/* ivory polish: single-line panel headings, full "Marital Status" label, no photo badges over the teaser's lock */
+.team-card__panel h4 { white-space: nowrap; font-size: .95rem; gap: 6px; }
+.team-card__panel h4 i { font-size: .95rem; }
+.team-card__compat-row-label { flex-basis: 88px; }
+.team-card--teaser .team-card__ribbon--photo,
+.team-card--teaser .team-card__photo .team-card__badge--verified { display: none; }
+@media (max-width: 420px) {
+    .team-card__panel h4 { font-size: .86rem; gap: 5px; }
+    .team-card__compat-row-label { flex-basis: 74px; font-size: .62rem; }
+    .team-card__compat-row-pct { flex-basis: 30px; }
+}
+
+/* ivory fix: the 10-character ID + copy icon must fit in the narrow right column */
+.team-card__toprow { gap: 0; }
+.team-card__name { font-size: 1.22rem; letter-spacing: .2px; white-space: nowrap; }
+.team-card__id-copy { margin-left: 6px; font-size: 14px !important; }
+@media (max-width: 420px) {
+    .team-card__name { font-size: 1.05rem; letter-spacing: 0; }
+    .team-card__id-copy { margin-left: 4px; font-size: 13px !important; }
+}
+
+/* AI Match explanation on its own (the match % box is gone) */
+.team-card__compat-explain--solo { margin: 0 0 12px; padding: 10px 12px; border: 1px dashed rgba(201, 151, 77, .6); border-radius: 12px; background: #FBF4E2; color: #4A4330; font-size: .8rem; line-height: 1.45; }
+
+/* client's first name under the ID (team cards only) */
+.team-card__realname { margin: -2px 0 8px; font-size: .95rem; font-weight: 600; color: #4A4330; }
+
+/* photo is as tall as the intro column beside it (ID + facts) */
+.team-card:not(.team-card--teaser) .team-card__head { align-items: stretch; }
+.team-card:not(.team-card--teaser) .team-card__photo { aspect-ratio: auto; height: auto; align-self: stretch; min-height: 200px; max-width: 220px; }
+.team-card:not(.team-card--teaser) .team-card__headinfo { padding-bottom: 6px; }
+
+/* equal-height cards: long values are cut at two lines, buttons stay at the bottom */
+.team-card__panel li span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.team-card__footer { margin-top: auto; }

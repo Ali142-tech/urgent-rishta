@@ -17,7 +17,7 @@
 @if(!empty($members) && sizeof($members) > 0)
 <div class="member-results">
     @foreach ($members as $member)
-        @include('member.partials.member-card', ['member' => $member, 'addedByName' => $member->added_by_name])
+        @include('team.partials.team-card', ['member' => $member, 'addedByName' => $member->added_by_name])
     @endforeach
 </div>
 

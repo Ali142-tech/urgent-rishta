@@ -46,6 +46,13 @@
     </div>
 </div>
 <script type="text/javascript">
+// Opening the edit modal must start at the top: the long description box was opening scrolled to its end, which also scrolled the modal off-screen.
+$(document).off('shown.bs.modal.pkg').on('shown.bs.modal.pkg', '#active_modal', function () {
+    var m = this;
+    var reset = function () { m.scrollTop = 0; $(m).find('.modal-content, .modal-dialog, .modal-body').each(function () { this.scrollTop = 0; }); $(m).find('textarea').each(function () { this.scrollTop = 0; this.setSelectionRange && this.setSelectionRange(0, 0); }); };
+    reset(); setTimeout(reset, 60);
+    if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') document.activeElement.blur();
+});
 
 function deletePackage(id) {
         swalConfirm("Delete Package?", "Are you sure you want to delete this package? You will not be able to revert this!", ()=>{

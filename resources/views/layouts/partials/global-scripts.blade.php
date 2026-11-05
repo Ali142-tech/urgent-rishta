@@ -29,8 +29,8 @@
     function cardCarouselNav(event, btn, dir) {
         event.stopPropagation();
         event.preventDefault();
-        var photoEl = btn.closest('.member-card__photo');
-        var slides = photoEl.querySelectorAll('.member-card__slide');
+        var photoEl = btn.closest('.member-card__photo, .team-card__photo');
+        var slides = photoEl.querySelectorAll('.member-card__slide, .team-card__slide');
         if (slides.length < 2) return false;
         var currentIndex = 0;
         slides.forEach(function (s, i) {
