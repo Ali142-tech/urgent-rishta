@@ -182,10 +182,21 @@
         .ur-ov-mcell:nth-child(4), .ur-ov-mcell--go { display: none; }
     }
     @media (max-width: 560px) {
-        .ur-ov-card__head { flex-wrap: wrap; padding: 16px; }
+        /* header: icon + title on one line, the "View All" button full-width underneath (the description no longer gets squeezed into a thin column) */
+        .ur-ov-card__head { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 10px 12px; padding: 16px; }
+        .ur-ov-card__icon { width: 44px; height: 44px; font-size: 18px; }
+        .ur-ov-card__title { min-width: 0; }
         .ur-ov-card__title h2 { font-size: 19px; }
-        .ur-ov-card__all { margin-left: 64px; }
-        .ur-ov-mrow { margin: 0 12px 10px; padding: 12px; }
+        .ur-ov-card__title p { font-size: 12.5px; }
+        .ur-ov-card__all { grid-column: 1 / -1; margin: 0; justify-content: center; padding: 10px 16px; font-size: 13px; }
+        .ur-ov-mrow { margin: 0 12px 12px; padding: 14px 12px; align-items: start; }
+        .ur-ov-mcell--client img, .ur-ov-mcell--match img { width: 46px; height: 46px; }
+        .ur-ov-mcell--match { padding-top: 12px; border-top: 1px dashed #E3D9C3; }
+        .ur-ov-mcell--client::after, .ur-ov-mcell--match::after { content: none; }
+        .ur-ov-mcell b { font-family: 'Playfair Display', Georgia, serif; font-size: 15px; }
+        .ur-ov-mcell--score b { font-family: 'Manrope', system-ui, sans-serif; color: #1C7A58; }
+        .ur-ov-act { padding: 12px 16px; }
+        .ur-ov-soon { padding: 14px 16px 18px; }
     }
 </style>
 

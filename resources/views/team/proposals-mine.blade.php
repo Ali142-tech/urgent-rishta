@@ -64,6 +64,38 @@
     .ur-mc-table .ur-mc-menu { padding: 6px !important; }
     .ur-mc-table .ur-mc-menu a { padding: 8px 10px !important; }
 
+    /* Phones: each client is its own card (profile + status on top, details as labelled rows, actions at the bottom) instead of a sideways-scrolling table */
+    @media (max-width: 767.98px) {
+        .ur-mc-head { gap: 12px; }
+        .ur-mc-head h1 { font-size: 24px; }
+        .ur-mc-add-btn { width: 100%; justify-content: center; box-sizing: border-box; }
+        .ur-mc-panel { padding: 12px; border-radius: 18px; }
+        .ur-mc-toolbar { gap: 10px; }
+        .ur-mc-search { flex: 1 1 100%; max-width: none; }
+        .ur-mc-toolbar select { flex: 1 1 0; min-width: 0; }
+        .ur-mc-count { margin-left: 0; }
+        .ur-mc-table-wrap, .ur-mc-table-wrap[style] { overflow: visible !important; }
+        .ur-mc-table, .ur-mc-table tbody { display: block; width: 100%; min-width: 0 !important; }
+        .ur-mc-table thead { display: none; }
+        .ur-mc-table tbody tr { display: grid !important; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 10px; background: #FBF8F1; border: 1px solid #E3D9C3; border-left: 4px solid #C9974D; border-radius: 12px; padding: 12px !important; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(15,46,36,.06); }
+        .ur-mc-table tbody td { display: block; border: 0 !important; padding: 0 !important; min-width: 0; }
+        .ur-mc-table tbody td.ur-mc-c-profile { grid-column: 1; grid-row: 1; }
+        .ur-mc-table tbody td.ur-mc-c-status { grid-column: 2; grid-row: 1; }
+        .ur-mc-profile__id { font-family: 'Playfair Display', Georgia, serif; font-size: 16px !important; }
+        .ur-mc-profile__meta { white-space: normal !important; }
+        .ur-mc-profile__photo { width: 46px !important; height: 46px !important; flex-basis: 46px !important; border-radius: 12px; }
+        .ur-mc-table tbody td.ur-mc-c-row { grid-column: 1 / -1; display: flex !important; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 8px 0 !important; border-top: 1px dashed #DCCFB4 !important; font-size: 13px; text-align: right; word-break: break-word; }
+        .ur-mc-table tbody td.ur-mc-c-profile + td.ur-mc-c-row { margin-top: 10px; }
+        .ur-mc-table td.ur-mc-c-row::before { content: attr(data-label); color: #6B7570; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; flex-shrink: 0; text-align: left; }
+        .ur-mc-table tbody td.ur-mc-c-act { grid-column: 1 / -1; padding-top: 10px !important; border-top: 1px dashed #DCCFB4 !important; }
+        .ur-mc-actions { width: 100%; gap: 8px; }
+        .ur-mc-actions > .ur-mc-icon-btn { flex: 1; width: auto; height: 40px; border-radius: 999px; background: #123A2E; border-color: #123A2E; color: #fff; gap: 8px; font-size: 13px; font-weight: 700; }
+        .ur-mc-actions > .ur-mc-icon-btn::after { content: 'View file'; font-family: inherit; }
+        .ur-mc-actions .dropdown .ur-mc-icon-btn { width: 40px; height: 40px; border-radius: 999px; }
+        .ur-mc-pagination { flex-direction: column; align-items: center; text-align: center; }
+        .ur-mc-pagination .pagination { justify-content: center; }
+    }
+
     .ur-mc-empty { text-align: center; color: #6B7570; padding: 40px 10px; }
 
     .ur-mc-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px dashed #E7E2D6; }
@@ -132,7 +164,7 @@
                     @foreach($members as $member)
                         @php $age = $ageOf($member); @endphp
                         <tr style="height:auto !important;">
-                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">
+                            <td class="ur-mc-c-profile">
                                 <div class="ur-mc-profile">
                                     <img class="ur-mc-profile__photo" src="{{ $member->getProfileImage(true) }}" alt="" onerror="this.onerror=null;this.src='{{ \App\Profile::defaultImage($member->gender) }}';">
                                     <div class="ur-mc-profile__text">
@@ -141,13 +173,13 @@
                                     </div>
                                 </div>
                             </td>
-                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->lbl_city ?: ($member->lbl_con_of_residence ?: '—') }}</td>
-                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->profession ?: '—' }}</td>
-                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->lbl_caste ?: '—' }}</td>
-                            <td>{{ \Carbon\Carbon::parse($member->created_at)->format('d M Y') }}</td>
-                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;"><span class="ur-mc-status ur-mc-status--{{ $member->profile_status ?: 'active' }}">{{ $statusOptions[$member->profile_status] ?? 'Active' }}</span></td>
-                            <td class="ur-mc-matches" style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">{{ $member->matchesCount ?? '—' }}</td>
-                            <td style="padding:15px 10px !important; height:auto !important; line-height:1.3 !important;">
+                            <td class="ur-mc-c-row" data-label="Location">{{ $member->lbl_city ?: ($member->lbl_con_of_residence ?: '—') }}</td>
+                            <td class="ur-mc-c-row" data-label="Profession">{{ $member->profession ?: '—' }}</td>
+                            <td class="ur-mc-c-row" data-label="Caste">{{ $member->lbl_caste ?: '—' }}</td>
+                            <td class="ur-mc-c-row" data-label="Added">{{ \Carbon\Carbon::parse($member->created_at)->format('d M Y') }}</td>
+                            <td class="ur-mc-c-status"><span class="ur-mc-status ur-mc-status--{{ $member->profile_status ?: 'active' }}">{{ $statusOptions[$member->profile_status] ?? 'Active' }}</span></td>
+                            <td class="ur-mc-matches ur-mc-c-row" data-label="AI matches">{{ $member->matchesCount ?? '—' }}</td>
+                            <td class="ur-mc-c-act">
                                 <div class="ur-mc-actions">
                                     <button type="button" class="ur-mc-icon-btn" title="View file" onclick="openClientFile('{{ $member->dataid }}')"><i class="fa fa-eye"></i></button>
                                     <div class="dropdown">

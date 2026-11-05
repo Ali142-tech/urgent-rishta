@@ -117,18 +117,31 @@
     .ur-am-btn--done { background: #E7F3EC !important; border-color: #2E7D5B !important; color: #2E7D5B !important; cursor: default; }
 
     .ur-am-empty { background: #fff; border: 1px solid #E7E2D6; border-radius: 14px; padding: 34px; text-align: center; color: #6B7570; }
+    /* Phones: let every grid/flex child shrink below its content width — the long proposal text was stretching the whole page sideways */
+    .ur-am-top > *, .ur-am-controls, .ur-am-controls form, .ur-am-controls__row > div, .ur-am-matching-for, .ur-am-match-card, .ur-am-pair__side { min-width: 0; max-width: 100%; box-sizing: border-box; }
+    .ur-am-matching-for__tiles { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .ur-am-matching-for__tiles div { min-width: 0; }
+    .ur-am-matching-for__tiles b { word-break: break-word; overflow-wrap: anywhere; }
+    .ur-pk-btn { max-width: 100%; box-sizing: border-box; }
+    @media (max-width: 767.98px) {
+        .ur-am-results-head { align-items: flex-start; }
+        .ur-am-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .ur-am-tags span { margin-left: 0 !important; }
+        .ur-am-generate { width: 100%; justify-content: center; box-sizing: border-box; }
+        .ur-am-actions a, .ur-am-actions button { white-space: normal; }
+    }
 
     @media (max-width: 991px) {
-        .ur-am-top { grid-template-columns: 1fr; }
+        .ur-am-top { grid-template-columns: minmax(0, 1fr); }
     }
     @media (max-width: 860px) {
-        .ur-am-grid { grid-template-columns: 1fr; }
+        .ur-am-grid { grid-template-columns: minmax(0, 1fr); }
     }
     @media (max-width: 560px) {
-        .ur-am-pair { grid-template-columns: 1fr; }
+        .ur-am-pair { grid-template-columns: minmax(0, 1fr); }
         .ur-am-pair__connector { flex-direction: row; width: 100%; }
         .ur-am-pair__connector span { writing-mode: horizontal-tb; }
-        .ur-am-why__grid { grid-template-columns: 1fr; }
+        .ur-am-why__grid { grid-template-columns: minmax(0, 1fr); }
         .ur-am-controls__row { flex-direction: column; }
         .ur-am-controls__row > div { flex-basis: auto; }
         .ur-am-generate { width: 100%; justify-content: center; align-self: stretch; }
@@ -250,4 +263,71 @@
 @endif
 @endif
 @endif
+
+<style>
+    /* Phone-only searchable picker for the (very long) proposal list: the native list opened as a huge wide box */
+    .ur-pk-btn { display: none; }
+    @media (max-width: 767.98px) {
+        .ur-am-controls select[name="proposal"].ur-pk-hidden { display: none; }
+        .ur-pk-btn { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; height: 46px; padding: 0 14px; border: 1px solid #E7E2D6; border-radius: 10px; background: #fff; color: #1C2321; font-size: 13.5px; text-align: left; }
+        .ur-pk-btn span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ur-pk-btn i { color: #C9974D; }
+        .ur-pk { position: fixed; inset: 0; z-index: 3500; display: none; align-items: flex-end; background: rgba(15,46,36,.55); }
+        .ur-pk.is-open { display: flex; }
+        .ur-pk__sheet { width: 100%; max-height: 82vh; background: #fff; border-radius: 18px 18px 0 0; display: flex; flex-direction: column; box-shadow: 0 -10px 40px rgba(15,46,36,.25); }
+        .ur-pk__head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; }
+        .ur-pk__head b { font-family: 'Playfair Display', Georgia, serif; font-size: 17px; color: #123A2E; }
+        .ur-pk__close { width: 34px; height: 34px; border: 0; border-radius: 50%; background: #F3F1EA; color: #123A2E; font-size: 16px; }
+        .ur-pk__searchwrap { position: relative; margin: 8px 16px 12px; }
+        .ur-pk__searchwrap > i.fa-search { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #C9974D; font-size: 15px; pointer-events: none; }
+        .ur-pk__search { -webkit-appearance: none; appearance: none; width: 100%; height: 48px; box-sizing: border-box; border: 1.5px solid #E3D9C3; border-radius: 999px; background: #FBF8F1; padding: 0 44px 0 42px; font-size: 14.5px; color: #1C2321; box-shadow: inset 0 1px 2px rgba(15,46,36,.04); transition: border-color .15s, box-shadow .15s, background .15s; }
+        .ur-pk__search::placeholder { color: #9A9486; }
+        .ur-pk__search::-webkit-search-cancel-button, .ur-pk__search::-webkit-search-decoration { -webkit-appearance: none; display: none; }
+        .ur-pk__search:focus { outline: none; background: #fff; border-color: #C9974D; box-shadow: 0 0 0 4px rgba(201,151,77,.18); }
+        .ur-pk__clear { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 32px; height: 32px; border: 0; background: transparent; color: #B8B2A2; font-size: 18px; display: none; }
+        .ur-pk__searchwrap.has-text .ur-pk__clear { display: block; }
+        .ur-pk__searchwrap.has-text .ur-pk__clear:active { color: #123A2E; }
+        .ur-pk__list { overflow-y: auto; padding: 0 12px 16px; -webkit-overflow-scrolling: touch; }
+        .ur-pk__item { display: block; width: 100%; text-align: left; border: 0; background: #FBF8F1; border-left: 3px solid transparent; border-radius: 10px; padding: 11px 12px; margin-bottom: 8px; font-size: 13.5px; line-height: 1.4; color: #1C2321; word-break: break-word; }
+        .ur-pk__item.is-sel { background: #F6ECD4; border-left-color: #C9974D; font-weight: 700; }
+        .ur-pk__none { text-align: center; color: #6B7570; padding: 24px 0; font-size: 13px; }
+    }
+</style>
+<script>
+(function () {
+    var sel = document.querySelector('.ur-am-controls select[name="proposal"]');
+    if (!sel) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ur-pk-btn';
+    btn.innerHTML = '<span></span><i class="fa fa-chevron-down"></i>';
+    sel.parentNode.insertBefore(btn, sel); sel.classList.add('ur-pk-hidden');
+    var label = function () { var o = sel.options[sel.selectedIndex]; btn.firstChild.textContent = o ? o.text.replace(/\s+/g, ' ').trim() : 'Select'; };
+    label();
+
+    var box = document.createElement('div'); box.className = 'ur-pk';
+    box.innerHTML = '<div class="ur-pk__sheet"><div class="ur-pk__head"><b>Select a proposal</b><button type="button" class="ur-pk__close"><i class="fa fa-times"></i></button></div>'
+        + '<div class="ur-pk__searchwrap"><i class="fa fa-search"></i><input type="search" class="ur-pk__search" placeholder="Search ID, gender or profession" autocomplete="off"><button type="button" class="ur-pk__clear" aria-label="Clear"><i class="fa fa-times-circle"></i></button></div><div class="ur-pk__list"></div></div>';
+    document.body.appendChild(box);
+    var list = box.querySelector('.ur-pk__list'), search = box.querySelector('.ur-pk__search');
+
+    function render(q) {
+        q = (q || '').toLowerCase().trim(); list.innerHTML = ''; var n = 0;
+        Array.prototype.forEach.call(sel.options, function (o) {
+            var t = o.text.replace(/\s+/g, ' ').trim();
+            if (q && t.toLowerCase().indexOf(q) === -1) return;
+            var b = document.createElement('button'); b.type = 'button'; b.className = 'ur-pk__item' + (o.selected ? ' is-sel' : ''); b.textContent = t;
+            b.onclick = function () { sel.value = o.value; label(); close(); if (sel.form) sel.form.submit(); };
+            list.appendChild(b); n++;
+        });
+        if (!n) list.innerHTML = '<div class="ur-pk__none">No proposals match.</div>';
+    }
+    function open() { render(''); search.value = ''; wrap.classList.remove('has-text'); box.classList.add('is-open'); var s = list.querySelector('.is-sel'); if (s) s.scrollIntoView({ block: 'center' }); }
+    function close() { box.classList.remove('is-open'); }
+    btn.addEventListener('click', open);
+    var wrap = box.querySelector('.ur-pk__searchwrap');
+    search.addEventListener('input', function () { wrap.classList.toggle('has-text', !!search.value); render(search.value); });
+    box.querySelector('.ur-pk__clear').addEventListener('click', function () { search.value = ''; wrap.classList.remove('has-text'); render(''); search.focus(); });
+    box.addEventListener('click', function (e) { if (e.target === box) close(); });
+    box.querySelector('.ur-pk__close').addEventListener('click', close);
+})();
+</script>
 @endsection

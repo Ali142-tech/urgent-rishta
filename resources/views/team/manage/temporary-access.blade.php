@@ -143,6 +143,44 @@
         .ur-ta-stat__ico { width: 38px; height: 38px; font-size: 16px; }
         .ur-ta-stat__num { font-size: 22px; }
     }
+
+    /* ---- phones: tidier hero/stats/form, swipeable filter chips, and each account as an ivory card with a full-width action row ---- */
+    @media (max-width: 767.98px) {
+        .ur-ta-hero { padding: 20px 18px; margin-bottom: 14px; }
+        .ur-ta-hero h1 { font-size: 24px; }
+        .ur-ta-hero::after { width: 150px; height: 150px; right: -50px; top: -50px; }
+        .ur-ta-sub { font-size: 13px; line-height: 1.6; }
+        .ur-ta-stats { gap: 10px; margin-bottom: 14px; }
+        .ur-ta-stat { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px; background: #FBF8F1; border-left: 4px solid #C9974D; }
+        .ur-ta-stat__lbl { font-size: 11.5px; line-height: 1.3; }
+        .ur-ta-card { border-radius: 16px; margin-bottom: 14px; }
+        .ur-ta-card__head { align-items: flex-start; }
+        .ur-ta-form { gap: 12px; }
+        .ur-ta-form .ur-ta-btn { width: 100%; }
+        .ur-ta-created__row { flex-direction: column; gap: 2px; padding: 7px 0; border-bottom: 1px dashed #E8DDC0; }
+        .ur-ta-created__row:last-child { border-bottom: 0; }
+        .ur-ta-created__row span { width: auto; }
+        .ur-ta-created__row b { font-size: 14px; }
+        .ur-ta-created__actions .ur-ta-btn { flex: 1 1 100%; }
+        .ur-ta-toolbar { flex-direction: column; gap: 10px; }
+        .ur-ta-tabs { flex-wrap: nowrap; overflow-x: auto; margin: 0 -18px; padding: 0 18px 4px; scrollbar-width: none; }
+        .ur-ta-tabs::-webkit-scrollbar { display: none; }
+        .ur-ta-tab { flex: 0 0 auto; }
+        .ur-ta-search input { height: 42px; }
+        .ur-ta-list { gap: 12px; }
+        .ur-ta-item { grid-template-columns: auto minmax(0, 1fr); gap: 0 10px; background: #FBF8F1; border: 1px solid #E3D9C3; border-left: 4px solid #C9974D; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(15,46,36,.06); }
+        .ur-ta-item > .ur-ta-who { grid-column: 1 / -1; }
+        .ur-ta-item__name { font-family: 'Playfair Display', Georgia, serif; font-size: 16px; }
+        .ur-ta-item > div:nth-child(2) { grid-column: 1; grid-row: 2; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #DCCFB4; }
+        .ur-ta-item > div:nth-child(3) { grid-column: 2; grid-row: 2; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #DCCFB4; text-align: right; }
+        .ur-ta-item > .ur-ta-created-at { grid-row: 3; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #DCCFB4; }
+        .ur-ta-item > .ur-ta-item__actions { grid-row: 4; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #DCCFB4; display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); gap: 8px; }
+        .ur-ta-item__actions form, .ur-ta-item__actions .ur-ta-btn { width: 100%; }
+        .ur-ta-item__actions .ur-ta-btn--sm { height: 40px; }
+        .ur-ta-pill { white-space: normal; text-align: left; }
+        .ur-ta-foot { flex-direction: column; align-items: center; text-align: center; }
+        .ur-ta-pager .pagination { justify-content: center; }
+    }
 </style>
 
 <div class="ur-ta">
