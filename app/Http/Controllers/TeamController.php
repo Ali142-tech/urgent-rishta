@@ -252,9 +252,6 @@ class TeamController extends Controller
                 $q->where('city', 'like', $cityLike)->orWhere('current_city', 'like', $cityLike);
             });
         }
-        if (!empty($request->country)) {
-            $query->where('con_of_residence', $request->country);
-        }
         // marital status, caste and education each accept several values (name[]=a&name[]=b => matches ANY of them); a single value still works
         $many = fn ($v) => array_values(array_filter((array) $v, fn ($x) => $x !== null && $x !== ''));
         if ($vals = $many($request->marital_status)) {
@@ -262,6 +259,12 @@ class TeamController extends Controller
         }
         if ($vals = $many($request->caste)) {
             $query->whereIn('caste_id', $vals);
+        }
+        if ($vals = $many($request->country)) {
+            $query->whereIn('con_of_residence', $vals);
+        }
+        if ($vals = $many($request->nationality)) {
+            $query->whereIn('con_of_citizenship', $vals);
         }
         if ($vals = $many($request->education)) {
             $query->whereIn('education', $vals);
@@ -304,6 +307,11 @@ class TeamController extends Controller
         $typed = Proposal::whereNotNull('con_of_residence')->where('con_of_residence', '!=', '')->distinct()->pluck('con_of_residence')
             ->reject(fn ($n) => isset(config('proposal_options.countries')[$n]) || is_numeric($n))->sort()->values();
         $countries = $countries->concat($typed->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]));
+        // the nationality list, plus any nationality typed by hand that is already on a proposal
+        $nationalities = $this->nationalityOptions();
+        $typedNationalities = Proposal::whereNotNull('con_of_citizenship')->where('con_of_citizenship', '!=', '')->distinct()->pluck('con_of_citizenship')
+            ->reject(fn ($n) => in_array($n, config('proposal_options.nationalities'), true) || is_numeric($n))->sort()->values();
+        $nationalities = $nationalities->concat($typedNationalities->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]));
         $caste = ProposalCaste::options();
         $education = $this->educationOptions();
         // the full profession list, plus any profession typed by hand that is already on a proposal
@@ -316,7 +324,7 @@ class TeamController extends Controller
         $totalNetworkCount = Proposal::count();
 
         return view('team.proposals-search', array_merge($grid, compact(
-            'maritalstatuses', 'countries', 'caste', 'education', 'professions', 'totalNetworkCount'
+            'maritalstatuses', 'countries', 'nationalities', 'caste', 'education', 'professions', 'totalNetworkCount'
         )));
     }
 

@@ -223,10 +223,11 @@
     </div>
 
     @php
-        $activeTab = request('country') ? 'country' : (request('profession') ? 'profession' : 'keyword');
-        $hasMoreFilters = collect(['height_from', 'height_to', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city'])
+        $activeTab = request()->filled('country') ? 'country' : (request('profession') ? 'profession' : 'keyword');
+        $hasMoreFilters = collect(['height_from', 'height_to', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city', 'country', 'nationality'])
             ->contains(fn ($f) => request()->filled($f));
-        $selectedCountry = request('country') ? $countries->firstWhere('dataid', request('country')) : null;
+        $selectedCountries = collect((array) request('country'))->filter()->values();
+        $selectedCountry = $selectedCountries->isNotEmpty() ? (object) ['name' => $selectedCountries->implode(', ')] : null;
     @endphp
 
     <p class="ur-adv-search__network">{{ number_format($totalNetworkCount) }} profile{{ $totalNetworkCount == 1 ? '' : 's' }} in the shared network</p>
@@ -303,6 +304,22 @@
                 <select name="caste[]" class="form-control ur-multi" multiple data-placeholder="Any">
                     @foreach($caste as $cst)
                         <option value="{{ $cst->dataid }}" {{ in_array((string) $cst->dataid, array_map('strval', (array) request('caste')), true) ? 'selected' : '' }}>{{ $cst->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label>Country</label>
+                <select name="country[]" class="form-control ur-multi" multiple data-placeholder="Any">
+                    @foreach($countries as $cty)
+                        <option value="{{ $cty->dataid }}" {{ in_array((string) $cty->dataid, array_map('strval', (array) request('country')), true) ? 'selected' : '' }}>{{ $cty->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label>Nationality</label>
+                <select name="nationality[]" class="form-control ur-multi" multiple data-placeholder="Any">
+                    @foreach($nationalities as $nat)
+                        <option value="{{ $nat->dataid }}" {{ in_array((string) $nat->dataid, array_map('strval', (array) request('nationality')), true) ? 'selected' : '' }}>{{ $nat->name }}</option>
                     @endforeach
                 </select>
             </div>
