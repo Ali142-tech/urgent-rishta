@@ -179,7 +179,8 @@
             </label>
         @endif
         @if($__restricted)
-        <a href="{{ \App\User::SUPPORT_WHATSAPP_URL }}?text={{ rawurlencode('Assalam o Alaikum, I am interested in proposal ' . $member->dataid . '. Please share more details.') }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> WhatsApp admin</a>
+        <a href="{{ \App\User::SUPPORT_WHATSAPP_URL }}?text={{ rawurlencode('Assalam o Alaikum, I am interested in proposal ' . $member->dataid . '. Please share more details.' . "
+" . route('team.proposals.view', $member->dataid)) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> WhatsApp admin</a>
         @endif
         @unless($__restricted)
         <a href="{{ route('team.proposals.share.whatsapp', $member->dataid) }}" target="_blank" rel="noopener"><i class="fa fa-whatsapp"></i> Form only</a>

@@ -136,7 +136,8 @@
         </a>
 
         @if($__restricted)
-        <a class="ur-search-card__btn ur-search-card__btn--whatsapp" href="{{ \App\User::SUPPORT_WHATSAPP_URL }}?text={{ rawurlencode('Assalam o Alaikum, I am interested in proposal ' . $member->dataid . '. Please share more details.') }}" target="_blank" rel="noopener">
+        <a class="ur-search-card__btn ur-search-card__btn--whatsapp" href="{{ \App\User::SUPPORT_WHATSAPP_URL }}?text={{ rawurlencode('Assalam o Alaikum, I am interested in proposal ' . $member->dataid . '. Please share more details.' . "
+" . route('team.proposals.view', $member->dataid)) }}" target="_blank" rel="noopener">
             <i class="fa fa-whatsapp"></i> WhatsApp
         </a>
         @endif
