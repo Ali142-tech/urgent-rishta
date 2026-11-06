@@ -236,6 +236,13 @@ class TeamAdminController extends Controller
         if (!empty($request->matchmaker)) {
             $query->where('added_by', (int) $request->matchmaker);
         }
+        $many = fn ($v) => array_values(array_filter((array) $v, fn ($x) => $x !== null && $x !== ''));
+        if ($vals = $many($request->country)) {
+            $query->whereIn('con_of_residence', $vals);
+        }
+        if ($vals = $many($request->nationality)) {
+            $query->whereIn('con_of_citizenship', $vals);
+        }
 
         $resultCount = (int) (clone $query)->count();
         $numPages = max(1, (int) ceil($resultCount / $pageSize));
@@ -262,7 +269,15 @@ class TeamAdminController extends Controller
 
         $privateCount = Proposal::where('is_private', true)->count();
 
-        return view('team.manage.proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers', 'privateOnly', 'privateCount'));
+        // the lists, plus any value typed by hand that is already on a proposal
+        $typedOf = fn (string $col, array $known) => Proposal::whereNotNull($col)->where($col, '!=', '')->distinct()->pluck($col)
+            ->reject(fn ($n) => in_array($n, $known, true) || is_numeric($n))->sort()->values()->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]);
+        $countryNames = array_keys(config('proposal_options.countries'));
+        $nationalityNames = config('proposal_options.nationalities');
+        $countries = collect($countryNames)->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n])->concat($typedOf('con_of_residence', $countryNames));
+        $nationalities = collect($nationalityNames)->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n])->concat($typedOf('con_of_citizenship', $nationalityNames));
+
+        return view('team.manage.proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers', 'privateOnly', 'privateCount', 'countries', 'nationalities'));
     }
 
     /** Approved team members, with a message box each and suspend / deactivate / reactivate. */

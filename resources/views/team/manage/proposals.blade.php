@@ -10,6 +10,7 @@
 @extends('layouts.team.dashboard')
 @section('dashboard-title', !empty($privateOnly) ? 'Private Proposals' : 'Team Proposals')
 @push('styles')
+<link rel="stylesheet" href="/css/ur-multiselect.css?v={{ filemtime(public_path('css/ur-multiselect.css')) }}">
 <link rel="stylesheet" href="/css/ur-member-card.css?v={{ filemtime(public_path('css/ur-member-card.css')) }}">
 <link rel="stylesheet" href="/css/ur-team-card.css?v={{ filemtime(public_path('css/ur-team-card.css')) }}">
 @endpush
@@ -46,6 +47,9 @@
     .ur-tp-search-btn:hover { background: #0D2C23; }
     .ur-tp-clear-btn { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; border: 1px solid #E7E2D6; border-radius: 10px; background: #fff; font-size: 14px; font-weight: 600; color: #123A2E; text-decoration: none; }
     .ur-tp-clear-btn:hover { background: #F6F4EF; text-decoration: none; }
+    .ur-tp-extra { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .ur-tp-extra .select2-container { width: 100% !important; }
+    @media (max-width: 575px) { .ur-tp-extra { grid-template-columns: minmax(0, 1fr); } }
     @media (max-width: 991px) { .ur-tp-search form { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .ur-tp-search .form-group:first-child { grid-column: 1 / -1; } .ur-tp-actions { grid-column: 1 / -1; } .ur-tp-actions > * { flex: 1 1 0; } }
     @media (max-width: 575px) { .ur-tp-search { padding: 14px; } .ur-tp-search form { grid-template-columns: 1fr; } }
 </style>
@@ -83,14 +87,32 @@
             </div>
             <div class="ur-tp-actions">
                 <button type="submit" class="ur-tp-search-btn"><i class="fa fa-search"></i> Search</button>
-                @if(request()->filled('keyword') || request()->filled('matchmaker'))
+                @if(request()->filled('keyword') || request()->filled('matchmaker') || request()->filled('country') || request()->filled('nationality'))
                 <a href="{{ route(!empty($privateOnly) ? 'team.manage.private-proposals' : 'team.manage.proposals') }}" class="ur-tp-clear-btn">Clear</a>
                 @endif
+            </div>
+            <div class="ur-tp-extra">
+                <div class="form-group">
+                    <label for="tp_country">Country</label>
+                    <select name="country[]" id="tp_country" class="ur-multi" multiple data-placeholder="Any">
+                        @foreach($countries as $cty)
+                            <option value="{{ $cty->dataid }}" {{ in_array((string) $cty->dataid, array_map('strval', (array) request('country')), true) ? 'selected' : '' }}>{{ $cty->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tp_nationality">Nationality</label>
+                    <select name="nationality[]" id="tp_nationality" class="ur-multi" multiple data-placeholder="Any">
+                        @foreach($nationalities as $nat)
+                            <option value="{{ $nat->dataid }}" {{ in_array((string) $nat->dataid, array_map('strval', (array) request('nationality')), true) ? 'selected' : '' }}>{{ $nat->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 
-    @php($__searching = request()->filled('keyword') || request()->filled('matchmaker'))
+    @php($__searching = request()->filled('keyword') || request()->filled('matchmaker') || request()->filled('country') || request()->filled('nationality'))
     <div id="tp-results">
     @include('team.partials.proposal-grid', [
         'members' => $members, 'resultCount' => $resultCount, 'currentPage' => $currentPage, 'numPages' => $numPages,
@@ -115,29 +137,36 @@
         var box = document.getElementById('tp-results');
         var base = form.getAttribute('action');
         var clearBtn = form.querySelector('.ur-tp-clear-btn');
-        var timer = null, xhr = null, last = input.value.trim() + '|' + select.value;
+        var countrySel = form.elements['country[]'], natSel = form.elements['nationality[]'];
+        function multi(sel) { return Array.prototype.filter.call(sel.options, function (o) { return o.selected && o.value !== ''; }).map(function (o) { return o.value; }); }
+        function sig() { return input.value.trim() + '|' + select.value + '|' + multi(countrySel).join(',') + '|' + multi(natSel).join(','); }
+        function anyFilter() { return input.value.trim() !== '' || select.value !== '' || multi(countrySel).length > 0 || multi(natSel).length > 0; }
+        function resetAll() { input.value = ''; select.value = ''; $(countrySel).val(null).trigger('change'); $(natSel).val(null).trigger('change'); }
+        var timer = null, xhr = null, last = sig();
 
         function urlFor() {
             var q = [];
             var term = input.value.trim().replace(/\s+/g, ' ');
             if (term) q.push('keyword=' + encodeURIComponent(term));
             if (select.value) q.push('matchmaker=' + encodeURIComponent(select.value));
+            multi(countrySel).forEach(function (v) { q.push('country[]=' + encodeURIComponent(v)); });
+            multi(natSel).forEach(function (v) { q.push('nationality[]=' + encodeURIComponent(v)); });
             return base + (q.length ? '?' + q.join('&') : '');
         }
         function showClear() {
-            var on = input.value.trim() !== '' || select.value !== '';
+            var on = anyFilter();
             if (clearBtn) { clearBtn.style.display = on ? '' : 'none'; return; }
             if (!on) return;
             clearBtn = document.createElement('a'); clearBtn.className = 'ur-tp-clear-btn'; clearBtn.href = base; clearBtn.textContent = 'Clear';
             form.querySelector('.ur-tp-actions').appendChild(clearBtn);
             bindClear();
         }
-        function bindClear() { if (clearBtn) clearBtn.addEventListener('click', function (e) { e.preventDefault(); input.value = ''; select.value = ''; clearTimeout(timer); run(); input.focus(); }); }
+        function bindClear() { if (clearBtn) clearBtn.addEventListener('click', function (e) { e.preventDefault(); resetAll(); clearTimeout(timer); run(); input.focus(); }); }
         function fail() { box.innerHTML = '<div class="ur-pg-empty"><div class="ur-pg-empty__icon"><i class="fa fa-exclamation-triangle"></i></div><h3>Could not load the proposals</h3><p>Please check your connection and try again.</p></div>'; }
 
         function run() {
             var url = urlFor();
-            last = input.value.trim() + '|' + select.value;
+            last = sig();
             showClear();
             box.innerHTML = '<div class="ur-pg-empty"><div class="ur-pg-empty__icon"><i class="fa fa-spinner fa-spin"></i></div><h3>Searching proposals...</h3><p>Just a moment.</p></div>';
             if (xhr) xhr.abort();
@@ -156,16 +185,18 @@
 
         input.addEventListener('input', function () {
             clearTimeout(timer);
-            timer = setTimeout(function () { if (input.value.trim() + '|' + select.value !== last) run(); }, 350);
+            timer = setTimeout(function () { if (sig() !== last) run(); }, 350);
         });
         select.addEventListener('change', function () { clearTimeout(timer); run(); });
+        $(countrySel).add(natSel).on('change', function () { clearTimeout(timer); if (sig() !== last) run(); });
         form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); run(); });
         bindClear();
         // the empty-state "Clear search" button works the same way
         box.addEventListener('click', function (e) {
             var b = e.target.closest ? e.target.closest('.js-tp-clear') : null;
-            if (!b) return; e.preventDefault(); input.value = ''; select.value = ''; run();
+            if (!b) return; e.preventDefault(); resetAll(); run();
         });
     })();
 </script>
+<script src="/js/ur-multiselect.js?v={{ filemtime(public_path('js/ur-multiselect.js')) }}"></script>
 @endsection
