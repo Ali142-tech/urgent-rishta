@@ -140,6 +140,12 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="sect" class="ur-admin-filters__label">Sect</label>
+                        <select name="sect[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any sect" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
+                            @foreach($filterSects as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="marital_status" class="ur-admin-filters__label">Marital status</label>
                         <select name="marital_status[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any marital status" onchange="javascript:if(!suppressFilterChange)refreshProfiles(true);">
                             @foreach($filterMaritalStatuses as $opt)<option value="{{ $opt->dataid }}">{{ $opt->name }}</option>@endforeach
@@ -261,7 +267,7 @@
         updateClearFiltersVisibility();
     }
 
-    var MORE_FILTERS = ['country', 'profession', 'religion', 'caste', 'marital_status', 'education', 'age_from', 'age_to'];
+    var MORE_FILTERS = ['country', 'profession', 'religion', 'caste', 'sect', 'marital_status', 'education', 'age_from', 'age_to'];
 
     /* the form control for a filter (the multi-selects are named like "country[]"), and how many values it holds */
     function ctl(form, n) { return form.elements[n + "[]"] || form.elements[n]; }

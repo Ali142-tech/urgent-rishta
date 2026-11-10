@@ -273,6 +273,7 @@ class AdminController extends Controller
             ->selectRaw('min(`profession`) as profession')->groupByRaw('lower(`profession`)')->havingRaw('count(*) >= 3')->orderBy('profession')->pluck('profession')->all());
         return [
             'filterCountries' => $byName('COUNTRY'), 'filterReligions' => $byName('RELIGION'), 'filterCastes' => $byName('CASTE'),
+            'filterSects' => collect(app(\App\Services\ProfileWizard::class)->sectOptions())->values()->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n]),
             'filterMaritalStatuses' => $byName('MARITAL_STATUS'), 'filterEducations' => $byName('EDUCATION'), 'filterProfessions' => $professions,
         ];
     }
@@ -717,7 +718,7 @@ class AdminController extends Controller
             }
 
             // Dropdown filters: each is a masterdata id (or, for profession, the saved text).
-            $dropdowns = ['country' => 'con_of_residence', 'religion' => 'religion', 'caste' => 'caste', 'marital_status' => 'marital_status', 'education' => 'education'];
+            $dropdowns = ['country' => 'con_of_residence', 'religion' => 'religion', 'caste' => 'caste', 'marital_status' => 'marital_status', 'education' => 'education', 'sect' => 'sect'];
             $hasDropdown = false;
             foreach ($dropdowns as $input => $column) {
                 $vals = $many($request->input($input));

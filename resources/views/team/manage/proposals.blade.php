@@ -87,7 +87,7 @@
             </div>
             <div class="ur-tp-actions">
                 <button type="submit" class="ur-tp-search-btn"><i class="fa fa-search"></i> Search</button>
-                @if(request()->filled('keyword') || request()->filled('matchmaker') || request()->filled('country') || request()->filled('nationality'))
+                @if(request()->filled('keyword') || request()->filled('matchmaker') || request()->filled('country') || request()->filled('nationality') || request()->filled('sect'))
                 <a href="{{ route(!empty($privateOnly) ? 'team.manage.private-proposals' : 'team.manage.proposals') }}" class="ur-tp-clear-btn">Clear</a>
                 @endif
             </div>
@@ -108,11 +108,19 @@
                         @endforeach
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="tp_sect">Sect</label>
+                    <select name="sect[]" id="tp_sect" class="ur-multi" multiple data-placeholder="Any">
+                        @foreach($sects as $sectName)
+                            <option value="{{ $sectName }}" {{ in_array($sectName, array_map('strval', (array) request('sect')), true) ? 'selected' : '' }}>{{ $sectName }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
         </form>
     </div>
 
-    @php($__searching = request()->filled('keyword') || request()->filled('matchmaker') || request()->filled('country') || request()->filled('nationality'))
+    @php($__searching = request()->filled('keyword') || request()->filled('matchmaker') || request()->filled('country') || request()->filled('nationality') || request()->filled('sect'))
     <div id="tp-results">
     @include('team.partials.proposal-grid', [
         'members' => $members, 'resultCount' => $resultCount, 'currentPage' => $currentPage, 'numPages' => $numPages,
@@ -137,11 +145,11 @@
         var box = document.getElementById('tp-results');
         var base = form.getAttribute('action');
         var clearBtn = form.querySelector('.ur-tp-clear-btn');
-        var countrySel = form.elements['country[]'], natSel = form.elements['nationality[]'];
+        var countrySel = form.elements['country[]'], natSel = form.elements['nationality[]'], sectSel = form.elements['sect[]'];
         function multi(sel) { return Array.prototype.filter.call(sel.options, function (o) { return o.selected && o.value !== ''; }).map(function (o) { return o.value; }); }
-        function sig() { return input.value.trim() + '|' + select.value + '|' + multi(countrySel).join(',') + '|' + multi(natSel).join(','); }
-        function anyFilter() { return input.value.trim() !== '' || select.value !== '' || multi(countrySel).length > 0 || multi(natSel).length > 0; }
-        function resetAll() { input.value = ''; select.value = ''; $(countrySel).val(null).trigger('change'); $(natSel).val(null).trigger('change'); }
+        function sig() { return input.value.trim() + '|' + select.value + '|' + multi(countrySel).join(',') + '|' + multi(natSel).join(',') + '|' + multi(sectSel).join(','); }
+        function anyFilter() { return input.value.trim() !== '' || select.value !== '' || multi(countrySel).length > 0 || multi(natSel).length > 0 || multi(sectSel).length > 0; }
+        function resetAll() { input.value = ''; select.value = ''; $(countrySel).val(null).trigger('change'); $(natSel).val(null).trigger('change'); $(sectSel).val(null).trigger('change'); }
         var timer = null, xhr = null, last = sig();
 
         function urlFor() {
@@ -151,6 +159,7 @@
             if (select.value) q.push('matchmaker=' + encodeURIComponent(select.value));
             multi(countrySel).forEach(function (v) { q.push('country[]=' + encodeURIComponent(v)); });
             multi(natSel).forEach(function (v) { q.push('nationality[]=' + encodeURIComponent(v)); });
+            multi(sectSel).forEach(function (v) { q.push('sect[]=' + encodeURIComponent(v)); });
             return base + (q.length ? '?' + q.join('&') : '');
         }
         function showClear() {
@@ -188,7 +197,7 @@
             timer = setTimeout(function () { if (sig() !== last) run(); }, 350);
         });
         select.addEventListener('change', function () { clearTimeout(timer); run(); });
-        $(countrySel).add(natSel).on('change', function () { clearTimeout(timer); if (sig() !== last) run(); });
+        $(countrySel).add(natSel).add(sectSel).on('change', function () { clearTimeout(timer); if (sig() !== last) run(); });
         form.addEventListener('submit', function (e) { e.preventDefault(); clearTimeout(timer); run(); });
         bindClear();
         // the empty-state "Clear search" button works the same way

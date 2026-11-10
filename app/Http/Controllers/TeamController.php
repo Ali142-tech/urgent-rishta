@@ -269,6 +269,9 @@ class TeamController extends Controller
         if ($vals = $many($request->education)) {
             $query->whereIn('education', $vals);
         }
+        if ($vals = $many($request->sect)) {
+            $query->whereIn('sect', $vals);
+        }
         if (!empty($request->current_city)) {
             $query->where('current_city', 'like', '%' . $request->current_city . '%');
         }
@@ -325,7 +328,7 @@ class TeamController extends Controller
 
         return view('team.proposals-search', array_merge($grid, compact(
             'maritalstatuses', 'countries', 'nationalities', 'caste', 'education', 'professions', 'totalNetworkCount'
-        )));
+        ) + ['sects' => app(\App\Services\ProfileWizard::class)->sectOptions()]));
     }
 
     /**

@@ -224,7 +224,7 @@
 
     @php
         $activeTab = request()->filled('country') ? 'country' : (request('profession') ? 'profession' : 'keyword');
-        $hasMoreFilters = collect(['height_from', 'height_to', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city', 'country', 'nationality'])
+        $hasMoreFilters = collect(['height_from', 'height_to', 'gender', 'aged_from', 'aged_to', 'caste', 'marital_status', 'education', 'city', 'current_city', 'country', 'nationality', 'sect'])
             ->contains(fn ($f) => request()->filled($f));
         $selectedCountries = collect((array) request('country'))->filter()->values();
         $selectedCountry = $selectedCountries->isNotEmpty() ? (object) ['name' => $selectedCountries->implode(', ')] : null;
@@ -304,6 +304,14 @@
                 <select name="caste[]" class="form-control ur-multi" multiple data-placeholder="Any">
                     @foreach($caste as $cst)
                         <option value="{{ $cst->dataid }}" {{ in_array((string) $cst->dataid, array_map('strval', (array) request('caste')), true) ? 'selected' : '' }}>{{ $cst->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div>
+                <label>Sect</label>
+                <select name="sect[]" class="form-control ur-multi" multiple data-placeholder="Any">
+                    @foreach($sects as $sectName)
+                        <option value="{{ $sectName }}" {{ in_array($sectName, array_map('strval', (array) request('sect')), true) ? 'selected' : '' }}>{{ $sectName }}</option>
                     @endforeach
                 </select>
             </div>

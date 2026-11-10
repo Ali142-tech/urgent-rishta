@@ -243,6 +243,9 @@ class TeamAdminController extends Controller
         if ($vals = $many($request->nationality)) {
             $query->whereIn('con_of_citizenship', $vals);
         }
+        if ($vals = $many($request->sect)) {
+            $query->whereIn('sect', $vals);
+        }
 
         $resultCount = (int) (clone $query)->count();
         $numPages = max(1, (int) ceil($resultCount / $pageSize));
@@ -277,7 +280,7 @@ class TeamAdminController extends Controller
         $countries = collect($countryNames)->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n])->concat($typedOf('con_of_residence', $countryNames));
         $nationalities = collect($nationalityNames)->map(fn ($n) => (object) ['dataid' => $n, 'name' => $n])->concat($typedOf('con_of_citizenship', $nationalityNames));
 
-        return view('team.manage.proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers', 'privateOnly', 'privateCount', 'countries', 'nationalities'));
+        return view('team.manage.proposals', compact('members', 'resultCount', 'currentPage', 'numPages', 'matchmakers', 'privateOnly', 'privateCount', 'countries', 'nationalities') + ['sects' => app(\App\Services\ProfileWizard::class)->sectOptions()]);
     }
 
     /** Approved team members, with a message box each and suspend / deactivate / reactivate. */
