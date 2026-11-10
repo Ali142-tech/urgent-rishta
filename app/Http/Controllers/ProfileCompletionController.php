@@ -37,6 +37,16 @@ class ProfileCompletionController extends Controller
                     if (!empty($field['keepCurrent']) && !empty($values[$field['name']]) && !array_key_exists($values[$field['name']], $field['choices'])) {
                         $field['choices'] = [$values[$field['name']] => $values[$field['name']] . ' (current)'] + $field['choices'];
                     }
+                    // outside Pakistan: show each income range in the visitor's own currency instead of PKR (approximate; the saved value stays the PKR text)
+                    if ($field['name'] === 'salary') {
+                        $fx = app(\App\Services\CurrencyService::class);
+                        foreach ($field['choices'] as $ck => $cl) {
+                            $approx = $fx->approxIncomeRange((string) $ck, $request);
+                            if ($approx) {
+                                $field['choices'][$ck] = $approx;   // local currency only; the option value (key) stays the PKR text
+                            }
+                        }
+                    }
                 }
             }
             unset($field);

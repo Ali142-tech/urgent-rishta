@@ -923,6 +923,16 @@
                                             </select>
                                         </div>
                                     </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group has-feedback">
+                                            <label for="" class="text-uppercase"><i class="fa fa-moon-o"></i> Sect</label>
+                                            <select name="sect[]" multiple class="form-control form-control-sm ur-multi" data-placeholder="Any sect" data-dropdown-parent="#search_filters_modal">
+                                                @foreach($sects as $sectName)
+                                                <option value="{{ $sectName }}" {{ in_array($sectName, array_map('strval', (array) request()->sect), true) ? 'selected="selected"' : '' }}>{{ $sectName }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

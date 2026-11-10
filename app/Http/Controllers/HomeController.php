@@ -331,6 +331,9 @@ class HomeController extends Controller {
                 if ($vals = $many($request->mother_tongue)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`mother_tongue` IN (".$inList($vals).")");
                 }
+                if ($vals = $many($request->sect)) {
+                    $where = $where.((empty($where) ? "" : " and ")."`u`.`sect` IN (".$inList($vals).")");
+                }
                 if ($vals = $many($request->caste)) {
                     $where = $where.((empty($where) ? "" : " and ")."`u`.`caste` IN (".$inList($vals).")");
                 }
@@ -360,7 +363,7 @@ class HomeController extends Controller {
             $hasNarrowFilters = $request->filled('member_id') || $request->filled('aged_from') || $request->filled('aged_to')
                 || $request->filled('first_name') || $request->filled('profession') || $request->filled('religion')
                 || $request->filled('city') || $request->filled('state') || $request->filled('country')
-                || $request->filled('marital_status') || $request->filled('mother_tongue') || $request->filled('caste')
+                || $request->filled('marital_status') || $request->filled('mother_tongue') || $request->filled('caste') || $request->filled('sect')
                 || $request->filled('withpics');
 
             if ($resultCount == 0 && !empty($loggedInUser) && !$hasNarrowFilters) {
@@ -398,6 +401,7 @@ class HomeController extends Controller {
                 'maritalstatuses' => $maritalstatuses,
                 'countries' => $countries,
                 'caste' => $caste,
+                'sects' => app(\App\Services\ProfileWizard::class)->sectOptions(),
                 'selectedGender' => $selectedGender,
                 'completeness' => $completeness,
                 'recommendedMatches' => $recommendedMatches,

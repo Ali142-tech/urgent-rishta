@@ -1105,7 +1105,7 @@
                                                 <div><span>Occupation</span><b>{{$profile->profession ?: '—'}}</b></div>
                                                 <div><span>Designation</span><b>{{$profile->designation ?: '—'}}</b></div>
                                                 <div><span>Company</span><b>{{$profile->companyname ?: '—'}}</b></div>
-                                                <div><span>Annual Income</span><b>{{$profile->salary ?: '—'}}</b></div>
+                                                <div><span>Annual Income</span><b>{{ ($profile->salary ? app(\App\Services\CurrencyService::class)->approxIncomeRange($profile->salary, request()) : null) ?: ($profile->salary ?: '—') }}</b></div>
                                             </div>
                                         </div>
 
@@ -1175,7 +1175,8 @@
                                                             <select name="salary" class="form-control form-control-sm selectpicker" data-placeholder="Choose an income range" data-hide-disabled="true">
                                                                 <option value="">Choose one</option>
                                                                 @if(!empty($profile->salary) && !array_key_exists($profile->salary, $incomeRanges))<option value="{{ $profile->salary }}" selected>{{ $profile->salary }} (current)</option>@endif
-                                                                @foreach($incomeRanges as $range)<option value="{{ $range }}" {{ $profile->salary == $range ? 'selected' : '' }}>{{ $range }}</option>@endforeach
+                                                                @php($__fx = app(\App\Services\CurrencyService::class))
+                                                                @foreach($incomeRanges as $range)<option value="{{ $range }}" {{ $profile->salary == $range ? 'selected' : '' }}>{{ $__fx->approxIncomeRange($range, request()) ?: $range }}</option>@endforeach
                                                             </select>
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
@@ -2017,7 +2018,12 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group has-feedback">
                                                             <label for="sect" class="text-uppercase c-gray-light">Sect</label>
-                                                            <input type="text" class="form-control no-resize" name="sect" value="{{$profile->sect}}" required="required">
+                                                            @php($__sects = app(\App\Services\ProfileWizard::class)->sectOptions())
+                                                            <select name="sect" class="form-control form-control-sm selectpicker" data-placeholder="Choose your sect" data-hide-disabled="true" required="required">
+                                                                <option value="">Choose one</option>
+                                                                @if(!empty($profile->sect) && !array_key_exists($profile->sect, $__sects))<option value="{{ $profile->sect }}" selected>{{ $profile->sect }} (current)</option>@endif
+                                                                @foreach($__sects as $__s)<option value="{{ $__s }}" {{ $profile->sect == $__s ? 'selected' : '' }}>{{ $__s }}</option>@endforeach
+                                                            </select>
                                                             <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                                                             <div class="help-block with-errors"></div>
                                                         </div>

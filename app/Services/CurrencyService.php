@@ -192,4 +192,49 @@ class CurrencyService
         $currency = $this->currencyFor($country);
         return $currency['symbol'] . number_format((int) round($flatForeignAmount));
     }
+    /** Symbols for the "≈" income line; any currency not listed is shown with its ISO code in front. */
+    protected const SYMBOLS = [
+        'USD' => '$', 'GBP' => '£', 'EUR' => '€', 'CAD' => 'CA$', 'AUD' => 'A$', 'NZD' => 'NZ$', 'INR' => '₹',
+        'SAR' => 'SAR ', 'AED' => 'AED ', 'QAR' => 'QAR ', 'KWD' => 'KWD ', 'OMR' => 'OMR ', 'BHD' => 'BHD ',
+    ];
+
+    /**
+     * For the "Monthly income range" answers, which are saved as PKR text ("PKR 50,000 – 100,000", "PKR Below 50,000",
+     * "PKR Above 5,000,000"): the same range in the visitor's own currency, e.g. "≈ $180 – $360". Display only: the saved
+     * value never changes. Null in Pakistan, for answers that are not a PKR range ("No Income / Student"), or when the live
+     * rate is unavailable (the page then simply shows the PKR text).
+     */
+    public function approxIncomeRange(?string $range, Request $request): ?string
+    {
+        if ($range === null || stripos($range, 'PKR') === false) {
+            return null;
+        }
+        preg_match_all('/\d[\d,]*/', $range, $m);
+        $nums = array_map(fn ($n) => (float) str_replace(',', '', $n), $m[0]);
+        if (empty($nums)) {
+            return null;
+        }
+        $lo = $nums[0];
+        $hi = $nums[1] ?? null;
+
+        $first = $this->convert($lo, 'PKR', $request);
+        if ($first === null) {
+            return null;
+        }
+        $code = $first['currency'];
+        $symbol = self::SYMBOLS[$code] ?? ($code . ' ');
+        $rate = $first['rate'];
+        $fmt = function (float $pkr) use ($rate, $symbol) {
+            $v = $pkr * $rate;
+            $step = $v >= 100000 ? 1000 : ($v >= 1000 ? 100 : 10);
+            return $symbol . number_format((int) (round($v / $step) * $step));
+        };
+
+        if ($hi !== null) {
+            return '≈ ' . $fmt($lo) . ' – ' . $fmt($hi);
+        }
+        return stripos($range, 'below') !== false || stripos($range, 'under') !== false
+            ? '≈ below ' . $fmt($lo)
+            : '≈ above ' . $fmt($lo);
+    }
 }

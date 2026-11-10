@@ -1195,7 +1195,7 @@
                                 @if(!empty($profile->profession))<div><span>Profession</span><b>{{ $profile->profession }}</b></div>@endif
                                 @if(!empty($profile->designation))<div><span>Designation</span><b>{{ $profile->designation }}</b></div>@endif
                                 @if(!empty($profile->companyname))<div><span>Company</span><b>{{ $profile->companyname }}</b></div>@endif
-                                @if(!empty($profile->salary))<div><span>Income Range</span><b>{{ $profile->salary }}</b></div>@endif
+                                @if(!empty($profile->salary))<div><span>Income Range</span><b>{{ app(\App\Services\CurrencyService::class)->approxIncomeRange($profile->salary, request()) ?: $profile->salary }}</b></div>@endif
                             </div>
                         </div>
                         @endif

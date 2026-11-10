@@ -95,6 +95,7 @@ class CmsAdminController extends Controller
             'title.required' => 'Please enter the page title.',
             'body.required' => 'Please write the page text.',
         ]);
+        
 
         $page->title = trim($data['title']);
         $page->body = HtmlSanitizer::clean($data['body']);
@@ -107,6 +108,7 @@ class CmsAdminController extends Controller
         $page->save();
         Log::info('Admin ' . Auth::user()->dataid . ' saved CMS page ' . $page->slug);
     }
+
 
     private function uniqueSlug(string $base, ?int $ignoreId): string
     {

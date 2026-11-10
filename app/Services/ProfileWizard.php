@@ -24,6 +24,11 @@ class ProfileWizard
         'diet' => ['Vegetarian' => 'Vegetarian', 'Non-Vegetarian' => 'Non-Vegetarian', 'Eggetarian' => 'Eggetarian', 'Vegan' => 'Vegan'],
         'exercise' => ['Regularly' => 'Regularly', 'Occasionally' => 'Occasionally', 'Never' => 'Never'],
         'living_arrangement' => ['With Family' => 'With Family', 'Alone' => 'Alone', 'With Roommates' => 'With Roommates', 'Other' => 'Other'],
+        // Muslim sect, in the client's order (saved as the text shown)
+        'sect' => [
+            'Sunni' => 'Sunni', 'Sunni Barelvi' => 'Sunni Barelvi', 'Deobandi' => 'Deobandi', 'Ahle Hadith' => 'Ahle Hadith',
+            'Shia' => 'Shia', 'Shia Ismaili' => 'Shia Ismaili', 'Dawoodi Bohra' => 'Dawoodi Bohra', 'Prefer Not say' => 'Prefer Not say',
+        ],
         // monthly income range, in the client's order (saved as the text shown)
         'income_range' => [
             'No Income / Student' => 'No Income / Student', 'PKR Below 50,000' => 'PKR Below 50,000', 'PKR 50,000 – 100,000' => 'PKR 50,000 – 100,000',
@@ -55,6 +60,12 @@ class ProfileWizard
 
     /** @var array<string, array<string,string>> masterdata lists by type, loaded once per request */
     private array $masterCache = [];
+
+    /** The sects offered, in order (value = the text that is saved). Used by the member forms and the team proposal form. */
+    public function sectOptions(): array
+    {
+        return self::SIMPLE_SELECTS['sect'];
+    }
 
     /** The monthly income ranges offered, in order (value = the text that is saved). */
     public function incomeRanges(): array
@@ -183,7 +194,7 @@ class ProfileWizard
                 $f('religion', 'Religion', 'select', true, ['master' => 'RELIGION']),
                 $f('caste', 'Caste / community', 'caste', true, ['depends' => 'religion']),
                 // Sect only applies to Muslim members: shown (and required) only then
-                $f('sect', 'Sect', 'text', false, ['max' => 100, 'requiredWhen' => ['religion', $this->muslimId()], 'showWhen' => ['religion', $this->muslimId()]]),
+                $f('sect', 'Sect', 'select', false, ['source' => 'sect', 'keepCurrent' => true, 'requiredWhen' => ['religion', $this->muslimId()], 'showWhen' => ['religion', $this->muslimId()]]),
             ]],
             ['key' => 'origin', 'title' => 'Origin & Citizenship', 'icon' => 'fa-globe', 'desc' => 'Where you were born and your citizenship.', 'fields' => [
                 $f('con_of_birth', 'Country of birth', 'country', true),

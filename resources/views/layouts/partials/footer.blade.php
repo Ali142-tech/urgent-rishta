@@ -210,6 +210,8 @@
         .ur-footer-col--bordered { border-left: 0; padding-left: 0; }
     }
     @media (max-width: 575px) {
+        /* phones: the Main Menu links are already in the top menu, so the footer skips them to stay short */
+        .ur-footer-col--mainmenu { display: none; }
         .ur-footer-grid { grid-template-columns: 1fr; text-align: center; }
         .ur-footer-desc { max-width: 320px; margin-left: auto; margin-right: auto; }
         .ur-footer-social-line { flex-basis: 40px; }
@@ -237,7 +239,7 @@
                     <div class="ur-footer-heart-divider" aria-hidden="true"><span></span><i class="fa fa-heart"></i><span></span></div>
                 </div>
 
-                <div class="ur-footer-col">
+                <div class="ur-footer-col ur-footer-col--mainmenu">
                     <h4 class="ur-footer-heading">Main Menu</h4>
                     <div class="ur-footer-underline" aria-hidden="true"><span></span><i class="fa fa-diamond"></i><span></span></div>
                     <ul class="ur-footer-iconlist">

@@ -442,7 +442,10 @@
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_sect">
                             <label>Sect</label>
-                            <input type="text" name="sect" form="af_form" class="form-control" required>
+                            <select name="sect" form="af_form" class="form-control" required>
+                                <option value="">Select sect</option>
+                                @foreach(app(\App\Services\ProfileWizard::class)->sectOptions() as $__s)<option value="{{ $__s }}" {{ old('sect') == $__s ? 'selected' : '' }}>{{ $__s }}</option>@endforeach
+                            </select>
                             <p class="ur-pp-review__err">Not detected — please fill.</p>
                         </div>
                         <div class="ur-pp-review__field" id="pp_field_country">
@@ -836,9 +839,34 @@ function urCopyTemplate(event) {
         setPrefHeightSelect('pref_height_min', min);
         setPrefHeightSelect('pref_height_max', max);
     }
+    // Sect is a fixed list: map free text (pasted form / AI / an older saved value) to the matching option; an unknown value is kept as an extra option so nothing is lost
+    function normSect(v) {
+        var t = String(v || '').toLowerCase();
+        if (/barelvi|barelwi|brelvi/.test(t)) return 'Sunni Barelvi';
+        if (/deoband/.test(t)) return 'Deobandi';
+        if (/ahle[\s-]*hadith|ahl[\s-]*e[\s-]*hadith|salafi/.test(t)) return 'Ahle Hadith';
+        if (/dawoodi|dawudi|bohra/.test(t)) return 'Dawoodi Bohra';
+        if (/ismaili/.test(t)) return 'Shia Ismaili';
+        if (/\bshia\b|\bshiite\b/.test(t)) return 'Shia';
+        if (/\bsunni\b/.test(t)) return 'Sunni';
+        if (/prefer\s+not/.test(t)) return 'Prefer Not say';
+        return '';
+    }
+    function setSect(el, value) {
+        var canon = normSect(value);
+        if (!canon) {
+            canon = String(value).trim();
+            if (!Array.from(el.options).some(function (o) { return o.value === canon; })) {
+                var op = document.createElement('option'); op.value = canon; op.textContent = canon + ' (current)'; el.appendChild(op);
+            }
+        }
+        el.value = canon;
+        if (typeof refreshSelect === 'function') refreshSelect(el);
+    }
     function setVal(name, value) {
         var el = document.querySelector('[name="' + name + '"]');
         if (el && value !== undefined && value !== null && String(value).trim() !== '') {
+            if (name === 'sect' && el.tagName === 'SELECT') { setSect(el, value); return; }
             if (el.tagName === 'SELECT' && el.dataset.other) { pickOrOther(el, value); return; }
             if (el.tagName === 'SELECT' && el.dataset.height) { setHeightSelect(el, value); return; }
             if (el.tagName === 'SELECT' && el.dataset.city) { setCitySelect(el, value); return; }
@@ -1230,11 +1258,7 @@ function urCopyTemplate(event) {
         else if (/\bwidow(ed)?\b/i.test(rawText)) { if (selectFuzzy('marital_status', 'Widow')) filled++; }
         else if (/\bmarried\b/i.test(rawText)) { if (selectFuzzy('marital_status', 'Married')) filled++; }
 
-        var muslimSects = ['Sunni', 'Shia', 'Ahmadi', 'Ismaili', 'Bohra'];
-        var sectFound = null;
-        for (var s = 0; s < muslimSects.length; s++) {
-            if (new RegExp('\\b' + muslimSects[s] + '\\b', 'i').test(rawText)) { sectFound = muslimSects[s]; break; }
-        }
+        var sectFound = normSect(rawText) || null;
         if (sectFound) {
             setVal('sect', sectFound);
             filled++;
