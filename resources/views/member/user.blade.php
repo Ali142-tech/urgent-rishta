@@ -1172,6 +1172,7 @@
                                                         <div class="form-group has-feedback">
                                                             <label for="salary" class="text-uppercase c-gray-light">Monthly Income Range</label>
                                                             @php($incomeRanges = app(\App\Services\ProfileWizard::class)->incomeRanges())
+                                                            @include('member.partials.income-currency', ['selectClass' => 'form-control form-control-sm'])
                                                             <select name="salary" class="form-control form-control-sm selectpicker" data-placeholder="Choose an income range" data-hide-disabled="true">
                                                                 <option value="">Choose one</option>
                                                                 @if(!empty($profile->salary) && !array_key_exists($profile->salary, $incomeRanges))<option value="{{ $profile->salary }}" selected>{{ $profile->salary }} (current)</option>@endif

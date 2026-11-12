@@ -198,6 +198,33 @@ class CurrencyService
         'SAR' => 'SAR ', 'AED' => 'AED ', 'QAR' => 'QAR ', 'KWD' => 'KWD ', 'OMR' => 'OMR ', 'BHD' => 'BHD ',
     ];
 
+    /** Currencies offered next to the "Monthly income range" dropdown: code => label. */
+    public const INCOME_CURRENCIES = [
+        'PKR' => 'Pakistan — PKR', 'GBP' => 'United Kingdom — GBP', 'USD' => 'USA — USD', 'AED' => 'UAE — AED',
+        'SAR' => 'Saudi Arabia — SAR', 'CAD' => 'Canada — CAD', 'AUD' => 'Australia — AUD', 'EUR' => 'Europe — EUR',
+    ];
+
+    /**
+     * Data for the income currency picker: the choices, the currency to start on (the visitor's own, if offered, else PKR
+     * in Pakistan / USD elsewhere), and a live PKR→currency rate for each. A currency whose rate can't be fetched is left out.
+     *
+     * @return array{default:string, currencies:array<string,array{label:string,symbol:string,rate:float}>}
+     */
+    public function incomeCurrencyOptions(Request $request): array
+    {
+        $local = $this->localCurrencyFor($request);
+        $out = [];
+        foreach (self::INCOME_CURRENCIES as $code => $label) {
+            $rate = $code === 'PKR' ? 1.0 : $this->exchangeRate('PKR', $code);
+            if ($rate === null) {
+                continue;
+            }
+            $out[$code] = ['label' => $label, 'symbol' => $code === 'PKR' ? 'PKR ' : (self::SYMBOLS[$code] ?? ($code . ' ')), 'rate' => $rate];
+        }
+        $default = isset($out[$local]) ? $local : (isset($out['USD']) ? 'USD' : 'PKR');
+        return ['default' => $default, 'currencies' => $out];
+    }
+
     /**
      * For the "Monthly income range" answers, which are saved as PKR text ("PKR 50,000 – 100,000", "PKR Below 50,000",
      * "PKR Above 5,000,000"): the same range in the visitor's own currency, e.g. "≈ $180 – $360". Display only: the saved
