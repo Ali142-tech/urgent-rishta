@@ -301,6 +301,28 @@ $packageIcon = match ($packageSlug) {
                         <span><i class="fa fa-heart"></i> Express Interest</span>
                     </a>
                 @endif
+
+                {{-- Chat: opens the conversation once one of the two has accepted the other's interest; before that it explains why it is not open yet --}}
+                @if(!empty($member->id) && (int) $member->id !== (int) Auth::id())
+                    @if(app(\App\Services\ChatService::class)->canChatWithId(User::retrieveUserObject(), (int) $member->id))
+                        <a class="is-chat" href="{{ route('member.chat', ['with' => $member->dataid]) }}" title="Chat with {{ $member->first_name }}">
+                            <i class="fa fa-comments"></i> <span>Chat</span>
+                        </a>
+                    @else
+                        <a class="is-chat is-chat--locked" onclick="return urChatLocked();" title="Chat opens after an interest is accepted">
+                            <i class="fa fa-comments"></i> <span>Chat</span>
+                        </a>
+                    @endif
+                    @once
+                    <script>
+                    function urChatLocked() {
+                        var t = 'Chat is not open yet', m = 'You can chat with this member once one of you has accepted the other\'s interest. Send an interest to get started.';
+                        if (typeof swal === 'function') { swal({ title: t, text: m, icon: 'info' }); } else { alert(t + '\n\n' + m); }
+                        return false;
+                    }
+                    </script>
+                    @endonce
+                @endif
             @endauth
             @endif
         @endif

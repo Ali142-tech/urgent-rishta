@@ -1154,6 +1154,21 @@
                          Profile model) — static, clearly-labelled for now. --}}
                     <a class="ur-mp-btn ur-mp-btn--outline" onclick="shortlistComingSoon();"><i class="fa fa-bookmark-o"></i> Shortlist</a>
 
+                    {{-- Member-to-member chat: opens once one side has accepted the other's interest --}}
+                    @auth
+                        @php
+                            $__chatMe = User::retrieveUserObject();
+                            $__chatOther = User::retrieveUserObject($profile->dataid);
+                        @endphp
+                        @if($__chatOther && (int) $__chatOther->id !== (int) $__chatMe->id)
+                            @if(app(\App\Services\ChatService::class)->canChat($__chatMe, $__chatOther))
+                                <a class="ur-mp-btn ur-mp-btn--solid" href="{{ route('member.chat', ['with' => $profile->dataid]) }}"><i class="fa fa-comments"></i> Chat</a>
+                            @else
+                                <a class="ur-mp-btn ur-mp-btn--outline" onclick="chatLocked();"><i class="fa fa-comments-o"></i> Chat</a>
+                            @endif
+                        @endif
+                    @endauth
+
                     {{-- No relationship-manager chat exists yet — same
                          static, clearly-labelled treatment. --}}
                     <a class="ur-mp-btn ur-mp-btn--outline" onclick="chatComingSoon();"><i class="fa fa-headphones"></i> Ask Matchmaker</a>
@@ -1504,6 +1519,14 @@
     function mpGoToTab(id) {
         $('#mp_tabs a[href="#' + id + '"]').tab('show');
         document.getElementById('mp_tabs').scrollIntoView({behavior: 'smooth', block: 'start'});
+    }
+
+    function chatLocked() {
+        swal({
+            'title': 'Chat is not open yet',
+            'text': 'You can chat with this member once one of you has accepted the other\'s interest. Send an interest to get started.',
+            'icon': 'info',
+        });
     }
 
     function chatComingSoon() {

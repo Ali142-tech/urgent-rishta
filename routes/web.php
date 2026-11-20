@@ -264,6 +264,13 @@ Route::post('member/profile/filtered/{action}/{type}/{id}', [App\Http\Controller
 // interest route
 Route::post('member/profile/interest/{action}/{id}', [App\Http\Controllers\ProfileController::class, 'updateInterest']);
 Route::post('member/profile/interest/{action}/{id}/{who}', [App\Http\Controllers\ProfileController::class, 'updateInterest']);
+// member-to-member chat (only between members with an accepted interest — see App\Services\ChatService)
+Route::get('member/chat', [App\Http\Controllers\ChatController::class, 'index'])->name('member.chat');
+Route::get('member/chat/conversations', [App\Http\Controllers\ChatController::class, 'conversations'])->name('member.chat.conversations');
+Route::get('member/chat/unread', [App\Http\Controllers\ChatController::class, 'unread'])->name('member.chat.unread');
+Route::post('member/chat/pusher-auth', [App\Http\Controllers\ChatController::class, 'pusherAuth'])->name('member.chat.pusher-auth');
+Route::get('member/chat/{dataid}/messages', [App\Http\Controllers\ChatController::class, 'messages'])->name('member.chat.messages');
+Route::post('member/chat/{dataid}/send', [App\Http\Controllers\ChatController::class, 'send'])->middleware('throttle:40,1')->name('member.chat.send');
 // photo access request route (request/grant/decline a hidden photo, or withdraw one you sent/granted)
 Route::post('member/profile/photoaccess/{action}/{id}', [App\Http\Controllers\ProfileController::class, 'updatePhotoAccess']);
 Route::post('member/profile/photoaccess/{action}/{id}/{who}', [App\Http\Controllers\ProfileController::class, 'updatePhotoAccess']);

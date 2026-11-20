@@ -226,7 +226,14 @@
                     <button type="button" class="pg-btn--outline pg-btn--small" id="pg_selfie_capture" style="display:none;" onclick="pgCaptureSelfie()">
                         <i class="fa fa-circle" aria-hidden="true"></i> Capture
                     </button>
+                    {{-- Plan B for browsers that cannot open a live camera (e.g. the in-app browser of Instagram / Facebook / WhatsApp on iPhone):
+                         opens the phone's own camera app and sends the photo it takes. --}}
+                    <button type="button" class="pg-btn--outline" id="pg_selfie_native" style="display:none;" onclick="document.getElementById('pg_selfie_file').click()">
+                        <i class="fa fa-camera" aria-hidden="true"></i> Take selfie with phone camera
+                    </button>
+                    <input type="file" id="pg_selfie_file" accept="image/*" capture="user" style="display:none;">
                 </div>
+                <p id="pg_selfie_native_note" style="display:none;text-align:center;font-size:13px;opacity:.8;margin:8px 0 0;">Your browser cannot open the live camera here, so we will use your phone's camera app instead. Take a clear selfie of your face.</p>
             </div>
 
             <div id="pg_selfie_done" @if(!($hasSelfie ?? false)) style="display:none;" @endif>
@@ -340,7 +347,9 @@
 
     window.pgStartCamera = function() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            if (typeof showAlert === 'function') showAlert('danger', 'Your browser does not support camera capture. Please try again from a different browser or device — this step is required to continue.');
+            // no live camera in this browser (typical for in-app browsers on iPhone): use the phone's camera app instead.
+            // This runs inside the tap on "Turn on camera", so the browser lets the file chooser open straight away.
+            showNativeSelfie(true);
             return;
         }
         navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
@@ -352,9 +361,37 @@
                 document.getElementById('pg_selfie_capture').style.display = 'inline-flex';
             })
             .catch(function() {
-                if (typeof showAlert === 'function') showAlert('danger', 'Could not access your camera. Please allow camera access in your browser settings — this step is required to continue.');
+                if (typeof showAlert === 'function') showAlert('danger', 'Could not access your camera. Please allow camera access in your browser settings, or use the "Take selfie with phone camera" button.');
+                showNativeSelfie(false);
             });
     };
+
+    function showNativeSelfie(openNow) {
+        document.getElementById('pg_selfie_native').style.display = 'inline-flex';
+        document.getElementById('pg_selfie_native_note').style.display = 'block';
+        if (openNow) { document.getElementById('pg_selfie_file').click(); }
+    }
+
+    // A photo taken with the phone's own camera: shrink it (phone photos are big, and may be HEIC) and send it like a captured selfie.
+    document.getElementById('pg_selfie_file').addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        this.value = '';
+        if (!file) return;
+        var MAX = 1280;
+        function fail() { if (typeof showAlert === 'function') showAlert('danger', 'Could not read that photo. Please try again.'); }
+        function draw(source, w, h) {
+            var scale = Math.min(1, MAX / Math.max(w, h));
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+            canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(function(blob) { blob ? sendSelfie(blob) : fail(); }, 'image/jpeg', 0.88);
+        }
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function() { draw(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url); };
+        img.onerror = function() { URL.revokeObjectURL(url); fail(); };
+        img.src = url;
+    });
 
     function stopCamera() {
         if (stream) {
@@ -373,7 +410,12 @@
         canvas.toBlob(function(blob) {
             if (!blob) return;
             stopCamera();
+            sendSelfie(blob);
+        }, 'image/jpeg', 0.9);
+    };
 
+    function sendSelfie(blob) {
+        {
             var formData = new FormData();
             formData.append('_token', document.querySelector('input[name="_token"]').value);
             formData.append('selfie', blob, 'selfie.jpg');
@@ -417,8 +459,8 @@
                 .catch(function() {
                     if (typeof showAlert === 'function') showAlert('danger', 'Could not save selfie. Please try again.');
                 });
-        }, 'image/jpeg', 0.9);
-    };
+        }
+    }
 
     window.pgRetakeSelfie = function() {
         document.getElementById('pg_selfie_done').style.display = 'none';

@@ -114,9 +114,15 @@ class Proposal extends Model
     public function getPhotoVerificationStatusAttribute() { return null; }
     public function getProfileCategoryAttribute() { return null; }
 
+    private array $ageMemo = [];
+
     public function getAgeAttribute(): ?int
     {
-        return $this->birthday ? $this->birthday->age : null;
+        if (!$this->birthday) {
+            return null;
+        }
+        $key = (string) $this->birthday;   // the memo follows the birthday if it is edited
+        return $this->ageMemo[$key] ??= $this->birthday->age;
     }
 
     private static function masterName(string $type, $dataid): ?string
@@ -404,6 +410,92 @@ class Proposal extends Model
     public static function bumpMatchVersion(): void
     {
         Cache::forever('proposal_match_version', microtime(true));
+        self::$candidatePools = [];
+        self::$visibleIds = null;
+    }
+
+    /** Per-request memo: every opposite-gender active proposal, read ONCE however many proposals are being matched. */
+    private static array $candidatePools = [];
+    /** Per-request memo: ids of the proposals the current viewer may see (one query instead of one per proposal). */
+    private static ?array $visibleIds = null;
+
+    /**
+     * Only the columns the scoring reads (the long intake / note texts stay in the database). The pool is
+     * filtered and ordered in PHP by candidatesFromPool(), exactly like candidatesQuery() does in SQL.
+     */
+    private const POOL_COLUMNS = [
+        'id', 'added_by', 'gender', 'active', 'birthday', 'height', 'profession', 'con_of_residence', 'con_of_citizenship',
+        'current_city', 'city', 'updated_at',
+        'pref_age_min', 'pref_age_max', 'pref_height', 'pref_height_min', 'pref_height_max', 'pref_city', 'pref_profession',
+        'pref_professions', 'pref_nationalities',
+    ];
+
+    /**
+     * The pool for one gender: the candidate models plus, worked out ONCE per candidate (not once per pair), the
+     * values the filter and the ordering need.
+     */
+    private static function candidatePool(string $gender): array
+    {
+        if (isset(self::$candidatePools[$gender])) {
+            return self::$candidatePools[$gender];
+        }
+        // Unscoped on purpose, same as candidatesQuery(): who may SEE a private candidate is applied when the matches are read.
+        $rows = static::withoutGlobalScope(\App\Scopes\PrivateProposalScope::class)
+            ->where('gender', $gender)->where('active', true)
+            ->select(self::POOL_COLUMNS)->orderBy('id')->get();
+
+        $pool = [];
+        foreach ($rows as $c) {
+            $pool[] = [
+                'm' => $c,
+                'id' => (int) $c->id,
+                'by' => (int) $c->added_by,
+                'age' => $c->birthday ? $c->age : null,
+                'city' => mb_strtolower(rtrim((string) $c->city)),
+                'country' => mb_strtolower(rtrim((string) $c->con_of_residence)),
+                'ts' => $c->updated_at ? $c->updated_at->getTimestamp() : 0,
+            ];
+        }
+        return self::$candidatePools[$gender] = $pool;
+    }
+
+    /**
+     * Same candidates, in the same order, as candidatesQuery(), but taken from the per-request pool instead of
+     * one database query (and one full row read) for EVERY proposal. Null when this proposal can't be matched.
+     */
+    public function candidatesFromPool(): ?\Illuminate\Support\Collection
+    {
+        $own = strtolower($this->gender ?? '');
+        $opposite = $own === 'male' ? 'female' : ($own === 'female' ? 'male' : null);
+        if ($opposite === null || !$this->hasPartnerPreferences()) {
+            return null;
+        }
+
+        $ageFilter = (bool) ($this->pref_age_min || $this->pref_age_max);
+        $min = $this->pref_age_min ?: 18;
+        $max = $this->pref_age_max ?: 99;
+        $selfId = (int) $this->id;
+        $selfBy = (int) $this->added_by;
+        $hasCity = $this->city !== null && $this->city !== '';
+        $hasCountry = $this->con_of_residence !== null && $this->con_of_residence !== '';
+        $city = mb_strtolower(rtrim((string) $this->city));
+        $country = mb_strtolower(rtrim((string) $this->con_of_residence));
+
+        $keep = [];
+        foreach (self::candidatePool($opposite) as $row) {
+            if ($row['id'] === $selfId || $row['by'] === $selfBy) {
+                continue;   // not itself, and never the same matchmaker's own client
+            }
+            if ($ageFilter && ($row['age'] === null || $row['age'] < $min || $row['age'] > $max)) {
+                continue;
+            }
+            // Same city first, then same country, then the most recently updated (what the SQL ORDER BY did).
+            $row['k'] = [$hasCity && $row['city'] === $city ? 1 : 0, $hasCountry && $row['country'] === $country ? 1 : 0, $row['ts']];
+            $keep[] = $row;
+        }
+        usort($keep, fn ($a, $b) => [$b['k'][0], $b['k'][1], $b['k'][2]] <=> [$a['k'][0], $a['k'][1], $a['k'][2]]);   // stable: ties keep id order
+
+        return collect(array_column($keep, 'm'));
     }
 
     /**
@@ -418,12 +510,12 @@ class Proposal extends Model
     {
         $key = 'pm3:' . $this->id . ':' . Cache::get('proposal_match_version', 0);
         return Cache::remember($key, 300, function () {
-            $query = $this->candidatesQuery();
-            if ($query === null) {
+            $candidates = $this->candidatesFromPool();
+            if ($candidates === null) {
                 return [];
             }
             $scores = [];
-            foreach ($query->setEagerLoads([])->get() as $candidate) {
+            foreach ($candidates as $candidate) {
                 // (2) first the cheap test: the candidate must have requirements of its own.
                 if (!$candidate->hasPartnerPreferences()) {
                     continue;
@@ -465,9 +557,13 @@ class Proposal extends Model
         if (!$scores) {
             return [];
         }
-        $visible = array_flip(static::whereIn('id', array_keys($scores))->pluck('id')->all());
+        // one id list per request (the viewer's visibility doesn't change within it) instead of one query per proposal
+        $viewer = (\Illuminate\Support\Facades\Auth::guard('team')->id() ?? 0) . ':' . (\Illuminate\Support\Facades\Auth::guard('web')->id() ?? 0);
+        if (self::$visibleIds === null || self::$visibleIds[0] !== $viewer) {
+            self::$visibleIds = [$viewer, array_flip(static::pluck('id')->all())];
+        }
 
-        return array_intersect_key($scores, $visible);
+        return array_intersect_key($scores, self::$visibleIds[1]);
     }
 
     /** 66 -> 5'6" */

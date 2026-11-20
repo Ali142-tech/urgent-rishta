@@ -870,7 +870,14 @@ class Profile extends Model {
                 $subQuery .= " where (" . $where . ")";
             }
             $subQuery .= " order by " . $orderByClause;
-            // $subQuery .= " limit " . $limitClause;
+            // Take the page's ids INSIDE the subquery, so the ~30 joins below run for the 10-24 members shown instead of for
+            // every member that matches (this limit was commented out, which made each list join and group ALL members first
+            // and cut the page afterwards: seconds per page on a large members table). Only safe when nothing after the
+            // subquery can remove or reorder rows: no HAVING, and the ordering uses plain `u` columns only.
+            $limitInside = empty($having) && preg_match('/^\s*(`u`\.`\w+`(\s+(asc|desc))?\s*,?\s*)+$/i', $orderByClause);
+            if ($limitInside) {
+                $subQuery .= ", `u`.`id` DESC limit " . $limitClause;   // `id` breaks ties so pages never repeat or skip a member
+            }
 
             // Main query: Join only the limited users with masterdata
             $query = "select `u`.*, CONCAT(`u`.`first_name`,' ',`u`.`last_name`) AS `name`,
@@ -947,8 +954,8 @@ class Profile extends Model {
                 left join `images` `i` on(`u`.`id` = `i`.`user_id` and `i`.`visibility` = 'Public')
                 group by `u`.`id`
                 " . (empty($having) ? "" : " having " . $having) . "
-                order by " . $orderByClause . "
-                limit " . $limitClause;
+                order by " . $orderByClause . (!empty($limitInside) ? ", `u`.`id` DESC" : "") . "
+                limit " . (!empty($limitInside) ? $limit : $limitClause);   // the page's offset was already applied inside the subquery
         } else {
             // Fallback to original query structure for complex WHERE clauses
             $query = "select `u`.*, CONCAT(`u`.`first_name`,' ',`u`.`last_name`) AS `name`,

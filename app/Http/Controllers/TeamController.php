@@ -707,11 +707,16 @@ class TeamController extends Controller
         $members = TeamMember::active()->orderBy('first_name')->orderBy('id')->skip(($page - 1) * $perPage)->take($perPage)->get();
         $hasMore = $page * $perPage < $memberTotal;
 
+        // the three counts for the whole batch in 3 grouped queries (was 2 queries per member)
+        $batchIds = $members->pluck('id')->all();
+        $activeCounts = Proposal::whereIn('added_by', $batchIds)->where('profile_status', 'active')
+            ->selectRaw('added_by, count(*) as c')->groupBy('added_by')->pluck('c', 'added_by');
+        $matchesAsA = \App\SuccessfulMatch::whereIn('partner_a_id', $batchIds)->selectRaw('partner_a_id as m, count(*) as c')->groupBy('partner_a_id')->pluck('c', 'm');
+        $matchesAsB = \App\SuccessfulMatch::whereIn('partner_b_id', $batchIds)->selectRaw('partner_b_id as m, count(*) as c')->groupBy('partner_b_id')->pluck('c', 'm');
+
         foreach ($members as $member) {
-            $member->activeProposalsCount = Proposal::where('added_by', $member->id)->where('profile_status', 'active')->count();
-            $member->successfulMatchesCount = \App\SuccessfulMatch::where('partner_a_id', $member->id)
-                ->orWhere('partner_b_id', $member->id)
-                ->count();
+            $member->activeProposalsCount = (int) ($activeCounts[$member->id] ?? 0);
+            $member->successfulMatchesCount = (int) ($matchesAsA[$member->id] ?? 0) + (int) ($matchesAsB[$member->id] ?? 0);
             // "Senior Partner" ribbon — experience is a single free-text field.
             $member->isSenior = stripos((string) $member->experience, 'senior') !== false;
             $member->hasRealPhoto = !empty($member->photo);
@@ -730,13 +735,24 @@ class TeamController extends Controller
         // set, every OTHER matchmaker's candidate that scores above 0, best first,
         // capped to the top 3 shown.
         $recommendations = collect();
+        $ownerCache = [];   // each owner is read once, however many candidates they have
         foreach (Proposal::where('added_by', $viewerId)->with('photos')->get() as $client) {
             if (!$client->hasPartnerPreferences()) {
                 continue;
             }
-            [$overallBest] = $this->bestMatchFor($client);
+            // one match list per client (it used to be read twice: 20 for the best one, then 10 again; the 10 are the first 10 of the 20)
+            $clientMatches = $client->getProposalMatches(20);
+            $overallBest = null;
+            $overallBestPercent = -1;
+            foreach ($clientMatches as $m) {
+                $p = $m->compatibilityWith($client)['percent'] ?? 0;
+                if ($overallBest === null || $p > $overallBestPercent) {
+                    $overallBest = $m;
+                    $overallBestPercent = $p;
+                }
+            }
 
-            foreach ($client->getProposalMatches(10) as $candidate) {
+            foreach ($clientMatches->take(10) as $candidate) {
                 if ($candidate->added_by == $viewerId) {
                     continue;
                 }
@@ -745,7 +761,7 @@ class TeamController extends Controller
                 if ($percent <= 0) {
                     continue;
                 }
-                $owner = TeamMember::find($candidate->added_by);
+                $owner = $ownerCache[$candidate->added_by] ??= TeamMember::find($candidate->added_by);
                 $reasons = collect($compat['checks'] ?? [])->filter(fn ($c) => $c['matched'])->pluck('label')->take(3)->implode(' • ');
                 $recommendations->push([
                     'client' => $client,

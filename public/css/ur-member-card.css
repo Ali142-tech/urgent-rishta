@@ -500,6 +500,25 @@
     color: #fff;
 }
 
+/* Chat button (member search / recommended cards): dark green like the other primary actions, narrower than the two text buttons. */
+.member-card__footer a.is-chat {
+    flex: 0 0 auto;
+    padding-left: 14px;
+    padding-right: 14px;
+    background: var(--ur-green, #123A2E);
+    border-color: var(--ur-green, #123A2E);
+    color: #fff;
+}
+.member-card__footer a.is-chat span { color: #fff !important; }
+.member-card__footer a.is-chat:hover {
+    background: var(--ur-green-dark, #0F2E24);
+    border-color: var(--ur-green-dark, #0F2E24);
+}
+.member-card__footer a.is-chat--locked { opacity: .85; }
+@media (max-width: 420px) {
+    .member-card__footer a.is-chat { flex: 1; }
+}
+
 /* Homepage "Meet Our Members" teaser ($hideImage) — lock overlay on the
    photo + a matching "paid members only" footer, instead of the normal
    View Full Profile / Express Interest pair. */

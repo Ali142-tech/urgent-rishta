@@ -28,7 +28,26 @@ return [
     |
     */
 
+    /*
+    | Which realtime service the member chat uses: "pusher" (hosted) or "reverb" (our own Laravel Reverb server).
+    | Both speak the Pusher protocol, so the chat code is the same; only the connection settings differ.
+    */
+    'chat_driver' => env('CHAT_REALTIME', 'pusher'),
+
     'connections' => [
+
+        'reverb' => [
+            'driver' => 'reverb',
+            'key' => env('REVERB_APP_KEY'),
+            'secret' => env('REVERB_APP_SECRET'),
+            'app_id' => env('REVERB_APP_ID'),
+            'options' => [
+                'host' => env('REVERB_HOST'),
+                'port' => env('REVERB_PORT', 443),
+                'scheme' => env('REVERB_SCHEME', 'https'),
+                'useTLS' => env('REVERB_SCHEME', 'https') === 'https',
+            ],
+        ],
 
         'pusher' => [
             'driver' => 'pusher',

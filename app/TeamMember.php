@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
@@ -244,26 +245,52 @@ class TeamMember extends Model implements AuthenticatableContract, CanResetPassw
         return Profile::defaultImage('male');
     }
 
-    /** How many AI matches the proposals this member owns have in total (sidebar badge). */
+    /**
+     * Both sidebar match numbers in ONE pass over the member's proposals (they used to be two separate passes, each
+     * scoring every proposal, on every Team Dashboard page). The result is kept for 10 minutes; it is recomputed at
+     * once when the member adds / edits / removes one of their own proposals (the key follows them), when proposals
+     * are deleted / restored or the match weights change (match version), or when the private-proposal access changes.
+     *
+     * @return array{ai:int, pairs:int} ai = distinct AI-match profiles across the member's clients; pairs = cards on
+     *         the My Matches page (up to 20 per client)
+     */
+    public function matchSidebarCounts(): array
+    {
+        $sig = Proposal::where('added_by', $this->id)->selectRaw('count(*) as c, max(updated_at) as u')->first();
+        $key = 'tm_match_counts:' . $this->id . ':' . Cache::get('proposal_match_version', 0) . ':' . (int) ($sig->c ?? 0) . ':' . ($sig->u ?? '')
+            . ':' . (int) $this->can_view_private . (int) $this->is_admin;
+
+        return Cache::remember($key, 600, function () {
+            $perProposal = [];
+            $all = [];
+            foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
+                $scores = $proposal->strongMatchScores();
+                $perProposal[] = array_keys($scores);
+                foreach ($scores as $id => $_) {
+                    $all[$id] = true;
+                }
+            }
+            // one visibility check for everything (private / draft proposals this member may not see are not counted)
+            $visible = $all ? array_flip(Proposal::whereIn('id', array_keys($all))->pluck('id')->all()) : [];
+
+            $ai = count(array_intersect_key($all, $visible));
+            $pairs = 0;
+            foreach ($perProposal as $ids) {
+                $pairs += min(20, count(array_intersect_key(array_flip($ids), $visible)));
+            }
+            return ['ai' => $ai, 'pairs' => $pairs];
+        });
+    }
+
+    /** How many AI matches the proposals this member owns have in total (sidebar badge). Distinct: a profile that fits several of their clients counts once. */
     public function ownedProposalsAiMatchesCount(): int
     {
-        // Distinct profiles: one that fits several of this member's clients is still one AI match.
-        $ids = [];
-        foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
-            foreach (array_keys($proposal->visibleMatchScores()) as $id) {
-                $ids[$id] = true;
-            }
-        }
-        return count($ids);
+        return $this->matchSidebarCounts()['ai'];
     }
 
     /** Cards on the My Matches page: one per (own client, match) pair, up to 20 matches per client. */
     public function myMatchesPairCount(): int
     {
-        $total = 0;
-        foreach (Proposal::where('added_by', $this->id)->get() as $proposal) {
-            $total += min(20, count($proposal->visibleMatchScores()));
-        }
-        return $total;
+        return $this->matchSidebarCounts()['pairs'];
     }
 }

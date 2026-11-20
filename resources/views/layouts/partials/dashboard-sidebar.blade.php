@@ -41,6 +41,29 @@
             </a>
         </li>
         <li>
+            @php($__chatUnread = app(\App\Services\ChatService::class)->unreadCount(User::retrieveUserObject()))
+            <a href="{{ route('member.chat') }}" class="{{ request()->is('member/chat*') ? 'is-active' : '' }}">
+                <i class="fa fa-comments"></i> Messages
+                <span class="ur-chat-unread" style="background:#C9974D;color:#fff;border-radius:10px;font-size:11px;font-weight:700;padding:1px 7px;margin-left:6px;{{ $__chatUnread ? '' : 'display:none;' }}">{{ $__chatUnread }}</span>
+            </a>
+        </li>
+        @unless(request()->is('member/chat*'))
+        <script>
+        (function () {
+            function refresh() {
+                if (document.hidden) return;
+                fetch('/member/chat/unread', { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (j) {
+                        if (!j) return;
+                        document.querySelectorAll('.ur-chat-unread').forEach(function (b) { b.textContent = j.unread; b.style.display = j.unread ? '' : 'none'; });
+                    }).catch(function () {});
+            }
+            setInterval(refresh, 30000);
+        })();
+        </script>
+        @endunless
+        <li>
             <a href="{{ url('member/profile/listing/photoaccess') }}" class="{{ request()->is('member/profile/listing/photoaccess') ? 'is-active' : '' }}">
                 <i class="fa fa-lock"></i> Photo Access Requests
             </a>

@@ -196,11 +196,19 @@ class TeamAdminController extends Controller
 
         // the member table is paged (it grows long); the counts below are worked out for the 10 shown only
         $members = TeamMember::approved()->orderBy('first_name')->paginate(10, ['*'], 'members_page')->withQueryString();
+        // the four numbers for these members in 3 grouped queries (was 4 queries per member)
+        $ids = $members->pluck('id')->all();
+        $perMember = Proposal::whereIn('added_by', $ids)
+            ->selectRaw("added_by, count(*) as total, sum(profile_status = 'active') as active, max(created_at) as last_at")
+            ->groupBy('added_by')->get()->keyBy('added_by');
+        $matchesAsA = \App\SuccessfulMatch::whereIn('partner_a_id', $ids)->selectRaw('partner_a_id as m, count(*) as c')->groupBy('partner_a_id')->pluck('c', 'm');
+        $matchesAsB = \App\SuccessfulMatch::whereIn('partner_b_id', $ids)->selectRaw('partner_b_id as m, count(*) as c')->groupBy('partner_b_id')->pluck('c', 'm');
         foreach ($members as $member) {
-            $member->proposals_count = Proposal::where('added_by', $member->id)->count();
-            $member->active_proposals_count = Proposal::where('added_by', $member->id)->where('profile_status', 'active')->count();
-            $member->matches_count = \App\SuccessfulMatch::where('partner_a_id', $member->id)->orWhere('partner_b_id', $member->id)->count();
-            $member->last_proposal_at = Proposal::where('added_by', $member->id)->max('created_at');
+            $row = $perMember->get($member->id);
+            $member->proposals_count = (int) ($row->total ?? 0);
+            $member->active_proposals_count = (int) ($row->active ?? 0);
+            $member->matches_count = (int) ($matchesAsA[$member->id] ?? 0) + (int) ($matchesAsB[$member->id] ?? 0);
+            $member->last_proposal_at = $row->last_at ?? null;
         }
 
         $recent = Proposal::with('owner')->orderByDesc('created_at')->take(8)->get();
