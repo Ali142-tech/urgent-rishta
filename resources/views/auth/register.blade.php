@@ -192,7 +192,7 @@
                     <input type="text" name="last_name" id="reg_last_name" class="form-control" placeholder="Last name"
                            value="{{ old('last_name', $registerLastName) }}" required autocomplete="family-name">
                 </div>
-                <label class="control-label font_light" style="font-size:14px;color:#333;font-weight:600;margin-bottom:6px;display:block;">Date of birth</label>
+                <label class="control-label font_light" style="font-size:14px;color:#333 !important;font-weight:600;margin-bottom:6px;display:block;">Date of birth</label>
                 <div class="row mb-3" style="margin-left:-6px;margin-right:-6px;">
                     <div class="col-xs-4" style="padding:0 6px;width:33.33%;float:left;">
                         <label for="reg_day" style="display:block;font-size:12px;color:#5B6560;font-weight:600;margin:0 0 4px;">Day</label>

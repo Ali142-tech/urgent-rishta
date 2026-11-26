@@ -166,6 +166,7 @@ body.homepage .ur-hero-a__trust {
     text-shadow: 0 1px 8px rgba(0,0,0,.7);
 }
 body.homepage .ur-hero-a__trust span:not(.ur-hero-a__trust-dot) {
+    color: #F6E4B8 !important;
     white-space: nowrap;
 }
 body.homepage .ur-hero-a__trust-dot {

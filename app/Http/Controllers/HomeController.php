@@ -117,7 +117,8 @@ class HomeController extends Controller {
             return Profile::where('active', 1)->where('gender', $gender)->whereNotNull('images')->where('images', '!=', '')
                 ->whereNotIn('marital_status', $notForPreview ?: [''])
                 ->where('age', '>=', 21)
-                ->whereNotNull('profession')->where('profession', '!=', '');
+                ->whereNotNull('profession')->where('profession', '!=', '')
+                ->whereRaw("lower(trim(profession)) not in ('none','n/a','na','nil','-','no','not applicable')");
         };
         $femalesProfiles=$previewQuery('female')->orderBy('created_at','desc')->take(11)->get();
         $malesProfiles=$previewQuery('male')->orderBy('created_at','desc')->take(10)->get();
