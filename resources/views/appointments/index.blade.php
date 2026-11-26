@@ -54,8 +54,8 @@
                             <div class="form-group">
                                 <label for="appointment_time" class="text-uppercase c-gray-light">Preferred Time <span class="text-danger">*</span></label>
                                 <select name="appointment_time" id="appointment_time" class="form-control form-control-md" required>
-                                    <option value="">Select time</option>
-                                    @foreach(['09:00 AM','10:00 AM','11:00 AM','12:00 PM','02:00 PM','03:00 PM','04:00 PM','05:00 PM'] as $slot)
+                                    <option value="">Select time (PKT)</option>
+                                    @foreach(config('site.consultation.slots') as $slot)
                                         <option value="{{ $slot }}" {{ old('appointment_time') == $slot ? 'selected' : '' }}>{{ $slot }}</option>
                                     @endforeach
                                 </select>

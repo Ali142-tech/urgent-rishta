@@ -192,11 +192,12 @@
                     <input type="text" name="last_name" id="reg_last_name" class="form-control" placeholder="Last name"
                            value="{{ old('last_name', $registerLastName) }}" required autocomplete="family-name">
                 </div>
-                <label class="control-label font_light" style="font-size:13px;color:#666;margin-bottom:6px;display:block;">Date of birth</label>
+                <label class="control-label font_light" style="font-size:14px;color:#333;font-weight:600;margin-bottom:6px;display:block;">Date of birth</label>
                 <div class="row mb-3" style="margin-left:-6px;margin-right:-6px;">
                     <div class="col-xs-4" style="padding:0 6px;width:33.33%;float:left;">
-                        <select name="day" id="reg_day" class="form-control" required>
-                            <option value="" disabled {{ old('day', $registerDay) ? '' : 'selected' }}>DD</option>
+                        <label for="reg_day" style="display:block;font-size:12px;color:#5B6560;font-weight:600;margin:0 0 4px;">Day</label>
+                        <select name="day" id="reg_day" class="form-control" required aria-label="Day of birth">
+                            <option value="" disabled {{ old('day', $registerDay) ? '' : 'selected' }}>Day</option>
                             @for ($i = 1; $i <= 31; $i++)
                                 @php $d = $i < 10 ? '0'.$i : (string)$i; @endphp
                                 <option value="{{ $d }}" @if(old('day', $registerDay)==$d) selected @endif>{{ $d }}</option>
@@ -204,16 +205,18 @@
                         </select>
                     </div>
                     <div class="col-xs-4" style="padding:0 6px;width:33.33%;float:left;">
-                        <select name="month" id="reg_month" class="form-control" required>
-                            <option value="" disabled {{ old('month', $registerMonth) ? '' : 'selected' }}>MM</option>
+                        <label for="reg_month" style="display:block;font-size:12px;color:#5B6560;font-weight:600;margin:0 0 4px;">Month</label>
+                        <select name="month" id="reg_month" class="form-control" required aria-label="Month of birth">
+                            <option value="" disabled {{ old('month', $registerMonth) ? '' : 'selected' }}>Month</option>
                             @foreach(['01'=>'Jan','02'=>'Feb','03'=>'Mar','04'=>'Apr','05'=>'May','06'=>'Jun','07'=>'Jul','08'=>'Aug','09'=>'Sep','10'=>'Oct','11'=>'Nov','12'=>'Dec'] as $val=>$label)
                                 <option value="{{ $val }}" @if(old('month', $registerMonth)==$val) selected @endif>{{ $label }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-xs-4" style="padding:0 6px;width:33.33%;float:left;">
-                        <select name="year" id="reg_year" class="form-control" required>
-                            <option value="" disabled {{ old('year', $registerYear) ? '' : 'selected' }}>YYYY</option>
+                        <label for="reg_year" style="display:block;font-size:12px;color:#5B6560;font-weight:600;margin:0 0 4px;">Year</label>
+                        <select name="year" id="reg_year" class="form-control" required aria-label="Year of birth">
+                            <option value="" disabled {{ old('year', $registerYear) ? '' : 'selected' }}>Year</option>
                             @for ($i = ((int)date('Y') - 18); $i >= 1927; $i--)
                                 <option value="{{ $i }}" @if(old('year', $registerYear)==$i) selected @endif>{{ $i }}</option>
                             @endfor

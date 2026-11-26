@@ -1182,7 +1182,7 @@
                     Where <em>Meaningful Matches</em> Begin
                 </h1>
                 <p class="ur-hero-a__subtitle">
-                    Global trusted premium matchmaking service for serious individuals and families in Pakistan, UK, USA, Canada, Australia, Europe &amp; the Gulf.
+                    A trusted, premium matchmaking service for serious individuals and families in Pakistan, the UK, the USA, Canada, Australia, Europe and the Gulf.
                 </p>
                 <p class="ur-hero-a__subtitle ur-hero-a__subtitle--sm">
                     Every profile is carefully reviewed, with privacy, discretion and personal matchmaking support at every stage.
@@ -1194,9 +1194,9 @@
                 <div class="ur-hero-a__trust" aria-label="Trust points">
                     <span>{{ number_format($verifiedProfilesCount) }}+ Verified Profiles</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
-                    <span>5,000+ Successful Matches</span>
+                    <span>{{ number_format(config('site.stats.successful_matches')) }}+ Successful Matches</span>
                     <span class="ur-hero-a__trust-dot" aria-hidden="true">&bull;</span>
-                    <span>16+ Years of Trust</span>
+                    <span>{{ config('site.stats.years') }}+ Years of Trust</span>
                 </div>
             </div>
         </div>
@@ -1216,7 +1216,7 @@
             <div class="ur-center">
                 <div class="ur-eyebrow">Online Matchmaking</div>
                 <h2 class="ur-h2">Search Profiles Yourself</h2>
-                <p class="ur-lead">Filter by age, location, education and more — browse verified profiles at your own pace.</p>
+                <p class="ur-lead">Filter by age, marital status, country and language, and browse verified profiles at your own pace.</p>
             </div>
             <div class="ur-hero-a__search-wrap" style="margin-top:8px;">
                 <div class="ur-hero-a__search-card s-search">
@@ -1302,27 +1302,26 @@
             <div class="ur-choice__grid">
                 <div class="ur-choice__card">
                     <div class="ur-choice__icon"><i class="fa fa-desktop" aria-hidden="true"></i></div>
-                    <h3 class="ur-choice__title">Online Matchmaking</h3>
+                    <h3 class="ur-choice__title">Online Plan</h3>
                     <p class="ur-choice__desc">For members who prefer to explore suitable profiles through our online platform.</p>
                     <ul class="ur-choice__list">
                         <li><i class="fa fa-check" aria-hidden="true"></i> Access to suitable profiles</li>
                         <li><i class="fa fa-check" aria-hidden="true"></i> Search based on preferences</li>
                         <li><i class="fa fa-check" aria-hidden="true"></i> Interest requests</li>
                         <li><i class="fa fa-check" aria-hidden="true"></i> Privacy controls</li>
-                        <li><i class="fa fa-check" aria-hidden="true"></i> Matchmaking support</li>
-                    </ul>
-                    <a href="/register" class="ur-btn ur-btn--outline">Explore Online Plans</a>
+                                            </ul>
+                    <a href="/register" class="ur-btn ur-btn--outline">View Online Plan</a>
                 </div>
                 <div class="ur-choice__card ur-choice__card--dark">
                     <div class="ur-choice__icon"><i class="fa fa-user-circle" aria-hidden="true"></i></div>
-                    <h3 class="ur-choice__title">Personalized Confidential Matchmaking</h3>
+                    <h3 class="ur-choice__title">Premium Personalized Plan</h3>
                     <p class="ur-choice__desc">For individuals and families who prefer their search to be personally managed by our matchmaking team.</p>
                     <ul class="ur-choice__list">
                         <li><i class="fa fa-check" aria-hidden="true"></i> We understand your requirements</li>
                         <li><i class="fa fa-check" aria-hidden="true"></i> We review suitable prospects</li>
                         <li><i class="fa fa-check" aria-hidden="true"></i> We coordinate introductions privately</li>
                     </ul>
-                    <a href="{{ url('packages') }}?type=personalized" class="ur-btn ur-btn--light">Explore Personalized Services</a>
+                    <a href="{{ url('packages') }}?type=personalized" class="ur-btn ur-btn--light">View Premium Personalized Plan</a>
                 </div>
             </div>
         </div>
@@ -1388,11 +1387,11 @@ experienced human matchmaking to create a private, structured and respectful exp
                         <div class="ur-enquiry-bar__sub">Verified Profiles</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="5000">5,000</span>+</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="{{ config('site.stats.successful_matches') }}">{{ number_format(config('site.stats.successful_matches')) }}</span>+</div>
                         <div class="ur-enquiry-bar__sub">Successful Matches</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
-                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="16">16</span>+ Years</div>
+                        <div class="ur-enquiry-bar__num"><span class="ur-counter" data-target="{{ config('site.stats.years') }}">{{ config('site.stats.years') }}</span>+ Years</div>
                         <div class="ur-enquiry-bar__sub">Matchmaking Experience</div>
                     </div>
                     <div class="ur-enquiry-bar__stat">
@@ -1500,29 +1499,29 @@ clients who value privacy, discretion and individual attention.</p>
             <div class="ur-premium__grid">
                 <div class="ur-premium__card">
                     <div class="ur-premium__icon"><i class="fa fa-shield" aria-hidden="true"></i></div>
-                    <div class="ur-premium__tier">Platinum</div>
+                    <div class="ur-premium__tier">Premium Personalized: Platinum</div>
                     <p class="ur-premium__desc">Personal matchmaking support for clients seeking a professionally managed search.</p>
                 </div>
                 <div class="ur-premium__card">
                     <div class="ur-premium__icon"><i class="fa fa-diamond" aria-hidden="true"></i></div>
-                    <div class="ur-premium__tier">Diamond</div>
+                    <div class="ur-premium__tier">Premium Personalized: Diamond</div>
                     <p class="ur-premium__desc">Priority matchmaking with broader search support and dedicated assistance.</p>
                 </div>
                 <div class="ur-premium__card">
                     <div class="ur-premium__icon"><i class="fa fa-star" aria-hidden="true"></i></div>
-                    <div class="ur-premium__tier">Royal - Executive Matchmaking</div>
+                    <div class="ur-premium__tier">Signature: Royal Executive Matchmaking</div>
                     <p class="ur-premium__desc">A highly personalized and confidential search with priority handling and senior-level oversight.</p>
                 </div>
                 <div class="ur-premium__card ur-premium__card--dark">
                     <div class="ur-premium__icon"><i class="fa fa-trophy" aria-hidden="true"></i></div>
-                    <div class="ur-premium__tier">Imperial - Bespoke Private Matchmaking</div>
+                    <div class="ur-premium__tier">Signature: Imperial Bespoke Private Matchmaking</div>
                     <p class="ur-premium__desc">Our most exclusive service for individuals and families with highly specific requirements who expect maximum
 discretion and individually managed search.</p>
                 </div>
             </div>
 
             <div class="ur-premium__cta">
-                <a href="{{ url('packages') }}" class="ur-btn ur-btn--solid">Compare Premium Plans</a>
+                <a href="{{ url('packages') }}" class="ur-btn ur-btn--solid">Compare Our Plans</a>
                 <a href="javascript:void(0);" onclick="openPopup()" class="ur-btn ur-btn--outline">Book a Private Consultation</a>
             </div>
         </div>
@@ -1805,8 +1804,8 @@ team, with senior-level involvement where applicable.</p>
             <button class="close-btn" onclick="closePopup()">×</button>
 
             <h2>Book a Private Consultation</h2>
-            <p class="package-price">Fee: 3000 PKR</p>
-            <p style="font-size:13px; color:#6B7570; margin:-8px 0 16px;">Submit your request below — our team will review it and contact you to confirm the appointment and arrange payment.</p>
+            <p class="package-price">Consultation fee: {{ config('site.consultation.fee') }}</p>
+            <p style="font-size:13px; color:#6B7570; margin:-8px 0 16px;">{{ config('site.consultation.payment_note') }} All times are Pakistan Standard Time (PKT).</p>
 
             <div id="consultation-success" class="note-box" style="display:none; background:#e6f4ea; color:#1e7e34;"></div>
             <div id="consultation-error" class="note-box" style="display:none; background:#fdecea; color:#b3261e;"></div>
@@ -1835,10 +1834,10 @@ team, with senior-level involvement where applicable.</p>
                 <div class="form-group">
                     <label>Preferred Time <span class="text-danger">*</span></label>
                     <select name="appointment_time" class="form-control" required>
-                        <option value="">Select a time...</option>
-                        <option value="Morning (9am - 12pm)">Morning (9am - 12pm)</option>
-                        <option value="Afternoon (12pm - 4pm)">Afternoon (12pm - 4pm)</option>
-                        <option value="Evening (4pm - 8pm)">Evening (4pm - 8pm)</option>
+                        <option value="">Select a time (PKT)...</option>
+                        @foreach(config('site.consultation.slots') as $slot)
+                        <option value="{{ $slot }}">{{ $slot }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="form-group">

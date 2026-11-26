@@ -158,12 +158,12 @@ body.homepage .ur-hero-a__trust {
     align-items: center;
     flex-wrap: wrap;
     gap: 8px 14px;
-    color: var(--ur1-gold);
-    font-size: 13px;
-    font-weight: 600;
+    color: #F6E4B8;
+    font-size: 14px;
+    font-weight: 700;
     letter-spacing: .04em;
     margin-top: 4px;
-    text-shadow: 0 1px 6px rgba(0,0,0,.55);
+    text-shadow: 0 1px 8px rgba(0,0,0,.7);
 }
 body.homepage .ur-hero-a__trust span:not(.ur-hero-a__trust-dot) {
     white-space: nowrap;

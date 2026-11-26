@@ -549,7 +549,7 @@
             <div class="pko-tabs">
                 <button type="button" class="pko-tab pko-tab--active" data-plan="personalized" onclick="pkoShowPlan('personalized')">
                     <span class="pko-tab-num">01</span>
-                    <span><span class="pko-tab-title">Personalized Plan</span><span class="pko-tab-sub">Manager-led matching</span></span>
+                    <span><span class="pko-tab-title">Premium Personalized Plan</span><span class="pko-tab-sub">Manager-led matching</span></span>
                 </button>
                 <button type="button" class="pko-tab" data-plan="signature" onclick="pkoShowPlan('signature')">
                     <span class="pko-tab-badge">✦ Most Exclusive</span>
@@ -710,6 +710,41 @@
         </div>
     </section>
 
+    <!-- PLAN COMPARISON -->
+    <section class="pko-compare" aria-label="Plan comparison">
+    <style>
+    .pko-compare{max-width:1100px;margin:0 auto;padding:10px 20px 50px;font-family:'Manrope',system-ui,sans-serif}
+    .pko-compare h2{font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#123A2E;text-align:center;margin:0 0 6px}
+    .pko-compare__sub{text-align:center;color:#5B6560;font-size:14px;margin:0 0 20px}
+    .pko-compare__wrap{overflow-x:auto;border:1px solid #E6DCC6;border-radius:14px;background:#fff}
+    .pko-compare table{width:100%;border-collapse:collapse;min-width:720px;font-size:14px}
+    .pko-compare th,.pko-compare td{padding:14px 16px;text-align:left;vertical-align:top;border-bottom:1px solid #EFE7D6;color:#1C2321}
+    .pko-compare thead th{background:#123A2E;color:#fff;font-weight:700}
+    .pko-compare tbody th{background:#FBF7EF;color:#123A2E;font-weight:700;width:22%}
+    .pko-compare tr:last-child th,.pko-compare tr:last-child td{border-bottom:0}
+    .pko-compare__note{font-size:12.5px;color:#5B6560;margin:12px 4px 0;line-height:1.6}
+    </style>
+    <h2>Compare Our Plans</h2>
+    <p class="pko-compare__sub">What each plan includes, and who handles your search.</p>
+    <div class="pko-compare__wrap">
+    <table>
+    <thead><tr><th></th><th>Online Plan</th><th>Premium Personalized Plan</th><th>Signature Plan</th></tr></thead>
+    <tbody>
+    <tr><th>Best for</th><td>Clients who prefer to search independently</td><td>Families residing in Pakistan who want a managed search</td><td>Overseas and reputed business-class families</td></tr>
+    <tr><th>Who manages your search</th><td>You (self-managed)</td><td>A dedicated relationship manager</td><td>Personally overseen by our CEO</td></tr>
+    <tr><th>Who suggests proposals</th><td>No one: you search and send interest yourself</td><td>Your relationship manager curates and suggests proposals</td><td>Our CEO and senior team select and suggest proposals</td></tr>
+    <tr><th>Introductions &amp; meetings</th><td>You connect directly once an interest is accepted</td><td>Coordinated privately by our team</td><td>Coordinated discreetly by our senior team</td></tr>
+    <tr><th>Privacy level</th><td>Standard member privacy</td><td>Private profile sharing, with your approval</td><td>Executive-level confidentiality</td></tr>
+    <tr><th>Tiers</th><td>Flexible package options</td><td>Platinum and Diamond</td><td>Royal and Imperial</td></tr>
+    <tr><th>Plan fees</th><td>Shown on the Online Plan page</td><td colspan="2">Shared during your private consultation</td></tr>
+    <tr><th>Consultation</th><td colspan="3">A private consultation is {{ config('site.consultation.fee') }}. It is a separate, one-time fee for the consultation itself and is not a plan or registration fee. Plan fees are discussed with you during the consultation, before you decide anything.</td></tr>
+    </tbody>
+    </table>
+    </div>
+    <p class="pko-compare__note">Every introduction is subject to profile verification, mutual consent, suitability and current availability. See our <a href="{{ url('tandc') }}" style="color:#123A2E;text-decoration:underline;">Terms &amp; Conditions</a> for fees, cancellation and refunds.</p>
+    </section>
+    
+    
     <script>
         function pkoShowPlan(plan) {
             document.querySelectorAll('.pko-tab').forEach(function (t) {

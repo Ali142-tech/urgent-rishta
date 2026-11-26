@@ -218,7 +218,7 @@
             </div>
         </div>
 
-        {{-- <p class="ss-disclaimer">Names and identifying details may be changed to protect our clients' privacy.</p> --}}
+        <p class="ss-disclaimer">Names and identifying details may be changed to protect our clients' privacy. Stories are shared only with the families' permission.</p>
 
         <div class="ss-cta">
             <a href="/register" class="ss-btn ss-btn--solid">Start Your Journey</a>

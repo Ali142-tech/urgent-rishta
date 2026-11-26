@@ -1,7 +1,7 @@
 @php
     $senderAge = !empty($sender->birthday) ? date_diff(date_create($sender->birthday), date_create('now'))->y : null;
     $senderCity = $sender->profile()->lbl_city ?? null;
-    $senderAvatarUrl = 'https://urgentrishta.co' . \App\Profile::defaultImage($sender->gender);
+    $senderAvatarUrl = 'https://urgentrishta.com' . \App\Profile::defaultImage($sender->gender);
 @endphp
 <!DOCTYPE html>
 <html>
@@ -52,7 +52,7 @@
         {{-- Header --}}
         <tr>
             <td bgcolor="#123A2E" class="ur-bg-header" style="background:#123A2E; padding:26px 30px; text-align:center;">
-                <img src="https://urgentrishta.co/images/header_logo2.png" alt="Urgent Rishta" height="40" style="display:inline-block;">
+                <img src="https://urgentrishta.com/images/header_logo2.png" alt="Urgent Rishta" height="40" style="display:inline-block;">
             </td>
         </tr>
 
@@ -97,7 +97,7 @@
                 <table role="presentation" cellpadding="0" cellspacing="0">
                     <tr>
                         <td bgcolor="#C9974D" class="ur-bg-accent" style="border-radius:8px; background:#C9974D;">
-                            <a href="https://urgentrishta.co/member/profile/listing/interests" class="ur-text-green" style="display:inline-block; padding:14px 34px; font-size:13.5px; font-weight:700; letter-spacing:.3px; color:#123A2E; text-decoration:none;">RESPOND TO INTEREST</a>
+                            <a href="https://urgentrishta.com/member/profile/listing/interests" class="ur-text-green" style="display:inline-block; padding:14px 34px; font-size:13.5px; font-weight:700; letter-spacing:.3px; color:#123A2E; text-decoration:none;">RESPOND TO INTEREST</a>
                         </td>
                     </tr>
                 </table>
@@ -126,7 +126,7 @@
         <tr>
             <td class="ur-px" style="padding:26px 34px 28px; border-top:1px solid #EFEAE0;">
                 <p class="ur-text-muted" style="margin:0 0 10px; font-size:12px; line-height:1.8; color:#6B7570;">
-                    Website: <a href="https://urgentrishta.co" class="ur-text-green" style="color:#123A2E;">urgentrishta.co</a><br>
+                    Website: <a href="https://urgentrishta.com" class="ur-text-green" style="color:#123A2E;">urgentrishta.com</a><br>
                     WhatsApp: <a href="https://wa.me/923040227000" class="ur-text-green" style="color:#123A2E;">+92 304 0227000</a><br>
                     Email: <a href="mailto:urgentrishta.co@gmail.com" class="ur-text-green" style="color:#123A2E;">urgentrishta.co@gmail.com</a>
                 </p>

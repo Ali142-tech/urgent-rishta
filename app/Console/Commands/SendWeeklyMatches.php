@@ -89,8 +89,8 @@ class SendWeeklyMatches extends Command
                 'name_line' => $profile->first_name . ($age ? ", {$age} yrs" : ''),
                 'location_line' => implode(' • ', array_filter([$profile->height ?? null, $cityCountry])),
                 'profession' => $profile->profession ?? null,
-                'image_url' => 'https://urgentrishta.co' . $profile->getProfileImage(true),
-                'profile_url' => 'https://urgentrishta.co/member/profile/' . $profile->dataid,
+                'image_url' => 'https://urgentrishta.com' . $profile->getProfileImage(true),
+                'profile_url' => 'https://urgentrishta.com/member/profile/' . $profile->dataid,
             ];
         });
 

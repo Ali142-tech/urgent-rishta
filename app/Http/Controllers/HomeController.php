@@ -110,8 +110,17 @@ class HomeController extends Controller {
 
         
 
-        $femalesProfiles=Profile::where('active', 1)->where('gender','female')->whereNotNull('images')->where('images', '!=', '')->orderBy('created_at','desc')->take(11)->get();
-        $malesProfiles=Profile::where('active', 1)->where('gender','male')->whereNotNull('images')->where('images', '!=', '')->orderBy('created_at','desc')->take(10)->get();
+        // Public preview cards must look right to a stranger: no married / awaiting-divorce profiles, nobody under 21, and a
+        // profession must be filled in. (A profile can also be kept off the homepage by deactivating it.)
+        $notForPreview = MasterData::where('type', 'MARITAL_STATUS')->whereIn('name', ['Married', 'Awaiting Divorce'])->pluck('dataid')->all();
+        $previewQuery = function ($gender) use ($notForPreview) {
+            return Profile::where('active', 1)->where('gender', $gender)->whereNotNull('images')->where('images', '!=', '')
+                ->whereNotIn('marital_status', $notForPreview ?: [''])
+                ->where('age', '>=', 21)
+                ->whereNotNull('profession')->where('profession', '!=', '');
+        };
+        $femalesProfiles=$previewQuery('female')->orderBy('created_at','desc')->take(11)->get();
+        $malesProfiles=$previewQuery('male')->orderBy('created_at','desc')->take(10)->get();
         // country flag on each card: the residence country's 2-letter code (masterdata abbreviation), one lookup for all of them
         $countryCodes = MasterData::where('type', 'COUNTRY')->pluck('abbreviation', 'dataid');
         $sampleProfiles=$femalesProfiles->merge($malesProfiles)->shuffle()->map(function ($profile) use ($countryCodes) {

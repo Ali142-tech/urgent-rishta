@@ -309,15 +309,15 @@
             <div class="cu-hero__content">
                 <div class="cu-eyebrow">Get In Touch</div>
                 <h1 class="cu-h1">We're Here to Help You Say <em>Yes</em></h1>
-                <p class="cu-lead">Questions about a profile, a package, or how our matchmaking process works? Our team responds personally — usually within a few hours.</p>
+                <p class="cu-lead">Questions about a profile, a package, or how our matchmaking process works? Our team responds personally, {{ config('site.contact.response_time') }}.</p>
                 <div class="cu-hero__actions">
                     <a href="#contact-form" class="cu-btn cu-btn--solid"><i class="fa fa-paper-plane" aria-hidden="true"></i> Send a Message</a>
-                    <a href="tel:+923040227000" class="cu-btn cu-btn--outline"><i class="fa fa-phone" aria-hidden="true"></i> Call Us Now</a>
+                    <a href="tel:{{ config('site.contact.phone_e164') }}" class="cu-btn cu-btn--outline"><i class="fa fa-phone" aria-hidden="true"></i> Call Us Now</a>
                 </div>
             </div>
             <div class="cu-hero__photo">
                 <img src="/images/about/elegant-couple.jpg" alt="A happy couple matched through Urgent Rishta" loading="lazy">
-                <div class="cu-hero__badge"><strong>5,000+</strong><span class="text-white">Successful Matches</span></div>
+                <div class="cu-hero__badge"><strong>{{ number_format(config('site.stats.successful_matches')) }}+</strong><span class="text-white">Successful Matches</span></div>
             </div>
         </div>
     </section>
@@ -327,20 +327,20 @@
             <div class="cu-info__card">
                 <div class="cu-info__icon"><i class="fa fa-phone" aria-hidden="true"></i></div>
                 <div class="cu-info__label">Call Us</div>
-                <a href="tel:+923040227000" class="cu-info__value">+92 304 0227000</a>
+                <a href="tel:{{ config('site.contact.phone_e164') }}" class="cu-info__value">{{ config('site.contact.phone') }}</a>
                 <div class="cu-info__note">Standard rates apply</div>
             </div>
             <div class="cu-info__card">
                 <div class="cu-info__icon"><i class="fa fa-whatsapp" aria-hidden="true"></i></div>
                 <div class="cu-info__label">WhatsApp</div>
-                <a href="https://wa.me/923040227000" target="_blank" rel="noopener" class="cu-info__value">+92 304 0227000</a>
+                <a href="https://wa.me/{{ config('site.contact.whatsapp') }}" target="_blank" rel="noopener" class="cu-info__value">{{ config('site.contact.phone') }}</a>
                 <div class="cu-info__note">Fastest response</div>
             </div>
             <div class="cu-info__card">
                 <div class="cu-info__icon"><i class="fa fa-envelope" aria-hidden="true"></i></div>
                 <div class="cu-info__label">Email</div>
-                <a href="mailto:urgentrishta.co@gmail.com" class="cu-info__value">urgentrishta.co@gmail.com</a>
-                <div class="cu-info__note">Replies within a day</div>
+                <a href="mailto:{{ config('site.contact.email') }}" class="cu-info__value">{{ config('site.contact.email') }}</a>
+                <div class="cu-info__note">Replies {{ config('site.contact.response_time') }}</div>
             </div>
             <div class="cu-info__card">
                 <div class="cu-info__icon"><i class="fa fa-map-marker" aria-hidden="true"></i></div>
@@ -416,7 +416,7 @@
                     <div class="cu-office-divider"></div>
 
                     <div class="cu-office__label">Office Hours</div>
-                    <p class="cu-office__text">Monday – Saturday, 10:00 AM – 7:00 PM (PKT)</p>
+                    <p class="cu-office__text">{{ config('site.contact.hours') }}</p>
                 </div>
 
                 <div class="cu-follow">
@@ -425,11 +425,11 @@
                         <li><a href="https://www.facebook.com/share/1EqwQvEXJh/" target="_blank" rel="noopener" title="Facebook" aria-label="Facebook"><i class="fa fa-facebook"></i></a></li>
                         <li><a href="https://www.linkedin.com/in/usman-zaheer-3028ab204?utm_source=share_via&amp;utm_content=profile&amp;utm_medium=member_android" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn"><i class="fa fa-linkedin"></i></a></li>
                         <li><a href="https://www.instagram.com/overseas_rishta?igsh=MXhldzY0ZTlidTU2Yw==" target="_blank" rel="noopener" title="Instagram" aria-label="Instagram"><i class="fa fa-instagram"></i></a></li>
-                        <li><a href="https://wa.me/923040227000" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><i class="fa fa-whatsapp"></i></a></li>
+                        <li><a href="https://wa.me/{{ config('site.contact.whatsapp') }}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><i class="fa fa-whatsapp"></i></a></li>
                     </ul>
                 </div>
 
-                <div class="cu-response-note"><i class="fa fa-clock-o" aria-hidden="true"></i> We typically respond within 2–4 hours</div>
+                <div class="cu-response-note"><i class="fa fa-clock-o" aria-hidden="true"></i> We respond {{ config('site.contact.response_time') }}</div>
             </div>
         </div>
     </section>

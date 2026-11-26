@@ -175,7 +175,7 @@
                             @if(!empty($partner['benefit']))
                                 <div class="pp-benefit pp-benefit--{{ $theme }}">
                                     <i class="fa fa-gift"></i>
-                                    <div><small>Exclusive Benefit for UR Members</small><b>{{ $partner['benefit'] }}</b></div>
+                                    <div><small>Exclusive Benefit for UR Members</small><b>{{ $partner['benefit'] }}</b>@if(!empty($partner['benefit_terms']))<small style="margin-top:3px;">{{ $partner['benefit_terms'] }}</small>@endif</div>
                                 </div>
                             @endif
                             <a class="pp-visit" href="{{ route('partner.go', $key) }}" target="_blank" rel="nofollow noopener">Visit Website <i class="fa fa-external-link"></i></a>
@@ -183,7 +183,8 @@
                     </article>
                 @endforeach
             </div>
-            <p class="pp-empty" id="pp_empty">No partners in this category yet.</p>
+            <p class="pp-note" style="text-align:center;font-size:12.5px;color:#5B6560;margin:18px 0 0;line-height:1.6;">Partners are independent businesses. Member offers are agreed with each partner and can change, so please confirm the offer with the partner before you buy.</p>
+            <p class="pp-empty" id="pp_empty">Partners for this category are coming soon.</p>
         </section>
     </div>
 

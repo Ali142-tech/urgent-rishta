@@ -69,7 +69,7 @@ class AppointmentController extends Controller
     /**
      * Public "Book a Private Consultation" request — the homepage popup
      * (welcome.blade.php). Open to guests as well as logged-in members;
-     * this is a REQUEST only (status starts 'pending') — the ₨300 fee is
+     * this is a REQUEST only (status starts 'pending') — the consultation fee (config site.consultation.fee) is
      * collected separately after admin reviews and schedules it, not
      * through this form. Admin sets the final date/time when confirming
      * (see AdminController::updateAppointmentStatus).
