@@ -85,7 +85,7 @@ class ProfileWizard
     {
         static $id = null;
         if ($id === null) {
-            $id = (string) MasterData::where('type', 'MARITAL_STATUS')->where('name', 'Never Married')->value('dataid');
+            $id = (string) MasterData::where('type', 'MARITAL_STATUS')->where('name', 'like', 'Never Married%')->value('dataid');
         }
         return $id;
     }
